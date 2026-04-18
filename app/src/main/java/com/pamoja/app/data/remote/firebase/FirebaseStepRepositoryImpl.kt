@@ -1,0 +1,99 @@
+package com.pamoja.app.data.remote.firebase
+
+import com.google.firebase.firestore.FirebaseFirestore
+import com.pamoja.app.data.remote.model.StepEntryDto
+import com.pamoja.app.domain.model.StepEntry
+import com.pamoja.app.domain.repository.StepRepository
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+
+class FirebaseStepRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore
+) : StepRepository {
+
+    private val stepsCollection = firestore.collection("steps")
+
+    override suspend fun saveStepEntry(stepEntry: StepEntry): Result<Unit> {
+        return try {
+            val dto = StepEntryDto.fromDomain(stepEntry)
+            stepsCollection
+                .document("${stepEntry.userId}_${stepEntry.date}")
+                .set(dto)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getStepsForUser(userId: String, date: String): Result<StepEntry> {
+        return try {
+            val snapshot = stepsCollection
+                .document("${userId}_${date}")
+                .get()
+                .await()
+            val dto = snapshot.toObject(StepEntryDto::class.java)
+                ?: return Result.success(StepEntry(userId = userId, stepCount = 0L, date = date))
+            Result.success(dto.toDomain())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getStepsForUserInRange(
+        userId: String,
+        startDate: String,
+        endDate: String
+    ): Flow<List<StepEntry>> = callbackFlow {
+        val listener = stepsCollection
+            .whereEqualTo("userId", userId)
+            .whereGreaterThanOrEqualTo("date", startDate)
+            .whereLessThanOrEqualTo("date", endDate)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val entries = snapshot?.documents?.mapNotNull {
+                    it.toObject(StepEntryDto::class.java)?.toDomain()
+                } ?: emptyList()
+                trySend(entries)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun getGroupStepsForWeek(
+        memberIds: List<String>,
+        startDate: String,
+        endDate: String
+    ): Flow<List<StepEntry>> = callbackFlow {
+        if (memberIds.isEmpty()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        val listener = stepsCollection
+            .whereIn("userId", memberIds)
+            .whereGreaterThanOrEqualTo("date", startDate)
+            .whereLessThanOrEqualTo("date", endDate)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val entries = snapshot?.documents?.mapNotNull {
+                    it.toObject(StepEntryDto::class.java)?.toDomain()
+                } ?: emptyList()
+                trySend(entries)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun syncTodaySteps(userId: String): Result<Unit> {
+        return Result.success(Unit)
+    }
+}

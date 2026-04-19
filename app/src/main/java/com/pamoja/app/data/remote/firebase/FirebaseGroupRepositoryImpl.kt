@@ -107,7 +107,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getGroupMembers(groupId: String): Flow<List<User>> = callbackFlow {
+    override  fun getGroupMembers(groupId: String): Flow<List<User>> = callbackFlow {
         val listener = membershipsCollection
             .whereEqualTo("groupId", groupId)
             .addSnapshotListener { snapshot, error ->
@@ -153,7 +153,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getUserGroups(userId: String): Flow<List<Group>> = callbackFlow {
+    override fun getUserGroups(userId: String): Flow<List<Group>> = callbackFlow {
         val listener = membershipsCollection
             .whereEqualTo("userId", userId)
             .addSnapshotListener { snapshot, error ->

@@ -72,7 +72,7 @@ class JoinGroupUseCase @Inject constructor(
 class GetGroupMembersUseCase @Inject constructor(
     private val groupRepository: GroupRepository
 ) {
-    suspend operator fun invoke(groupId: String): Flow<List<User>> {
+    operator fun invoke(groupId: String): Flow<List<User>> {
         return groupRepository.getGroupMembers(groupId)
     }
 }

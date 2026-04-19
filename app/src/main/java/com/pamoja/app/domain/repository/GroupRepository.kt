@@ -11,9 +11,9 @@ interface GroupRepository {
     suspend fun updateGroup(group: Group): Result<Unit>
     suspend fun getGroupByInviteLink(inviteLink: String): Result<Group>
     suspend fun joinGroup(groupId: String, userId: String): Result<Unit>
-    suspend fun getGroupMembers(groupId: String): Flow<List<User>>
+    fun getGroupMembers(groupId: String): Flow<List<User>>
     suspend fun getMembership(userId: String, groupId: String): Result<Membership>
-    suspend fun getUserGroups(userId: String): Flow<List<Group>>
+    fun getUserGroups(userId: String): Flow<List<Group>>
     suspend fun updateMemberCap(groupId: String, cap: Int): Result<Unit>
     suspend fun updateWeeklyTarget(groupId: String, target: Int): Result<Unit>
     suspend fun deactivateInviteLink(groupId: String): Result<Unit>

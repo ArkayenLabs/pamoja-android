@@ -42,6 +42,7 @@ data class GroupUiState(
     val isAdmin: Boolean = false
 )
 
+
 @HiltViewModel
 class GroupViewModel @Inject constructor(
     private val getGroupUseCase: GetGroupUseCase,
@@ -51,12 +52,13 @@ class GroupViewModel @Inject constructor(
     private val getMembershipUseCase: GetMembershipUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val updateWeeklyTargetUseCase: UpdateWeeklyTargetUseCase,
-    private val userPreferences: UserPreferences,
+    val userPreferences: UserPreferences,
     private val workManagerScheduler: WorkManagerScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GroupUiState())
     val uiState: StateFlow<GroupUiState> = _uiState.asStateFlow()
+
 
     fun loadGroup(groupId: String) {
         viewModelScope.launch {

@@ -26,6 +26,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,6 +59,9 @@ fun GroupScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val userPreferences = viewModel.userPreferences
+    val isHealthConnectGranted by userPreferences.isHealthConnectGranted
+        .collectAsState(initial = false)
 
     LaunchedEffect(groupId) {
         viewModel.loadGroup(groupId)
@@ -85,9 +89,13 @@ fun GroupScreen(
                 color = PamojaBlue
             )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                if (!isHealthConnectGranted) {
+                    item {
+                        HealthConnectBanner(onClick = { })
+                    }
+                }
+
                 item {
                     GroupHeader(
                         groupName = uiState.group?.name ?: "",
@@ -382,6 +390,32 @@ fun LeaderboardRow(
                 style = MaterialTheme.typography.labelSmall,
                 color = secondaryColor,
                 fontSize = 10.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun HealthConnectBanner(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(PamojaBlueLight)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "Connect Health to sync your steps",
+            style = MaterialTheme.typography.bodyMedium,
+            color = PamojaBlueDark,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onClick) {
+            Text(
+                text = "Connect",
+                style = MaterialTheme.typography.labelMedium,
+                color = PamojaBlue
             )
         }
     }

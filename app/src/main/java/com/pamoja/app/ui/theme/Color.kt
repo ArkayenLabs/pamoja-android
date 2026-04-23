@@ -2,10 +2,29 @@ package com.pamoja.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Primary blue
+val PamojaBlue = Color(0xFF378ADD)
+val PamojaBlueDark = Color(0xFF185FA5)
+val PamojaBlueLight = Color(0xFFE6F1FB)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Neutrals
+val PamojaWhite = Color(0xFFFFFFFF)
+val PamojaBackground = Color(0xFFF8F8F8)
+val PamojaSurface = Color(0xFFF1F1F1)
+val PamojaGray = Color(0xFF888780)
+val PamojaGrayLight = Color(0xFFD3D1C7)
+val PamojaTextPrimary = Color(0xFF2C2C2A)
+val PamojaTextSecondary = Color(0xFF5F5E5A)
+val PamojaTextTertiary = Color(0xFFB4B2A9)
+
+// Success
+val PamojaGreen = Color(0xFF3B6D11)
+val PamojaGreenLight = Color(0xFFEAF3DE)
+
+// Error
+val PamojaRed = Color(0xFFA32D2D)
+val PamojaRedLight = Color(0xFFFCEBEB)
+
+val PamojaDarkBackground = Color(0xFF1A1A18)
+val PamojaDarkSurface = Color(0xFF2C2C2A)
+val PamojaDarkSurfaceVariant = Color(0xFF3A3A38)

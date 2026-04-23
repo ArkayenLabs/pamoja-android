@@ -84,6 +84,9 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.compose.material.icons.extended)
+
+
 
     // Testing
     testImplementation(libs.junit)

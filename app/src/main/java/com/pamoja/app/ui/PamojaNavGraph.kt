@@ -68,7 +68,7 @@ fun PamojaNavGraph(
             CreateGroupScreen(
                 onGroupCreated = { groupId ->
                     navController.navigate(Screen.Invite.createRoute(groupId)) {
-                        popUpTo(Screen.CreateGroup.route) { inclusive = true }
+                        popUpTo(Screen.CreateOrJoinGroup.route) { inclusive = true }
                     }
                 },
                 onBack = {

@@ -1,10 +1,10 @@
 package com.pamoja.app.data.local.health
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import com.pamoja.app.BuildConfig
 
 class StepCounterManager(private val context: Context) {
 
@@ -15,7 +15,8 @@ class StepCounterManager(private val context: Context) {
      * Release builds perform the real hardware check.
      */
     fun isStepCounterAvailable(): Boolean {
-        if (BuildConfig.DEBUG) return true
+        val isDebug = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (isDebug) return true
 
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val hasSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null

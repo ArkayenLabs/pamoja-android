@@ -26,6 +26,20 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         return try {
             val dto = GroupDto.fromDomain(group)
             groupsCollection.document(group.groupId).set(dto).await()
+            
+            // Add admin membership
+            val membership = MembershipDto(
+                userId = group.adminId,
+                groupId = group.groupId,
+                role = "admin",
+                canEditTarget = true,
+                joinedAt = System.currentTimeMillis()
+            )
+            membershipsCollection
+                .document("${group.adminId}_${group.groupId}")
+                .set(membership)
+                .await()
+                
             Result.success(group)
         } catch (e: Exception) {
             Result.failure(e)

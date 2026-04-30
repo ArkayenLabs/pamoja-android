@@ -194,8 +194,9 @@ fun HomeScreen(
                             .padding(horizontal = 24.dp)
                             .padding(top = 48.dp, bottom = 8.dp)
                     ) {
+                        val firstName = uiState.userName.takeIf { it.isNotBlank() }?.split(" ")?.firstOrNull() ?: "there"
                         Text(
-                            text = "Hey, ${uiState.userName.split(" ").firstOrNull() ?: "there"} 👋",
+                            text = "Hey, $firstName 👋",
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.onBackground
                         )

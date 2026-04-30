@@ -32,6 +32,7 @@ class CreateGroupUseCase @Inject constructor(
             adminId = adminId,
             weeklyTarget = weeklyTarget,
             maxMemberCap = maxMemberCap,
+            canMembersEditTarget = canMembersEditTarget,
             inviteLink = inviteLink,
             inviteLinkActive = true,
             createdAt = System.currentTimeMillis()
@@ -101,7 +102,7 @@ class UpdateWeeklyTargetUseCase @Inject constructor(
         }
 
         val isAdmin = group.adminId == userId
-        val canEdit = membership.canEditTarget
+        val canEdit = group.canMembersEditTarget
 
         if (!isAdmin && !canEdit) {
             return Result.failure(Exception("You don't have permission to edit the target"))

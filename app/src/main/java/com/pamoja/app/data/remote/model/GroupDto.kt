@@ -6,6 +6,7 @@ data class GroupDto(
     val adminId: String = "",
     val weeklyTarget: Int = 70000,
     val maxMemberCap: Int = 10,
+    val canMembersEditTarget: Boolean = false,
     val inviteLink: String = "",
     val inviteLinkActive: Boolean = true,
     val createdAt: Long = 0L
@@ -16,6 +17,7 @@ data class GroupDto(
         adminId = adminId,
         weeklyTarget = weeklyTarget,
         maxMemberCap = maxMemberCap,
+        canMembersEditTarget = canMembersEditTarget,
         inviteLink = inviteLink,
         inviteLinkActive = inviteLinkActive,
         createdAt = createdAt
@@ -28,6 +30,7 @@ data class GroupDto(
             adminId = group.adminId,
             weeklyTarget = group.weeklyTarget,
             maxMemberCap = group.maxMemberCap,
+            canMembersEditTarget = group.canMembersEditTarget,
             inviteLink = group.inviteLink,
             inviteLinkActive = group.inviteLinkActive,
             createdAt = group.createdAt

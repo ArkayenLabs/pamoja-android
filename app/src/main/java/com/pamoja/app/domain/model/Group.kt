@@ -6,6 +6,7 @@ data class Group(
     val adminId: String = "",
     val weeklyTarget: Int = 70000,
     val maxMemberCap: Int = 10,
+    val canMembersEditTarget: Boolean = false,
     val inviteLink: String = "",
     val inviteLinkActive: Boolean = true,
     val createdAt: Long = 0L

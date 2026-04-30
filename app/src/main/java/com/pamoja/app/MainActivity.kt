@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 val isOnboarded by userPreferences.isOnboarded.collectAsState(initial = false)
 
                 val startDestination = if (isOnboarded) {
-                    Screen.CreateOrJoinGroup.route
+                    Screen.Home.route
                 } else {
                     Screen.Welcome.route
                 }

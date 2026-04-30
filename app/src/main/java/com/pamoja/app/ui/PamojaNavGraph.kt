@@ -8,9 +8,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.pamoja.app.ui.group.CreateGroupScreen
 import com.pamoja.app.ui.group.GroupScreen
+import com.pamoja.app.ui.home.HomeScreen
 import com.pamoja.app.ui.invite.InviteScreen
 import com.pamoja.app.ui.onboarding.HealthConnectScreen
 import com.pamoja.app.ui.onboarding.ProfileSetupScreen
+import com.pamoja.app.ui.onboarding.SignInScreen
 import com.pamoja.app.ui.onboarding.WelcomeScreen
 
 @Composable
@@ -22,10 +24,29 @@ fun PamojaNavGraph(
         navController = navController,
         startDestination = startDestination
     ) {
+
+        // ─── Onboarding ─────────────────────────────────────────────────────────
+
         composable(Screen.Welcome.route) {
             WelcomeScreen(
                 onGetStarted = {
                     navController.navigate(Screen.ProfileSetup.route)
+                },
+                onSignIn = {
+                    navController.navigate(Screen.SignIn.route)
+                }
+            )
+        }
+
+        composable(Screen.SignIn.route) {
+            SignInScreen(
+                onSignedIn = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -41,25 +62,32 @@ fun PamojaNavGraph(
         composable(Screen.HealthConnect.route) {
             HealthConnectScreen(
                 onConnected = {
-                    navController.navigate(Screen.CreateOrJoinGroup.route) {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onSkip = {
-                    navController.navigate(Screen.CreateOrJoinGroup.route) {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Screen.CreateOrJoinGroup.route) {
-            CreateOrJoinGroupScreen(
+        // ─── Main App ────────────────────────────────────────────────────────────
+
+        composable(Screen.Home.route) {
+            HomeScreen(
+                onGroupClick = { groupId ->
+                    navController.navigate(Screen.Group.createRoute(groupId))
+                },
                 onCreateGroup = {
                     navController.navigate(Screen.CreateGroup.route)
                 },
-                onJoinGroup = { groupId ->
-                    navController.navigate(Screen.Group.createRoute(groupId))
+                onSessionExpired = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -68,7 +96,7 @@ fun PamojaNavGraph(
             CreateGroupScreen(
                 onGroupCreated = { groupId ->
                     navController.navigate(Screen.Invite.createRoute(groupId)) {
-                        popUpTo(Screen.CreateOrJoinGroup.route) { inclusive = true }
+                        popUpTo(Screen.Home.route) { inclusive = false }
                     }
                 },
                 onBack = {
@@ -86,7 +114,7 @@ fun PamojaNavGraph(
                 groupId = groupId,
                 onGoToGroup = {
                     navController.navigate(Screen.Group.createRoute(groupId)) {
-                        popUpTo(Screen.Invite.route) { inclusive = true }
+                        popUpTo(Screen.Home.route) { inclusive = false }
                     }
                 }
             )

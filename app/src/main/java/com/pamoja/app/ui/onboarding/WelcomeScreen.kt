@@ -31,7 +31,7 @@ import com.pamoja.app.ui.theme.PamojaBlue
 import com.pamoja.app.ui.theme.PamojaBlueLight
 
 @Composable
-fun WelcomeScreen(onGetStarted: () -> Unit) {
+fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -105,7 +105,7 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(onClick = { }) {
+                TextButton(onClick = onSignIn) {
                     Text(
                         text = "Already have an account? Sign in",
                         style = MaterialTheme.typography.bodySmall,

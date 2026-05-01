@@ -58,8 +58,6 @@ fun ProfileSetupScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
@@ -145,27 +143,6 @@ fun ProfileSetupScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            PamojaTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "Email *",
-                placeholder = "your@email.com",
-                keyboardType = KeyboardType.Email
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            PamojaTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password *",
-                placeholder = "Min 6 characters",
-                keyboardType = KeyboardType.Password,
-                isPassword = true
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -209,8 +186,6 @@ fun ProfileSetupScreen(
             Button(
                 onClick = {
                     viewModel.signUpAndCreateProfile(
-                        email = email.trim(),
-                        password = password,
                         name = name.trim(),
                         age = age.toIntOrNull(),
                         height = height.toFloatOrNull(),

@@ -105,13 +105,13 @@ fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(onClick = onSignIn) {
-                    Text(
-                        text = "Already have an account? Sign in",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                // TextButton(onClick = onSignIn) {
+                //     Text(
+                //         text = "Already have an account? Sign in",
+                //         style = MaterialTheme.typography.bodySmall,
+                //         color = MaterialTheme.colorScheme.onSurfaceVariant
+                //     )
+                // }
             }
         }
     }

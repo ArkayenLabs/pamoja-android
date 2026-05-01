@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.CreateUserUseCase
-import com.pamoja.app.domain.usecase.SignUpUseCase
+import com.pamoja.app.domain.usecase.SignInAnonymouslyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ data class OnboardingUiState(
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val signUpUseCase: SignUpUseCase,
+    private val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
     private val createUserUseCase: CreateUserUseCase,
     private val userPreferences: UserPreferences
 ) : ViewModel() {
@@ -33,8 +33,6 @@ class OnboardingViewModel @Inject constructor(
     val user: StateFlow<User?> = _user.asStateFlow()
 
     fun signUpAndCreateProfile(
-        email: String,
-        password: String,
         name: String,
         age: Int?,
         height: Float?,
@@ -43,7 +41,7 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = OnboardingUiState(isLoading = true)
 
-            val authResult = signUpUseCase(email, password)
+            val authResult = signInAnonymouslyUseCase()
             authResult.fold(
                 onSuccess = { authUser ->
                     val user = User(

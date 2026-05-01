@@ -23,6 +23,19 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun signInAnonymously(): Result<User> {
+        return try {
+            val result = auth.signInAnonymously().await()
+            val firebaseUser = result.user
+                ?: return Result.failure(Exception("Anonymous sign in failed"))
+            Result.success(
+                User(userId = firebaseUser.uid)
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun signIn(email: String, password: String): Result<User> {
         return try {
             val result = auth.signInWithEmailAndPassword(email, password).await()

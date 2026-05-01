@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -101,13 +102,24 @@ class GroupViewModel @Inject constructor(
         currentUserId: String
     ) {
         viewModelScope.launch {
-            getGroupMembersUseCase(groupId).collect { members ->
+            getGroupMembersUseCase(groupId)
+                .catch { error -> 
+                    _uiState.value = _uiState.value.copy(error = error.message)
+                }
+                .collect { members ->
                 if (members.isEmpty()) return@collect
 
                 val memberIds = members.map { it.userId }
                 val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
 
-                getGroupStepsForWeekUseCase(memberIds).collect { weeklyEntries ->
+                getGroupStepsForWeekUseCase(memberIds)
+                    .catch { error ->
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = "Database setup required: Please click the index link in your Logcat to generate the required Firestore index."
+                        )
+                    }
+                    .collect { weeklyEntries ->
                     val memberStepData = members.map { member ->
                         val todayEntry = weeklyEntries.find {
                             it.userId == member.userId && it.date == today

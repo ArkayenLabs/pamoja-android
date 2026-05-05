@@ -8,21 +8,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -33,17 +37,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.StepCounterService
-import com.pamoja.app.ui.theme.PamojaBlue
-import com.pamoja.app.ui.theme.PamojaBlueLight
+import com.pamoja.app.ui.theme.PamojaBackground
+import com.pamoja.app.ui.theme.PamojaBorder
 import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaGreenLight
+import com.pamoja.app.ui.theme.PamojaGreenSubtle
+import com.pamoja.app.ui.theme.PamojaIndigo
+import com.pamoja.app.ui.theme.PamojaIndigoDark
+import com.pamoja.app.ui.theme.PamojaIndigoSubtle
+import com.pamoja.app.ui.theme.PamojaSurface
+import com.pamoja.app.ui.theme.PamojaTextPrimary
+import com.pamoja.app.ui.theme.PamojaTextSecondary
+import com.pamoja.app.ui.theme.PamojaWhite
 import kotlinx.coroutines.launch
 
 @Composable
@@ -52,10 +65,10 @@ fun HealthConnectScreen(
     onSkip: () -> Unit,
     viewModel: HealthConnectViewModel = hiltViewModel()
 ) {
-    val userPreferences = viewModel.userPreferences
+    val userPreferences   = viewModel.userPreferences
     val stepCounterManager = viewModel.stepCounterManager
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val scope             = rememberCoroutineScope()
+    val context           = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -64,13 +77,11 @@ fun HealthConnectScreen(
         scope.launch {
             if (granted) {
                 userPreferences.setHealthConnectGranted(true)
-                StepCounterService.start(context)
+                try { StepCounterService.start(context) } catch (_: Exception) {}
                 onConnected()
             } else {
                 userPreferences.setHealthConnectGranted(false)
-                snackbarHostState.showSnackbar(
-                    "Permission denied. You can enable it later from settings."
-                )
+                snackbarHostState.showSnackbar("Permission denied. You can enable it later.")
             }
         }
     }
@@ -78,139 +89,183 @@ fun HealthConnectScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(PamojaBackground)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 28.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+
+            // ── Top content ────────────────────────────────────────────────
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                OnboardingProgressBar(currentStep = 3, totalSteps = 3)
+
                 Spacer(modifier = Modifier.height(48.dp))
 
-                ProgressDots(current = 3, total = 3)
-
-                Spacer(modifier = Modifier.height(40.dp))
-
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(PamojaBlueLight),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DirectionsWalk,
-                        contentDescription = "Step Counter",
-                        tint = PamojaBlue,
-                        modifier = Modifier.size(36.dp)
+                // Step ring illustration — layered circles give depth
+                Box(contentAlignment = Alignment.Center) {
+                    // Outer glow ring
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(PamojaIndigoSubtle)
                     )
+                    // Inner icon box
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(PamojaIndigo, PamojaIndigoDark)
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
+                            contentDescription = "Step tracking",
+                            tint     = PamojaWhite,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
-                    text = "Track your steps",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    text  = "Track your steps",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = PamojaTextPrimary,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Pamoja counts your steps automatically so your group always sees your real progress.",
+                    text  = "Pamoja counts your steps using your device sensor so your group always sees your real progress.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = PamojaTextSecondary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
+                // ── Permission explanation card ────────────────────────
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(PamojaSurface)
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "What Pamoja accesses",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onBackground
+                        text  = "WHAT PAMOJA ACCESSES",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PamojaTextSecondary
                     )
-                    HealthAccessRow(
-                        icon = Icons.Default.DirectionsWalk,
-                        iconBackground = PamojaBlueLight,
-                        iconTint = PamojaBlue,
-                        title = "Physical activity",
-                        subtitle = "Step count only, using your device sensor"
+                    PermissionRow(
+                        icon       = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        iconColor  = PamojaIndigo,
+                        iconBg     = PamojaIndigoSubtle,
+                        title      = "Physical activity",
+                        subtitle   = "Step count using device hardware sensor"
                     )
-                    HealthAccessRow(
-                        icon = Icons.Default.Shield,
-                        iconBackground = PamojaGreenLight,
-                        iconTint = PamojaGreen,
-                        title = "Nothing else",
-                        subtitle = "No location, heart rate or sleep data"
+                    // Divider
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(PamojaBorder)
+                    )
+                    PermissionRow(
+                        icon       = Icons.Default.Shield,
+                        iconColor  = PamojaGreen,
+                        iconBg     = PamojaGreenSubtle,
+                        title      = "Nothing else",
+                        subtitle   = "No location, heart rate or sleep data"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(PamojaBorder)
+                    )
+                    PermissionRow(
+                        icon       = Icons.Default.Lock,
+                        iconColor  = PamojaGreen,
+                        iconBg     = PamojaGreenSubtle,
+                        title      = "Private by default",
+                        subtitle   = "Only your group members see your steps"
+                    )
+                }
+
+                if (!stepCounterManager.isStepCounterAvailable()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text  = "Step counter sensor is not available on this device.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
 
+            // ── Bottom CTAs ─────────────────────────────────────────────
             Column(
-                modifier = Modifier.padding(bottom = 40.dp),
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (!stepCounterManager.isStepCounterAvailable()) {
-                    Text(
-                        text = "Step counter sensor not available on this device.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                }
-
                 Button(
                     onClick = {
-                        val alreadyGranted = ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACTIVITY_RECOGNITION
+                        val granted = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.ACTIVITY_RECOGNITION
                         ) == PackageManager.PERMISSION_GRANTED
 
-                        if (alreadyGranted) {
+                        if (granted) {
                             scope.launch {
                                 userPreferences.setHealthConnectGranted(true)
-                                StepCounterService.start(context)
+                                try { StepCounterService.start(context) } catch (_: Exception) {}
                                 onConnected()
                             }
                         } else {
                             permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
                         }
                     },
-                    enabled = stepCounterManager.isStepCounterAvailable(),
+                    enabled  = stepCounterManager.isStepCounterAvailable(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PamojaBlue)
+                        .height(56.dp),
+                    shape  = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor         = PamojaIndigo,
+                        contentColor           = PamojaWhite,
+                        disabledContainerColor = PamojaIndigoSubtle,
+                        disabledContentColor   = PamojaTextSecondary
+                    )
                 ) {
                     Text(
-                        text = "Enable step tracking",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White
+                        text  = "Enable step tracking",
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
                 TextButton(onClick = onSkip) {
                     Text(
-                        text = "Maybe later",
+                        text  = "Maybe later",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = PamojaTextSecondary
                     )
                 }
             }
@@ -218,47 +273,60 @@ fun HealthConnectScreen(
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier  = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
 
+// ─── Permission explanation row ───────────────────────────────────────────────
 @Composable
 fun HealthAccessRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconBackground: Color,
     iconTint: Color,
     title: String,
     subtitle: String
 ) {
-    androidx.compose.foundation.layout.Row(
+    PermissionRow(icon, iconTint, iconBackground, title, subtitle)
+}
+
+@Composable
+private fun PermissionRow(
+    icon: ImageVector,
+    iconColor: Color,
+    iconBg: Color,
+    title: String,
+    subtitle: String
+) {
+    Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(iconBackground),
+                .background(iconBg),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = iconTint,
+                tint     = iconColor,
                 modifier = Modifier.size(20.dp)
             )
         }
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = title,
+                text  = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                color = PamojaTextPrimary
             )
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text  = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = PamojaTextSecondary
             )
         }
     }

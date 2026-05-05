@@ -123,8 +123,7 @@ fun SignInScreen(
                 onValueChange = { password = it },
                 label = "Password",
                 placeholder = "Your password",
-                keyboardType = KeyboardType.Password,
-                isPassword = true
+                keyboardType = KeyboardType.Password
             )
 
             Spacer(modifier = Modifier.height(8.dp))

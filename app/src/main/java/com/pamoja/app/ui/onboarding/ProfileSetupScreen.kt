@@ -242,8 +242,7 @@ fun PamojaTextField(
     label: String,
     placeholder: String,
     modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     Column(modifier = modifier) {
         Text(
@@ -266,7 +265,7 @@ fun PamojaTextField(
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+            visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = PamojaBlue,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,

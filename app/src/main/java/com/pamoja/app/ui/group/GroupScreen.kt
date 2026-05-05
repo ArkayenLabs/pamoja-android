@@ -1,5 +1,6 @@
 package com.pamoja.app.ui.group
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -440,7 +443,7 @@ fun LeaderboardRow(
 
 @Composable
 fun HealthConnectCard(onClick: () -> Unit) {
-    androidx.compose.foundation.layout.Row(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp)
@@ -459,9 +462,9 @@ fun HealthConnectCard(onClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.DirectionsWalk,
+                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
                 contentDescription = null,
-                tint = androidx.compose.ui.graphics.Color.White,
+                tint = Color.White,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -478,7 +481,7 @@ fun HealthConnectCard(onClick: () -> Unit) {
             )
         }
         Icon(
-            imageVector = androidx.compose.material.icons.Icons.Default.ChevronRight,
+            imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             tint = PamojaBlue,
             modifier = Modifier.size(18.dp)

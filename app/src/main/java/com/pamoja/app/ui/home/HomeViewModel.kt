@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,7 +44,11 @@ class HomeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(userName = user.name, isLoading = false)
 
             // Observe groups in real-time via the existing Firestore Flow
-            getUserGroupsUseCase(user.userId).collect { groups ->
+            getUserGroupsUseCase(user.userId)
+                .catch { e ->
+                    _uiState.value = _uiState.value.copy(error = e.message ?: "Failed to load groups")
+                }
+                .collect { groups ->
                 _uiState.value = _uiState.value.copy(groups = groups)
             }
         }

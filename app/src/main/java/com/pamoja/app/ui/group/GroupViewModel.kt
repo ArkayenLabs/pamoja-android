@@ -107,7 +107,10 @@ class GroupViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(error = error.message)
                 }
                 .collect { members ->
-                if (members.isEmpty()) return@collect
+                if (members.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isLoading = false, memberStepData = emptyList())
+                    return@collect
+                }
 
                 val memberIds = members.map { it.userId }
                 val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)

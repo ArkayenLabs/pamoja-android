@@ -61,7 +61,15 @@ class StepCounterService : Service(), SensorEventListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification())
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID, 
+                buildNotification(), 
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification())
+        }
         stepCounterSensor?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }

@@ -47,6 +47,7 @@ import com.pamoja.app.ui.theme.PamojaBlueDark
 import com.pamoja.app.ui.theme.PamojaBlueLight
 import com.pamoja.app.ui.theme.PamojaGreen
 import com.pamoja.app.ui.theme.PamojaGreenLight
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -62,6 +63,28 @@ fun GroupScreen(
     val userPreferences = viewModel.userPreferences
     val isHealthConnectGranted by userPreferences.isHealthConnectGranted
         .collectAsState(initial = false)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+
+    val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        scope.launch {
+            if (granted) {
+                userPreferences.setHealthConnectGranted(true)
+                try {
+                    com.pamoja.app.data.local.health.StepCounterService.start(context)
+                } catch (e: Exception) {
+                    // Service may not start on debug builds without sensor
+                }
+            } else {
+                userPreferences.setHealthConnectGranted(false)
+                snackbarHostState.showSnackbar(
+                    "Permission denied. You can enable it later from settings."
+                )
+            }
+        }
+    }
 
     LaunchedEffect(groupId) {
         viewModel.loadGroup(groupId)
@@ -90,12 +113,6 @@ fun GroupScreen(
             )
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                if (!isHealthConnectGranted) {
-                    item {
-                        HealthConnectBanner(onClick = { })
-                    }
-                }
-
                 item {
                     GroupHeader(
                         groupName = uiState.group?.name ?: "",
@@ -133,7 +150,33 @@ fun GroupScreen(
                     )
                 }
 
-                item { Spacer(modifier = Modifier.height(40.dp)) }
+                // Health connect prompt card at the bottom — better UX than top banner
+                if (!isHealthConnectGranted) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HealthConnectCard(onClick = {
+                            val alreadyGranted = androidx.core.content.ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.ACTIVITY_RECOGNITION
+                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                            if (alreadyGranted) {
+                                scope.launch {
+                                    userPreferences.setHealthConnectGranted(true)
+                                    try {
+                                        com.pamoja.app.data.local.health.StepCounterService.start(context)
+                                    } catch (e: Exception) {
+                                        // Service may not start on debug builds without sensor
+                                    }
+                                }
+                            } else {
+                                permissionLauncher.launch(android.Manifest.permission.ACTIVITY_RECOGNITION)
+                            }
+                        })
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
 
@@ -396,27 +439,49 @@ fun LeaderboardRow(
 }
 
 @Composable
-fun HealthConnectBanner(onClick: () -> Unit) {
-    Row(
+fun HealthConnectCard(onClick: () -> Unit) {
+    androidx.compose.foundation.layout.Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(PamojaBlueLight)
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Connect Health to sync your steps",
-            style = MaterialTheme.typography.bodyMedium,
-            color = PamojaBlueDark,
-            modifier = Modifier.weight(1f)
-        )
-        TextButton(onClick = onClick) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(PamojaBlue),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = androidx.compose.material.icons.Icons.Default.DirectionsWalk,
+                contentDescription = null,
+                tint = androidx.compose.ui.graphics.Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Connect",
-                style = MaterialTheme.typography.labelMedium,
+                text = "Enable step tracking",
+                style = MaterialTheme.typography.bodyMedium,
+                color = PamojaBlueDark
+            )
+            Text(
+                text = "Tap to grant permission and start counting",
+                style = MaterialTheme.typography.labelSmall,
                 color = PamojaBlue
             )
         }
+        Icon(
+            imageVector = androidx.compose.material.icons.Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = PamojaBlue,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }

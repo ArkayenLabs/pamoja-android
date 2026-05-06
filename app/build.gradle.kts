@@ -22,11 +22,16 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            // Debug keeps minify off for faster builds and readable stack traces
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -88,6 +93,9 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
 
+
+    // Play In-App Update (seamless updates during closed testing)
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     // Testing
     testImplementation(libs.junit)

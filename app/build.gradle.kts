@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.pamoja.app"
+        applicationId = "com.arkayenlabs.pamoja"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

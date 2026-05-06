@@ -1,5 +1,11 @@
 package com.pamoja.app.ui.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,13 +16,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
@@ -26,7 +35,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -46,18 +54,47 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.ui.CreateOrJoinViewModel
-import com.pamoja.app.ui.theme.PamojaBlue
-import com.pamoja.app.ui.theme.PamojaBlueDark
-import com.pamoja.app.ui.theme.PamojaBlueLight
+import com.pamoja.app.ui.theme.PamojaAmber
+import com.pamoja.app.ui.theme.PamojaBackground
+import com.pamoja.app.ui.theme.PamojaBorder
 import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaGreenLight
-import androidx.compose.foundation.text.KeyboardOptions
+import com.pamoja.app.ui.theme.PamojaGreenSubtle
+import com.pamoja.app.ui.theme.PamojaIndigo
+import com.pamoja.app.ui.theme.PamojaIndigoDark
+import com.pamoja.app.ui.theme.PamojaIndigoSubtle
+import com.pamoja.app.ui.theme.PamojaSurface
+import com.pamoja.app.ui.theme.PamojaSurfaceVariant
+import com.pamoja.app.ui.theme.PamojaTextPrimary
+import com.pamoja.app.ui.theme.PamojaTextSecondary
+import com.pamoja.app.ui.theme.PamojaTextTertiary
+import com.pamoja.app.ui.theme.PamojaWhite
+
+// ─── Colour palette for group card avatar gradients ──────────────────────────
+// Each group gets a deterministic gradient based on its name's first char,
+// so the same group always shows the same colour — not random each time.
+private val avatarGradients = listOf(
+    listOf(Color(0xFF6366F1), Color(0xFF4F46E5)), // indigo
+    listOf(Color(0xFF34D399), Color(0xFF059669)), // emerald
+    listOf(Color(0xFFF59E0B), Color(0xFFD97706)), // amber
+    listOf(Color(0xFFF87171), Color(0xFFEF4444)), // rose
+    listOf(Color(0xFF60A5FA), Color(0xFF2563EB)), // blue
+    listOf(Color(0xFFC084FC), Color(0xFF9333EA)), // purple
+)
+
+private fun gradientForGroup(name: String): List<Color> {
+    val index = (name.firstOrNull()?.code ?: 0) % avatarGradients.size
+    return avatarGradients[index]
+}
 
 @Composable
 fun HomeScreen(
@@ -67,69 +104,72 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState     by viewModel.uiState.collectAsState()
     val joinUiState by joinViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showJoinDialog by remember { mutableStateOf(false) }
-    var inviteLink by remember { mutableStateOf("") }
+    var inviteLink     by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            if (it.contains("Session expired")) {
-                onSessionExpired()
-            } else {
+            if (it.contains("Session expired")) onSessionExpired()
+            else {
                 snackbarHostState.showSnackbar(it)
                 viewModel.clearError()
             }
         }
     }
-
     LaunchedEffect(joinUiState.error) {
         joinUiState.error?.let {
             snackbarHostState.showSnackbar(it)
             joinViewModel.clearError()
         }
     }
-
     LaunchedEffect(joinUiState.joinedGroupId) {
-        joinUiState.joinedGroupId?.let { groupId ->
-            onGroupClick(groupId)
-        }
+        joinUiState.joinedGroupId?.let { onGroupClick(it) }
     }
 
+    // ── Join-via-link dialog ──────────────────────────────────────────────────
     if (showJoinDialog) {
         AlertDialog(
             onDismissRequest = { showJoinDialog = false },
+            containerColor   = PamojaSurface,
+            shape            = RoundedCornerShape(20.dp),
             title = {
                 Text(
-                    text = "Join a group",
-                    style = MaterialTheme.typography.headlineSmall
+                    text  = "Join a group",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = PamojaTextPrimary
                 )
             },
             text = {
                 Column {
                     Text(
-                        text = "Paste the invite link shared by your group admin.",
+                        text  = "Paste the invite link shared by your group admin.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = PamojaTextSecondary
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
-                        value = inviteLink,
+                        value         = inviteLink,
                         onValueChange = { inviteLink = it },
-                        placeholder = {
+                        placeholder   = {
                             Text(
-                                text = "pamoja://join/...",
+                                text  = "pamoja://join/…",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = PamojaTextTertiary
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape    = RoundedCornerShape(12.dp),
                         singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = PamojaTextPrimary),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PamojaBlue,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            focusedBorderColor      = PamojaIndigo,
+                            unfocusedBorderColor    = PamojaBorder,
+                            focusedContainerColor   = PamojaSurface,
+                            unfocusedContainerColor = PamojaSurface,
+                            cursorColor             = PamojaIndigo
                         )
                     )
                 }
@@ -142,230 +182,332 @@ fun HomeScreen(
                         inviteLink = ""
                     },
                     enabled = inviteLink.isNotBlank() && !joinUiState.isLoading,
-                    colors = ButtonDefaults.buttonColors(containerColor = PamojaBlue)
+                    shape   = RoundedCornerShape(12.dp),
+                    colors  = ButtonDefaults.buttonColors(containerColor = PamojaIndigo)
                 ) {
-                    Text("Join", color = Color.White)
+                    Text("Join", color = PamojaWhite, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showJoinDialog = false }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Cancel", color = PamojaTextSecondary)
                 }
-            },
-            shape = RoundedCornerShape(16.dp)
+            }
         )
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateGroup,
-                containerColor = PamojaBlue,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Create group"
-                )
-            }
-        }
+        containerColor = PamojaBackground,
+        snackbarHost   = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = PamojaBlue)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                // Header
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 48.dp, bottom = 8.dp)
-                    ) {
-                        val firstName = uiState.userName.takeIf { it.isNotBlank() }?.split(" ")?.firstOrNull() ?: "there"
-                        Text(
-                            text = "Hey, $firstName 👋",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "Here are your groups",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
 
-                // Join via link option
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(PamojaGreenLight)
-                            .clickable { showJoinDialog = true }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(PamojaGreen),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Link,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Text(
-                            text = "Join a group via invite link",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = PamojaGreen,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null,
-                            tint = PamojaGreen,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-
-                // Groups section header
-                if (uiState.groups.isNotEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (uiState.isLoading) {
+                // ── Loading state ─────────────────────────────────────────
+                CircularProgressIndicator(
+                    color     = PamojaIndigo,
+                    modifier  = Modifier.align(Alignment.Center),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                // ── Main scrollable content ───────────────────────────────
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Greeting header
                     item {
-                        Text(
-                            text = "YOUR GROUPS",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp)
+                        HomeHeader(
+                            name = uiState.userName
+                                .takeIf { it.isNotBlank() }
+                                ?.split(" ")
+                                ?.firstOrNull() ?: "there"
                         )
                     }
-                }
 
-                // Group cards
-                items(uiState.groups) { group ->
-                    GroupCard(
-                        group = group,
-                        onClick = { onGroupClick(group.groupId) }
-                    )
-                }
-
-                // Empty state
-                if (uiState.groups.isEmpty()) {
+                    // Join via link card
                     item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 48.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(PamojaBlueLight),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Groups,
-                                    contentDescription = null,
-                                    tint = PamojaBlue,
-                                    modifier = Modifier.size(32.dp)
+                        JoinLinkCard(onClick = { showJoinDialog = true })
+                    }
+
+                    // Section label
+                    if (uiState.groups.isNotEmpty()) {
+                        item {
+                            Text(
+                                text  = "YOUR GROUPS",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = PamojaTextTertiary,
+                                modifier = Modifier.padding(
+                                    start = 24.dp, end = 24.dp,
+                                    top = 20.dp, bottom = 8.dp
                                 )
-                            }
-                            Text(
-                                text = "No groups yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = "Create a group and invite your family or friends, or join one via a link.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
                     }
+
+                    // Group cards
+                    items(uiState.groups) { group ->
+                        GroupCard(
+                            group   = group,
+                            onClick = { onGroupClick(group.groupId) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    // Empty state
+                    if (uiState.groups.isEmpty()) {
+                        item {
+                            EmptyGroupsState()
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(120.dp)) }
                 }
 
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                // ── Floating bottom action bar ────────────────────────────
+                // Anchored to bottom instead of a FAB so it feels more iOS-native
+                BottomActionBar(
+                    onCreateGroup = onCreateGroup,
+                    onJoinGroup   = { showJoinDialog = true },
+                    modifier      = Modifier.align(Alignment.BottomCenter)
+                )
             }
         }
     }
 }
 
+// ─── Header ──────────────────────────────────────────────────────────────────
 @Composable
-fun GroupCard(
-    group: Group,
-    onClick: () -> Unit
-) {
+private fun HomeHeader(name: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp)
+            .padding(top = 28.dp, bottom = 4.dp)
+    ) {
+        Text(
+            text  = "Hey, $name",
+            style = MaterialTheme.typography.headlineLarge,
+            color = PamojaTextPrimary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text  = "Your groups are waiting for you.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = PamojaTextSecondary
+        )
+    }
+}
+
+// ─── Join via link card ───────────────────────────────────────────────────────
+@Composable
+private fun JoinLinkCard(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(PamojaGreenSubtle)
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(PamojaGreen.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Link,
+                contentDescription = null,
+                tint     = PamojaGreen,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+        Text(
+            text     = "Join a group via invite link",
+            style    = MaterialTheme.typography.bodyMedium,
+            color    = PamojaGreen,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint     = PamojaGreen,
+            modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+// ─── Group card ───────────────────────────────────────────────────────────────
+@Composable
+fun GroupCard(group: Group, onClick: () -> Unit) {
+    val gradientColors = gradientForGroup(group.name)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(PamojaSurface)
             .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Avatar with first two letters of group name
+        // Avatar — gradient box with first two letters
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(PamojaBlue),
+                .size(48.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    brush = Brush.linearGradient(colors = gradientColors)
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = group.name.take(2).uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White
+                text  = group.name.take(2).uppercase(),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = 16.sp,
+                    color = PamojaWhite
+                )
             )
         }
 
-        Column(modifier = Modifier.weight(1f)) {
+        // Group info
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = group.name,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                text     = group.name,
+                style    = MaterialTheme.typography.bodyLarge.copy(color = PamojaTextPrimary),
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "%,d steps / week goal".format(group.weeklyTarget),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text  = "%,d steps / week goal".format(group.weeklyTarget),
+                style = MaterialTheme.typography.bodySmall.copy(color = PamojaTextSecondary)
             )
         }
 
+        // Chevron
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = "Open group",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint     = PamojaTextTertiary,
             modifier = Modifier.size(18.dp)
         )
+    }
+}
+
+// ─── Empty state ─────────────────────────────────────────────────────────────
+@Composable
+private fun EmptyGroupsState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(PamojaIndigoSubtle),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Groups,
+                contentDescription = null,
+                tint     = PamojaIndigo,
+                modifier = Modifier.size(34.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text  = "No groups yet",
+            style = MaterialTheme.typography.headlineSmall,
+            color = PamojaTextPrimary
+        )
+        Text(
+            text      = "Create a group and invite friends or family, or join one with an invite link.",
+            style     = MaterialTheme.typography.bodyMedium,
+            color     = PamojaTextSecondary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+// ─── Bottom action bar ────────────────────────────────────────────────────────
+// Two equal buttons side by side, floating above nav bar.
+// More ergonomic than a single FAB — clearer call to action.
+@Composable
+private fun BottomActionBar(
+    onCreateGroup: () -> Unit,
+    onJoinGroup: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Join (secondary)
+        Button(
+            onClick  = onJoinGroup,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+            shape  = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PamojaSurfaceVariant,
+                contentColor   = PamojaTextPrimary
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Link,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = PamojaTextSecondary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text  = "Join",
+                style = MaterialTheme.typography.labelLarge.copy(color = PamojaTextPrimary)
+            )
+        }
+
+        // Create (primary)
+        Button(
+            onClick  = onCreateGroup,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+            shape  = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PamojaIndigo,
+                contentColor   = PamojaWhite
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = PamojaWhite
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text  = "Create group",
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
     }
 }

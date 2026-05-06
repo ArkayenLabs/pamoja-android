@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -25,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -45,10 +45,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.ui.theme.PamojaBlue
-import com.pamoja.app.ui.theme.PamojaBlueLight
+import com.pamoja.app.ui.theme.PamojaBorder
 import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaGreenLight
+import com.pamoja.app.ui.theme.PamojaGreenSubtle
+import com.pamoja.app.ui.theme.PamojaIndigo
+import com.pamoja.app.ui.theme.PamojaIndigoSubtle
+import com.pamoja.app.ui.theme.PamojaSurface
+import com.pamoja.app.ui.theme.PamojaTextPrimary
+import com.pamoja.app.ui.theme.PamojaTextSecondary
+import com.pamoja.app.ui.theme.PamojaTextTertiary
+import com.pamoja.app.ui.theme.PamojaWhite
 
 @Composable
 fun CreateOrJoinGroupScreen(
@@ -56,17 +62,14 @@ fun CreateOrJoinGroupScreen(
     onJoinGroup: (String) -> Unit,
     viewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState           by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showJoinDialog by remember { mutableStateOf(false) }
-    var inviteLink by remember { mutableStateOf("") }
+    var showJoinDialog    by remember { mutableStateOf(false) }
+    var inviteLink        by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.joinedGroupId) {
-        uiState.joinedGroupId?.let { groupId ->
-            onJoinGroup(groupId)
-        }
+        uiState.joinedGroupId?.let { onJoinGroup(it) }
     }
-
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -74,39 +77,47 @@ fun CreateOrJoinGroupScreen(
         }
     }
 
+    // ── Join dialog ──────────────────────────────────────────────────────────
     if (showJoinDialog) {
         AlertDialog(
             onDismissRequest = { showJoinDialog = false },
+            containerColor   = PamojaSurface,
+            shape            = RoundedCornerShape(20.dp),
             title = {
                 Text(
-                    text = "Join a group",
-                    style = MaterialTheme.typography.headlineSmall
+                    text  = "Join a group",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = PamojaTextPrimary
                 )
             },
             text = {
                 Column {
                     Text(
-                        text = "Paste the invite link shared by your group admin.",
+                        text  = "Paste the invite link shared by your group admin.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = PamojaTextSecondary
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
-                        value = inviteLink,
+                        value         = inviteLink,
                         onValueChange = { inviteLink = it },
-                        placeholder = {
+                        placeholder   = {
                             Text(
-                                text = "pamoja://join/...",
+                                text  = "pamoja://join/…",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = PamojaTextTertiary
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        modifier   = Modifier.fillMaxWidth(),
+                        shape      = RoundedCornerShape(12.dp),
                         singleLine = true,
+                        textStyle  = MaterialTheme.typography.bodyMedium.copy(color = PamojaTextPrimary),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PamojaBlue,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            focusedBorderColor      = PamojaIndigo,
+                            unfocusedBorderColor    = PamojaBorder,
+                            focusedContainerColor   = PamojaSurface,
+                            unfocusedContainerColor = PamojaSurface,
+                            cursorColor             = PamojaIndigo
                         )
                     )
                 }
@@ -118,17 +129,17 @@ fun CreateOrJoinGroupScreen(
                         showJoinDialog = false
                     },
                     enabled = inviteLink.isNotBlank() && !uiState.isLoading,
-                    colors = ButtonDefaults.buttonColors(containerColor = PamojaBlue)
+                    shape   = RoundedCornerShape(12.dp),
+                    colors  = ButtonDefaults.buttonColors(containerColor = PamojaIndigo)
                 ) {
-                    Text("Join", color = Color.White)
+                    Text("Join", color = PamojaWhite, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showJoinDialog = false }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Cancel", color = PamojaTextSecondary)
                 }
-            },
-            shape = RoundedCornerShape(16.dp)
+            }
         )
     }
 
@@ -140,54 +151,56 @@ fun CreateOrJoinGroupScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 28.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp),
+            verticalArrangement   = Arrangement.Center,
+            horizontalAlignment   = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Get started",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                text  = "Get started",
+                style = MaterialTheme.typography.headlineLarge,
+                color = PamojaTextPrimary
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Create a new group or join one your circle already started.",
+                text  = "Create a new group or join one your circle already started.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = PamojaTextSecondary
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             GroupOptionCard(
-                icon = Icons.Default.Add,
-                iconBackground = PamojaBlueLight,
-                iconTint = PamojaBlue,
-                title = "Create a group",
-                subtitle = "Set a goal, invite your circle",
-                onClick = onCreateGroup
+                icon            = Icons.Default.Add,
+                iconBackground  = PamojaIndigoSubtle,
+                iconTint        = PamojaIndigo,
+                title           = "Create a group",
+                subtitle        = "Set a goal, invite your circle",
+                onClick         = onCreateGroup
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             GroupOptionCard(
-                icon = Icons.Default.Link,
-                iconBackground = PamojaGreenLight,
-                iconTint = PamojaGreen,
-                title = "Join via link",
-                subtitle = "Tap a link from your group",
-                onClick = { showJoinDialog = true }
+                icon            = Icons.Default.Link,
+                iconBackground  = PamojaGreenSubtle,
+                iconTint        = PamojaGreen,
+                title           = "Join via link",
+                subtitle        = "Tap a link from your group",
+                onClick         = { showJoinDialog = true }
             )
         }
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier  = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
 
+// ─── Option card ──────────────────────────────────────────────────────────────
 @Composable
 fun GroupOptionCard(
     icon: ImageVector,
@@ -200,42 +213,42 @@ fun GroupOptionCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clip(RoundedCornerShape(18.dp))
+            .background(PamojaSurface)
             .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(16.dp)
+                width = 1.dp,
+                color = PamojaBorder,
+                shape = RoundedCornerShape(18.dp)
             )
             .clickable { onClick() }
             .padding(18.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .size(46.dp)
+                .clip(RoundedCornerShape(13.dp))
                 .background(iconBackground),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(20.dp)
+                tint     = iconTint,
+                modifier = Modifier.size(22.dp)
             )
         }
         Column {
             Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                text  = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = PamojaTextPrimary
             )
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text  = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = PamojaTextSecondary
             )
         }
     }

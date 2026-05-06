@@ -18,18 +18,19 @@ class WorkManagerScheduler @Inject constructor(
     fun scheduleStepSync() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)   // Pause sync when battery < ~15%
             .build()
 
         val syncRequest = PeriodicWorkRequestBuilder<StepSyncWorker>(
-            repeatInterval = 1,
-            repeatIntervalTimeUnit = TimeUnit.HOURS
+            repeatInterval         = 30,
+            repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
             .setConstraints(constraints)
             .build()
 
         workManager.enqueueUniquePeriodicWork(
             StepSyncWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.KEEP,   // Don't reset timer if already scheduled
             syncRequest
         )
     }

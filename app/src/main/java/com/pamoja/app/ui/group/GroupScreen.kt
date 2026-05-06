@@ -54,7 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.data.local.health.StepCounterService
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.ui.theme.PamojaAmber
 import com.pamoja.app.ui.theme.PamojaAmberSubtle
@@ -97,11 +99,19 @@ fun GroupScreen(
     ) { granted ->
         scope.launch {
             if (granted) {
+                // WorkManager will read the sensor on next cycle — no foreground service needed
                 userPreferences.setHealthConnectGranted(true)
-                try { StepCounterService.start(context) } catch (_: Exception) {}
             } else {
                 userPreferences.setHealthConnectGranted(false)
-                snackbarHostState.showSnackbar("Permission denied. Enable it later in settings.")
+                val activity = context as? androidx.activity.ComponentActivity
+                val isPermanent = activity?.shouldShowRequestPermissionRationale(
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                ) == false
+                val msg = if (isPermanent)
+                    "Permission permanently blocked — open Settings to enable step tracking."
+                else
+                    "Permission denied. Tap 'Enable steps' to try again."
+                snackbarHostState.showSnackbar(msg)
             }
         }
     }
@@ -190,7 +200,7 @@ fun GroupScreen(
                             if (alreadyGranted) {
                                 scope.launch {
                                     userPreferences.setHealthConnectGranted(true)
-                                    try { StepCounterService.start(context) } catch (_: Exception) {}
+                                    // WorkManager reads sensor on next 30-min cycle — no service needed
                                 }
                             } else {
                                 permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)

@@ -21,20 +21,27 @@ class UserPreferences @Inject constructor(
 ) {
 
     companion object {
-        val KEY_USER_ID = stringPreferencesKey("user_id")
-        val KEY_USER_NAME = stringPreferencesKey("user_name")
-        val KEY_IS_ONBOARDED = booleanPreferencesKey("is_onboarded")
-        val KEY_HEALTH_CONNECT_GRANTED = booleanPreferencesKey("health_connect_granted")
-        val KEY_ACTIVE_GROUP_ID = stringPreferencesKey("active_group_id")
+        val KEY_USER_ID                  = stringPreferencesKey("user_id")
+        val KEY_USER_NAME                = stringPreferencesKey("user_name")
+        val KEY_IS_ONBOARDED             = booleanPreferencesKey("is_onboarded")
+        val KEY_HEALTH_CONNECT_GRANTED   = booleanPreferencesKey("health_connect_granted")
+        val KEY_ACTIVE_GROUP_ID          = stringPreferencesKey("active_group_id")
+        // Step baseline — hardware sensor total at the start of each calendar day
+        val KEY_STEP_BASELINE_DATE       = stringPreferencesKey("step_baseline_date")
+        val KEY_STEP_BASELINE_VALUE      = stringPreferencesKey("step_baseline_value")
     }
 
-    val userId: Flow<String?> = context.dataStore.data.map { it[KEY_USER_ID] }
+    val userId: Flow<String?>  = context.dataStore.data.map { it[KEY_USER_ID] }
     val userName: Flow<String?> = context.dataStore.data.map { it[KEY_USER_NAME] }
     val isOnboarded: Flow<Boolean> = context.dataStore.data.map { it[KEY_IS_ONBOARDED] ?: false }
     val isHealthConnectGranted: Flow<Boolean> = context.dataStore.data.map {
         it[KEY_HEALTH_CONNECT_GRANTED] ?: false
     }
     val activeGroupId: Flow<String?> = context.dataStore.data.map { it[KEY_ACTIVE_GROUP_ID] }
+    val stepBaselineDate: Flow<String?>  = context.dataStore.data.map { it[KEY_STEP_BASELINE_DATE] }
+    val stepBaselineValue: Flow<Long>    = context.dataStore.data.map {
+        it[KEY_STEP_BASELINE_VALUE]?.toLongOrNull() ?: 0L
+    }
 
     suspend fun saveUserId(userId: String) {
         context.dataStore.edit { it[KEY_USER_ID] = userId }
@@ -54,6 +61,13 @@ class UserPreferences @Inject constructor(
 
     suspend fun saveActiveGroupId(groupId: String) {
         context.dataStore.edit { it[KEY_ACTIVE_GROUP_ID] = groupId }
+    }
+
+    suspend fun saveStepBaseline(date: String, hardwareCount: Long) {
+        context.dataStore.edit {
+            it[KEY_STEP_BASELINE_DATE]  = date
+            it[KEY_STEP_BASELINE_VALUE] = hardwareCount.toString()
+        }
     }
 
     suspend fun clearAll() {

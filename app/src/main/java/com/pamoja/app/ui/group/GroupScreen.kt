@@ -27,7 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -147,8 +147,27 @@ fun GroupScreen(
                     GroupTopBar(
                         groupName   = uiState.group?.name ?: "",
                         memberCount = uiState.memberStepData.size,
-                        isAdmin     = uiState.isAdmin,
-                        onBack      = onBack
+                        onBack      = onBack,
+                        onShare     = {
+                            val link = uiState.group?.inviteLink
+                            if (!link.isNullOrBlank()) {
+                                val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(
+                                        android.content.Intent.EXTRA_TEXT,
+                                        "Join my Pamoja group \"${uiState.group?.name}\"! " +
+                                        "We're tracking our steps together. Join here: $link"
+                                    )
+                                }
+                                context.startActivity(
+                                    android.content.Intent.createChooser(sendIntent, "Share invite link")
+                                )
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Invite link not available yet.")
+                                }
+                            }
+                        }
                     )
                 }
 
@@ -231,7 +250,7 @@ fun GroupScreen(
 fun GroupTopBar(
     groupName: String,
     memberCount: Int,
-    isAdmin: Boolean,
+    onShare: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
     Row(
@@ -272,15 +291,14 @@ fun GroupTopBar(
             }
         }
 
-        if (isAdmin) {
-            IconButton(onClick = { }) {
-                Icon(
-                    imageVector        = Icons.Default.Settings,
-                    contentDescription = "Group settings",
-                    tint               = PamojaTextSecondary,
-                    modifier           = Modifier.size(20.dp)
-                )
-            }
+        // Share invite link — available to everyone (members can also invite friends)
+        IconButton(onClick = onShare) {
+            Icon(
+                imageVector        = Icons.Default.Share,
+                contentDescription = "Share invite link",
+                tint               = PamojaIndigo,
+                modifier           = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -625,4 +643,4 @@ fun GroupHeader(
     groupName: String,
     memberCount: Int,
     isAdmin: Boolean
-) = GroupTopBar(groupName, memberCount, isAdmin, onBack = null)
+) = GroupTopBar(groupName, memberCount, onShare = {}, onBack = null)

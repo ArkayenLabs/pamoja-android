@@ -1,11 +1,5 @@
 package com.pamoja.app.ui.onboarding
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,11 +9,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
@@ -30,11 +23,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -43,8 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaGreenSubtle
 import com.pamoja.app.ui.theme.PamojaIndigo
 import com.pamoja.app.ui.theme.PamojaIndigoDark
 import com.pamoja.app.ui.theme.PamojaIndigoSubtle
@@ -55,50 +45,22 @@ import com.pamoja.app.ui.theme.PamojaWhite
 @Composable
 fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
 
-    // Subtle pulsing glow animation behind the logo
-    val infiniteTransition = rememberInfiniteTransition(label = "glow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.35f,
-        targetValue  = 0.55f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(2800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowAlpha"
+    // Gradient background: subtle indigo tint at top fades into the dark background.
+    // This is reliable across all Android versions unlike Modifier.blur() which
+    // requires API 31+ and renders as a hard rectangle on older devices.
+    val backgroundGradient = Brush.verticalGradient(
+        colorStops = arrayOf(
+            0.0f to Color(0xFF1C1A3A),  // Deep indigo-tinted dark at very top
+            0.45f to PamojaBackground,  // Fades into app background colour
+            1.0f to PamojaBackground    // Solid dark from midpoint down
+        )
     )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PamojaBackground)
+            .background(backgroundGradient)
     ) {
-
-        // ── Ambient glow blobs in background ────────────────────────────────
-        // Top-right indigo glow
-        Box(
-            modifier = Modifier
-                .size(320.dp)
-                .offset(x = 80.dp, y = (-60).dp)
-                .blur(120.dp)
-                .background(
-                    color = PamojaIndigo.copy(alpha = glowAlpha * 0.4f),
-                    shape = CircleShape
-                )
-        )
-        // Bottom-left green glow
-        Box(
-            modifier = Modifier
-                .size(240.dp)
-                .align(Alignment.BottomStart)
-                .offset(x = (-40).dp, y = 40.dp)
-                .blur(100.dp)
-                .background(
-                    color = PamojaGreen.copy(alpha = glowAlpha * 0.25f),
-                    shape = CircleShape
-                )
-        )
-
-        // ── Main content ─────────────────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -108,16 +70,18 @@ fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.height(1.dp))
-
-            // ── Logo + headline ────────────────────────────────────────────
+            // ── Top: progress bar + logo area ─────────────────────────────
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Step 1 of 3 — consistent with ProfileSetup (step 2) and HealthConnect (step 3)
+                OnboardingProgressBar(currentStep = 1, totalSteps = 3)
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                // App icon — indigo rounded square with footstep icon
+                // App icon — indigo gradient rounded square
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -130,10 +94,10 @@ fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector  = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        imageVector        = Icons.AutoMirrored.Filled.DirectionsWalk,
                         contentDescription = "Pamoja logo",
-                        tint         = PamojaWhite,
-                        modifier     = Modifier.size(34.dp)
+                        tint               = PamojaWhite,
+                        modifier           = Modifier.size(34.dp)
                     )
                 }
 
@@ -148,50 +112,51 @@ fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text  = "Walk further, together.",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = PamojaTextSecondary,
+                    text      = "Walk further, together.",
+                    style     = MaterialTheme.typography.bodyLarge.copy(
+                        color     = PamojaTextSecondary,
                         textAlign = TextAlign.Center
                     )
                 )
 
                 Spacer(modifier = Modifier.height(40.dp))
 
-                // ── Feature pills row ────────────────────────────────────
+                // Feature pills
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     FeaturePill(
-                        icon  = Icons.AutoMirrored.Filled.DirectionsWalk,
-                        label = "Step tracking",
+                        icon     = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        label    = "Step tracking",
                         modifier = Modifier.weight(1f)
                     )
                     FeaturePill(
-                        icon  = Icons.Default.Groups,
-                        label = "Group goals",
+                        icon     = Icons.Default.Groups,
+                        label    = "Group goals",
                         modifier = Modifier.weight(1f)
                     )
                     FeaturePill(
-                        icon  = Icons.Default.Leaderboard,
-                        label = "Leaderboard",
+                        icon     = Icons.Default.Leaderboard,
+                        label    = "Leaderboard",
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            // ── Bottom CTA area ───────────────────────────────────────────
+            // ── Bottom CTA ────────────────────────────────────────────────
             Column(
-                modifier = Modifier.padding(bottom = 48.dp),
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Button(
-                    onClick = onGetStarted,
+                    onClick  = onGetStarted,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape  = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = PamojaIndigo,
                         contentColor   = PamojaWhite
@@ -205,20 +170,21 @@ fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Muted sign-in hint — shown but low emphasis
-                Text(
-                    text  = "Already have an account? Sign in",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = PamojaTextSecondary
+                // Clickable sign-in link for returning users
+                TextButton(onClick = onSignIn) {
+                    Text(
+                        text  = "Already have an account? Sign in",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = PamojaIndigo
+                        )
                     )
-                )
+                }
             }
         }
     }
 }
 
-// ─── Feature Pill ────────────────────────────────────────────────────────────
-// Small card with icon + label, used to surface app features on welcome screen
+// ─── Feature Pill ─────────────────────────────────────────────────────────────
 @Composable
 private fun FeaturePill(
     icon: ImageVector,
@@ -234,17 +200,17 @@ private fun FeaturePill(
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Icon(
-            imageVector = icon,
+            imageVector        = icon,
             contentDescription = null,
-            tint = PamojaIndigo,
-            modifier = Modifier.size(20.dp)
+            tint               = PamojaIndigo,
+            modifier           = Modifier.size(20.dp)
         )
         Text(
-            text      = label,
-            style     = MaterialTheme.typography.labelSmall.copy(
-                color = PamojaIndigo,
+            text  = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                color     = PamojaIndigo,
                 textAlign = TextAlign.Center,
-                fontSize = 10.sp
+                fontSize  = 10.sp
             )
         )
     }

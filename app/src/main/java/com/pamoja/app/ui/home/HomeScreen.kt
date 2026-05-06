@@ -453,61 +453,70 @@ private fun BottomActionBar(
     onJoinGroup: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    // Gradient scrim behind the buttons so they're never transparent over content
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .background(
+                brush = Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0f to PamojaBackground.copy(alpha = 0f),
+                        0.25f to PamojaBackground
+                    )
+                )
+            )
     ) {
-        // Join (secondary)
-        Button(
-            onClick  = onJoinGroup,
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .height(52.dp),
-            shape  = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PamojaSurfaceVariant,
-                contentColor   = PamojaTextPrimary
-            )
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Link,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = PamojaTextSecondary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text  = "Join",
-                style = MaterialTheme.typography.labelLarge.copy(color = PamojaTextPrimary)
-            )
-        }
+            // Join (secondary)
+            Button(
+                onClick  = onJoinGroup,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                shape  = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PamojaSurfaceVariant,
+                    contentColor   = PamojaTextPrimary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Link,
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp),
+                    tint = PamojaTextSecondary
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text     = "Join",
+                    style    = MaterialTheme.typography.labelLarge.copy(color = PamojaTextPrimary),
+                    maxLines = 1
+                )
+            }
 
-        // Create (primary)
-        Button(
-            onClick  = onCreateGroup,
-            modifier = Modifier
-                .weight(1f)
-                .height(52.dp),
-            shape  = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PamojaIndigo,
-                contentColor   = PamojaWhite
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = PamojaWhite
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text  = "Create group",
-                style = MaterialTheme.typography.labelLarge
-            )
+            // Create (primary) — no leading icon so text never wraps on narrow screens
+            Button(
+                onClick  = onCreateGroup,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                shape  = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PamojaIndigo,
+                    contentColor   = PamojaWhite
+                )
+            ) {
+                Text(
+                    text     = "+ New group",
+                    style    = MaterialTheme.typography.labelLarge,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

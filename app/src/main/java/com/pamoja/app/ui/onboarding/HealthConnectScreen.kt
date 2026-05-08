@@ -1,12 +1,9 @@
 package com.pamoja.app.ui.onboarding
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +33,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,8 +48,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.ui.theme.PamojaBackground
 import com.pamoja.app.ui.theme.PamojaBorder
 import com.pamoja.app.ui.theme.PamojaGreen
@@ -65,8 +64,8 @@ import com.pamoja.app.ui.theme.PamojaTextSecondary
 import com.pamoja.app.ui.theme.PamojaWhite
 import kotlinx.coroutines.launch
 
-// Permission states — drives UI without relying on Activity lifecycle quirks
-private enum class PermState { UNKNOWN, GRANTED, SOFT_DENIED, PERM_DENIED }
+// Permission states — drives UI
+private enum class PermState { UNKNOWN, GRANTED, DENIED, HC_UNAVAILABLE }
 
 @Composable
 fun HealthConnectScreen(
@@ -74,41 +73,36 @@ fun HealthConnectScreen(
     onSkip: () -> Unit,
     viewModel: HealthConnectViewModel = hiltViewModel()
 ) {
-    val userPreferences    = viewModel.userPreferences
-    val stepCounterManager = viewModel.stepCounterManager
-    val scope              = rememberCoroutineScope()
-    val context            = LocalContext.current
-    val snackbarHostState  = remember { SnackbarHostState() }
+    val healthConnectReader = viewModel.healthConnectReader
+    val userPreferences     = viewModel.userPreferences
+    val scope               = rememberCoroutineScope()
+    val context             = LocalContext.current
+    val snackbarHostState   = remember { SnackbarHostState() }
 
-    // Track how many times user has been shown the system dialog
-    var permState by remember {
-        val isGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACTIVITY_RECOGNITION
-        ) == PackageManager.PERMISSION_GRANTED
+    // Check current permission state on entry
+    var permState by remember { mutableStateOf(PermState.UNKNOWN) }
 
-        mutableStateOf(if (isGranted) PermState.GRANTED else PermState.UNKNOWN)
+    LaunchedEffect(Unit) {
+        permState = when {
+            !healthConnectReader.isAvailable() -> PermState.HC_UNAVAILABLE
+            healthConnectReader.hasPermission() -> PermState.GRANTED
+            else -> PermState.UNKNOWN
+        }
     }
 
+    // Health Connect permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
+        contract = PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         scope.launch {
-            if (granted) {
-                // ── Permission granted ─────────────────────────────────
-                // WorkManager will read the sensor on its next cycle.
-                // No foreground service needed.
+            val hasPermission = granted.containsAll(HealthConnectReader.REQUIRED_PERMISSIONS)
+            if (hasPermission) {
                 userPreferences.setHealthConnectGranted(true)
                 permState = PermState.GRANTED
                 onConnected()
             } else {
                 userPreferences.setHealthConnectGranted(false)
-                // shouldShowRationale = false after a denial means permanently denied
-                val activity = context as? androidx.activity.ComponentActivity
-                val isPermanentlyDenied = activity?.shouldShowRequestPermissionRationale(
-                    Manifest.permission.ACTIVITY_RECOGNITION
-                ) == false
-
-                permState = if (isPermanentlyDenied) PermState.PERM_DENIED else PermState.SOFT_DENIED
+                permState = PermState.DENIED
             }
         }
     }
@@ -176,25 +170,27 @@ fun HealthConnectScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 val subtitle = when (permState) {
-                    PermState.PERM_DENIED ->
-                        "You've permanently blocked this permission. Open Settings to enable it — Pamoja can't count your steps without it."
-                    PermState.SOFT_DENIED ->
-                        "Without this permission, Pamoja can't count your steps. Your progress will show as 0 to your group."
+                    PermState.HC_UNAVAILABLE ->
+                        "Health Connect is not available on this device. Step tracking won't be available."
+                    PermState.DENIED ->
+                        "Without this permission, your steps will show as 0 to your group. You can enable it later in Health Connect settings."
+                    PermState.GRANTED ->
+                        "You're all set! Pamoja will sync your steps via Health Connect — no battery drain, no background tracking."
                     else ->
-                        "Pamoja counts your steps using your device sensor so your group always sees your real progress."
+                        "Pamoja uses Health Connect to count your steps. Your data stays private and is only shared with your group members."
                 }
 
                 Text(
                     text      = subtitle,
                     style     = MaterialTheme.typography.bodyMedium,
-                    color     = if (permState == PermState.PERM_DENIED) MaterialTheme.colorScheme.error
+                    color     = if (permState == PermState.DENIED) MaterialTheme.colorScheme.error
                                 else PamojaTextSecondary,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Permission explanation card
+                // What Pamoja accesses card
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -209,34 +205,34 @@ fun HealthConnectScreen(
                         color = PamojaTextSecondary
                     )
                     PermissionRow(
-                        icon     = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        icon      = Icons.AutoMirrored.Filled.DirectionsWalk,
                         iconColor = PamojaIndigo,
-                        iconBg   = PamojaIndigoSubtle,
-                        title    = "Physical activity",
-                        subtitle = "Step count using device hardware sensor"
+                        iconBg    = PamojaIndigoSubtle,
+                        title     = "Daily step count",
+                        subtitle  = "Read from Health Connect — battery friendly"
                     )
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(PamojaBorder))
                     PermissionRow(
-                        icon     = Icons.Default.Shield,
+                        icon      = Icons.Default.Shield,
                         iconColor = PamojaGreen,
-                        iconBg   = PamojaGreenSubtle,
-                        title    = "Nothing else",
-                        subtitle = "No location, heart rate or sleep data"
+                        iconBg    = PamojaGreenSubtle,
+                        title     = "Nothing else",
+                        subtitle  = "No location, heart rate or sleep data"
                     )
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(PamojaBorder))
                     PermissionRow(
-                        icon     = Icons.Default.Lock,
+                        icon      = Icons.Default.Lock,
                         iconColor = PamojaGreen,
-                        iconBg   = PamojaGreenSubtle,
-                        title    = "Private by default",
-                        subtitle = "Only your group members see your steps"
+                        iconBg    = PamojaGreenSubtle,
+                        title     = "Private by default",
+                        subtitle  = "Only your group members see your steps"
                     )
                 }
 
-                if (!stepCounterManager.isStepCounterAvailable()) {
+                if (permState == PermState.HC_UNAVAILABLE) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text      = "Step counter sensor is not available on this device.",
+                        text      = "Health Connect is not available on this device.",
                         style     = MaterialTheme.typography.bodySmall,
                         color     = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center
@@ -244,7 +240,7 @@ fun HealthConnectScreen(
                 }
             }
 
-            // ── Bottom CTAs — adapt to permission state ──────────────────
+            // ── Bottom CTAs ──────────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .navigationBarsPadding()
@@ -254,18 +250,37 @@ fun HealthConnectScreen(
             ) {
                 when (permState) {
 
-                    // ── Permanently denied: send user to Settings ────────
-                    PermState.PERM_DENIED -> {
+                    // ── HC not on this device → skip only ────────────────
+                    PermState.HC_UNAVAILABLE -> {
+                        Button(
+                            onClick  = onSkip,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape    = RoundedCornerShape(16.dp),
+                            colors   = ButtonDefaults.buttonColors(
+                                containerColor = PamojaIndigo,
+                                contentColor   = PamojaWhite
+                            )
+                        ) {
+                            Text(
+                                text  = "Continue without steps",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+
+                    // ── Denied → offer Settings shortcut + skip ──────────
+                    PermState.DENIED -> {
                         Button(
                             onClick = {
+                                // Open Health Connect app settings
                                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                     data = Uri.fromParts("package", context.packageName, null)
                                 }
                                 context.startActivity(intent)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape  = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
+                            shape    = RoundedCornerShape(16.dp),
+                            colors   = ButtonDefaults.buttonColors(
                                 containerColor = PamojaIndigo,
                                 contentColor   = PamojaWhite
                             )
@@ -290,68 +305,45 @@ fun HealthConnectScreen(
                         }
                     }
 
-                    // ── Soft denied: explain + try again ────────────────
-                    PermState.SOFT_DENIED -> {
+                    // ── Granted → proceed ────────────────────────────────
+                    PermState.GRANTED -> {
+                        Button(
+                            onClick  = onConnected,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape    = RoundedCornerShape(16.dp),
+                            colors   = ButtonDefaults.buttonColors(
+                                containerColor = PamojaGreen,
+                                contentColor   = PamojaWhite
+                            )
+                        ) {
+                            Text(
+                                text  = "Steps connected ✓",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+
+                    // ── Unknown → request permission ─────────────────────
+                    else -> {
                         Button(
                             onClick = {
-                                permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+                                permissionLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape  = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
+                            shape    = RoundedCornerShape(16.dp),
+                            colors   = ButtonDefaults.buttonColors(
                                 containerColor = PamojaIndigo,
                                 contentColor   = PamojaWhite
                             )
                         ) {
                             Text(
-                                text  = "Try again",
+                                text  = "Connect Health Connect",
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
                         TextButton(onClick = onSkip) {
                             Text(
-                                text  = "Continue without step tracking",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = PamojaTextSecondary
-                            )
-                        }
-                    }
-
-                    // ── Default: first ask or already granted ────────────
-                    else -> {
-                        Button(
-                            onClick = {
-                                val alreadyGranted = ContextCompat.checkSelfPermission(
-                                    context, Manifest.permission.ACTIVITY_RECOGNITION
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                                if (alreadyGranted) {
-                                    scope.launch {
-                                        userPreferences.setHealthConnectGranted(true)
-                                        onConnected()
-                                    }
-                                } else {
-                                    permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
-                                }
-                            },
-                            enabled  = stepCounterManager.isStepCounterAvailable(),
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape  = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor         = PamojaIndigo,
-                                contentColor           = PamojaWhite,
-                                disabledContainerColor = PamojaIndigoSubtle,
-                                disabledContentColor   = PamojaTextSecondary
-                            )
-                        ) {
-                            Text(
-                                text  = "Enable step tracking",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        TextButton(onClick = onSkip) {
-                            Text(
-                                text  = "Maybe later",
+                                text  = "Skip for now",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = PamojaTextSecondary
                             )
@@ -368,17 +360,7 @@ fun HealthConnectScreen(
     }
 }
 
-@Composable
-fun HealthAccessRow(
-    icon: ImageVector,
-    iconBackground: Color,
-    iconTint: Color,
-    title: String,
-    subtitle: String
-) {
-    PermissionRow(icon, iconTint, iconBackground, title, subtitle)
-}
-
+// ─── Permission explanation row ───────────────────────────────────────────────
 @Composable
 private fun PermissionRow(
     icon: ImageVector,
@@ -388,14 +370,13 @@ private fun PermissionRow(
     subtitle: String
 ) {
     Row(
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier              = Modifier.fillMaxWidth()
+        verticalAlignment    = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(iconBg),
             contentAlignment = Alignment.Center
         ) {
@@ -406,7 +387,7 @@ private fun PermissionRow(
                 modifier           = Modifier.size(20.dp)
             )
         }
-        Column(modifier = Modifier.weight(1f)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text  = title,
                 style = MaterialTheme.typography.bodyMedium,

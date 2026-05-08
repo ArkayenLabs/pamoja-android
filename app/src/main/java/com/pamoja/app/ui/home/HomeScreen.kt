@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -78,6 +79,8 @@ import com.pamoja.app.ui.theme.PamojaTextPrimary
 import com.pamoja.app.ui.theme.PamojaTextSecondary
 import com.pamoja.app.ui.theme.PamojaTextTertiary
 import com.pamoja.app.ui.theme.PamojaWhite
+import kotlinx.coroutines.delay
+import java.util.Calendar
 
 // ─── Colour palette for group card avatar gradients ──────────────────────────
 // Each group gets a deterministic gradient based on its name's first char,
@@ -282,6 +285,34 @@ fun HomeScreen(
 // ─── Header ──────────────────────────────────────────────────────────────────
 @Composable
 private fun HomeHeader(name: String) {
+    // Time-aware greeting
+    val greeting = remember {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        when {
+            hour < 12 -> "Good morning"
+            hour < 17 -> "Good afternoon"
+            else      -> "Good evening"
+        }
+    }
+
+    // Rotating motivational subtitles — cycles every 4 seconds
+    val subtitles = remember {
+        listOf(
+            "Every step counts. Let's go! 👟",
+            "Your group is counting on you.",
+            "Walk together, grow together.",
+            "Today's a great day to move.",
+            "Small steps. Big impact."
+        )
+    }
+    var subtitleIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(4_000)
+            subtitleIndex = (subtitleIndex + 1) % subtitles.size
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,13 +321,13 @@ private fun HomeHeader(name: String) {
             .padding(top = 28.dp, bottom = 4.dp)
     ) {
         Text(
-            text  = "Hey, $name",
+            text  = "$greeting, $name 👋",
             style = MaterialTheme.typography.headlineLarge,
             color = PamojaTextPrimary
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text  = "Your groups are waiting for you.",
+            text  = subtitles[subtitleIndex],
             style = MaterialTheme.typography.bodyMedium,
             color = PamojaTextSecondary
         )

@@ -32,6 +32,7 @@ class CreateGroupUseCase @Inject constructor(
             adminId = adminId,
             weeklyTarget = weeklyTarget,
             maxMemberCap = maxMemberCap,
+            memberCount = 1,  // Admin is the first member
             canMembersEditTarget = canMembersEditTarget,
             inviteLink = inviteLink,
             inviteLinkActive = true,

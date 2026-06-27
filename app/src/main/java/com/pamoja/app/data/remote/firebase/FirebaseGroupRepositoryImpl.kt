@@ -1,5 +1,7 @@
 package com.pamoja.app.data.remote.firebase
 
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pamoja.app.data.remote.model.GroupDto
 import com.pamoja.app.data.remote.model.MembershipDto
@@ -82,38 +84,92 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
+    // ── Fix 2: Atomic join with memberCount ─────────────────────────────────────
+    //
+    // Why a schema change is needed:
+    //   Firestore transactions can only read individual documents — they cannot
+    //   run collection queries. The previous implementation counted memberships
+    //   via a query and then wrote the membership document in a separate step,
+    //   creating a TOCTOU race condition where concurrent joins could exceed
+    //   maxMemberCap.
+    //
+    // Solution:
+    //   Store memberCount on the group document and use a Firestore transaction
+    //   to atomically read the count, validate the cap, increment the count,
+    //   and write the membership — all in one atomic operation.
+    //
+    // Migration:
+    //   Existing groups created before this change will have memberCount = 0
+    //   (Kotlin default for missing Firestore fields). The transaction handles
+    //   this by falling back to a query-based count when memberCount is 0,
+    //   backfilling the field atomically on the first join.
+
     override suspend fun joinGroup(groupId: String, userId: String): Result<Unit> {
         return try {
-            val groupResult = getGroup(groupId)
-            val group = groupResult.getOrElse {
-                return Result.failure(it)
+            val groupDocRef = groupsCollection.document(groupId)
+            val membershipDocRef = membershipsCollection.document("${userId}_${groupId}")
+
+            // For legacy groups without memberCount, pre-fetch the actual count
+            // so the transaction can backfill it. This query runs outside the
+            // transaction (acceptable: the transaction still validates atomically).
+            val legacyCount: Int? = run {
+                val groupSnap = groupDocRef.get().await()
+                val dto = groupSnap.toObject(GroupDto::class.java)
+                    ?: return Result.failure(Exception("Group not found"))
+                if (dto.memberCount == 0 && dto.adminId.isNotEmpty()) {
+                    // memberCount is 0 but the group has an admin — likely a legacy group.
+                    // Count actual memberships for backfill.
+                    membershipsCollection
+                        .whereEqualTo("groupId", groupId)
+                        .get()
+                        .await()
+                        .size()
+                } else {
+                    null  // memberCount is already accurate, no backfill needed
+                }
             }
 
-            val memberCount = membershipsCollection
-                .whereEqualTo("groupId", groupId)
-                .get()
-                .await()
-                .size()
+            firestore.runTransaction { transaction ->
+                val groupSnapshot = transaction.get(groupDocRef)
+                val group = groupSnapshot.toObject(GroupDto::class.java)
+                    ?: throw Exception("Group not found")
 
-            if (memberCount >= group.maxMemberCap) {
-                return Result.failure(Exception("Group is full"))
-            }
+                // Check if already a member (idempotent join)
+                val existingMembership = transaction.get(membershipDocRef)
+                if (existingMembership.exists()) {
+                    return@runTransaction  // Already joined — no-op
+                }
 
-            val membership = MembershipDto(
-                userId = userId,
-                groupId = groupId,
-                role = "member",
-                canEditTarget = false,
-                joinedAt = System.currentTimeMillis()
-            )
-            membershipsCollection
-                .document("${userId}_${groupId}")
-                .set(membership)
-                .await()
+                // Determine current count: use backfilled value for legacy groups
+                val currentCount = if (group.memberCount == 0 && legacyCount != null) {
+                    legacyCount
+                } else {
+                    group.memberCount
+                }
 
-            if (memberCount + 1 >= group.maxMemberCap) {
-                deactivateInviteLink(groupId)
-            }
+                if (currentCount >= group.maxMemberCap) {
+                    throw Exception("Group is full")
+                }
+
+                // Write membership
+                val membership = MembershipDto(
+                    userId = userId,
+                    groupId = groupId,
+                    role = "member",
+                    canEditTarget = false,
+                    joinedAt = System.currentTimeMillis()
+                )
+                transaction.set(membershipDocRef, membership)
+
+                // Atomically update member count (and backfill for legacy groups)
+                val newCount = currentCount + 1
+                transaction.update(groupDocRef, "memberCount", newCount)
+
+                // Deactivate invite link if cap is now reached
+                if (newCount >= group.maxMemberCap) {
+                    transaction.update(groupDocRef, "inviteLinkActive", false)
+                }
+            }.await()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -121,7 +177,16 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
-    override  fun getGroupMembers(groupId: String): Flow<List<User>> = callbackFlow {
+    // ── Fix 1: Replace runTransaction with parallel document reads ───────────────
+    //
+    // Previous implementation used runTransaction() for read-only batch fetches,
+    // which is incorrect (transactions are for atomic read-write operations) and
+    // silently swallowed failures due to missing addOnFailureListener.
+    //
+    // New implementation uses Tasks.whenAllSuccess() to fetch all documents in
+    // parallel, with proper error handling on both success and failure paths.
+
+    override fun getGroupMembers(groupId: String): Flow<List<User>> = callbackFlow {
         val listener = membershipsCollection
             .whereEqualTo("groupId", groupId)
             .addSnapshotListener { snapshot, error ->
@@ -140,15 +205,19 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
 
-                firestore.runTransaction { transaction ->
-                    userIds.mapNotNull { userId ->
-                        transaction.get(usersCollection.document(userId))
-                            .toObject(UserDto::class.java)
-                            ?.toDomain()
-                    }
-                }.addOnSuccessListener { users ->
-                    trySend(users)
+                val tasks = userIds.map { userId ->
+                    usersCollection.document(userId).get()
                 }
+                Tasks.whenAllSuccess<DocumentSnapshot>(tasks)
+                    .addOnSuccessListener { snapshots ->
+                        val users = snapshots.mapNotNull {
+                            it.toObject(UserDto::class.java)?.toDomain()
+                        }
+                        trySend(users)
+                    }
+                    .addOnFailureListener { e ->
+                        close(e)
+                    }
             }
         awaitClose { listener.remove() }
     }
@@ -186,15 +255,19 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
 
-                firestore.runTransaction { transaction ->
-                    groupIds.mapNotNull { groupId ->
-                        transaction.get(groupsCollection.document(groupId))
-                            .toObject(GroupDto::class.java)
-                            ?.toDomain()
-                    }
-                }.addOnSuccessListener { groups ->
-                    trySend(groups)
+                val tasks = groupIds.map { groupId ->
+                    groupsCollection.document(groupId).get()
                 }
+                Tasks.whenAllSuccess<DocumentSnapshot>(tasks)
+                    .addOnSuccessListener { snapshots ->
+                        val groups = snapshots.mapNotNull {
+                            it.toObject(GroupDto::class.java)?.toDomain()
+                        }
+                        trySend(groups)
+                    }
+                    .addOnFailureListener { e ->
+                        close(e)
+                    }
             }
         awaitClose { listener.remove() }
     }

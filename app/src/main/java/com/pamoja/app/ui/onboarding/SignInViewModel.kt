@@ -82,6 +82,10 @@ class SignInViewModel @Inject constructor(
         }
     }
 
+    fun clearSuccess() {
+        _uiState.value = _uiState.value.copy(isSuccess = false)
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }

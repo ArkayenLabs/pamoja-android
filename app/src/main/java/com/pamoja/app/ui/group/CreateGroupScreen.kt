@@ -75,7 +75,10 @@ fun CreateGroupScreen(
     val selectedTarget   = stepPresets[weeklyTargetIndex.toInt()]
 
     LaunchedEffect(uiState.createdGroupId) {
-        uiState.createdGroupId?.let { onGroupCreated(it) }
+        uiState.createdGroupId?.let {
+            viewModel.clearCreatedGroupId()
+            onGroupCreated(it)
+        }
     }
     LaunchedEffect(uiState.error) {
         uiState.error?.let {

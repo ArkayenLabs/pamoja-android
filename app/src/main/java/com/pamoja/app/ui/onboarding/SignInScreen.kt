@@ -64,7 +64,12 @@ fun SignInScreen(
     val uiState           by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.isSuccess) { if (uiState.isSuccess) onSignedIn() }
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            viewModel.clearSuccess()
+            onSignedIn()
+        }
+    }
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)

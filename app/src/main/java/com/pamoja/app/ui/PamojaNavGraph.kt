@@ -125,7 +125,10 @@ fun PamojaNavGraph(
             arguments = listOf(navArgument("groupId") { type = NavType.StringType })
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
-            GroupScreen(groupId = groupId)
+            GroupScreen(
+                groupId = groupId,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

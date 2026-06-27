@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.usecase.CreateGroupUseCase
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
+import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ data class CreateGroupUiState(
 @HiltViewModel
 class CreateGroupViewModel @Inject constructor(
     private val createGroupUseCase: CreateGroupUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -54,6 +56,7 @@ class CreateGroupViewModel @Inject constructor(
             result.fold(
                 onSuccess = { group ->
                     _uiState.value = CreateGroupUiState(createdGroupId = group.groupId)
+                    analyticsManager.logGroupCreated(group.groupId, name)
                 },
                 onFailure = { error ->
                     _uiState.value = CreateGroupUiState(
@@ -62,6 +65,10 @@ class CreateGroupViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    fun clearCreatedGroupId() {
+        _uiState.value = _uiState.value.copy(createdGroupId = null)
     }
 
     fun clearError() {

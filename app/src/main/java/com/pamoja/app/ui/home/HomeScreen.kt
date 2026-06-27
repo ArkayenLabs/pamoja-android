@@ -115,8 +115,10 @@ fun HomeScreen(
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            if (it.contains("Session expired")) onSessionExpired()
-            else {
+            if (it.contains("Session expired")) {
+                viewModel.clearError()
+                onSessionExpired()
+            } else {
                 snackbarHostState.showSnackbar(it)
                 viewModel.clearError()
             }
@@ -129,7 +131,10 @@ fun HomeScreen(
         }
     }
     LaunchedEffect(joinUiState.joinedGroupId) {
-        joinUiState.joinedGroupId?.let { onGroupClick(it) }
+        joinUiState.joinedGroupId?.let {
+            joinViewModel.clearJoinedGroupId()
+            onGroupClick(it)
+        }
     }
 
     // ── Join-via-link dialog ──────────────────────────────────────────────────

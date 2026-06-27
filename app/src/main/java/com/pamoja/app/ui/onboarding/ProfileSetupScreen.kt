@@ -70,7 +70,14 @@ fun ProfileSetupScreen(
     var weight by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) onContinue()
+        if (uiState.isSuccess) {
+            viewModel.clearSuccess()
+            onContinue()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.onProfileSetupStarted()
     }
 
     LaunchedEffect(uiState.error) {

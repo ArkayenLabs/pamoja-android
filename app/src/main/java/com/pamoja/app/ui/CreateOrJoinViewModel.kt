@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.JoinGroupUseCase
+import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ data class CreateOrJoinUiState(
 @HiltViewModel
 class CreateOrJoinViewModel @Inject constructor(
     private val joinGroupUseCase: JoinGroupUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateOrJoinUiState())
@@ -41,6 +43,8 @@ class CreateOrJoinViewModel @Inject constructor(
                 onSuccess = {
                     val groupId = inviteLink.removePrefix("pamoja://join/")
                     _uiState.value = CreateOrJoinUiState(joinedGroupId = groupId)
+                    analyticsManager.logInviteLinkUsed(groupId, user.userId)
+                    analyticsManager.logGroupJoined(groupId, user.userId)
                 },
                 onFailure = { error ->
                     _uiState.value = CreateOrJoinUiState(
@@ -49,6 +53,10 @@ class CreateOrJoinViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    fun clearJoinedGroupId() {
+        _uiState.value = _uiState.value.copy(joinedGroupId = null)
     }
 
     fun clearError() {

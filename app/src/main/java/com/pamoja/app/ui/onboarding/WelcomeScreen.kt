@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,9 +42,17 @@ import com.pamoja.app.ui.theme.PamojaIndigoSubtle
 import com.pamoja.app.ui.theme.PamojaTextPrimary
 import com.pamoja.app.ui.theme.PamojaTextSecondary
 import com.pamoja.app.ui.theme.PamojaWhite
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun WelcomeScreen(onGetStarted: () -> Unit, onSignIn: () -> Unit) {
+fun WelcomeScreen(
+    onGetStarted: () -> Unit,
+    onSignIn: () -> Unit,
+    viewModel: WelcomeViewModel = hiltViewModel()
+) {
+    LaunchedEffect(Unit) {
+        viewModel.onScreenViewed()
+    }
 
     // Gradient background: subtle indigo tint at top fades into the dark background.
     // This is reliable across all Android versions unlike Modifier.blur() which

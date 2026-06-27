@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserGroupsUseCase
+import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +24,14 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val getUserGroupsUseCase: GetUserGroupsUseCase
+    private val getUserGroupsUseCase: GetUserGroupsUseCase,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private var homeScreenReachedLogged = false
 
     init {
         loadHome()
@@ -42,6 +46,11 @@ class HomeViewModel @Inject constructor(
             }
 
             _uiState.value = _uiState.value.copy(userName = user.name, isLoading = false)
+
+            if (!homeScreenReachedLogged) {
+                homeScreenReachedLogged = true
+                analyticsManager.logHomeScreenReached()
+            }
 
             // Observe groups in real-time via the existing Firestore Flow
             getUserGroupsUseCase(user.userId)

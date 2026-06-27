@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.usecase.GetGroupUseCase
+import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,8 @@ data class InviteUiState(
 
 @HiltViewModel
 class InviteViewModel @Inject constructor(
-    private val getGroupUseCase: GetGroupUseCase
+    private val getGroupUseCase: GetGroupUseCase,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InviteUiState())
@@ -32,6 +34,7 @@ class InviteViewModel @Inject constructor(
             result.fold(
                 onSuccess = { group ->
                     _uiState.value = InviteUiState(group = group)
+                    analyticsManager.logInviteScreenViewed(groupId)
                 },
                 onFailure = { error ->
                     _uiState.value = InviteUiState(

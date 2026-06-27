@@ -7,6 +7,7 @@ import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.CreateUserUseCase
 import com.pamoja.app.domain.usecase.SignInAnonymouslyUseCase
+import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,8 @@ class OnboardingViewModel @Inject constructor(
     private val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
     private val createUserUseCase: CreateUserUseCase,
     private val userPreferences: UserPreferences,
-    private val firebaseAuth: FirebaseAuth          // injected to check existing session
+    private val firebaseAuth: FirebaseAuth,          // injected to check existing session
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -34,6 +36,16 @@ class OnboardingViewModel @Inject constructor(
 
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
+
+    private var profileSetupStartedLogged = false
+
+    /** Call when ProfileSetupScreen enters composition. Logs once per session. */
+    fun onProfileSetupStarted() {
+        if (!profileSetupStartedLogged) {
+            profileSetupStartedLogged = true
+            analyticsManager.logProfileSetupStarted()
+        }
+    }
 
     fun signUpAndCreateProfile(
         name: String,
@@ -83,6 +95,7 @@ class OnboardingViewModel @Inject constructor(
                     userPreferences.setOnboarded(true)
                     _user.value = user
                     _uiState.value = OnboardingUiState(isSuccess = true)
+                    analyticsManager.logProfileCompleted(userId)
                 },
                 onFailure = { error ->
                     _uiState.value = OnboardingUiState(
@@ -91,6 +104,10 @@ class OnboardingViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    fun clearSuccess() {
+        _uiState.value = _uiState.value.copy(isSuccess = false)
     }
 
     fun clearError() {

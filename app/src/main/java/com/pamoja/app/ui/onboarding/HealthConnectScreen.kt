@@ -2,7 +2,6 @@ package com.pamoja.app.ui.onboarding
 
 import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +61,7 @@ import com.pamoja.app.ui.theme.PamojaSurface
 import com.pamoja.app.ui.theme.PamojaTextPrimary
 import com.pamoja.app.ui.theme.PamojaTextSecondary
 import com.pamoja.app.ui.theme.PamojaWhite
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // Permission states — drives UI
@@ -83,6 +83,7 @@ fun HealthConnectScreen(
     var permState by remember { mutableStateOf(PermState.UNKNOWN) }
 
     LaunchedEffect(Unit) {
+        viewModel.onScreenViewed()
         permState = when {
             !healthConnectReader.isAvailable() -> PermState.HC_UNAVAILABLE
             healthConnectReader.hasPermission() -> PermState.GRANTED
@@ -99,10 +100,13 @@ fun HealthConnectScreen(
             if (hasPermission) {
                 userPreferences.setHealthConnectGranted(true)
                 permState = PermState.GRANTED
+                val userId = userPreferences.userId.first() ?: ""
+                viewModel.onPermissionGranted(userId)
                 onConnected()
             } else {
                 userPreferences.setHealthConnectGranted(false)
                 permState = PermState.DENIED
+                viewModel.onPermissionDenied()
             }
         }
     }
@@ -253,7 +257,10 @@ fun HealthConnectScreen(
                     // ── HC not on this device → skip only ────────────────
                     PermState.HC_UNAVAILABLE -> {
                         Button(
-                            onClick  = onSkip,
+                            onClick  = {
+                                viewModel.onSkipped()
+                                onSkip()
+                            },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape    = RoundedCornerShape(16.dp),
                             colors   = ButtonDefaults.buttonColors(
@@ -272,10 +279,13 @@ fun HealthConnectScreen(
                     PermState.DENIED -> {
                         Button(
                             onClick = {
-                                // Open Health Connect app settings
-                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.fromParts("package", context.packageName, null)
+                                val intent = if (android.os.Build.VERSION.SDK_INT >= 34) {
+                                Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS").apply {
+                                    putExtra(Intent.EXTRA_PACKAGE_NAME, context.packageName)
                                 }
+                            } else {
+                                Intent(androidx.health.connect.client.HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+                            }
                                 context.startActivity(intent)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -296,7 +306,10 @@ fun HealthConnectScreen(
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
-                        TextButton(onClick = onSkip) {
+                        TextButton(onClick = {
+                            viewModel.onSkipped()
+                            onSkip()
+                        }) {
                             Text(
                                 text  = "Skip for now",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -327,6 +340,7 @@ fun HealthConnectScreen(
                     else -> {
                         Button(
                             onClick = {
+                                viewModel.onPermissionRequested()
                                 permissionLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -341,7 +355,10 @@ fun HealthConnectScreen(
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
-                        TextButton(onClick = onSkip) {
+                        TextButton(onClick = {
+                            viewModel.onSkipped()
+                            onSkip()
+                        }) {
                             Text(
                                 text  = "Skip for now",
                                 style = MaterialTheme.typography.bodyMedium,

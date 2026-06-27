@@ -99,7 +99,6 @@ fun GroupScreen(
     ) { granted ->
         scope.launch {
             if (granted) {
-                // WorkManager will read the sensor on next cycle — no foreground service needed
                 userPreferences.setHealthConnectGranted(true)
             } else {
                 userPreferences.setHealthConnectGranted(false)
@@ -219,7 +218,6 @@ fun GroupScreen(
                             if (alreadyGranted) {
                                 scope.launch {
                                     userPreferences.setHealthConnectGranted(true)
-                                    // WorkManager reads sensor on next 30-min cycle — no service needed
                                 }
                             } else {
                                 permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)

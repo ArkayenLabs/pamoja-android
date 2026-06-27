@@ -1,5 +1,7 @@
 package com.pamoja.app.util
 
+import android.util.Log
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -26,6 +28,11 @@ class WorkManagerScheduler @Inject constructor(
             repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
             .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                30,                     // initial delay
+                TimeUnit.SECONDS        // 30s → 60s → 120s → ...
+            )
             .build()
 
         workManager.enqueueUniquePeriodicWork(
@@ -33,9 +40,16 @@ class WorkManagerScheduler @Inject constructor(
             ExistingPeriodicWorkPolicy.KEEP,   // Don't reset timer if already scheduled
             syncRequest
         )
+
+        Log.d(TAG, "Step sync scheduled (KEEP policy, 30min interval)")
     }
 
     fun cancelStepSync() {
         workManager.cancelUniqueWork(StepSyncWorker.WORK_NAME)
+        Log.d(TAG, "Step sync cancelled")
+    }
+
+    companion object {
+        private const val TAG = "WorkManagerScheduler"
     }
 }

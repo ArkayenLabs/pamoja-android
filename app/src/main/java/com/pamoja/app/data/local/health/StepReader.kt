@@ -24,7 +24,7 @@ import kotlin.coroutines.resume
  * Returns null if:
  *  - The device has no step counter sensor
  *  - The sensor doesn't deliver an event within 3 seconds (timeout guard)
- *  - ACTIVITY_RECOGNITION permission is not granted
+ *  - Health Connect permission is not granted
  */
 @Singleton
 class StepReader @Inject constructor(

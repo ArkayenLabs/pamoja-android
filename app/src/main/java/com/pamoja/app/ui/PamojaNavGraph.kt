@@ -84,7 +84,23 @@ fun PamojaNavGraph(
                 onCreateGroup = {
                     navController.navigate(Screen.CreateGroup.route)
                 },
+                onSettingsClick = {
+                    navController.navigate(Screen.Settings.route)
+                },
                 onSessionExpired = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            com.pamoja.app.ui.settings.SettingsScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onSignedOut = {
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }

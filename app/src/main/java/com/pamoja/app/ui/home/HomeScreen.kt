@@ -44,6 +44,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,6 +74,7 @@ import com.pamoja.app.ui.theme.PamojaGreen
 import com.pamoja.app.ui.theme.PamojaGreenSubtle
 import com.pamoja.app.ui.theme.PamojaIndigo
 import com.pamoja.app.ui.theme.PamojaIndigoDark
+import com.pamoja.app.ui.theme.PamojaIndigoLight
 import com.pamoja.app.ui.theme.PamojaIndigoSubtle
 import com.pamoja.app.ui.theme.PamojaSurface
 import com.pamoja.app.ui.theme.PamojaSurfaceVariant
@@ -103,6 +106,7 @@ private fun gradientForGroup(name: String): List<Color> {
 fun HomeScreen(
     onGroupClick: (String) -> Unit,
     onCreateGroup: () -> Unit,
+    onSettingsClick: () -> Unit,
     onSessionExpired: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
@@ -232,13 +236,9 @@ fun HomeScreen(
                             name = uiState.userName
                                 .takeIf { it.isNotBlank() }
                                 ?.split(" ")
-                                ?.firstOrNull() ?: "there"
+                                ?.firstOrNull() ?: "there",
+                            onSettingsClick = onSettingsClick
                         )
-                    }
-
-                    // Join via link card
-                    item {
-                        JoinLinkCard(onClick = { showJoinDialog = true })
                     }
 
                     // Section label
@@ -289,7 +289,10 @@ fun HomeScreen(
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 @Composable
-private fun HomeHeader(name: String) {
+private fun HomeHeader(
+    name: String,
+    onSettingsClick: () -> Unit
+) {
     // Time-aware greeting
     val greeting = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -303,7 +306,7 @@ private fun HomeHeader(name: String) {
     // Rotating motivational subtitles — cycles every 4 seconds
     val subtitles = remember {
         listOf(
-            "Every step counts. Let's go! 👟",
+            "Every step counts. Let's go!",
             "Your group is counting on you.",
             "Walk together, grow together.",
             "Today's a great day to move.",
@@ -325,11 +328,29 @@ private fun HomeHeader(name: String) {
             .padding(horizontal = 24.dp)
             .padding(top = 28.dp, bottom = 4.dp)
     ) {
-        Text(
-            text  = "$greeting, $name 👋",
-            style = MaterialTheme.typography.headlineLarge,
-            color = PamojaTextPrimary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text  = "$greeting, $name",
+                style = MaterialTheme.typography.headlineLarge,
+                color = PamojaTextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = onSettingsClick,
+                modifier = Modifier.size(48.dp) // Touch target
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = PamojaIndigoLight,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text  = subtitles[subtitleIndex],

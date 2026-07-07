@@ -55,3 +55,11 @@ class IsUserLoggedInUseCase @Inject constructor(
         return authRepository.isUserLoggedIn()
     }
 }
+
+class DeleteAccountUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(): Result<Unit> {
+        return authRepository.deleteAccount()
+    }
+}

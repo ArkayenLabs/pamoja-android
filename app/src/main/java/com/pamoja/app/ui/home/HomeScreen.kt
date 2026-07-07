@@ -324,9 +324,8 @@ private fun HomeHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .statusBarsPadding()
             .padding(horizontal = 24.dp)
-            .padding(top = 28.dp, bottom = 4.dp)
+            .padding(top = 16.dp, bottom = 4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

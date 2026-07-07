@@ -18,3 +18,12 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# Agent configurations & instruction files
+.agents/
+CLAUDE.md
+ARCHITECTURE.md
+PROJECT.md
+
+# System crash/error dumps
+*.stackdump

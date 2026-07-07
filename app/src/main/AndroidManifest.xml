@@ -4,7 +4,6 @@
 
     <!-- Health Connect — replaces raw ACTIVITY_RECOGNITION sensor approach -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Required so Android allows our app to talk to the Health Connect app -->

@@ -1,6 +1,7 @@
 package com.pamoja.app.data.remote.firebase
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.remote.model.StepEntryDto
 import com.pamoja.app.domain.model.StepEntry
 import com.pamoja.app.domain.repository.StepRepository
@@ -8,10 +9,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class FirebaseStepRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val healthConnectReader: HealthConnectReader
 ) : StepRepository {
 
     private val stepsCollection = firestore.collection("steps")
@@ -94,6 +98,18 @@ class FirebaseStepRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncTodaySteps(userId: String): Result<Unit> {
-        return Result.success(Unit)
+        return try {
+            val todaySteps = healthConnectReader.readTodaySteps()
+                ?: return Result.success(Unit) // HC unavailable or permission not granted
+            val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val entry = StepEntry(
+                userId    = userId,
+                stepCount = todaySteps,
+                date      = today
+            )
+            saveStepEntry(entry)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

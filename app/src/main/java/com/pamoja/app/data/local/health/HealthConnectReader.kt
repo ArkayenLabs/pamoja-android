@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
@@ -70,15 +70,16 @@ class HealthConnectReader @Inject constructor(
             val startTime = today.atStartOfDay(ZoneId.systemDefault()).toInstant()
             val endTime   = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
 
-            val response = client.readRecords(
-                ReadRecordsRequest(
-                    recordType       = StepsRecord::class,
-                    timeRangeFilter  = TimeRangeFilter.between(startTime, endTime)
+            // aggregate() deduplicates overlapping records from multiple apps
+            // (e.g. Google Fit writes both raw records AND a merged total — readRecords()
+            // would sum both and double the count; aggregate() returns one correct total)
+            val response = client.aggregate(
+                AggregateRequest(
+                    metrics         = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
                 )
             )
-
-            // Sum all step records for today (apps like Google Fit write multiple records)
-            response.records.sumOf { it.count }
+            response[StepsRecord.COUNT_TOTAL] ?: 0L
         } catch (e: Exception) {
             null
         }

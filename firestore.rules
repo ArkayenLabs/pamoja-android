@@ -1,0 +1,236 @@
+rules_version = '2';
+
+// ============================================================================
+// PAMOJA. FIRESTORE SECURITY RULES
+// ============================================================================
+// ⚠️  DEPLOY THIS IMMEDIATELY. It replaces `allow read, write: if true`, which
+//     left the entire database open to the unauthenticated public internet.
+//
+// This version is INTENTIONALLY compatible with the app's CURRENT code, it
+// requires no refactor and will not break the running closed test. It closes
+// the critical hole (anonymous public access) and pins every write to its
+// owner.
+//
+// Phase 2 hardening (after the code refactors) is documented at the bottom.
+//
+// Deploy:
+//     firebase deploy --only firestore:rules
+// or paste into Firebase Console → Firestore → Rules → Publish.
+//
+// ---------------------------------------------------------------------------
+// Data model:
+//   users/{userId}                  userId == Firebase Auth UID
+//   groups/{groupId}                groupId == UUID v4
+//   memberships/{userId}_{groupId}  fields: userId, groupId, role, canEditTarget, joinedAt
+//   steps/{userId}_{date}           fields: userId, date, steps
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- helpers
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isGroupAdmin(groupId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/groups/$(groupId)).data.adminId == request.auth.uid;
+    }
+
+    function onlyChanged(allowedKeys) {
+      return request.resource.data.diff(resource.data)
+               .affectedKeys()
+               .hasOnly(allowedKeys);
+    }
+
+    // ------------------------------------------------------------------ users
+
+    match /users/{userId} {
+      // OWNER ONLY. Nobody can read anyone else's profile, including their age,
+      // height and weight.
+      //
+      // Possible because member display names are denormalised onto the
+      // membership documents, so rendering a leaderboard no longer needs to read
+      // other people's user documents at all.
+      allow read: if isSelf(userId);
+
+      // Only the owner may write their own profile, and the document ID must
+      // match their UID. This is what stops anyone editing another user.
+      allow create, update: if isSelf(userId)
+                            && request.resource.data.name is string
+                            && request.resource.data.name.size() > 0
+                            && request.resource.data.name.size() <= 100;
+
+      allow delete: if isSelf(userId);
+    }
+
+    // ----------------------------------------------------------------- groups
+
+    match /groups/{groupId} {
+      // get: any signed-in user may read a group BY ID. Required for the invite
+      //      flow, since you must read a group before you are a member of it.
+      //      Group IDs are UUID v4 (122 bits), so they are not guessable.
+      // list: DENIED. This is what stops anyone enumerating every group in the
+      //      database. Possible because getGroupByInviteLink() now resolves by
+      //      document ID instead of querying on the inviteLink field.
+      allow get: if isSignedIn();
+      allow list: if false;
+
+      // The creator must be the admin, must start as the only member, and the
+      // caps must be sane. Stops absurd or forged groups being created.
+      allow create: if isSignedIn()
+                    && request.resource.data.adminId == request.auth.uid
+                    && request.resource.data.memberCount == 1
+                    && request.resource.data.maxMemberCap >= 2
+                    && request.resource.data.maxMemberCap <= 20
+                    && request.resource.data.weeklyTarget > 0
+                    && request.resource.data.weeklyTarget <= 1000000
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 100;
+
+      allow update: if
+        // --- Case A: a JOIN. A signed-in user increments memberCount.
+        //     The count may only ever INCREASE and may never exceed the cap.
+        //     (Deliberately not pinned to exactly +1: joinGroup() backfills
+        //     legacy groups whose memberCount was 0, jumping straight to the
+        //     real member count. The cap check is what actually matters.)
+        (
+          isSignedIn()
+          && onlyChanged(['memberCount', 'inviteLinkActive'])
+          && request.resource.data.memberCount > resource.data.memberCount
+          && request.resource.data.memberCount <= resource.data.maxMemberCap
+        )
+        ||
+        // --- Case B: the admin edits group settings. adminId can never change.
+        (
+          isGroupAdmin(groupId)
+          && request.resource.data.adminId == resource.data.adminId
+          && request.resource.data.maxMemberCap >= 2
+          && request.resource.data.maxMemberCap <= 20
+          && request.resource.data.weeklyTarget > 0
+          && request.resource.data.weeklyTarget <= 1000000
+        )
+        ||
+        // --- Case C: a member edits the weekly target, but only where the
+        //     admin enabled it for this group.
+        (
+          isSignedIn()
+          && resource.data.canMembersEditTarget == true
+          && onlyChanged(['weeklyTarget'])
+          && request.resource.data.weeklyTarget > 0
+          && request.resource.data.weeklyTarget <= 1000000
+        );
+
+      allow delete: if isGroupAdmin(groupId);
+    }
+
+    // ------------------------------------------------------------ memberships
+
+    match /memberships/{membershipId} {
+      // Read + query for signed-in users (group member lists, user's groups).
+      allow read: if isSignedIn();
+
+      // Membership IDs are deterministic "{uid}_{groupId}". Pinning the write
+      // to that pattern makes forging a membership for someone else impossible.
+      // displayName is validated with get(..., '') rather than required to
+      // exist. Requiring the field made this rule reject any client that did
+      // not write it, which broke group creation outright. It is a display
+      // string, so only its length is worth enforcing, never its presence.
+      allow create: if isSignedIn()
+                    && membershipId == request.auth.uid + '_' + request.resource.data.groupId
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.get('displayName', '') is string
+                    && request.resource.data.get('displayName', '').size() <= 100;
+
+      // A member may not silently promote themselves to admin. They may update
+      // their own displayName, which is what the rename fan-out does.
+      allow update: if isSignedIn()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.role == resource.data.role
+                    && request.resource.data.get('displayName', '') is string
+                    && request.resource.data.get('displayName', '').size() <= 100;
+
+      // Remove yourself, or the group admin may remove anyone.
+      allow delete: if isSignedIn()
+                    && (
+                         resource.data.userId == request.auth.uid
+                         || isGroupAdmin(resource.data.groupId)
+                       );
+    }
+
+    // ------------------------------------------------------------------ steps
+
+    match /steps/{stepId} {
+      // Read + query for signed-in users (leaderboard aggregation).
+      allow read: if isSignedIn();
+
+      // You may only ever write YOUR OWN step data, the document ID must match
+      // your UID, and the value must be a sane non-negative integer.
+      // This is what stops someone writing 999,999,999 steps to win, or
+      // fabricating step history for another user.
+      //
+      // NOTE: the field is `stepCount` (see StepEntryDto), NOT `steps`.
+      // Referencing a non-existent field makes the whole condition fail and
+      // silently denies every write.
+      allow create, update: if isSignedIn()
+                            && stepId == request.auth.uid + '_' + request.resource.data.date
+                            && request.resource.data.userId == request.auth.uid
+                            && request.resource.data.stepCount is int
+                            && request.resource.data.stepCount >= 0
+                            && request.resource.data.stepCount <= 300000;
+
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ------------------------------------------------------- deny by default
+    // Anything not explicitly matched above is denied. NEVER remove this.
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ============================================================================
+// WHAT THIS FIXES IMMEDIATELY
+//   ✅ Unauthenticated public access, completely closed
+//   ✅ Writing to another user's profile, blocked
+//   ✅ Writing another user's step data, blocked
+//   ✅ Fabricating step counts to win the leaderboard, bounded 0..300000
+//   ✅ Forging group memberships, blocked by the ID pattern
+//   ✅ Promoting yourself to admin, blocked
+//   ✅ Deleting another user's group, blocked
+//   ✅ Creating groups with absurd member caps, bounded 2..20
+//
+// ---------------------------------------------------------------------------
+// PHASE 2 HARDENING, requires two small code changes, do after launch prep
+//
+//   1. DONE. `list` on groups is now denied. getGroupByInviteLink() resolves by
+//      document ID rather than querying the inviteLink field, so enumeration of
+//      the groups collection is closed.
+//
+//   2. DONE. users/{userId} is owner-only. Member display names are denormalised
+//      onto membership documents, so nothing reads another person's profile and
+//      age/height/weight are no longer reachable by anyone but the owner.
+//
+//   3. REMAINING: `steps` is still readable by any signed-in user. Step documents
+//      are keyed "{userId}_{date}" and users cannot be enumerated, so this is not
+//      directly scrapable, but someone who learns a UID can read that person's
+//      step history. Closing it means denormalising weekly totals onto membership
+//      documents too, at the cost of a write per sync.
+//
+//   4. ENABLE FIREBASE APP CHECK so only your genuine app binary can talk to
+//      Firestore at all. Highest-value remaining control for this architecture.
+//
+//   5. Move the join into a Cloud Function to close the memberCount griefing
+//      gap (Case A above lets a signed-in user increment the count without
+//      actually joining). Low real-world risk, requires knowing a UUID v4.
+// ============================================================================

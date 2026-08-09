@@ -9,6 +9,9 @@ import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
 import com.pamoja.app.domain.usecase.SignOutUseCase
 import com.pamoja.app.domain.usecase.UpdateUserUseCase
+import com.pamoja.app.util.NotificationContext
+import com.pamoja.app.util.SmartNotificationEngine
+import com.pamoja.app.util.SmartNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +36,8 @@ class SettingsViewModel @Inject constructor(
     private val updateUserUseCase: UpdateUserUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val notificationHelper: SmartNotificationHelper,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -153,6 +157,56 @@ class SettingsViewModel @Inject constructor(
                         error = error.message ?: "Failed to delete account"
                     )
                 }
+            )
+        }
+    }
+
+    /**
+     * Posts one notification per channel, ignoring every gate.
+     *
+     * Only reachable from a debug build. Guarded again at the call site, so
+     * neither the row nor this path can ship.
+     */
+    fun sendDebugNotifications() {
+        if (!com.pamoja.app.BuildConfig.DEBUG) return
+
+        viewModelScope.launch {
+            val name = _uiState.value.userName.ifBlank { "Ravi" }
+
+            // Values chosen so every candidate builds: a goal just reached, a
+            // teammate just ahead, a new member and a streak all at once, which
+            // never happens in reality but exercises all four channels.
+            val context = NotificationContext(
+                userName = name,
+                groupId = "debug-group",
+                groupName = "Debug Group",
+                memberCount = 5,
+                groupAgeMs = 14L * 24 * 60 * 60 * 1000,
+                weeklyGoal = 70_000,
+                groupStepsTotal = 70_500,
+                userStepsThisWeek = 14_200,
+                userStepsToday = 6_400,
+                daysLeftInWeek = 2,
+                memberJustAheadName = "Priya",
+                stepsToOvertakeMemberAhead = 320,
+                memberWhoJustPassedYouName = "Arjun",
+                goalReachedJustNow = true,
+                newMemberName = "Meera",
+                isFirstEverSync = true,
+                currentStreakDays = 6,
+                streakAtRiskToday = true,
+                now = java.time.LocalTime.now(),
+                today = java.time.LocalDate.now().dayOfWeek,
+                hoursSinceLastNotification = 999,
+                consecutiveIgnored = 0,
+                rotationSeed = java.time.LocalDate.now().dayOfYear,
+            )
+
+            val samples = SmartNotificationEngine.debugSamples(context)
+            samples.forEach { notificationHelper.show(it) }
+
+            _uiState.value = _uiState.value.copy(
+                successMessage = "Posted ${samples.size} test notifications"
             )
         }
     }

@@ -405,6 +405,30 @@ fun SettingsScreen(
                     )
                 }
 
+                // ─── Debug tools, never present in a release build ───────────
+                if (com.pamoja.app.BuildConfig.DEBUG) {
+                    Spacer(modifier = Modifier.height(Spacing.x8))
+
+                    SectionLabel("DEBUG", color = colors.textTertiary)
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.x6)
+                            .clip(RoundedCornerShape(PamojaRadii.md))
+                            .background(colors.surface1)
+                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                    ) {
+                        SettingsRow(
+                            icon = PamojaIcons.Notification,
+                            title = "Send test notifications",
+                            subtitle = "One per channel, bypassing quiet hours and throttling",
+                            iconColor = colors.textSecondary,
+                            onClick = { viewModel.sendDebugNotifications() }
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(Spacing.x12))
 
                 // App version signature

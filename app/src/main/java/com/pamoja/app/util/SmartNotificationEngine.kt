@@ -140,6 +140,20 @@ object SmartNotificationEngine {
     fun select(ctx: NotificationContext): PamojaNotification? =
         buildCandidates(ctx).filter { isAllowed(it, ctx) }.maxByOrNull { it.priority }
 
+    /**
+     * Every category at once, with the gates bypassed. Debug builds only.
+     *
+     * The gates are what make this engine correct in production, and they are
+     * also what make it impossible to exercise by hand: quiet hours, a 20 hour
+     * minimum between sends, a 10:00 to 19:30 nudge window and engagement
+     * backoff mean a developer can wait a full day and see nothing. This is the
+     * only way to look at all four channels without editing constants.
+     */
+    fun debugSamples(ctx: NotificationContext): List<PamojaNotification> =
+        buildCandidates(ctx)
+            .sortedByDescending { it.priority }
+            .distinctBy { it.category }
+
     // ── Gatekeeping ─────────────────────────────────────────────────────────
 
     private fun isAllowed(n: PamojaNotification, ctx: NotificationContext): Boolean {

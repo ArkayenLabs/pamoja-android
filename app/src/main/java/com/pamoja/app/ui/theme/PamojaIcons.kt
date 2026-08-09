@@ -43,6 +43,7 @@ object PamojaIcons {
     @DrawableRes val Refresh = R.drawable.ic_refresh
     @DrawableRes val Search = R.drawable.ic_search
     @DrawableRes val Close = R.drawable.ic_x
+    @DrawableRes val Notification = R.drawable.ic_notification
 
     /**
      * The Google "G". Unlike everything else here it is multi-colour and must be

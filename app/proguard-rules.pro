@@ -6,6 +6,16 @@
 -keep class kotlin.Metadata { *; }
 -keepclassmembers class **$WhenMappings { <fields>; }
 
+# ─── Crashlytics ─────────────────────────────────────────────────────────────
+# Without these two attributes the uploaded mapping file still cannot produce a
+# line number, so every release stack trace stops at the class. This is the
+# difference between a readable crash and a useless one.
+-keepattributes SourceFile,LineNumberTable
+-keepattributes *Annotation*
+
+# Custom exceptions keep their names so they are greppable in the dashboard.
+-keep public class * extends java.lang.Exception
+
 # ─── Firebase Auth & Firestore ────────────────────────────────────────────────
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }

@@ -15,7 +15,7 @@ import javax.inject.Singleton
 /**
  * Reads today's cumulative step count from Health Connect.
  *
- * Health Connect is a system-level data store managed by Google — it works
+ * Health Connect is a system-level data store managed by Google, it works
  * reliably in the background without a foreground service. It works on any
  * app installed from the Play Store (any track: internal, closed, production).
  *
@@ -23,7 +23,7 @@ import javax.inject.Singleton
  *  - Battery-optimized: no background sensor registration
  *  - Reliable across OEM battery-killers (Samsung, Xiaomi, OnePlus)
  *  - Data persists even when the app is not running
- *  - Standard Google permission dialog — users trust it more
+ *  - Standard Google permission dialog, users trust it more
  */
 @Singleton
 class HealthConnectReader @Inject constructor(
@@ -31,7 +31,7 @@ class HealthConnectReader @Inject constructor(
 ) {
 
     companion object {
-        /** The single permission we require — read daily steps. */
+        /** The single permission we require, read daily steps. */
         val REQUIRED_PERMISSIONS = setOf(
             HealthPermission.getReadPermission(StepsRecord::class)
         )
@@ -71,7 +71,7 @@ class HealthConnectReader @Inject constructor(
             val endTime   = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
 
             // aggregate() deduplicates overlapping records from multiple apps
-            // (e.g. Google Fit writes both raw records AND a merged total — readRecords()
+            // (e.g. Google Fit writes both raw records AND a merged total, readRecords()
             // would sum both and double the count; aggregate() returns one correct total)
             val response = client.aggregate(
                 AggregateRequest(

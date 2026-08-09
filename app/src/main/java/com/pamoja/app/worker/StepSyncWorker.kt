@@ -6,19 +6,29 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.pamoja.app.data.local.health.HealthConnectReader
+import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.StepEntry
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.StepRepository
+import com.pamoja.app.domain.usecase.GetGroupUseCase
+import com.pamoja.app.domain.usecase.GetGroupMembersUseCase
+import com.pamoja.app.domain.usecase.GetGroupStepsForWeekUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
+import com.pamoja.app.util.SmartNotificationHelper
+import com.pamoja.app.util.SmartNotificationEngine
+import com.pamoja.app.util.NotificationContext
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 /**
- * Runs every 30 minutes (when network is available and battery is not low).
+ * Runs periodically (when network is available and battery is not low).
  *
- * Uses Health Connect to read steps — no foreground service, no hardware
+ * Uses Health Connect to read steps, no foreground service, no hardware
  * sensor registration. Health Connect is a system-level store managed by
  * Google, making it reliable across OEM battery optimisers.
  *
@@ -26,7 +36,8 @@ import java.time.format.DateTimeFormatter
  *  1. Verify user is logged in (fail fast if not).
  *  2. Read today's step total from Health Connect.
  *  3. Write exactly ONE StepEntry to Firestore.
- *  4. Done.
+ *  4. Check if smart notifications should be triggered (throttled to 12h).
+ *  5. Done.
  */
 @HiltWorker
 class StepSyncWorker @AssistedInject constructor(
@@ -35,7 +46,12 @@ class StepSyncWorker @AssistedInject constructor(
     private val authRepository: AuthRepository,
     private val stepRepository: StepRepository,
     private val healthConnectReader: HealthConnectReader,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val getGroupUseCase: GetGroupUseCase,
+    private val getGroupMembersUseCase: GetGroupMembersUseCase,
+    private val getGroupStepsForWeekUseCase: GetGroupStepsForWeekUseCase,
+    private val smartNotificationHelper: SmartNotificationHelper,
+    private val userPreferences: UserPreferences
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -45,7 +61,7 @@ class StepSyncWorker @AssistedInject constructor(
         // ── Guard: user must be authenticated ───────────────────────
         val user = authRepository.getCurrentUser()
         if (user == null) {
-            Log.w(TAG, "No authenticated user — failing permanently")
+            Log.w(TAG, "No authenticated user, failing permanently")
             return Result.failure()
         }
 
@@ -53,7 +69,7 @@ class StepSyncWorker @AssistedInject constructor(
 
         return try {
             // ── Read today's steps from Health Connect ───────────────────
-            // Returns null if HC unavailable or permission revoked — silent success, no retry
+            // Returns null if HC unavailable or permission revoked, silent success, no retry
             val todaySteps = healthConnectReader.readTodaySteps()
             if (todaySteps == null) {
                 val durationMs = System.currentTimeMillis() - startTime
@@ -77,12 +93,149 @@ class StepSyncWorker @AssistedInject constructor(
             Log.i(TAG, "Sync success | steps=$todaySteps | duration=${durationMs}ms")
             analyticsManager.logStepsSyncSuccess(user.userId, todaySteps, durationMs)
 
+            // ── Smart Notifications Trigger ──────────────────────────────
+            checkAndTriggerNotification(user.userId, todaySteps)
+
             Result.success()
         } catch (e: Exception) {
             val durationMs = System.currentTimeMillis() - startTime
             Log.e(TAG, "Sync failed | duration=${durationMs}ms | attempt=$runAttemptCount", e)
             analyticsManager.logStepsSyncFailed(user.userId, e.message ?: "unknown", durationMs)
             Result.retry()
+        }
+    }
+
+    private suspend fun checkAndTriggerNotification(userId: String, todaySteps: Long) {
+        try {
+            // Frequency, quiet hours, actionable-window and engagement backoff
+            // are all decided inside SmartNotificationEngine, it needs the full
+            // picture to make that call, so we only gather data here.
+            val lastTime = userPreferences.lastNotificationTime.firstOrNull() ?: 0L
+            val currentTime = System.currentTimeMillis()
+
+            val activeGroupId = userPreferences.activeGroupId.firstOrNull()
+            if (activeGroupId.isNullOrBlank()) {
+                Log.d(TAG, "No active group set. Skipping notification check.")
+                return
+            }
+
+            val groupResult = getGroupUseCase(activeGroupId)
+            val group = groupResult.getOrNull() ?: return
+
+            val members = getGroupMembersUseCase(activeGroupId).firstOrNull() ?: return
+            if (members.isEmpty()) return
+
+            val memberIds = members.map { it.userId }
+            val weeklyEntries = getGroupStepsForWeekUseCase(memberIds).firstOrNull() ?: return
+
+            // Calculate statistics
+            val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+            
+            // Map members to their weekly step counts
+            data class MemberWeekly(val userId: String, val name: String, val steps: Long)
+            val membersData = members.map { member ->
+                val steps = weeklyEntries
+                    .filter { it.userId == member.userId }
+                    .sumOf { it.stepCount }
+                MemberWeekly(member.userId, member.name, steps)
+            }.sortedByDescending { it.steps }
+
+            // Find ranks and overtake targets
+            val userIndex = membersData.indexOfFirst { it.userId == userId }
+            val userRank = if (userIndex != -1) userIndex + 1 else membersData.size
+            val teamAverage = if (membersData.isNotEmpty()) membersData.map { it.steps }.average().toLong() else 0L
+
+            var stepsToOvertake = 0L
+            var nextMemberName: String? = null
+            if (userIndex > 0) {
+                // Member at index - 1 is the one right ahead
+                val targetMember = membersData[userIndex - 1]
+                stepsToOvertake = (targetMember.steps - (membersData[userIndex].steps)).coerceAtLeast(0L)
+                nextMemberName = targetMember.name
+            }
+
+            val userName = userPreferences.userName.firstOrNull() ?: "there"
+            val weeklyGoal = group.weeklyTarget.toLong()
+            val groupStepsTotal = weeklyEntries.sumOf { it.stepCount }
+            val groupAgeMs = currentTime - group.createdAt
+            val userStepsThisWeek = membersData.firstOrNull { it.userId == userId }?.steps ?: 0L
+
+            // Days remaining in the Mon–Sun week, inclusive of today.
+            val today = LocalDate.now()
+            val daysLeftInWeek = 8 - today.dayOfWeek.value
+
+            // Was the goal crossed by this sync? Compared against the total we
+            // recorded last time so we fire exactly once, on the crossing.
+            val previousTotal = userPreferences.lastKnownGroupTotal.firstOrNull() ?: 0L
+            val goalReachedJustNow = weeklyGoal > 0 &&
+                previousTotal < weeklyGoal &&
+                groupStepsTotal >= weeklyGoal
+            userPreferences.saveLastKnownGroupTotal(groupStepsTotal)
+
+            // ── Detect locally that someone overtook this user ───────────────
+            // No server needed: compare our leaderboard position against the one
+            // recorded at the previous sync.
+            //
+            // Guarded on member count being unchanged. If someone joined or left,
+            // everyone's rank shifts without anyone actually being overtaken, and
+            // telling a user "Priya passed you" when Priya simply joined would be
+            // both wrong and discouraging.
+            val previousRank = userPreferences.lastKnownRank.firstOrNull() ?: 0
+            val previousMemberCount = userPreferences.lastKnownMemberCount.firstOrNull() ?: 0
+
+            val overtakenBy: String? = if (
+                previousRank > 0 &&
+                previousMemberCount == membersData.size &&
+                userRank > previousRank &&
+                userIndex > 0
+            ) {
+                // Whoever now sits directly ahead of us is the one who passed.
+                membersData[userIndex - 1].name
+            } else null
+
+            userPreferences.saveLeaderboardPosition(userRank, membersData.size)
+
+            val context = NotificationContext(
+                userName = userName,
+                groupId = activeGroupId,
+                groupName = group.name,
+                memberCount = membersData.size,
+                groupAgeMs = groupAgeMs,
+                weeklyGoal = weeklyGoal,
+                groupStepsTotal = groupStepsTotal,
+                userStepsThisWeek = userStepsThisWeek,
+                userStepsToday = todaySteps,
+                daysLeftInWeek = daysLeftInWeek,
+                memberJustAheadName = nextMemberName,
+                stepsToOvertakeMemberAhead = stepsToOvertake,
+                memberWhoJustPassedYouName = overtakenBy,
+                goalReachedJustNow = goalReachedJustNow,
+                now = LocalTime.now(),
+                today = today.dayOfWeek,
+                hoursSinceLastNotification =
+                    if (lastTime == 0L) Long.MAX_VALUE
+                    else (currentTime - lastTime) / (60 * 60 * 1000L),
+                consecutiveIgnored = userPreferences.consecutiveIgnoredNotifications.firstOrNull() ?: 0,
+                // Day of year rotates the wording so repeated notification types
+                // don't read identically every time.
+                rotationSeed = today.dayOfYear,
+            )
+
+            val notification = SmartNotificationEngine.select(context)
+            if (notification == null) {
+                Log.d(TAG, "Engine chose to stay silent, nothing worth sending right now.")
+                return
+            }
+
+            smartNotificationHelper.show(notification)
+            userPreferences.saveLastNotificationTime(currentTime)
+            // Optimistically count this as ignored; MainActivity resets the
+            // counter to 0 when the user actually opens from a notification.
+            userPreferences.incrementIgnoredNotifications()
+            Log.i(TAG, "Notification sent [${notification.category}] ${notification.title}")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error building notification", e)
         }
     }
 

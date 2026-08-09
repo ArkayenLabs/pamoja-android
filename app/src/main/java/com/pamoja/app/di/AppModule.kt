@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.pamoja.app.data.local.health.StepCounterManager
 import com.pamoja.app.data.local.preferences.UserPreferences
 import dagger.Module
 import dagger.Provides
@@ -36,10 +35,4 @@ object AppModule {
     fun provideUserPreferences(
         @ApplicationContext context: Context
     ): UserPreferences = UserPreferences(context)
-
-    @Provides
-    @Singleton
-    fun provideStepCounterManager(
-        @ApplicationContext context: Context
-    ): StepCounterManager = StepCounterManager(context)
 }

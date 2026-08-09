@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL@20..48,200..700,0..1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E1D8;color:#231C17;font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#C34A21;text-decoration:none}
+a:hover{color:#DE5F35;text-decoration:underline}
+.mi{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-variation-settings:'FILL' 0,'wght' 400;user-select:none}
+.mif{font-variation-settings:'FILL' 1,'wght' 400}
+.ph{--bg:#FAF5EF;--s1:#FFFFFF;--s2:#F2EBE1;--s3:#FFFFFF;--ink:#231C17;--ink2:#6B5F55;--ink3:#877B70;--line:rgba(35,28,23,.09);--line2:rgba(35,28,23,.16);--pri:#C34A21;--prii:#FFFFFF;--prib:#DE5F35;--pris:#FAE6DB;--amb:#A9701A;--ambg:#E9A13E;--ambs:#FAEEDA;--jad:#0E8563;--jadg:#17A67C;--jads:#DDF2EB;--dng:#B4271F;--dngs:#FBE3E0;--gold:#B98A17;--silv:#75737C;--brnz:#9C5F35;--sh:0 1px 2px rgba(60,42,28,.05),0 8px 20px -10px rgba(60,42,28,.18);--sh2:0 2px 6px rgba(60,42,28,.08),0 24px 48px -18px rgba(60,42,28,.30);--scrim:rgba(35,28,23,.45);
+position:relative;width:392px;height:838px;flex:none;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(45,30,20,.18),0 22px 44px -16px rgba(45,30,20,.32)}
+.ph[data-t=dark]{--bg:#141110;--s1:#1E1815;--s2:#2A231E;--s3:#342B25;--ink:#F4EBE2;--ink2:#BCAEA3;--ink3:#9C8F84;--line:rgba(255,238,226,.10);--line2:rgba(255,238,226,.18);--pri:#FF7A47;--prii:#2A1207;--prib:#FF8A5B;--pris:#3A2015;--amb:#F5B463;--ambg:#F5B463;--ambs:#3A2C15;--jad:#42D6A4;--jadg:#42D6A4;--jads:#123329;--dng:#FF8E7E;--dngs:#3E1C18;--gold:#E8B93F;--silv:#C3C6D2;--brnz:#D08C5C;--sh:0 2px 6px rgba(0,0,0,.45),0 14px 30px -12px rgba(0,0,0,.6);--sh2:0 4px 12px rgba(0,0,0,.5),0 28px 56px -18px rgba(0,0,0,.75);--scrim:rgba(8,6,5,.66)}
+.ph[data-t=dark] .card{background-image:linear-gradient(180deg,rgba(255,242,232,.04),rgba(255,242,232,0) 44%)}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin:0}
+.h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:20px;line-height:1.22;letter-spacing:-.015em;margin:0}
+.num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:0}
+.bd{font-size:15px;line-height:1.5;color:var(--ink2);margin:0}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh)}
+.btn{height:56px;min-width:48px;border-radius:999px;background:var(--pri);color:var(--prii);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;border:0;cursor:pointer;box-shadow:0 8px 18px -10px var(--pri)}
+.btn2{height:56px;border-radius:999px;background:transparent;color:var(--ink);border:1.5px solid var(--line2);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex:none;letter-spacing:.01em}
+.fld{height:58px;border-radius:18px;background:var(--s2);border:1.5px solid var(--line);padding:0 18px;display:flex;align-items:center;gap:10px;font-size:16px;color:var(--ink);font-weight:500}
+.row{display:flex;align-items:center;gap:14px;min-height:56px}
+.sec{padding:40px 46px;border-bottom:1px solid rgba(35,28,23,.10)}
+.sech{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px}
+.secn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.12em;padding:4px 8px;background:#231C17;color:#FAF5EF;border-radius:5px}
+.sect{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.24;margin:0}
+.secd{font-size:13.5px;line-height:1.5;color:#6B5F55;max-width:760px;margin:0 0 26px}
+.cap{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;color:#584D44;letter-spacing:.01em;max-width:800px}
+.cap b{font-weight:600;color:#231C17}
+.brd{width:auto;height:auto;flex:none;border-radius:26px;padding:30px 32px;box-shadow:0 2px 8px rgba(45,30,20,.14),0 30px 60px -24px rgba(45,30,20,.3);display:grid;grid-template-columns:repeat(3,282px);gap:34px 30px;align-items:start}
+.cl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin:0 0 11px}
+.grp{display:flex;flex-direction:column;gap:10px}
+.tog{width:52px;height:32px;border-radius:99px;flex:none;position:relative;transition:.2s}
+.tog::after{content:"";position:absolute;top:4px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sk{background:var(--s2);border-radius:8px;position:relative;overflow:hidden}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--line),transparent);animation:shim 1.6s infinite}
+@keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes ringfill{from{stroke-dashoffset:var(--c)}to{stroke-dashoffset:var(--o)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+
+<section class="sec" style="border-bottom:0">
+<div class="sech"><span class="secn">§9.3</span><h2 class="sect">Component sheet</h2></div>
+<p class="secd">Every reusable part, both themes, all states. <a href="Pamoja.dc.html">← Back to the design system</a></p>
+<div style="display:flex;gap:38px;flex-wrap:wrap;align-items:flex-start">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph brd" data-t="{{ th }}">
+
+<div><p class="cl">Buttons · primary</p><div class="grp">
+<div class="btn" style="width:100%">Get started</div>
+<div class="btn" style="width:100%;filter:brightness(.92);transform:scale(.97)">Pressed · scale .97</div>
+<div class="btn" style="width:100%;background:var(--s2);color:var(--ink3);box-shadow:none">Continue</div>
+<div class="btn" style="width:100%;background:var(--pri);opacity:.9"><span class="mi" style="font-size:19px;animation:spin 1s linear infinite">progress_activity</span>Creating account…</div>
+<div class="btn" style="width:100%;background:var(--jad);color:var(--prii);box-shadow:none"><span class="mi mif" style="font-size:20px">check_circle</span>Steps connected</div>
+<p class="cap" style="color:var(--ink3);margin:2px 0 0;font-size:10.5px">default · pressed · disabled · loading · confirmed</p>
+</div></div>
+
+<div><p class="cl">Buttons · secondary &amp; other</p><div class="grp">
+<div class="btn2" style="width:100%">More share options</div>
+<div class="btn2" style="width:100%;background:var(--pris);border-color:transparent;color:var(--pri)"><span class="mi" style="font-size:20px">group_add</span>Join</div>
+<div class="btn" style="width:100%"><span class="mi" style="font-size:20px">content_copy</span>Copy link</div>
+<div class="btn2" style="width:100%;border-color:var(--dng);color:var(--dng)"><span class="mi" style="font-size:20px">delete</span>Delete Permanently</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:15px;font-weight:600;color:var(--pri)">Skip for now</div>
+<div style="width:48px;height:48px;border-radius:999px;border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--ink2)"><span class="mi">ios_share</span></div>
+<div style="width:48px;height:48px;border-radius:999px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink)"><span class="mi">arrow_back</span></div>
+</div>
+<p class="cap" style="color:var(--ink3);margin:2px 0 0;font-size:10.5px">outline · tonal · primary with icon · destructive · text + icon buttons (48dp)</p>
+</div></div>
+
+<div><p class="cl">Text fields</p><div class="grp">
+<div><p class="cap" style="color:var(--ink3);margin:0 0 6px;font-size:10.5px">Name</p><div class="fld" style="color:var(--ink3)">What should we call you?</div></div>
+<div class="fld" style="border-color:var(--pri);border-width:2px;background:var(--s1)">Ravi<span style="width:2px;height:22px;background:var(--pri);margin-left:-6px"></span></div>
+<div class="fld">Ravi Sharma<span class="mi" style="margin-left:auto;color:var(--jad);font-size:20px">check</span></div>
+<div><div class="fld" style="border-color:var(--dng);background:var(--dngs)">Nam<span class="mi" style="margin-left:auto;color:var(--dng);font-size:20px">error</span></div><p style="font-size:12.5px;color:var(--dng);margin:6px 0 0;font-weight:500">Names need at least 2 characters</p></div>
+<div style="display:flex;gap:10px">
+<div style="flex:1"><p class="cap" style="color:var(--ink3);margin:0 0 6px;font-size:10.5px">Age</p><div class="fld" style="height:52px;justify-content:center;padding:0 10px;color:var(--ink3)">34</div></div>
+<div style="flex:1"><p class="cap" style="color:var(--ink3);margin:0 0 6px;font-size:10.5px">Height</p><div class="fld" style="height:52px;justify-content:center;padding:0 10px;color:var(--ink3)">cm</div></div>
+<div style="flex:1"><p class="cap" style="color:var(--ink3);margin:0 0 6px;font-size:10.5px">Weight</p><div class="fld" style="height:52px;justify-content:center;padding:0 10px;color:var(--ink3)">kg</div></div>
+</div>
+</div></div>
+
+<div><p class="cl">Progress ring · 3 stages</p><div style="display:flex;gap:14px;align-items:flex-start">
+<div style="text-align:center">
+<svg width="86" height="86" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--s2)" stroke-width="10"></circle><circle cx="50" cy="50" r="42" fill="none" stroke="var(--ambg)" stroke-width="10" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="200" transform="rotate(-90 50 50)"></circle></svg>
+<p class="cap" style="margin:4px 0 0;color:var(--amb);font-size:10.5px;font-weight:600">24%</p></div>
+<div style="text-align:center">
+<svg width="86" height="86" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--s2)" stroke-width="10"></circle><circle cx="50" cy="50" r="42" fill="none" stroke="var(--prib)" stroke-width="10" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="100" transform="rotate(-90 50 50)"></circle></svg>
+<p class="cap" style="margin:4px 0 0;color:var(--pri);font-size:10.5px;font-weight:600">62%</p></div>
+<div style="text-align:center">
+<svg width="86" height="86" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--jads)" stroke-width="10"></circle><circle cx="50" cy="50" r="42" fill="none" stroke="var(--jadg)" stroke-width="10" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="0" transform="rotate(-90 50 50)"></circle><circle cx="50" cy="50" r="27" fill="var(--jads)"></circle></svg>
+<p class="cap" style="margin:4px 0 0;color:var(--jad);font-size:10.5px;font-weight:600">100%</p></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--ambs);color:var(--amb);font-size:11.5px;font-weight:700"><span class="mi" style="font-size:15px">wb_twilight</span>Warming up</span>
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--pris);color:var(--pri);font-size:11.5px;font-weight:700"><span class="mi mif" style="font-size:15px">local_fire_department</span>On track</span>
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--jads);color:var(--jad);font-size:11.5px;font-weight:700"><span class="mi mif" style="font-size:15px">verified</span>Complete</span>
+</div></div>
+
+<div><p class="cl">Stat pills</p><div style="display:flex;gap:8px">
+<div style="flex:1;background:var(--s2);border-radius:18px;padding:13px 10px;text-align:center"><p class="num" style="font-size:21px;color:var(--pri)">62%</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">COMPLETED</p></div>
+<div style="flex:1;background:var(--s2);border-radius:18px;padding:13px 10px;text-align:center"><p class="num" style="font-size:21px">26,880</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">REMAINING</p></div>
+<div style="flex:1;background:var(--s2);border-radius:18px;padding:13px 10px;text-align:center"><p class="num" style="font-size:21px">8</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">MEMBERS</p></div>
+</div>
+<p class="cl" style="margin:18px 0 11px">Section header</p>
+<div style="display:flex;align-items:center;justify-content:space-between"><p class="lbl">Leaderboard</p><span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--pri)">This week<span class="mi" style="font-size:16px">expand_more</span></span></div>
+<div style="height:1px;background:var(--line);margin-top:11px"></div>
+<p class="cl" style="margin:18px 0 11px">Segmented control</p>
+<div style="display:flex;background:var(--s2);border-radius:99px;padding:3px">
+<div style="flex:1;height:38px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--ink3)">Today</div>
+<div style="flex:1;height:38px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--s1);color:var(--ink);box-shadow:var(--sh)">This week</div>
+<div style="flex:1;height:38px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--ink3)">All time</div>
+</div></div>
+
+<div><p class="cl">Leaderboard rows</p><div class="grp">
+<div class="card" style="border-radius:20px;padding:15px 16px;display:flex;align-items:center;gap:13px;border-color:var(--line2)">
+<div style="position:relative"><div class="av" style="width:52px;height:52px;background:#2E7D6E;font-size:17px">MS</div><span class="mi mif" style="position:absolute;bottom:-3px;right:-5px;font-size:21px;color:var(--gold)">workspace_premium</span></div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px"><p style="margin:0;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Meera Sharma</p><span class="num" style="font-size:12px;color:var(--gold)">1</span></div><p class="cap" style="margin:3px 0 0;color:var(--ink2);font-size:11.5px">9,840 this week</p></div>
+<div style="text-align:right"><p class="num" style="font-size:17px">3,120</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:10px">TODAY</p></div>
+</div>
+<div style="border-radius:20px;padding:12px 14px;display:flex;align-items:center;gap:12px;background:var(--pris);border:1.5px solid var(--pri)">
+<span class="num" style="font-size:14px;color:var(--pri);width:18px;text-align:center">2</span>
+<div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9.5px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p class="cap" style="margin:2px 0 0;color:var(--ink2);font-size:11.5px">8,215 this week</p></div>
+<div style="text-align:right"><p class="num" style="font-size:15.5px">4,860</p></div>
+</div>
+<div style="border-radius:20px;padding:12px 14px;display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--line)">
+<span class="mi mif" style="font-size:19px;color:var(--silv);width:18px">workspace_premium</span>
+<div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">TH</div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Tomás Herrera</p><p class="cap" style="margin:2px 0 0;color:var(--ink2);font-size:11.5px">6,930 this week</p></div>
+<div style="width:44px;height:44px;border-radius:99px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri)"><span class="mi" style="font-size:20px">campaign</span></div>
+</div>
+<div style="border-radius:20px;padding:12px 14px;display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--line);opacity:.96">
+<span class="num" style="font-size:14px;color:var(--ink3);width:18px;text-align:center">7</span>
+<div class="av" style="width:44px;height:44px;background:#6B4C9A;font-size:15px">GM</div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Grace Mwangi</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11.5px">2,480 this week</p></div>
+<div style="text-align:right"><p class="num" style="font-size:15.5px;color:var(--ink3)">0</p></div>
+</div>
+<p class="cap" style="color:var(--ink3);margin:2px 0 0;font-size:10.5px">1st elevated · you (always highlighted) · cheer action · resting</p>
+</div></div>
+
+<div><p class="cl">Cards</p><div class="grp">
+<div class="card" style="padding:15px 16px;display:flex;align-items:center;gap:14px">
+<div class="av" style="width:54px;height:54px;border-radius:18px;background:#C34A21;font-size:17px">SF</div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sharma Family</p><p class="cap" style="margin:3px 0 5px;color:var(--ink3);font-size:11px">70,000 STEPS / WEEK GOAL</p>
+<div style="height:7px;border-radius:99px;background:var(--s2);overflow:hidden"><div style="width:62%;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ambg),var(--prib))"></div></div>
+<p style="margin:5px 0 0;font-size:12px;font-weight:600;color:var(--ink2)">43,120 <span style="color:var(--ink3);font-weight:500">· 62% · 3 days left</span></p></div>
+<span class="mi" style="color:var(--ink3)">chevron_right</span>
+</div>
+<div style="border-radius:20px;padding:14px 16px;background:var(--pris);display:flex;align-items:center;gap:13px">
+<div style="width:42px;height:42px;border-radius:14px;background:var(--pri);display:flex;align-items:center;justify-content:center;color:var(--prii)"><span class="mi">directions_walk</span></div>
+<div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Enable step tracking</p><p class="cap" style="margin:2px 0 0;color:var(--ink2);font-size:11.5px">Tap to grant permission and start counting</p></div>
+<span class="mi" style="color:var(--pri)">chevron_right</span>
+</div>
+<div style="border-radius:20px;padding:14px 16px;background:var(--s2);display:flex;align-items:center;gap:12px">
+<span class="mi" style="color:var(--jad)">trending_up</span>
+<p style="margin:0;font-size:14px;font-weight:600;line-height:1.35"><span class="num" style="font-size:15px">1,120</span> steps/day each<span style="color:var(--ink3);font-weight:500"> to hit the goal</span></p>
+</div>
+</div></div>
+
+<div><p class="cl">List rows &amp; toggles</p><div class="grp">
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:20px;overflow:hidden">
+<div class="row" style="padding:13px 16px"><div style="width:40px;height:40px;border-radius:13px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2)"><span class="mi" style="font-size:20px">shield</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Privacy Policy</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Read our terms and privacy policy</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+<div style="height:1px;background:var(--line);margin-left:16px"></div>
+<div class="row" style="padding:13px 16px"><div style="width:40px;height:40px;border-radius:13px;background:var(--dngs);display:flex;align-items:center;justify-content:center;color:var(--dng)"><span class="mi" style="font-size:20px">delete_forever</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600;color:var(--dng)">Delete Account</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Permanently wipe your profile</p></div></div>
+</div>
+<div class="row" style="padding:14px 16px;background:var(--s1);border:1px solid var(--line);border-radius:20px"><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Members can edit goal</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Allow others to change the step target</p></div><div class="tog" style="background:var(--pri)"><span style="position:absolute;top:4px;left:24px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+<div class="row" style="padding:14px 16px;background:var(--s1);border:1px solid var(--line);border-radius:20px"><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Daily reminder</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Off</p></div><div class="tog" style="background:var(--line2)"><span style="position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:99px;background:var(--s1);box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+</div></div>
+
+<div><p class="cl">Sliders</p><div class="grp">
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:17px 18px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px"><p class="cap" style="color:var(--ink3);margin:0;font-size:10.5px">WEEKLY STEP GOAL</p><p class="num" style="font-size:24px;color:var(--pri)">70,000</p></div>
+<div style="position:relative;height:8px;border-radius:99px;background:var(--s2);margin:0 2px"><div style="position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:99px;background:var(--pri)"></div>
+<div style="position:absolute;left:calc(50% - 13px);top:-9px;width:26px;height:26px;border-radius:99px;background:var(--s1);border:3px solid var(--pri);box-shadow:var(--sh)"></div>
+<div style="position:absolute;left:25%;top:2px;width:4px;height:4px;border-radius:99px;background:var(--line2)"></div><div style="position:absolute;left:75%;top:2px;width:4px;height:4px;border-radius:99px;background:var(--line2)"></div><div style="position:absolute;left:99%;top:2px;width:4px;height:4px;border-radius:99px;background:var(--line2)"></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:12px"><span class="cap" style="font-size:10px;color:var(--ink3)">35k</span><span class="cap" style="font-size:10px;color:var(--ink3)">50k</span><span class="cap" style="font-size:10px;color:var(--pri);font-weight:700">70k</span><span class="cap" style="font-size:10px;color:var(--ink3)">100k</span><span class="cap" style="font-size:10px;color:var(--ink3)">150k</span></div>
+</div>
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:17px 18px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px"><p class="cap" style="color:var(--ink3);margin:0;font-size:10.5px">MAX MEMBERS</p><p style="margin:0"><span class="num" style="font-size:24px">10</span><span class="cap" style="color:var(--ink3);font-size:11px"> / 20</span></p></div>
+<div style="position:relative;height:8px;border-radius:99px;background:var(--s2);margin:0 2px"><div style="position:absolute;left:0;top:0;bottom:0;width:44%;border-radius:99px;background:var(--ink)"></div><div style="position:absolute;left:calc(44% - 13px);top:-9px;width:26px;height:26px;border-radius:99px;background:var(--s1);border:3px solid var(--ink);box-shadow:var(--sh)"></div></div>
+<div style="display:flex;justify-content:space-between;margin-top:12px"><span class="cap" style="font-size:10px;color:var(--ink3)">2</span><span class="cap" style="font-size:10px;color:var(--ink3)">20</span></div>
+</div>
+</div></div>
+
+<div><p class="cl">Badges, medals, streaks</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+<div style="text-align:center;width:74px"><div style="width:64px;height:64px;border-radius:22px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);border:1.5px solid var(--pri)"><span class="mi mif" style="font-size:32px">emoji_events</span></div><p class="cap" style="margin:6px 0 0;font-size:10px;color:var(--ink2);line-height:1.3">First 10k</p></div>
+<div style="text-align:center;width:74px"><div style="width:64px;height:64px;border-radius:22px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad);border:1.5px solid var(--jad)"><span class="mi mif" style="font-size:32px">local_fire_department</span></div><p class="cap" style="margin:6px 0 0;font-size:10px;color:var(--ink2);line-height:1.3">7-day streak</p></div>
+<div style="text-align:center;width:74px"><div style="width:64px;height:64px;border-radius:22px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink3);border:1.5px dashed var(--line2)"><span class="mi" style="font-size:28px">lock</span></div><p class="cap" style="margin:6px 0 0;font-size:10px;color:var(--ink3);line-height:1.3">Locked</p></div>
+<div style="text-align:center;width:74px"><div style="width:64px;height:64px;border-radius:22px;background:var(--ambs);display:flex;align-items:center;justify-content:center;color:var(--amb);border:1.5px solid var(--amb)"><span class="mi mif" style="font-size:32px">military_tech</span></div><p class="cap" style="margin:6px 0 0;font-size:10px;color:var(--ink2);line-height:1.3">Best week</p></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:var(--pris);color:var(--pri);font-size:12.5px;font-weight:700"><span class="mi mif" style="font-size:17px">local_fire_department</span>6 day streak</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:var(--jads);color:var(--jad);font-size:12.5px;font-weight:700"><span class="mi mif" style="font-size:17px">calendar_month</span>4 weeks</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:var(--ambs);color:var(--amb);font-size:12.5px;font-weight:700"><span class="mi" style="font-size:17px">schedule</span>At risk</span>
+</div>
+<div style="display:flex;gap:14px;margin-top:16px;align-items:center">
+<span class="mi mif" style="font-size:26px;color:var(--gold)">workspace_premium</span><span class="mi mif" style="font-size:26px;color:var(--silv)">workspace_premium</span><span class="mi mif" style="font-size:26px;color:var(--brnz)">workspace_premium</span><span class="num" style="font-size:15px;color:var(--ink3)">4</span><span class="num" style="font-size:15px;color:var(--ink3)">5</span>
+<p class="cap" style="margin:0;font-size:10px;color:var(--ink3);line-height:1.3">medal + numeral<br>never color alone</p>
+</div>
+</div>
+
+<div><p class="cl">Dialogs</p>
+<div style="border-radius:28px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh2);padding:22px;margin-bottom:14px">
+<p class="h2" style="font-size:19px;margin-bottom:6px">Join a group</p>
+<p class="bd" style="font-size:13.5px;margin-bottom:16px">Paste the invite link shared by your group admin.</p>
+<div class="fld" style="height:52px;font-size:14px;color:var(--ink3)">pamoja.app/j/…</div>
+<div style="display:flex;gap:10px;margin-top:18px"><div class="btn2" style="flex:1;height:50px;font-size:15px">Cancel</div><div class="btn" style="flex:1;height:50px;font-size:15px">Join</div></div>
+</div>
+<div style="border-radius:28px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh2);padding:22px">
+<div style="width:46px;height:46px;border-radius:15px;background:var(--dngs);display:flex;align-items:center;justify-content:center;color:var(--dng);margin-bottom:14px"><span class="mi">warning</span></div>
+<p class="h2" style="font-size:19px;margin-bottom:6px">Delete account?</p>
+<p class="bd" style="font-size:13.5px">This action is permanent and cannot be undone. All your step groups and progress history will be removed.</p>
+<div style="display:flex;gap:10px;margin-top:18px"><div class="btn2" style="flex:1;height:50px;font-size:15px">Cancel</div><div class="btn" style="flex:1.3;height:50px;font-size:14.5px;background:var(--dng);color:var(--prii);box-shadow:none">Delete Permanently</div></div>
+</div>
+</div>
+
+<div><p class="cl">Toasts &amp; snackbars</p><div class="grp">
+<div style="border-radius:18px;background:var(--ink);color:var(--bg);padding:14px 16px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh2)"><span class="mi mif" style="font-size:20px;color:var(--jadg)">check_circle</span><p style="margin:0;font-size:14px;font-weight:600">Link copied</p></div>
+<div style="border-radius:18px;background:var(--ink);color:var(--bg);padding:14px 16px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh2)"><span class="mi" style="font-size:20px;color:var(--bg)">content_copy</span><p style="margin:0;font-size:14px;font-weight:600;flex:1">User ID copied to clipboard</p></div>
+<div style="border-radius:18px;background:var(--ink);color:var(--bg);padding:14px 16px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh2)"><span class="mi mif" style="font-size:20px;color:var(--prib)">volunteer_activism</span><p style="margin:0;font-size:14px;font-weight:600;flex:1">Cheer sent to Grace</p></div>
+<div style="border-radius:18px;background:var(--dngs);border:1px solid var(--dng);padding:14px 16px;display:flex;align-items:center;gap:11px"><span class="mi" style="font-size:20px;color:var(--dng)">cloud_off</span><p style="margin:0;font-size:14px;font-weight:600;color:var(--ink);flex:1">No connection — showing saved data</p><span style="font-size:13px;font-weight:700;color:var(--dng)">Retry</span></div>
+</div></div>
+
+<div><p class="cl">Skeletons &amp; charts</p>
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:15px 16px;display:flex;gap:13px;align-items:center;margin-bottom:14px">
+<div class="sk" style="width:54px;height:54px;border-radius:18px"></div>
+<div style="flex:1"><div class="sk" style="width:60%;height:14px;margin-bottom:8px"></div><div class="sk" style="width:85%;height:10px;margin-bottom:9px"></div><div class="sk" style="width:100%;height:7px;border-radius:99px"></div></div>
+</div>
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:16px">
+<div style="display:flex;align-items:flex-end;gap:7px;height:88px">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:38%;border-radius:7px;background:var(--s2)"></div><span class="cap" style="font-size:9px;color:var(--ink3)">M</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:62%;border-radius:7px;background:var(--s2)"></div><span class="cap" style="font-size:9px;color:var(--ink3)">T</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:48%;border-radius:7px;background:var(--s2)"></div><span class="cap" style="font-size:9px;color:var(--ink3)">W</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:88%;border-radius:7px;background:linear-gradient(180deg,var(--prib),var(--pri))"></div><span class="cap" style="font-size:9px;color:var(--pri);font-weight:700">T</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:70%;border-radius:7px;background:var(--s2)"></div><span class="cap" style="font-size:9px;color:var(--ink3)">F</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:26%;border-radius:7px;background:var(--s2)"></div><span class="cap" style="font-size:9px;color:var(--ink3)">S</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;align-items:center"><div style="width:100%;height:12%;border-radius:7px;background:var(--s2);opacity:.6"></div><span class="cap" style="font-size:9px;color:var(--ink3)">S</span></div>
+</div>
+<p class="cap" style="margin:12px 0 0;color:var(--ink3);font-size:10.5px">Bars are ember only for the best day; the rest sit in surface-2 so one day reads as the peak.</p>
+</div>
+</div>
+
+<div><p class="cl">Avatars &amp; empty state</p>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+<div class="av" style="width:56px;height:56px;background:#C34A21;font-size:18px">RS</div>
+<div class="av" style="width:44px;height:44px;background:#2E7D6E;font-size:15px">MS</div>
+<div class="av" style="width:36px;height:36px;background:#A03C5C;font-size:12.5px">AB</div>
+<div class="av" style="width:36px;height:36px;background:var(--s2);color:var(--ink3);font-size:12.5px">+4</div>
+<div class="av" style="width:56px;height:56px;border-radius:18px;background:#3F5FA8;font-size:18px">KC</div>
+</div>
+<div style="border-radius:22px;border:1.5px dashed var(--line2);padding:24px 18px;text-align:center;background:var(--s1)">
+<svg width="72" height="72" viewBox="0 0 64 64" fill="none" style="margin-bottom:10px"><circle cx="24.5" cy="32" r="16.5" stroke="var(--pri)" stroke-width="5" stroke-opacity=".55"></circle><circle cx="39.5" cy="32" r="16.5" stroke="var(--jad)" stroke-width="5" stroke-opacity=".55" stroke-dasharray="6 7"></circle></svg>
+<p class="h2" style="font-size:17px;margin-bottom:5px">No groups yet</p>
+<p class="bd" style="font-size:13px">Create a group and invite friends or family, or join one with an invite link.</p>
+</div>
+</div>
+
+</div>
+</sc-for>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;themeMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Both&quot;,&quot;Light&quot;,&quot;Dark&quot;],&quot;default&quot;:&quot;Both&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const m = this.props.themeMode ?? 'Both';
+    return { themes: m === 'Light' ? ['light'] : m === 'Dark' ? ['dark'] : ['light', 'dark'] };
+  }
+}
+</script>
+</body>
+</html>

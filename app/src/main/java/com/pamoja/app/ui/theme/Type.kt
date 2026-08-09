@@ -2,116 +2,113 @@ package com.pamoja.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import com.pamoja.app.R
 
-// ─── Outfit Font Family ──────────────────────────────────────────────────────
-// Geometric sans-serif — feels iOS-native without being SF Pro.
-// Great for fitness/social apps: clean, modern, slightly rounded.
-val OutfitFontFamily = FontFamily(
-    Font(R.font.outfit_light,    FontWeight.Light),
-    Font(R.font.outfit_regular,  FontWeight.Normal),
-    Font(R.font.outfit_medium,   FontWeight.Medium),
-    Font(R.font.outfit_semibold, FontWeight.SemiBold),
-    Font(R.font.outfit_bold,     FontWeight.Bold)
+// ============================================================================
+// PAMOJA. TYPOGRAPHY  (Pamoja Design System: Baloo 2 display + Nunito body)
+// Both rounded families are fetched via the downloadable Google Fonts provider
+// (certs in res/values/font_certs.xml). No bundled TTFs, the first launch
+// downloads + caches them. Display roles use Baloo 2 (chunky rounded terminals,
+// matches the "Pamoja" wordmark); body/label roles use Nunito.
+// ============================================================================
+
+private val googleFontProvider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = R.array.com_google_android_gms_fonts_certs,
 )
 
-// ─── Type Scale ──────────────────────────────────────────────────────────────
-// Follows a tight, modern scale with negative letter-spacing on large headings
-// (the "Apple feel"). Labels use slight positive tracking for readability.
+private val baloo2 = GoogleFont("Baloo 2")
+private val nunito = GoogleFont("Nunito")
+
+/** Display / headings. Baloo 2. */
+val DisplayFontFamily = FontFamily(
+    Font(googleFont = baloo2, fontProvider = googleFontProvider, weight = FontWeight.Medium),
+    Font(googleFont = baloo2, fontProvider = googleFontProvider, weight = FontWeight.SemiBold),
+    Font(googleFont = baloo2, fontProvider = googleFontProvider, weight = FontWeight.Bold),
+    Font(googleFont = baloo2, fontProvider = googleFontProvider, weight = FontWeight.ExtraBold),
+)
+
+/** Body / UI text. Nunito. */
+val BodyFontFamily = FontFamily(
+    Font(googleFont = nunito, fontProvider = googleFontProvider, weight = FontWeight.Normal),
+    Font(googleFont = nunito, fontProvider = googleFontProvider, weight = FontWeight.Medium),
+    Font(googleFont = nunito, fontProvider = googleFontProvider, weight = FontWeight.SemiBold),
+    Font(googleFont = nunito, fontProvider = googleFontProvider, weight = FontWeight.Bold),
+    Font(googleFont = nunito, fontProvider = googleFontProvider, weight = FontWeight.ExtraBold),
+)
+
+// M3 type scale mapped to the design system's scale (tokens/typography.css).
 val PamojaTypography = Typography(
-
-    // Hero numbers — used for large step counts on the progress ring
+    // Hero stats, large step counts on the progress ring.
     displayLarge = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Bold,
-        fontSize     = 48.sp,
-        lineHeight   = 52.sp,
-        letterSpacing = (-1.5).sp
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.ExtraBold,
+        fontSize = 56.sp, lineHeight = 60.sp, letterSpacing = (-0.5).sp,
     ),
-
-    // Large heading — screen titles, group name on detail page
+    displayMedium = TextStyle(
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.ExtraBold,
+        fontSize = 40.sp, lineHeight = 46.sp,
+    ),
+    displaySmall = TextStyle(
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.Bold,
+        fontSize = 32.sp, lineHeight = 38.sp,
+    ),
+    // Screen titles / group names.
     headlineLarge = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.SemiBold,
-        fontSize     = 28.sp,
-        lineHeight   = 34.sp,
-        letterSpacing = (-0.5).sp
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.Bold,
+        fontSize = 28.sp, lineHeight = 34.sp,
     ),
-
-    // Medium heading — section titles, dialog titles
     headlineMedium = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.SemiBold,
-        fontSize     = 22.sp,
-        lineHeight   = 28.sp,
-        letterSpacing = (-0.3).sp
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.Bold,
+        fontSize = 24.sp, lineHeight = 30.sp,
     ),
-
-    // Small heading — card titles
     headlineSmall = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Medium,
-        fontSize     = 18.sp,
-        lineHeight   = 24.sp,
-        letterSpacing = (-0.2).sp
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp, lineHeight = 26.sp,
     ),
-
-    // Body large — primary content text
+    // Card titles.
+    titleLarge = TextStyle(
+        fontFamily = DisplayFontFamily, fontWeight = FontWeight.SemiBold,
+        fontSize = 18.sp, lineHeight = 24.sp,
+    ),
+    titleMedium = TextStyle(
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp, lineHeight = 22.sp,
+    ),
+    titleSmall = TextStyle(
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp, lineHeight = 20.sp,
+    ),
+    // Body copy.
     bodyLarge = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Normal,
-        fontSize     = 16.sp,
-        lineHeight   = 24.sp,
-        letterSpacing = 0.sp
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.Medium,
+        fontSize = 17.sp, lineHeight = 26.sp,
     ),
-
-    // Body medium — descriptions, subtitles, leaderboard names
     bodyMedium = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Normal,
-        fontSize     = 14.sp,
-        lineHeight   = 20.sp,
-        letterSpacing = 0.sp
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.Medium,
+        fontSize = 15.sp, lineHeight = 22.sp,
     ),
-
-    // Body small — helper text, secondary info
     bodySmall = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Light,
-        fontSize     = 12.sp,
-        lineHeight   = 16.sp,
-        letterSpacing = 0.sp
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.Normal,
+        fontSize = 13.sp, lineHeight = 19.sp,
     ),
-
-    // Label large — important labels, button text
+    // Buttons / labels.
     labelLarge = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.SemiBold,
-        fontSize     = 15.sp,
-        lineHeight   = 20.sp,
-        letterSpacing = 0.sp
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.Bold,
+        fontSize = 15.sp, lineHeight = 20.sp,
     ),
-
-    // Label medium — stat values, leaderboard rank numbers
     labelMedium = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Medium,
-        fontSize     = 13.sp,
-        lineHeight   = 16.sp,
-        letterSpacing = 0.sp
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.Bold,
+        fontSize = 13.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp,
     ),
-
-    // Label small — caps labels, section headers ("LEADERBOARD")
-    // Slight positive tracking for legibility at small caps
+    // Tracked-out caps section labels ("YOUR GROUPS", "LEADERBOARD").
     labelSmall = TextStyle(
-        fontFamily   = OutfitFontFamily,
-        fontWeight   = FontWeight.Medium,
-        fontSize     = 11.sp,
-        lineHeight   = 14.sp,
-        letterSpacing = 0.6.sp
-    )
+        fontFamily = BodyFontFamily, fontWeight = FontWeight.Bold,
+        fontSize = 11.sp, lineHeight = 14.sp, letterSpacing = 0.8.sp,
+    ),
 )

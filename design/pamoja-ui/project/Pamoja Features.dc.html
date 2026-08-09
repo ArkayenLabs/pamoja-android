@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL@20..48,200..700,0..1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E1D8;color:#231C17;font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#C34A21;text-decoration:none}
+a:hover{color:#DE5F35;text-decoration:underline}
+.mi{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-variation-settings:'FILL' 0,'wght' 400;user-select:none}
+.mif{font-variation-settings:'FILL' 1,'wght' 400}
+.ph{--bg:#FAF5EF;--s1:#FFFFFF;--s2:#F2EBE1;--s3:#FFFFFF;--ink:#231C17;--ink2:#6B5F55;--ink3:#877B70;--line:rgba(35,28,23,.09);--line2:rgba(35,28,23,.16);--pri:#C34A21;--prii:#FFFFFF;--prib:#DE5F35;--pris:#FAE6DB;--amb:#A9701A;--ambg:#E9A13E;--ambs:#FAEEDA;--jad:#0E8563;--jadg:#17A67C;--jads:#DDF2EB;--dng:#B4271F;--dngs:#FBE3E0;--gold:#B98A17;--silv:#75737C;--brnz:#9C5F35;--sh:0 1px 2px rgba(60,42,28,.05),0 8px 20px -10px rgba(60,42,28,.18);--sh2:0 2px 6px rgba(60,42,28,.08),0 24px 48px -18px rgba(60,42,28,.30);--scrim:rgba(35,28,23,.45);--cel:#0E8563;--celi:#FFFFFF;--celb:#FFFFFF;--celbi:#0B5C45;
+position:relative;width:392px;height:838px;flex:none;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(45,30,20,.18),0 22px 44px -16px rgba(45,30,20,.32)}
+.ph[data-t=dark]{--bg:#141110;--s1:#1E1815;--s2:#2A231E;--s3:#342B25;--ink:#F4EBE2;--ink2:#BCAEA3;--ink3:#9C8F84;--line:rgba(255,238,226,.10);--line2:rgba(255,238,226,.18);--pri:#FF7A47;--prii:#2A1207;--prib:#FF8A5B;--pris:#3A2015;--amb:#F5B463;--ambg:#F5B463;--ambs:#3A2C15;--jad:#42D6A4;--jadg:#42D6A4;--jads:#123329;--dng:#FF8E7E;--dngs:#3E1C18;--gold:#E8B93F;--silv:#C3C6D2;--brnz:#D08C5C;--sh:0 2px 6px rgba(0,0,0,.45),0 14px 30px -12px rgba(0,0,0,.6);--sh2:0 4px 12px rgba(0,0,0,.5),0 28px 56px -18px rgba(0,0,0,.75);--scrim:rgba(8,6,5,.66);--cel:#10312A;--celi:#EAF7F1;--celb:#42D6A4;--celbi:#08251E}
+.ph[data-t=dark] .card{background-image:linear-gradient(180deg,rgba(255,242,232,.04),rgba(255,242,232,0) 44%)}
+.sb{height:36px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 24px;font-size:12.5px;font-weight:700;color:var(--ink);position:relative;z-index:3}
+.sb::before{content:"9:41"}
+.sb::after{content:"";width:44px;height:11px;border-radius:2px;background:linear-gradient(90deg,currentColor 0 10px,transparent 10px 13px,currentColor 13px 27px,transparent 27px 30px,currentColor 30px 44px);opacity:.5}
+.gb{height:24px;flex:none;display:flex;align-items:center;justify-content:center;position:relative;z-index:6}
+.gb::after{content:"";width:118px;height:4px;border-radius:99px;background:var(--ink);opacity:.26}
+.sc{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 18px;position:relative;z-index:2}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin:0}
+.h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:30px;line-height:1.1;letter-spacing:-.025em;margin:0}
+.h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:20px;line-height:1.22;letter-spacing:-.015em;margin:0}
+.num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:0}
+.bd{font-size:15px;line-height:1.55;color:var(--ink2);margin:0}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh)}
+.btn{height:56px;min-width:48px;border-radius:999px;background:var(--pri);color:var(--prii);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;border:0;box-shadow:0 8px 18px -10px var(--pri)}
+.btn2{height:56px;border-radius:999px;background:var(--s1);color:var(--ink);border:1.5px solid var(--line2);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.lr{border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--s1);border:1px solid var(--line)}
+.ic{width:44px;height:44px;border-radius:99px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none}
+.tbar{display:flex;align-items:center;gap:12px;padding:4px 0 10px}
+.sec{padding:40px 46px;border-bottom:1px solid rgba(35,28,23,.10)}
+.sech{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px}
+.secn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.12em;padding:4px 8px;background:#231C17;color:#FAF5EF;border-radius:5px}
+.sect{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.24;margin:0}
+.secd{font-size:13.5px;line-height:1.5;color:#6B5F55;max-width:800px;margin:0 0 26px}
+.cap{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;color:#584D44;letter-spacing:.01em;max-width:392px;line-height:1.5}
+.cap b{font-weight:600;color:#231C17}
+.gal{display:flex;flex-wrap:wrap;gap:40px 34px;align-items:flex-start}
+.scr{display:flex;flex-direction:column;gap:12px}
+.pair{display:flex;gap:18px}
+.bdg{width:100%;aspect-ratio:1;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:scale(.7);opacity:0}62%{transform:scale(1.07);opacity:1}100%{transform:scale(1)}}
+@keyframes brst{from{transform:scale(.6);opacity:.9}to{transform:scale(1.25);opacity:0}}
+</style>
+</helmet>
+
+<section class="sec" style="border-bottom:0">
+<div class="sech"><span class="secn">§5.1–5.3</span><h2 class="sect">Celebration, streaks, achievements</h2></div>
+<p class="secd">The reward layer. Jade is the payoff color and it is rationed — it only shows up when something was actually earned. <a href="Pamoja.dc.html">← Design system</a> · <a href="Pamoja Dashboard.dc.html">Dashboard →</a></p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>5.3 Goal celebration</b> — full-bleed jade, the ring bursts outward in three expanding rings (1400ms), the number scales up once, and the contributor strip proves it was collective. Share is primary because the win is social. Reduced motion: rings appear static, number does not scale.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.3 Goal celebration">
+<div style="position:absolute;inset:0;background:var(--cel)"></div>
+<div style="position:absolute;inset:0;overflow:hidden">
+<svg width="392" height="838" viewBox="0 0 392 838" fill="none" style="position:absolute;inset:0">
+<circle cx="196" cy="330" r="120" stroke="#FFFFFF" stroke-opacity=".22" stroke-width="2"></circle>
+<circle cx="196" cy="330" r="176" stroke="#FFFFFF" stroke-opacity=".14" stroke-width="2"></circle>
+<circle cx="196" cy="330" r="236" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="2"></circle>
+<circle cx="196" cy="330" r="300" stroke="#FFFFFF" stroke-opacity=".05" stroke-width="2"></circle>
+<circle cx="64" cy="150" r="5" fill="#FFFFFF" fill-opacity=".5"></circle><circle cx="330" cy="196" r="7" fill="#FFFFFF" fill-opacity=".38"></circle><circle cx="96" cy="470" r="6" fill="#FFFFFF" fill-opacity=".3"></circle><circle cx="316" cy="452" r="4" fill="#FFFFFF" fill-opacity=".45"></circle><circle cx="44" cy="300" r="3" fill="#FFFFFF" fill-opacity=".5"></circle><circle cx="352" cy="304" r="5" fill="#FFFFFF" fill-opacity=".3"></circle>
+<rect x="120" y="112" width="5" height="14" rx="2.5" fill="#FFFFFF" fill-opacity=".4" transform="rotate(24 120 112)"></rect>
+<rect x="276" y="126" width="5" height="14" rx="2.5" fill="#FFFFFF" fill-opacity=".35" transform="rotate(-38 276 126)"></rect>
+<rect x="62" y="392" width="5" height="14" rx="2.5" fill="#FFFFFF" fill-opacity=".3" transform="rotate(52 62 392)"></rect>
+</svg>
+</div>
+<div class="sb" style="color:var(--celi)"></div>
+<div class="sc" style="z-index:3">
+<div style="display:flex;justify-content:flex-end;padding:2px 0"><div style="width:44px;height:44px;border-radius:99px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:var(--celi)"><span class="mi">close</span></div></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin-top:-40px">
+<div style="position:relative;width:172px;height:172px;display:flex;align-items:center;justify-content:center;margin-bottom:26px">
+<svg width="172" height="172" viewBox="0 0 172 172" fill="none" style="position:absolute;inset:0"><circle cx="86" cy="86" r="72" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="3"></circle><circle cx="86" cy="86" r="58" fill="#FFFFFF" fill-opacity=".16"></circle></svg>
+<span class="mi mif" style="font-size:72px;color:var(--celi);position:relative;animation:pop 620ms cubic-bezier(.2,1.3,.3,1) both">verified</span>
+</div>
+<p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.22em;color:rgba(255,255,255,.72)">WEEKLY GOAL COMPLETE</p>
+<h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:40px;font-weight:700;letter-spacing:-.035em;margin:12px 0 0;color:var(--celi);line-height:1.05">You did it,<br>together</h1>
+<p class="num" style="font-size:58px;color:var(--celi);margin:20px 0 2px">71,540</p>
+<p style="margin:0;font-size:14px;font-weight:600;color:rgba(255,255,255,.8)">steps · Sharma Family · 70,000 target</p>
+<div style="display:flex;align-items:center;gap:-8px;margin-top:26px">
+<div class="av" style="width:40px;height:40px;background:#2E7D6E;font-size:13px;border:2.5px solid var(--cel)">MS</div>
+<div class="av" style="width:40px;height:40px;background:#C34A21;font-size:13px;border:2.5px solid var(--cel);margin-left:-10px">RS</div>
+<div class="av" style="width:40px;height:40px;background:#3F5FA8;font-size:13px;border:2.5px solid var(--cel);margin-left:-10px">TH</div>
+<div class="av" style="width:40px;height:40px;background:#A03C5C;font-size:13px;border:2.5px solid var(--cel);margin-left:-10px">AB</div>
+<div class="av" style="width:40px;height:40px;background:rgba(255,255,255,.22);font-size:12.5px;border:2.5px solid var(--cel);margin-left:-10px">+4</div>
+</div>
+<div style="display:inline-flex;align-items:center;gap:7px;margin-top:22px;padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.16)"><span class="mi mif" style="font-size:18px;color:var(--celi)">local_fire_department</span><p style="margin:0;font-size:13px;font-weight:700;color:var(--celi)">4 weeks in a row</p></div>
+</div>
+<div class="btn" style="background:var(--celb);color:var(--celbi);box-shadow:0 10px 24px -12px rgba(0,0,0,.5);margin-bottom:11px"><span class="mi mif" style="font-size:21px">chat</span>Share with the group</div>
+<div style="height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:rgba(255,255,255,.85);margin-bottom:6px">See the week</div>
+</div>
+<div class="gb" style="color:var(--celi)"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.1 Streaks</b> — personal streak (days you moved) and group streak (weeks the group hit target) share one screen. The week strip uses filled/hollow rings, not colour alone, and the "at risk" card states the fix in steps, not guilt.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.1 Streaks">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><h1 class="h1" style="font-size:24px">Streaks</h1></div>
+<div class="card" style="padding:17px 20px;margin-bottom:10px;text-align:center">
+<div style="position:relative;width:108px;height:108px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+<svg width="108" height="108" viewBox="0 0 118 118" fill="none" style="position:absolute;inset:0"><circle cx="59" cy="59" r="52" stroke="var(--pris)" stroke-width="8"></circle><circle cx="59" cy="59" r="52" stroke="var(--prib)" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="46" transform="rotate(-90 59 59)"></circle></svg>
+<div style="position:relative"><span class="mi mif" style="font-size:26px;color:var(--pri)">local_fire_department</span><p class="num" style="font-size:30px;margin:0;line-height:1">6</p></div>
+</div>
+<p style="margin:0;font-size:17px;font-weight:700">6 day personal streak</p>
+<p class="bd" style="font-size:13.5px;margin-top:5px">Your best is 11 days. One more day ties your record.</p>
+<div style="display:flex;justify-content:center;gap:9px;margin-top:16px">
+<div style="text-align:center"><span class="mi mif" style="font-size:20px;color:var(--pri)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">M</p></div>
+<div style="text-align:center"><span class="mi mif" style="font-size:20px;color:var(--pri)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">T</p></div>
+<div style="text-align:center"><span class="mi mif" style="font-size:20px;color:var(--pri)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">W</p></div>
+<div style="text-align:center"><span class="mi mif" style="font-size:20px;color:var(--pri)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">T</p></div>
+<div style="text-align:center"><span class="mi mif" style="font-size:20px;color:var(--pri)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">F</p></div>
+<div style="text-align:center"><span class="mi mif" style="font-size:20px;color:var(--pri)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">S</p></div>
+<div style="text-align:center"><span class="mi" style="font-size:20px;color:var(--line2)">circle</span><p class="cap" style="margin:4px 0 0;font-size:9.5px;color:var(--ink3)">S</p></div>
+</div>
+</div>
+<div style="border-radius:20px;background:var(--ambs);padding:13px 15px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+<span class="mi" style="font-size:21px;color:var(--amb);margin-top:1px">schedule</span>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Streak at risk</p><p class="bd" style="font-size:12.5px;margin-top:3px">1,140 steps before midnight keeps it alive. No rush — a walk round the block does it.</p></div>
+</div>
+<div class="card" style="padding:15px 18px;margin-bottom:10px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+<div style="width:44px;height:44px;border-radius:15px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi mif" style="font-size:22px">calendar_month</span></div>
+<div style="flex:1"><p style="margin:0;font-size:16px;font-weight:700">Sharma Family · 4 weeks</p><p class="bd" style="font-size:12.5px;margin-top:2px">Group streak · target hit every week since June</p></div>
+</div>
+<div style="display:flex;gap:6px">
+<div style="flex:1;height:38px;border-radius:12px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi mif" style="font-size:18px">check</span></div>
+<div style="flex:1;height:38px;border-radius:12px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi mif" style="font-size:18px">check</span></div>
+<div style="flex:1;height:38px;border-radius:12px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi mif" style="font-size:18px">check</span></div>
+<div style="flex:1;height:38px;border-radius:12px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi mif" style="font-size:18px">check</span></div>
+<div style="flex:1;height:38px;border-radius:12px;background:var(--s2);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;color:var(--ink3)"><span class="mi" style="font-size:17px">more_horiz</span></div>
+</div>
+<p class="cap" style="margin:11px 0 0;color:var(--ink3);font-size:10.5px">JUN 30 · JUL 7 · JUL 14 · JUL 21 · THIS WEEK</p>
+</div>
+<div class="card" style="padding:14px 17px;display:flex;gap:12px;align-items:flex-start;margin-bottom:4px">
+<div style="width:40px;height:40px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:20px">restart_alt</span></div>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Streak ended Tuesday — that's ok</p><p class="bd" style="font-size:12.5px;margin-top:3px">You walked 5 days out of 7. A new streak starts with your next step, and your badges stay yours.</p><p style="margin:9px 0 0;font-size:13px;font-weight:700;color:var(--pri)">Start a new one</p></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.2 Achievements gallery</b> — earned badges are tinted and filled; locked ones are dashed outlines with the requirement stated, never a mystery. Progress bar on the next attainable badge does the motivating.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.2 Achievements">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1"><h1 class="h1" style="font-size:24px">Achievements</h1></div><span class="cap" style="color:var(--ink3);font-size:11px">4 / 12</span></div>
+<div class="card" style="padding:15px 16px;display:flex;gap:13px;align-items:center;margin-bottom:18px">
+<div style="width:48px;height:48px;border-radius:16px;background:var(--ambs);display:flex;align-items:center;justify-content:center;color:var(--amb);flex:none"><span class="mi mif" style="font-size:24px">military_tech</span></div>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Next up: Personal best week</p><div style="height:7px;border-radius:99px;background:var(--s2);overflow:hidden;margin:8px 0 5px"><div style="width:74%;height:100%;border-radius:99px;background:var(--ambg)"></div></div><p class="cap" style="margin:0;color:var(--ink3);font-size:10.5px">13,420 / 18,100 STEPS THIS WEEK</p></div>
+</div>
+<p class="lbl" style="margin-bottom:12px">Earned</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:20px">
+<div><div class="bdg" style="background:var(--pris);border:1.5px solid var(--pri);color:var(--pri)"><span class="mi mif" style="font-size:34px">emoji_events</span></div><p style="margin:7px 0 0;font-size:11.5px;font-weight:700;text-align:center;line-height:1.3">First 10k day</p></div>
+<div><div class="bdg" style="background:var(--jads);border:1.5px solid var(--jad);color:var(--jad)"><span class="mi mif" style="font-size:34px">local_fire_department</span></div><p style="margin:7px 0 0;font-size:11.5px;font-weight:700;text-align:center;line-height:1.3">7 day streak</p></div>
+<div><div class="bdg" style="background:var(--ambs);border:1.5px solid var(--amb);color:var(--amb)"><span class="mi mif" style="font-size:34px">groups</span></div><p style="margin:7px 0 0;font-size:11.5px;font-weight:700;text-align:center;line-height:1.3">Team player</p></div>
+<div><div class="bdg" style="background:var(--jads);border:1.5px solid var(--jad);color:var(--jad)"><span class="mi mif" style="font-size:34px">verified</span></div><p style="margin:7px 0 0;font-size:11.5px;font-weight:700;text-align:center;line-height:1.3">Goal hit ×4</p></div>
+<div><div class="bdg" style="background:var(--s2);border:1.5px dashed var(--line2);color:var(--ink3)"><span class="mi" style="font-size:28px">lock</span></div><p style="margin:7px 0 0;font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;color:var(--ink3)">15k in a day</p></div>
+<div><div class="bdg" style="background:var(--s2);border:1.5px dashed var(--line2);color:var(--ink3)"><span class="mi" style="font-size:28px">lock</span></div><p style="margin:7px 0 0;font-size:11.5px;font-weight:600;text-align:center;line-height:1.3;color:var(--ink3)">30 day streak</p></div>
+</div>
+<p class="lbl" style="margin-bottom:12px">Locked</p>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr"><div style="width:44px;height:44px;border-radius:15px;background:var(--s2);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;color:var(--ink3);flex:none"><span class="mi" style="font-size:21px">bolt</span></div><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Early bird</p><p class="bd" style="font-size:12px;margin-top:2px">5,000 steps before 9am</p></div></div>
+<div class="lr"><div style="width:44px;height:44px;border-radius:15px;background:var(--s2);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;color:var(--ink3);flex:none"><span class="mi" style="font-size:21px">volunteer_activism</span></div><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Cheerleader</p><p class="bd" style="font-size:12px;margin-top:2px">Send 25 cheers to teammates</p></div></div>
+<div class="lr"><div style="width:44px;height:44px;border-radius:15px;background:var(--s2);border:1.5px dashed var(--line2);display:flex;align-items:center;justify-content:center;color:var(--ink3);flex:none"><span class="mi" style="font-size:21px">calendar_month</span></div><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Perfect month</p><p class="bd" style="font-size:12px;margin-top:2px">Group hits target 4 weeks running</p></div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.2 Badge unlocked</b> — a bottom sheet, not a takeover: the badge pops with an expanding glow ring, the requirement that was met is restated, and sharing is optional. Group goal celebrations are full-screen; personal ones are not, so the two never compete.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.2 Badge unlocked">
+<div class="sb"></div>
+<div class="sc" style="filter:blur(1.4px);opacity:.5">
+<div class="tbar"><div class="ic"></div><h1 class="h1" style="font-size:24px">Sharma Family</h1></div>
+<div style="display:flex;justify-content:center;padding:20px 0"><svg width="200" height="200" viewBox="0 0 240 240" fill="none"><circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle><circle cx="120" cy="120" r="104" stroke="var(--prib)" stroke-width="19" stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="248" transform="rotate(-90 120 120)"></circle></svg></div>
+<div style="display:flex;gap:8px"><div style="flex:1;height:66px;border-radius:18px;background:var(--s2)"></div><div style="flex:1;height:66px;border-radius:18px;background:var(--s2)"></div><div style="flex:1;height:66px;border-radius:18px;background:var(--s2)"></div></div>
+</div>
+<div style="position:absolute;inset:0;background:var(--scrim);z-index:4"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:5;background:var(--s3);border-radius:32px 32px 0 0;border-top:1px solid var(--line);box-shadow:var(--sh2);padding:14px 22px 30px;text-align:center">
+<div style="width:44px;height:4px;border-radius:99px;background:var(--line2);margin:0 auto 20px"></div>
+<div style="position:relative;width:132px;height:132px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center">
+<svg width="132" height="132" viewBox="0 0 132 132" fill="none" style="position:absolute;inset:0"><circle cx="66" cy="66" r="64" stroke="var(--pri)" stroke-width="2" opacity=".3" style="animation:brst 1.6s ease-out infinite"></circle><circle cx="66" cy="66" r="52" stroke="var(--pri)" stroke-width="2" opacity=".45"></circle></svg>
+<div style="width:96px;height:96px;border-radius:32px;background:var(--pris);border:2px solid var(--pri);display:flex;align-items:center;justify-content:center;color:var(--pri);position:relative;animation:pop 560ms cubic-bezier(.2,1.3,.3,1) both"><span class="mi mif" style="font-size:48px">emoji_events</span></div>
+</div>
+<p class="lbl" style="color:var(--pri);letter-spacing:.2em;font-weight:600">Badge unlocked</p>
+<h2 class="h1" style="font-size:26px;margin-top:9px">First 10,000 step day</h2>
+<p class="bd" style="font-size:14px;margin:10px 12px 0">You walked 10,240 steps on Thursday — your first five figure day. Four badges down, eight to go.</p>
+<div class="btn" style="margin:22px 0 10px">Share with the group</div>
+<div style="height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:var(--ink3)">Not now</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section>
+
+<section class="sec" style="border-bottom:0;border-top:1px solid rgba(35,28,23,.10)">
+<div class="sech"><span class="secn">§5.4–5.8</span><h2 class="sect">History, stats, feed, cheers, filters</h2></div>
+<p class="secd">The accountability loop and the memory of it. Charts use one ember bar for the peak day and surface-2 for the rest — the shape of the week is the data, not a rainbow.</p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>5.4 Weekly history</b> — every past week as a row: hit or missed (icon + word, not colour alone), final total against target, and the three biggest contributors. Missed weeks are stated flatly and never red.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.4 Weekly history">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1"><h1 class="h1" style="font-size:23px">Weekly history</h1><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Sharma Family · since June 30</p></div></div>
+<div class="card" style="padding:16px 17px;margin-bottom:16px;display:flex;gap:14px;align-items:center">
+<div style="text-align:center"><p class="num" style="font-size:28px;color:var(--jad)">4</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:9.5px">HIT</p></div>
+<div style="width:1px;height:40px;background:var(--line)"></div>
+<div style="text-align:center"><p class="num" style="font-size:28px">1</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:9.5px">MISSED</p></div>
+<div style="width:1px;height:40px;background:var(--line)"></div>
+<div style="flex:1"><p style="margin:0;font-size:13.5px;font-weight:700;line-height:1.35">Best week: 78,410 steps</p><p class="bd" style="font-size:12px;margin-top:3px">Week of July 14</p></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="card" style="padding:14px 15px;border-color:var(--jad)">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span class="mi mif" style="font-size:20px;color:var(--jad)">verified</span><p style="margin:0;font-size:14.5px;font-weight:700;flex:1">Jul 21 – Jul 27 · Goal hit</p><p class="num" style="font-size:15px;color:var(--jad)">102%</p></div>
+<div style="height:8px;border-radius:99px;background:var(--jads);overflow:hidden;margin-bottom:9px"><div style="width:100%;height:100%;border-radius:99px;background:var(--jadg)"></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><p class="cap" style="margin:0;color:var(--ink2);font-size:11px">71,540 OF 70,000</p><div style="display:flex"><div class="av" style="width:26px;height:26px;background:#2E7D6E;font-size:9.5px;border:2px solid var(--s1)">MS</div><div class="av" style="width:26px;height:26px;background:#C34A21;font-size:9.5px;border:2px solid var(--s1);margin-left:-8px">RS</div><div class="av" style="width:26px;height:26px;background:#3F5FA8;font-size:9.5px;border:2px solid var(--s1);margin-left:-8px">TH</div></div></div>
+</div>
+<div class="card" style="padding:14px 15px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span class="mi mif" style="font-size:20px;color:var(--jad)">verified</span><p style="margin:0;font-size:14.5px;font-weight:700;flex:1">Jul 14 – Jul 20 · Goal hit</p><p class="num" style="font-size:15px;color:var(--jad)">112%</p></div>
+<div style="height:8px;border-radius:99px;background:var(--s2);overflow:hidden;margin-bottom:9px"><div style="width:100%;height:100%;border-radius:99px;background:var(--jadg)"></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><p class="cap" style="margin:0;color:var(--ink2);font-size:11px">78,410 OF 70,000</p><div style="display:flex"><div class="av" style="width:26px;height:26px;background:#C34A21;font-size:9.5px;border:2px solid var(--s1)">RS</div><div class="av" style="width:26px;height:26px;background:#A03C5C;font-size:9.5px;border:2px solid var(--s1);margin-left:-8px">AB</div><div class="av" style="width:26px;height:26px;background:#2E7D6E;font-size:9.5px;border:2px solid var(--s1);margin-left:-8px">MS</div></div></div>
+</div>
+<div class="card" style="padding:14px 15px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span class="mi" style="font-size:20px;color:var(--ink3)">remove_circle_outline</span><p style="margin:0;font-size:14.5px;font-weight:700;flex:1;color:var(--ink2)">Jul 7 – Jul 13 · Just short</p><p class="num" style="font-size:15px;color:var(--ink2)">88%</p></div>
+<div style="height:8px;border-radius:99px;background:var(--s2);overflow:hidden;margin-bottom:9px"><div style="width:88%;height:100%;border-radius:99px;background:var(--ambg)"></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><p class="cap" style="margin:0;color:var(--ink2);font-size:11px">61,620 OF 70,000</p><div style="display:flex"><div class="av" style="width:26px;height:26px;background:#2E7D6E;font-size:9.5px;border:2px solid var(--s1)">MS</div><div class="av" style="width:26px;height:26px;background:#8F5E13;font-size:9.5px;border:2px solid var(--s1);margin-left:-8px">DO</div><div class="av" style="width:26px;height:26px;background:#C34A21;font-size:9.5px;border:2px solid var(--s1);margin-left:-8px">RS</div></div></div>
+</div>
+<div class="card" style="padding:14px 15px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span class="mi mif" style="font-size:20px;color:var(--jad)">verified</span><p style="margin:0;font-size:14.5px;font-weight:700;flex:1">Jun 30 – Jul 6 · Goal hit</p><p class="num" style="font-size:15px;color:var(--jad)">104%</p></div>
+<div style="height:8px;border-radius:99px;background:var(--s2);overflow:hidden"><div style="width:100%;height:100%;border-radius:99px;background:var(--jadg)"></div></div>
+</div>
+<div style="border-radius:20px;border:1.5px dashed var(--line2);padding:16px;text-align:center"><p class="cap" style="margin:0;color:var(--ink3);font-size:11px">GROUP CREATED JUNE 30 — NOTHING BEFORE THIS</p></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.4 Personal stats</b> — your week as a chart, with the peak day in ember and today outlined. Averages, best day and the week-over-week delta sit beneath as plain numbers; the comparison is always framed against yourself, never against a teammate.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.4 Personal stats">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1"><h1 class="h1" style="font-size:23px">Your week</h1><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Mon 21 – Sun 27 July</p></div><div class="ic"><span class="mi" style="font-size:20px">ios_share</span></div></div>
+<div class="card" style="padding:18px;margin-bottom:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px">
+<div><p class="num" style="font-size:34px">43,120</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10.5px">STEPS THIS WEEK</p></div>
+<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;background:var(--jads);color:var(--jad);font-size:12px;font-weight:700"><span class="mi" style="font-size:16px">trending_up</span>+12% vs last week</span>
+</div>
+<div style="display:flex;align-items:flex-end;gap:8px;height:132px">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9px;color:var(--ink3)">6.2k</span><div style="width:100%;height:52%;border-radius:8px;background:var(--s2)"></div><span class="cap" style="font-size:9.5px;color:var(--ink3)">M</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9px;color:var(--ink3)">4.8k</span><div style="width:100%;height:40%;border-radius:8px;background:var(--s2)"></div><span class="cap" style="font-size:9.5px;color:var(--ink3)">T</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9px;color:var(--ink3)">8.1k</span><div style="width:100%;height:68%;border-radius:8px;background:var(--s2)"></div><span class="cap" style="font-size:9.5px;color:var(--ink3)">W</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9.5px;color:var(--pri);font-weight:700">10.2k</span><div style="width:100%;height:88%;border-radius:8px;background:var(--pri)"></div><span class="cap" style="font-size:9.5px;color:var(--pri);font-weight:700">T</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9px;color:var(--ink3)">7.4k</span><div style="width:100%;height:62%;border-radius:8px;background:var(--s2)"></div><span class="cap" style="font-size:9.5px;color:var(--ink3)">F</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9.5px;color:var(--ink2);font-weight:700">4.9k</span><div style="width:100%;height:41%;border-radius:8px;background:var(--s2);border:1.5px solid var(--pri)"></div><span class="cap" style="font-size:9.5px;color:var(--ink);font-weight:700">S</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center"><span class="cap" style="font-size:9px;color:var(--ink3)">—</span><div style="width:100%;height:8%;border-radius:8px;background:var(--s2);opacity:.5"></div><span class="cap" style="font-size:9.5px;color:var(--ink3)">S</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:14px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--pri)"></span><p class="cap" style="margin:0;color:var(--ink3);font-size:10px">BEST DAY</p></div>
+<div style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--s2);border:1.5px solid var(--pri)"></span><p class="cap" style="margin:0;color:var(--ink3);font-size:10px">TODAY</p></div>
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-bottom:12px">
+<div class="card" style="flex:1;padding:15px 16px"><p class="num" style="font-size:24px">6,160</p><p class="cap" style="margin:4px 0 0;color:var(--ink3);font-size:10px">DAILY AVERAGE</p></div>
+<div class="card" style="flex:1;padding:15px 16px"><p class="num" style="font-size:24px">10,240</p><p class="cap" style="margin:4px 0 0;color:var(--ink3);font-size:10px">BEST DAY · THU</p></div>
+</div>
+<div class="card" style="padding:16px 17px;display:flex;gap:12px;align-items:center;margin-bottom:12px">
+<div style="width:42px;height:42px;border-radius:14px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:21px">groups</span></div>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">19% of the group total</p><p class="bd" style="font-size:12.5px;margin-top:2px">Second highest contribution this week</p></div>
+</div>
+<div class="card" style="padding:16px 17px;display:flex;gap:12px;align-items:center">
+<div style="width:42px;height:42px;border-radius:14px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad);flex:none"><span class="mi" style="font-size:21px">timeline</span></div>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">4,620 steps ahead of last week</p><p class="bd" style="font-size:12.5px;margin-top:2px">Same day, last week: 38,500</p></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.6 Group activity feed</b> — five item types: milestone, personal record, join, cheer, goal achieved. Each has its own icon tile and tint; goal-achieved is the only full-width jade card, so scrolling the feed tells you at a glance which weeks were good ones.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.6 Activity feed">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1"><h1 class="h1" style="font-size:23px">Activity</h1><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Sharma Family</p></div></div>
+<p class="lbl" style="margin:6px 0 11px">Today</p>
+<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px">
+<div class="lr" style="align-items:flex-start;padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">footprint</span></div><div style="flex:1"><p style="margin:0;font-size:14px;font-weight:600;line-height:1.4"><b style="font-weight:800;white-space:nowrap">Ravi</b> hit 12,000 steps today</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">2 HOURS AGO</p></div></div>
+<div class="lr" style="align-items:flex-start;padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad);flex:none"><span class="mi" style="font-size:20px">flag</span></div><div style="flex:1"><p style="margin:0;font-size:14px;font-weight:600;line-height:1.4">Your group reached <b style="font-weight:800;white-space:nowrap">50%</b> of the weekly goal</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">TODAY, 07:20</p></div></div>
+<div class="lr" style="align-items:flex-start;padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--ambs);display:flex;align-items:center;justify-content:center;color:var(--amb);flex:none"><span class="mi mif" style="font-size:20px">volunteer_activism</span></div><div style="flex:1"><p style="margin:0;font-size:14px;font-weight:600;line-height:1.4"><b style="font-weight:800;white-space:nowrap">Meera</b> cheered <b style="font-weight:800;white-space:nowrap">Grace</b> on</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">TODAY, 06:55</p></div></div>
+</div>
+<p class="lbl" style="margin:0 0 11px">Yesterday</p>
+<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px">
+<div class="lr" style="align-items:flex-start;padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--ambs);display:flex;align-items:center;justify-content:center;color:var(--amb);flex:none"><span class="mi mif" style="font-size:20px">military_tech</span></div><div style="flex:1"><p style="margin:0;font-size:14px;font-weight:600;line-height:1.4"><b style="font-weight:800;white-space:nowrap">Meera</b> beat her personal best — 14,980 steps</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">YESTERDAY, 21:05</p></div></div>
+<div class="lr" style="align-items:flex-start;padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:20px">person_add</span></div><div style="flex:1"><p style="margin:0;font-size:14px;font-weight:600;line-height:1.4"><b style="font-weight:800;white-space:nowrap">Priya</b> joined the group</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">YESTERDAY, 18:12</p></div></div>
+</div>
+<p class="lbl" style="margin:0 0 11px">Last week</p>
+<div style="border-radius:20px;background:var(--jad);padding:16px 17px;display:flex;gap:12px;align-items:center">
+<div style="width:44px;height:44px;border-radius:15px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:var(--prii);flex:none"><span class="mi mif" style="font-size:23px">verified</span></div>
+<div style="flex:1"><p style="margin:0;font-size:15px;font-weight:800;white-space:nowrap;color:var(--prii)">Group goal achieved!</p><p style="margin:3px 0 0;font-size:12.5px;font-weight:600;color:var(--prii);opacity:.85">78,410 steps · 112% of target</p></div>
+<span class="mi" style="font-size:20px;color:var(--prii)">chevron_right</span>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.5 Send a cheer</b> — long-press a leaderboard row (or tap the megaphone) and this sheet rises. Four fixed, unambiguously kind messages: no free text, so nobody can be passive-aggressive, and no "nudge harder" option. The recipient's current numbers are shown so you know what you're cheering.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.5 Cheer sheet">
+<div class="sb"></div>
+<div class="sc" style="filter:blur(1.4px);opacity:.5">
+<div class="tbar"><div class="ic"></div><h1 class="h1" style="font-size:22px">Sharma Family</h1></div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+<div class="lr" style="height:66px"></div><div class="lr" style="height:66px"></div><div class="lr" style="height:66px;border-color:var(--pri);background:var(--pris)"></div><div class="lr" style="height:66px"></div>
+</div>
+</div>
+<div style="position:absolute;inset:0;background:var(--scrim);z-index:4"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:5;background:var(--s3);border-radius:32px 32px 0 0;border-top:1px solid var(--line);box-shadow:var(--sh2);padding:14px 20px 26px">
+<div style="width:44px;height:4px;border-radius:99px;background:var(--line2);margin:0 auto 20px"></div>
+<div style="display:flex;align-items:center;gap:13px;margin-bottom:20px">
+<div class="av" style="width:52px;height:52px;background:#2E7D6E;font-size:17px">GM</div>
+<div style="flex:1"><p style="margin:0;font-size:17px;font-weight:700">Cheer Grace on</p><p class="bd" style="font-size:12.5px;margin-top:2px">2,480 this week · rest day today</p></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr" style="border-color:var(--pri);background:var(--pris);padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--pri);display:flex;align-items:center;justify-content:center;color:var(--prii);flex:none"><span class="mi mif" style="font-size:21px">volunteer_activism</span></div><p style="margin:0;flex:1;font-size:14.5px;font-weight:700">You've got this</p><span class="mi mif" style="font-size:20px;color:var(--pri)">check_circle</span></div>
+<div class="lr" style="padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:21px">bolt</span></div><p style="margin:0;flex:1;font-size:14.5px;font-weight:600">Great pace this week</p></div>
+<div class="lr" style="padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:21px">favorite</span></div><p style="margin:0;flex:1;font-size:14.5px;font-weight:600">Proud of you</p></div>
+<div class="lr" style="padding:13px"><div style="width:40px;height:40px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:21px">directions_walk</span></div><p style="margin:0;flex:1;font-size:14.5px;font-weight:600">Walk with me?</p></div>
+</div>
+<div class="btn" style="margin:20px 0 8px"><span class="mi" style="font-size:20px">send</span>Send cheer</div>
+<p class="cap" style="text-align:center;color:var(--ink3);font-size:10.5px;margin:0">Grace gets one gentle notification. Nothing public, nothing counted.</p>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.5 Cheer received</b> — Android heads-up notification and the in-app toast that follows. The receiving copy names the sender and never mentions rank or how far behind anyone is.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.5 Cheer received">
+<div class="sb"></div>
+<div style="position:absolute;left:10px;right:10px;top:44px;z-index:7">
+<div style="border-radius:26px;background:var(--s3);box-shadow:var(--sh2);border:1px solid var(--line);padding:15px 16px">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+<svg width="18" height="18" viewBox="0 0 64 64" fill="none"><circle cx="24.5" cy="32" r="16.5" stroke="var(--pri)" stroke-width="8"></circle><circle cx="39.5" cy="32" r="16.5" stroke="var(--jad)" stroke-width="8"></circle></svg>
+<p class="cap" style="margin:0;color:var(--ink3);font-size:10.5px;flex:1">PAMOJA · NOW</p><span class="mi" style="font-size:17px;color:var(--ink3)">expand_more</span>
+</div>
+<p style="margin:0;font-size:15px;font-weight:700">Ravi cheered you on</p>
+<p class="bd" style="font-size:13px;margin-top:3px">"You've got this" — Sharma Family is at 62% with 3 days to go.</p>
+<div style="display:flex;gap:8px;margin-top:13px"><div style="height:40px;padding:0 16px;border-radius:99px;background:var(--pris);color:var(--pri);display:flex;align-items:center;font-size:13.5px;font-weight:700">Cheer back</div><div style="height:40px;padding:0 16px;border-radius:99px;background:var(--s2);color:var(--ink2);display:flex;align-items:center;font-size:13.5px;font-weight:600">Open group</div></div>
+</div>
+</div>
+<div class="sc" style="filter:blur(.6px);opacity:.75">
+<div class="tbar" style="padding-top:96px"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1;min-width:0"><p style="margin:0;font-size:17px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif">Sharma Family</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">8 members · Mon–Sun</p></div></div>
+<div style="display:flex;justify-content:center;padding:8px 0"><svg width="200" height="200" viewBox="0 0 240 240" fill="none"><circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle><circle cx="120" cy="120" r="104" stroke="var(--prib)" stroke-width="19" stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="248" transform="rotate(-90 120 120)"></circle></svg></div>
+<div style="display:flex;gap:8px"><div style="flex:1;height:64px;border-radius:18px;background:var(--s2)"></div><div style="flex:1;height:64px;border-radius:18px;background:var(--s2)"></div><div style="flex:1;height:64px;border-radius:18px;background:var(--s2)"></div></div>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:44px;z-index:6">
+<div style="border-radius:18px;background:var(--ink);color:var(--bg);padding:14px 16px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh2)"><span class="mi mif" style="font-size:20px;color:var(--prib)">volunteer_activism</span><p style="margin:0;font-size:14px;font-weight:600;flex:1">Cheer sent to Grace</p><span style="font-size:13px;font-weight:700;color:var(--prib)">Undo</span></div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.8 Leaderboard filters</b> — Today and All time. Today re-sorts and drops weekly totals; All time adds a lifetime figure and a "member since" line. The pace card hides on non-weekly views because it would be meaningless there.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.8 Leaderboard filters">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1;min-width:0"><p style="margin:0;font-size:17px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Sharma Family</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">8 members · Mon–Sun</p></div><div class="ic"><span class="mi" style="font-size:20px">person_add</span></div></div>
+<div style="display:flex;background:var(--s2);border-radius:99px;padding:3px;margin:4px 0 16px">
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700;background:var(--s1);color:var(--ink);box-shadow:var(--sh)">Today</div>
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--ink3)">This week</div>
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--ink3)">All time</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p class="lbl">Today · Saturday</p><p class="cap" style="margin:0;color:var(--ink2);font-size:11px">13,660 TOTAL</p></div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:22px">
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)"><span class="mi mif" style="font-size:19px;color:var(--gold);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span><span class="num" style="font-size:11px;color:var(--gold)">1</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:600;color:var(--ink2)">Best today</p></div><p class="num" style="font-size:17px">4,860</p></div>
+<div class="lr"><span class="mi mif" style="font-size:19px;color:var(--silv);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#2E7D6E;font-size:15px">MS</div><div style="flex:1"><div style="display:flex;align-items:center;gap:5px"><p style="margin:0;font-size:15.5px;font-weight:600">Meera Sharma</p><span class="num" style="font-size:11px;color:var(--silv)">2</span></div></div><p class="num" style="font-size:16px">3,120</p></div>
+<div class="lr"><span class="mi mif" style="font-size:19px;color:var(--brnz);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">TH</div><div style="flex:1"><div style="display:flex;align-items:center;gap:5px"><p style="margin:0;font-size:15.5px;font-weight:600">Tomás Herrera</p><span class="num" style="font-size:11px;color:var(--brnz)">3</span></div></div><p class="num" style="font-size:16px">2,240</p></div>
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">4</span><div class="av" style="width:44px;height:44px;background:#6B4C9A;font-size:15px">PS</div><div style="flex:1"><p style="margin:0;font-size:15.5px;font-weight:600">Priya Sharma</p></div><p class="num" style="font-size:16px">1,510</p></div>
+</div>
+<div style="display:flex;background:var(--s2);border-radius:99px;padding:3px;margin:0 0 16px">
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--ink3)">Today</div>
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--ink3)">This week</div>
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700;background:var(--s1);color:var(--ink);box-shadow:var(--sh)">All time</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><p class="lbl">All time · since June 30</p><p class="cap" style="margin:0;color:var(--ink2);font-size:11px">1.42M TOTAL</p></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr"><span class="mi mif" style="font-size:19px;color:var(--gold);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#2E7D6E;font-size:15px">MS</div><div style="flex:1"><p style="margin:0;font-size:15.5px;font-weight:600">Meera Sharma</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:10px">MEMBER SINCE JUNE 30</p></div><p class="num" style="font-size:16px">284,110</p></div>
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)"><span class="mi mif" style="font-size:19px;color:var(--silv);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:10px">MEMBER SINCE JUNE 30</p></div><p class="num" style="font-size:16px">241,880</p></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section>
+<section class="sec" style="border-bottom:0;border-top:1px solid rgba(35,28,23,.10)">
+<div class="sech"><span class="secn">§5.9–5.13</span><h2 class="sect">Admin, join preview, notifications, widget, running</h2></div>
+<p class="secd">The plumbing and the forward-looking bits. Admin destructive actions always name the person or thing they affect.</p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>5.9 Admin controls</b> — admin-only. Editable goal and cap reuse the create-group controls verbatim; the invite link can be regenerated or switched off; members carry an overflow action. Transfer admin sits above the danger zone with its own confirmation.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.9 Admin controls">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1"><h1 class="h1" style="font-size:23px">Manage group</h1><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">Sharma Family · you are admin</p></div></div>
+<p class="lbl" style="margin:6px 0 10px">Group</p>
+<div class="card" style="padding:4px 0;margin-bottom:18px">
+<div class="row" style="padding:12px 15px;min-height:56px"><div style="flex:1"><p class="cap" style="color:var(--ink3);font-size:10px;margin:0 0 3px">NAME</p><p style="margin:0;font-size:15.5px;font-weight:700">Sharma Family</p></div><div style="width:48px;height:48px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--pri)"><span class="mi" style="font-size:20px">edit</span></div></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div style="padding:14px 15px"><div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px"><p class="cap" style="color:var(--ink3);font-size:10px;margin:0">WEEKLY STEP GOAL</p><p class="num" style="font-size:22px;color:var(--pri)">70,000</p></div><div style="position:relative;height:8px;border-radius:99px;background:var(--s2)"><div style="position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:99px;background:var(--pri)"></div><div style="position:absolute;left:calc(50% - 13px);top:-9px;width:26px;height:26px;border-radius:99px;background:var(--s1);border:3px solid var(--pri);box-shadow:var(--sh)"></div></div></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div style="padding:14px 15px"><div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px"><p class="cap" style="color:var(--ink3);font-size:10px;margin:0">MEMBER CAP</p><p style="margin:0"><span class="num" style="font-size:22px">10</span><span class="cap" style="color:var(--ink3);font-size:11px"> / 20</span></p></div><div style="position:relative;height:8px;border-radius:99px;background:var(--s2)"><div style="position:absolute;left:0;top:0;bottom:0;width:44%;border-radius:99px;background:var(--ink)"></div><div style="position:absolute;left:calc(44% - 13px);top:-9px;width:26px;height:26px;border-radius:99px;background:var(--s1);border:3px solid var(--ink);box-shadow:var(--sh)"></div></div><p class="bd" style="font-size:12px;margin-top:11px;color:var(--ink3)">8 of 10 spots taken — cap can't go below current members.</p></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:12px 15px"><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Members can edit goal</p><p class="bd" style="font-size:12px;margin-top:2px">Allow others to change the step target</p></div><div style="width:52px;height:32px;border-radius:99px;background:var(--line2);position:relative;flex:none"><span style="position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:99px;background:var(--s1);box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+</div>
+<p class="lbl" style="margin:0 0 10px">Invite link</p>
+<div class="card" style="padding:14px 15px;margin-bottom:18px">
+<p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">pamoja.app/j/4KQ2-SHRM</p>
+<div style="display:flex;gap:8px;margin-top:12px">
+<div style="flex:1;height:44px;border-radius:99px;background:var(--pris);color:var(--pri);display:flex;align-items:center;justify-content:center;gap:7px;font-size:13.5px;font-weight:700"><span class="mi" style="font-size:18px">autorenew</span>Regenerate</div>
+<div style="flex:1;height:44px;border-radius:99px;background:var(--s2);color:var(--ink2);display:flex;align-items:center;justify-content:center;gap:7px;font-size:13.5px;font-weight:600"><span class="mi" style="font-size:18px">link_off</span>Deactivate</div>
+</div>
+</div>
+<p class="lbl" style="margin:0 0 10px">Members · 8</p>
+<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#C34A21;font-size:14px">RS</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.08em;padding:2px 6px;border-radius:99px;background:var(--ink);color:var(--bg)">ADMIN</span></div></div></div>
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#2E7D6E;font-size:14px">MS</div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Meera Sharma</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:10px">JOINED JUN 30</p></div><div style="width:44px;height:44px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--ink3)"><span class="mi">more_vert</span></div></div>
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#3F5FA8;font-size:14px">TH</div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Tomás Herrera</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:10px">JOINED JUL 2</p></div><div style="width:44px;height:44px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--ink3)"><span class="mi">more_vert</span></div></div>
+</div>
+<div class="card" style="padding:4px 0;margin-bottom:18px">
+<div class="row" style="padding:12px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:20px">shield_person</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Transfer admin rights</p><p class="bd" style="font-size:12px;margin-top:2px">Hand the group over to another member</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:12px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--dngs);display:flex;align-items:center;justify-content:center;color:var(--dng);flex:none"><span class="mi" style="font-size:20px">group_remove</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700;color:var(--dng)">Delete group</p><p class="bd" style="font-size:12px;margin-top:2px">Removes the group for all 8 members</p></div><span class="mi" style="color:var(--dng);font-size:20px">chevron_right</span></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.9 Remove member · confirmation</b> — names the person, states exactly what happens to their steps, and offers the softer option (they can be re-invited) so removal never feels like a purge.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.9 Remove member dialog">
+<div class="sb"></div>
+<div class="sc" style="filter:blur(1.4px);opacity:.5">
+<div class="tbar"><div class="ic"></div><h1 class="h1" style="font-size:23px">Manage group</h1></div>
+<div class="card" style="height:120px;margin-bottom:16px"></div>
+<p class="lbl" style="margin:0 0 10px">Members · 8</p>
+<div style="display:flex;flex-direction:column;gap:9px"><div class="lr" style="height:64px"></div><div class="lr" style="height:64px"></div><div class="lr" style="height:64px"></div></div>
+</div>
+<div style="position:absolute;inset:0;background:var(--scrim);z-index:4"></div>
+<div style="position:absolute;left:18px;right:18px;top:0;bottom:0;display:flex;align-items:center;z-index:5">
+<div style="width:100%;border-radius:28px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh2);padding:24px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="av" style="width:48px;height:48px;background:#3F5FA8;font-size:16px">TH</div><div><p style="margin:0;font-size:16px;font-weight:700">Remove Tomás?</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10.5px">JOINED JUL 2 · 6,930 THIS WEEK</p></div></div>
+<p class="bd" style="font-size:14px">Tomás loses access to Sharma Family and his 6,930 steps come out of this week's total. You can send him the invite link again any time.</p>
+<div style="display:flex;gap:10px;margin-top:20px"><div class="btn2" style="flex:1;height:52px;font-size:15px">Cancel</div><div class="btn" style="flex:1;height:52px;font-size:15px;background:var(--dng);color:var(--prii);box-shadow:none">Remove</div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.10 Join via link · preview</b> — you see the group before you commit: name, who is already in, the weekly goal and how many spots remain. This is the only screen where you see people you might not know yet, so names and avatars come first.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.10 Join preview">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">close</span></div><p class="lbl" style="flex:1">Invite preview</p></div>
+<div style="text-align:center;padding:12px 0 2px">
+<div class="av" style="width:80px;height:80px;border-radius:26px;background:#2E7D6E;font-size:26px;margin:0 auto 14px">MW</div>
+<h1 class="h1" style="font-size:28px">Monday Walkers</h1>
+<p class="bd" style="font-size:14.5px;margin-top:8px">Meera invited you to walk together</p>
+</div>
+<div style="display:flex;gap:10px;margin:18px 0 10px">
+<div class="card" style="flex:1;padding:13px 12px;text-align:center"><p class="num" style="font-size:22px">50,000</p><p class="cap" style="margin:4px 0 0;color:var(--ink3);font-size:9.5px">WEEKLY GOAL</p></div>
+<div class="card" style="flex:1;padding:15px 12px;text-align:center"><p class="num" style="font-size:22px">4 / 8</p><p class="cap" style="margin:4px 0 0;color:var(--ink3);font-size:9.5px">MEMBERS</p></div>
+<div class="card" style="flex:1;padding:15px 12px;text-align:center"><p class="num" style="font-size:22px">Mon</p><p class="cap" style="margin:4px 0 0;color:var(--ink3);font-size:9.5px">RESETS</p></div>
+</div>
+<p class="lbl" style="margin:8px 0 10px">Already walking</p>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#2E7D6E;font-size:14px">MS</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15px;font-weight:700">Meera Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.08em;padding:2px 6px;border-radius:99px;background:var(--ink);color:var(--bg)">ADMIN</span></div></div></div>
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#A03C5C;font-size:14px">AB</div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Aisha Bello</p></div></div>
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#3F5FA8;font-size:14px">TH</div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Tomás Herrera</p></div></div>
+<div class="lr"><div class="av" style="width:42px;height:42px;background:#6B4C9A;font-size:14px">DO</div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:600">Daniel Okonkwo</p></div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:13px 4px 0"><span class="mi" style="font-size:17px;color:var(--jad)">lock</span><p class="cap" style="color:var(--ink3);font-size:10.5px;margin:0">They'll see your name and step count. Nothing else.</p></div>
+<div style="flex:1"></div>
+<div class="btn" style="margin-bottom:10px">Join Monday Walkers</div>
+<div style="height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:var(--ink3);margin-bottom:6px">Cancel</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.10 Join failures</b> — group full (ochre, with the one useful action: ask the admin to raise the cap) and invalid or expired link (neutral, with a paste-again route). Neither uses red; neither is the user's fault.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.10 Join failures">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">close</span></div><p class="lbl" style="flex:1">Invite preview</p></div>
+<div style="border-radius:24px;background:var(--ambs);padding:24px 20px;text-align:center;margin:14px 0 26px">
+<div style="width:64px;height:64px;border-radius:22px;background:var(--amb);display:flex;align-items:center;justify-content:center;color:var(--prii);margin:0 auto 16px"><span class="mi" style="font-size:32px">group_off</span></div>
+<h2 class="h2" style="font-size:21px">This group is full</h2>
+<p class="bd" style="font-size:13.5px;margin-top:9px">Monday Walkers has all 8 spots taken. The admin can raise the cap to 20 — ask Meera and try the link again.</p>
+<div style="display:flex;gap:9px;margin-top:20px"><div class="btn2" style="flex:1;height:48px;font-size:14.5px;background:transparent">Close</div><div class="btn" style="flex:1.2;height:48px;font-size:14.5px;background:var(--amb);box-shadow:none;color:var(--prii)"><span class="mi" style="font-size:19px">chat</span>Ask admin</div></div>
+</div>
+<div style="border-radius:24px;background:var(--s2);padding:24px 20px;text-align:center">
+<div style="width:64px;height:64px;border-radius:22px;background:var(--s1);border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--ink3);margin:0 auto 16px"><span class="mi" style="font-size:32px">link_off</span></div>
+<h2 class="h2" style="font-size:21px">This link doesn't work</h2>
+<p class="bd" style="font-size:13.5px;margin-top:9px">It may have expired or been regenerated by the admin. Ask for a fresh invite link and paste it again.</p>
+<div style="display:flex;gap:9px;margin-top:20px"><div class="btn2" style="flex:1;height:48px;font-size:14.5px">Close</div><div class="btn" style="flex:1.2;height:48px;font-size:14.5px"><span class="mi" style="font-size:19px">content_paste</span>Paste again</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;justify-content:center;gap:7px;padding-bottom:16px"><span class="mi" style="font-size:16px;color:var(--ink3)">help</span><p class="cap" style="margin:0;color:var(--ink3);font-size:10.5px">Invite links look like pamoja.app/j/XXXX-XXXX</p></div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.11 Notification settings</b> — four switches, each with the actual sending time or trigger spelled out, plus a quiet-hours row. Nothing here is on by default except the weekly recap.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.11 Notification settings">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><h1 class="h1" style="font-size:23px">Notifications</h1></div>
+<p class="bd" style="font-size:13.5px;margin:8px 4px 20px">We keep these rare on purpose. Pamoja will never send you a guilt trip.</p>
+<p class="lbl" style="margin:0 0 10px">Reminders</p>
+<div class="card" style="padding:4px 0;margin-bottom:20px">
+<div class="row" style="padding:13px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">alarm</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Daily reminder</p><p class="bd" style="font-size:12px;margin-top:2px">Once, at 19:00, only if you're under 3,000 steps</p></div><div style="width:52px;height:32px;border-radius:99px;background:var(--pri);position:relative;flex:none"><span style="position:absolute;top:4px;left:24px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:13px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:20px">bedtime</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Quiet hours</p><p class="bd" style="font-size:12px;margin-top:2px">22:00 – 07:30 · nothing gets through</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+</div>
+<p class="lbl" style="margin:0 0 10px">From your group</p>
+<div class="card" style="padding:4px 0;margin-bottom:20px">
+<div class="row" style="padding:13px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi mif" style="font-size:20px">volunteer_activism</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Cheers from teammates</p><p class="bd" style="font-size:12px;margin-top:2px">When someone cheers you on</p></div><div style="width:52px;height:32px;border-radius:99px;background:var(--pri);position:relative;flex:none"><span style="position:absolute;top:4px;left:24px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:13px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad);flex:none"><span class="mi" style="font-size:20px">flag</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Goal milestones</p><p class="bd" style="font-size:12px;margin-top:2px">At 50%, 90% and when the goal is hit</p></div><div style="width:52px;height:32px;border-radius:99px;background:var(--pri);position:relative;flex:none"><span style="position:absolute;top:4px;left:24px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:13px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi" style="font-size:20px">person_add</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Someone joins</p><p class="bd" style="font-size:12px;margin-top:2px">A new member accepts the invite</p></div><div style="width:52px;height:32px;border-radius:99px;background:var(--line2);position:relative;flex:none"><span style="position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:99px;background:var(--s1);box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+</div>
+<p class="lbl" style="margin:0 0 10px">Summaries</p>
+<div class="card" style="padding:4px 0">
+<div class="row" style="padding:13px 15px"><div style="width:42px;height:42px;border-radius:14px;background:var(--ambs);display:flex;align-items:center;justify-content:center;color:var(--amb);flex:none"><span class="mi" style="font-size:20px">calendar_month</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Weekly recap</p><p class="bd" style="font-size:12px;margin-top:2px">Monday morning, with the final total</p></div><div style="width:52px;height:32px;border-radius:99px;background:var(--pri);position:relative;flex:none"><span style="position:absolute;top:4px;left:24px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.13 Running support</b> — a second activity type without a new screen: an activity switch under the top bar, the ring counts distance instead of steps, and the leaderboard swaps its unit. Steps stays the default; the group target is set in whichever unit the group picked.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="5.13 Running support">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar"><div class="ic"><span class="mi">arrow_back</span></div><div style="flex:1;min-width:0"><p style="margin:0;font-size:17px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Nakuru Runners</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">6 members · Mon–Sun</p></div><div class="ic"><span class="mi" style="font-size:20px">person_add</span></div></div>
+<div style="display:flex;background:var(--s2);border-radius:99px;padding:3px;margin:4px 0 14px">
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--ink3)"><span class="mi" style="font-size:19px">directions_walk</span>Steps</div>
+<div style="flex:1;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:13.5px;font-weight:700;background:var(--s1);color:var(--ink);box-shadow:var(--sh)"><span class="mi" style="font-size:19px">directions_run</span>Distance</div>
+</div>
+<div style="display:flex;justify-content:center;padding:0 0 2px">
+<div style="position:relative;width:228px;height:228px;display:flex;align-items:center;justify-content:center">
+<svg width="228" height="228" viewBox="0 0 240 240" fill="none" style="position:absolute;inset:0">
+<circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--prib)" stroke-width="19" stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="196" transform="rotate(-90 120 120)"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--ink3)" stroke-width="19" stroke-dasharray="3 651" stroke-dashoffset="-464" transform="rotate(-90 120 120)"></circle>
+</svg>
+<div style="position:relative;text-align:center">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--pris);color:var(--pri);font-size:10.5px;font-weight:800;white-space:nowrap"><span class="mi mif" style="font-size:14px">local_fire_department</span>ON TRACK</span>
+<p class="num" style="font-size:46px;margin:8px 0 0">70.2<span style="font-size:22px;font-weight:600;letter-spacing:0"> km</span></p>
+<p class="cap" style="margin:1px 0 0;color:var(--ink3);font-size:11.5px">of 100 km</p>
+<div style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 10px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:11px;font-weight:700"><span class="mi" style="font-size:14px">event</span>3 days left</div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:2px 0 11px">
+<div style="flex:1;background:var(--s2);border-radius:18px;padding:12px 8px;text-align:center"><p class="num" style="font-size:19px;color:var(--pri)">70%</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">COMPLETED</p></div>
+<div style="flex:1;background:var(--s2);border-radius:18px;padding:12px 8px;text-align:center"><p class="num" style="font-size:19px">29.8</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">KM TO GO</p></div>
+<div style="flex:1;background:var(--s2);border-radius:18px;padding:12px 8px;text-align:center"><p class="num" style="font-size:19px">6</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">MEMBERS</p></div>
+</div>
+<div style="border-radius:18px;background:var(--jads);padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:14px"><span class="mi" style="font-size:20px;color:var(--jad)">trending_up</span><p style="margin:0;font-size:13.5px;font-weight:600;color:var(--ink)"><span class="num" style="font-size:15px">1.7 km</span>/day each<span style="color:var(--ink2);font-weight:500"> — you're ahead of pace.</span></p></div>
+<p class="lbl" style="margin-bottom:10px">Leaderboard · distance</p>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr" style="padding:12px 13px"><span class="mi mif" style="font-size:19px;color:var(--gold);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">TH</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Tomás Herrera</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">18.4 km · 4 runs</p></div><p class="num" style="font-size:16px">5.2<span style="font-size:11px;font-weight:600;letter-spacing:0"> km</span></p></div>
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)"><span class="mi mif" style="font-size:19px;color:var(--silv);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:600;color:var(--ink2)">15.1 km · 3 runs</p></div><p class="num" style="font-size:16px">0<span style="font-size:11px;font-weight:600;letter-spacing:0"> km</span></p></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>5.12 Home screen widget</b> — two sizes, both themes. 2×2 is the ring, the percentage and days left; 4×2 adds the standings and your own position. Both are tappable straight into the group. The widget uses the same ring stage colors, so a glance at the home screen tells you the week's mood.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" style="width:392px;height:auto;border-radius:30px;padding:26px 22px 30px;box-shadow:0 2px 8px rgba(45,30,20,.14),0 26px 52px -22px rgba(45,30,20,.3);background:var(--bg)">
+<p class="lbl" style="margin-bottom:18px">Widgets · {{ th }}</p>
+<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:22px">
+<div style="width:160px;height:160px;border-radius:26px;background:var(--s1);border:1px solid var(--line);box-shadow:var(--sh);padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+<div style="position:relative;width:82px;height:82px;display:flex;align-items:center;justify-content:center">
+<svg width="82" height="82" viewBox="0 0 82 82" fill="none" style="position:absolute;inset:0"><circle cx="41" cy="41" r="35" stroke="var(--s2)" stroke-width="8"></circle><circle cx="41" cy="41" r="35" stroke="var(--prib)" stroke-width="8" stroke-linecap="round" stroke-dasharray="219.9" stroke-dashoffset="83.6" transform="rotate(-90 41 41)"></circle></svg>
+<div style="position:relative;text-align:center"><p class="num" style="font-size:20px;line-height:1">62%</p></div>
+</div>
+<p style="margin:0;font-size:12.5px;font-weight:700;text-align:center">Sharma Family</p>
+<p class="cap" style="margin:0;color:var(--ink3);font-size:9.5px">43,120 · 3 DAYS LEFT</p>
+</div>
+<div style="flex:1;height:160px;border-radius:26px;background:var(--s1);border:1px solid var(--line);box-shadow:var(--sh);padding:15px 16px;display:flex;gap:14px">
+<div style="position:relative;width:74px;height:74px;flex:none;display:flex;align-items:center;justify-content:center">
+<svg width="74" height="74" viewBox="0 0 74 74" fill="none" style="position:absolute;inset:0"><circle cx="37" cy="37" r="31" stroke="var(--s2)" stroke-width="7.5"></circle><circle cx="37" cy="37" r="31" stroke="var(--prib)" stroke-width="7.5" stroke-linecap="round" stroke-dasharray="194.8" stroke-dashoffset="74" transform="rotate(-90 37 37)"></circle></svg>
+<p class="num" style="font-size:17px;position:relative">62%</p>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px">
+<p style="margin:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sharma Family</p>
+<div style="display:flex;align-items:center;gap:7px"><span class="mi mif" style="font-size:14px;color:var(--gold)">workspace_premium</span><p style="margin:0;font-size:11.5px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Meera</p><p class="num" style="font-size:11.5px">9,840</p></div>
+<div style="display:flex;align-items:center;gap:7px;padding:3px 6px;margin:0 -6px;border-radius:8px;background:var(--pris)"><span class="num" style="font-size:11px;color:var(--pri);width:14px;text-align:center">2</span><p style="margin:0;font-size:11.5px;font-weight:700;flex:1;color:var(--pri)">You</p><p class="num" style="font-size:11.5px;color:var(--pri)">8,215</p></div>
+<div style="display:flex;align-items:center;gap:7px"><span class="mi mif" style="font-size:14px;color:var(--silv)">workspace_premium</span><p style="margin:0;font-size:11.5px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tomás</p><p class="num" style="font-size:11.5px">6,930</p></div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:16px;align-items:flex-start">
+<div style="width:160px;height:78px;border-radius:22px;background:var(--jads);border:1px solid var(--jad);padding:13px 14px;display:flex;align-items:center;gap:11px">
+<span class="mi mif" style="font-size:26px;color:var(--jad)">verified</span>
+<div style="min-width:0"><p style="margin:0;font-size:12.5px;font-weight:800;white-space:nowrap;color:var(--jad)">Goal hit</p><p class="cap" style="margin:2px 0 0;color:var(--ink2);font-size:9.5px">NCUBE COUSINS</p></div>
+</div>
+<div style="flex:1;height:78px;border-radius:22px;background:var(--s1);border:1px solid var(--line);box-shadow:var(--sh);padding:13px 15px;display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:14px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi mif" style="font-size:21px">local_fire_department</span></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:12.5px;font-weight:700">6 day streak</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:9.5px">1,140 STEPS TO KEEP IT</p></div>
+</div>
+</div>
+<p class="cap" style="margin:18px 0 0;color:var(--ink3);font-size:10.5px;line-height:1.5">2×2 · 4×2 · plus two 4×1 variants for streak and goal-hit states. Widgets refresh on step sync and never show data older than an hour without a stale marker.</p>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;themeMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Both&quot;,&quot;Light&quot;,&quot;Dark&quot;],&quot;default&quot;:&quot;Both&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const m = this.props.themeMode ?? 'Both';
+    return { themes: m === 'Light' ? ['light'] : m === 'Dark' ? ['dark'] : ['light', 'dark'] };
+  }
+}
+</script>
+</body>
+</html>

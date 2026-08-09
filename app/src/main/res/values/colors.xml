@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Pamoja brand, mirrors Brand500 in ui/theme/Color.kt. Used where an
+         Android framework API needs a colour resource rather than a Compose
+         Color (notification accent, themes.xml). -->
+    <color name="pamoja_brand">#FF7B7FF2</color>
+
+    <!-- Project-template colours. Referenced by themes.xml; not for new code. -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL@20..48,200..700,0..1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E1D8;color:#231C17;font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#C34A21;text-decoration:none}
+a:hover{color:#DE5F35;text-decoration:underline}
+.mi{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-variation-settings:'FILL' 0,'wght' 400;user-select:none}
+.mif{font-variation-settings:'FILL' 1,'wght' 400}
+.ph{--bg:#FAF5EF;--s1:#FFFFFF;--s2:#F2EBE1;--s3:#FFFFFF;--ink:#231C17;--ink2:#6B5F55;--ink3:#877B70;--line:rgba(35,28,23,.09);--line2:rgba(35,28,23,.16);--pri:#C34A21;--prii:#FFFFFF;--prib:#DE5F35;--pris:#FAE6DB;--amb:#A9701A;--ambg:#E9A13E;--ambs:#FAEEDA;--jad:#0E8563;--jadg:#17A67C;--jads:#DDF2EB;--dng:#B4271F;--dngs:#FBE3E0;--gold:#B98A17;--silv:#75737C;--brnz:#9C5F35;--sh:0 1px 2px rgba(60,42,28,.05),0 8px 20px -10px rgba(60,42,28,.18);--sh2:0 2px 6px rgba(60,42,28,.08),0 24px 48px -18px rgba(60,42,28,.30);--scrim:rgba(35,28,23,.45);
+position:relative;width:392px;height:838px;flex:none;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(45,30,20,.18),0 22px 44px -16px rgba(45,30,20,.32)}
+.ph[data-t=dark]{--bg:#141110;--s1:#1E1815;--s2:#2A231E;--s3:#342B25;--ink:#F4EBE2;--ink2:#BCAEA3;--ink3:#9C8F84;--line:rgba(255,238,226,.10);--line2:rgba(255,238,226,.18);--pri:#FF7A47;--prii:#2A1207;--prib:#FF8A5B;--pris:#3A2015;--amb:#F5B463;--ambg:#F5B463;--ambs:#3A2C15;--jad:#42D6A4;--jadg:#42D6A4;--jads:#123329;--dng:#FF8E7E;--dngs:#3E1C18;--gold:#E8B93F;--silv:#C3C6D2;--brnz:#D08C5C;--sh:0 2px 6px rgba(0,0,0,.45),0 14px 30px -12px rgba(0,0,0,.6);--sh2:0 4px 12px rgba(0,0,0,.5),0 28px 56px -18px rgba(0,0,0,.75);--scrim:rgba(8,6,5,.66)}
+.ph[data-t=dark] .card{background-image:linear-gradient(180deg,rgba(255,242,232,.04),rgba(255,242,232,0) 44%)}
+.sb{height:36px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 24px;font-size:12.5px;font-weight:700;color:var(--ink);position:relative;z-index:3}
+.sb::before{content:"9:41"}
+.sb::after{content:"";width:44px;height:11px;border-radius:2px;background:linear-gradient(90deg,currentColor 0 10px,transparent 10px 13px,currentColor 13px 27px,transparent 27px 30px,currentColor 30px 44px);opacity:.5}
+.gb{height:24px;flex:none;display:flex;align-items:center;justify-content:center;position:relative;z-index:5}
+.gb::after{content:"";width:118px;height:4px;border-radius:99px;background:var(--ink);opacity:.26}
+.sc{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 18px;position:relative;z-index:2}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin:0}
+.h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:30px;line-height:1.1;letter-spacing:-.025em;margin:0}
+.h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:20px;line-height:1.22;letter-spacing:-.015em;margin:0}
+.num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:0}
+.bd{font-size:15px;line-height:1.55;color:var(--ink2);margin:0}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh)}
+.btn{height:56px;min-width:48px;border-radius:999px;background:var(--pri);color:var(--prii);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;border:0;box-shadow:0 8px 18px -10px var(--pri)}
+.btn2{height:56px;border-radius:999px;background:var(--s1);color:var(--ink);border:1.5px solid var(--line2);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex:none}
+.row{display:flex;align-items:center;gap:12px}
+.sec{padding:40px 46px;border-bottom:1px solid rgba(35,28,23,.10)}
+.sech{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px}
+.secn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.12em;padding:4px 8px;background:#231C17;color:#FAF5EF;border-radius:5px}
+.sect{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.24;margin:0}
+.secd{font-size:13.5px;line-height:1.5;color:#6B5F55;max-width:800px;margin:0 0 26px}
+.cap{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;color:#584D44;letter-spacing:.01em;max-width:392px;line-height:1.5}
+.cap b{font-weight:600;color:#231C17}
+.gal{display:flex;flex-wrap:wrap;gap:40px 34px;align-items:flex-start}
+.scr{display:flex;flex-direction:column;gap:12px}
+.pair{display:flex;gap:18px}
+.tbar{display:flex;align-items:center;gap:12px;padding:4px 0 10px}
+.ic{width:44px;height:44px;border-radius:99px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none}
+.pil{flex:1;background:var(--s2);border-radius:18px;padding:12px 8px;text-align:center}
+.lr{border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--s1);border:1px solid var(--line)}
+.sk{background:var(--s2);border-radius:8px;position:relative;overflow:hidden}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--line),transparent);animation:shim 1.6s infinite}
+@keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ringfill{from{stroke-dashoffset:653.5}to{stroke-dashoffset:var(--o)}}
+</style>
+</helmet>
+
+<section class="sec" style="border-bottom:0">
+<div class="sech"><span class="secn">§4.8</span><h2 class="sect">Group dashboard — the flagship</h2></div>
+<p class="secd">One screen that answers: are we going to make it, and where do I sit? The ring animates from empty on every open (900ms spring), the hero number counts up with it, and the small tick on the ring is the <b>pace marker</b> — where the week expects the group to be today. Being ahead of the tick is the feeling the product sells. <a href="Pamoja.dc.html">← Design system</a> · <a href="Pamoja Features.dc.html">Planned features →</a></p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>4.8 Dashboard · on track (62%)</b> — ember stage. Ring, three pills, pace line, then the leaderboard: first place is a raised card with a gold medal, and Ravi's own row is ember-tinted wherever he ranks. Cheer buttons are 44dp circles inside 48dp rows.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.8 Dashboard on track">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar">
+<div class="ic"><span class="mi">arrow_back</span></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Sharma Family</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">8 members · Mon–Sun</p></div>
+<div class="ic"><span class="mi" style="font-size:20px">person_add</span></div>
+</div>
+<div style="display:flex;justify-content:center;padding:6px 0 2px">
+<div style="position:relative;width:246px;height:246px;display:flex;align-items:center;justify-content:center">
+<svg width="246" height="246" viewBox="0 0 240 240" fill="none" style="position:absolute;inset:0">
+<circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--prib)" stroke-width="19" stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="248" transform="rotate(-90 120 120)" style="--o:248px;animation:ringfill 900ms cubic-bezier(.22,1.2,.3,1) both"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--ink3)" stroke-width="19" stroke-dasharray="3 651" stroke-dashoffset="-464" transform="rotate(-90 120 120)" opacity=".9"></circle>
+</svg>
+<div style="position:relative;text-align:center">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--pris);color:var(--pri);font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.02em"><span class="mi mif" style="font-size:15px">local_fire_department</span>ON TRACK</span>
+<p class="num" style="font-size:52px;margin:8px 0 0">43,120</p>
+<p class="cap" style="margin:1px 0 0;color:var(--ink3);font-size:12px">of 70,000</p>
+<div style="display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:5px 10px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:11.5px;font-weight:700"><span class="mi" style="font-size:15px">event</span>3 days left</div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:2px 0 11px">
+<div class="pil"><p class="num" style="font-size:20px;color:var(--pri)">62%</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">COMPLETED</p></div>
+<div class="pil"><p class="num" style="font-size:20px">26,880</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">REMAINING</p></div>
+<div class="pil"><p class="num" style="font-size:20px">8</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">MEMBERS</p></div>
+</div>
+<div style="border-radius:18px;background:var(--jads);padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:16px">
+<span class="mi" style="font-size:20px;color:var(--jad)">trending_up</span>
+<p style="margin:0;font-size:13.5px;font-weight:600;line-height:1.35;color:var(--ink)"><span class="num" style="font-size:15px">1,120</span> steps/day each<span style="color:var(--ink2);font-weight:500"> and you're there — you're ahead of pace.</span></p>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+<p class="lbl">Leaderboard</p>
+<div style="display:flex;background:var(--s2);border-radius:99px;padding:2px">
+<div style="height:28px;padding:0 11px;border-radius:99px;display:flex;align-items:center;font-size:11.5px;font-weight:600;color:var(--ink3)">Today</div>
+<div style="height:28px;padding:0 11px;border-radius:99px;display:flex;align-items:center;font-size:11.5px;font-weight:700;background:var(--s1);color:var(--ink);box-shadow:var(--sh)">Week</div>
+<div style="height:28px;padding:0 11px;border-radius:99px;display:flex;align-items:center;font-size:11.5px;font-weight:600;color:var(--ink3)">All</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="card" style="border-radius:20px;padding:14px 15px;display:flex;align-items:center;gap:13px;border-color:var(--line2)">
+<div style="position:relative"><div class="av" style="width:52px;height:52px;background:#2E7D6E;font-size:17px">MS</div><span class="mi mif" style="position:absolute;bottom:-4px;right:-6px;font-size:22px;color:var(--gold)">workspace_premium</span></div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Meera Sharma</p><span class="num" style="font-size:12px;color:var(--gold)">1</span></div><p style="margin:3px 0 0;font-size:12.5px;font-weight:600;color:var(--ink2)">9,840 this week</p></div>
+<div style="text-align:right"><p class="num" style="font-size:17px">3,120</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:9px">TODAY</p></div>
+</div>
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)">
+<span class="num" style="font-size:14px;color:var(--pri);width:16px;text-align:center">2</span>
+<div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:600;color:var(--ink2)">8,215 this week</p></div>
+<div style="text-align:right"><p class="num" style="font-size:16px">4,860</p></div>
+</div>
+<div class="lr">
+<span class="mi mif" style="font-size:19px;color:var(--silv);width:16px">workspace_premium</span>
+<div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">TH</div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:5px"><p style="margin:0;font-size:15.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tomás Herrera</p><span class="num" style="font-size:11px;color:var(--silv)">3</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">6,930 this week · 2,240 today</p></div>
+<div style="width:44px;height:44px;border-radius:99px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">campaign</span></div>
+</div>
+<div class="lr">
+<span class="mi mif" style="font-size:19px;color:var(--brnz);width:16px">workspace_premium</span>
+<div class="av" style="width:44px;height:44px;background:#A03C5C;font-size:15px">AB</div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:5px"><p style="margin:0;font-size:15.5px;font-weight:600">Aisha Bello</p><span class="num" style="font-size:11px;color:var(--brnz)">4</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">5,480 this week · 980 today</p></div>
+<div style="width:44px;height:44px;border-radius:99px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">campaign</span></div>
+</div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.8 Dashboard · scrolled</b> — the ring collapses into a compact sticky header (ring, total, percentage) so context never leaves. Rows 5–8 continue; the lowest contributor is never greyed out or scolded — the cheer button is the loudest thing on their row.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.8 Dashboard scrolled">
+<div class="sb"></div>
+<div class="sc" style="padding-top:0">
+<div style="display:flex;align-items:center;gap:12px;padding:8px 0 12px;border-bottom:1px solid var(--line);margin:0 -18px 12px;padding-left:18px;padding-right:18px;background:var(--bg)">
+<div class="ic" style="width:40px;height:40px"><span class="mi" style="font-size:20px">arrow_back</span></div>
+<div style="position:relative;width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center">
+<svg width="42" height="42" viewBox="0 0 42 42" fill="none" style="position:absolute;inset:0"><circle cx="21" cy="21" r="17" stroke="var(--s2)" stroke-width="6"></circle><circle cx="21" cy="21" r="17" stroke="var(--prib)" stroke-width="6" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="40.6" transform="rotate(-90 21 21)"></circle></svg>
+<span class="num" style="font-size:11px;position:relative">62</span>
+</div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sharma Family</p><p class="cap" style="margin:1px 0 0;color:var(--ink3);font-size:10.5px">43,120 of 70,000 · 3 days left</p></div>
+<div class="ic" style="width:40px;height:40px"><span class="mi" style="font-size:19px">person_add</span></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p class="lbl">Leaderboard</p><span class="cap" style="color:var(--ink3);font-size:10.5px">RANK 5–8</span></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">5</span><div class="av" style="width:44px;height:44px;background:#6B4C9A;font-size:15px">PS</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Priya Sharma</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">4,760 this week · 1,510 today</p></div><div style="width:44px;height:44px;border-radius:99px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">campaign</span></div></div>
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">6</span><div class="av" style="width:44px;height:44px;background:#8F5E13;font-size:15px">DO</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Daniel Okonkwo</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">3,615 this week · 640 today</p></div><div style="width:44px;height:44px;border-radius:99px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">campaign</span></div></div>
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">7</span><div class="av" style="width:44px;height:44px;background:#2E7D6E;font-size:15px">GM</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Grace Mwangi</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink3)">2,480 this week · rest day</p></div><div style="width:44px;height:44px;border-radius:99px;background:var(--pri);display:flex;align-items:center;justify-content:center;color:var(--prii);flex:none"><span class="mi mif" style="font-size:20px">volunteer_activism</span></div></div>
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">8</span><div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">AS</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Arjun Sharma</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">1,800 this week · 310 today</p></div><div style="width:44px;height:44px;border-radius:99px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:20px">campaign</span></div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:14px 4px 12px"><span class="mi" style="font-size:17px;color:var(--ink3)">touch_app</span><p class="cap" style="color:var(--ink3);font-size:10.5px;margin:0">Long-press any row to send a cheer</p></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px"><p class="lbl">This week's moments</p><span style="font-size:12px;font-weight:700;color:var(--pri)">See all</span></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="lr" style="align-items:flex-start;padding:12px 13px"><div style="width:36px;height:36px;border-radius:12px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad);flex:none"><span class="mi" style="font-size:19px">flag</span></div><div style="flex:1"><p style="margin:0;font-size:13.5px;font-weight:600;line-height:1.4">Your group reached 50% of the weekly goal</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">YESTERDAY, 18:40</p></div></div>
+<div class="lr" style="align-items:flex-start;padding:12px 13px"><div style="width:36px;height:36px;border-radius:12px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:19px">footprint</span></div><div style="flex:1"><p style="margin:0;font-size:13.5px;font-weight:600;line-height:1.4">Meera hit 12,000 steps in a day</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:10px">MONDAY, 21:05</p></div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.8 Dashboard · brand new group, nobody has moved</b> — zeros are framed as a beginning, not a failure. The ring shows a soft dashed track, the pace line does the maths for you, and the leaderboard becomes an invitation with the member list intact.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.8 Dashboard zero state">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar">
+<div class="ic"><span class="mi">arrow_back</span></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:18px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Monday Walkers</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">4 members · Mon–Sun</p></div>
+<div class="ic"><span class="mi" style="font-size:20px">person_add</span></div>
+</div>
+<div style="display:flex;justify-content:center;padding:6px 0 2px">
+<div style="position:relative;width:246px;height:246px;display:flex;align-items:center;justify-content:center">
+<svg width="246" height="246" viewBox="0 0 240 240" fill="none" style="position:absolute;inset:0">
+<circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--ambg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="6 14" opacity=".45" transform="rotate(-90 120 120)"></circle>
+</svg>
+<div style="position:relative;text-align:center">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--ambs);color:var(--amb);font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.02em"><span class="mi" style="font-size:15px">wb_twilight</span>FRESH WEEK</span>
+<p class="num" style="font-size:52px;margin:8px 0 0">0</p>
+<p class="cap" style="margin:1px 0 0;color:var(--ink3);font-size:12px">of 50,000</p>
+<div style="display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:5px 10px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:11.5px;font-weight:700"><span class="mi" style="font-size:15px">event</span>7 days left</div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:2px 0 11px">
+<div class="pil"><p class="num" style="font-size:20px;color:var(--ink3)">0%</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">COMPLETED</p></div>
+<div class="pil"><p class="num" style="font-size:20px">50,000</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">REMAINING</p></div>
+<div class="pil"><p class="num" style="font-size:20px">4</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">MEMBERS</p></div>
+</div>
+<div style="border-radius:18px;background:var(--ambs);padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:16px">
+<span class="mi" style="font-size:20px;color:var(--amb)">directions_walk</span>
+<p style="margin:0;font-size:13.5px;font-weight:600;line-height:1.35;color:var(--ink)"><span class="num" style="font-size:15px">1,790</span> steps/day each<span style="color:var(--ink2);font-weight:500"> — about a 15 minute walk.</span></p>
+</div>
+<div style="border-radius:22px;border:1.5px dashed var(--line2);padding:20px 16px;text-align:center;margin-bottom:12px">
+<span class="mi" style="font-size:30px;color:var(--pri)">footprint</span>
+<p style="margin:9px 0 0;font-size:15.5px;font-weight:700">No steps logged yet</p>
+<p class="bd" style="font-size:13px;margin-top:5px">Whoever moves first sets the tone. It only takes one.</p>
+</div>
+<p class="lbl" style="margin-bottom:10px">Leaderboard</p>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)"><span class="num" style="font-size:14px;color:var(--pri);width:16px;text-align:center">—</span><div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div><div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">Ready to start</p></div><p class="num" style="font-size:16px;color:var(--ink3)">0</p></div>
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">—</span><div class="av" style="width:44px;height:44px;background:#2E7D6E;font-size:15px">GM</div><div style="flex:1"><p style="margin:0;font-size:15.5px;font-weight:600">Grace Mwangi</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink3)">Ready to start</p></div><p class="num" style="font-size:16px;color:var(--ink3)">0</p></div>
+<div class="lr"><span class="num" style="font-size:14px;color:var(--ink3);width:16px;text-align:center">—</span><div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">TH</div><div style="flex:1"><p style="margin:0;font-size:15.5px;font-weight:600">Tomás Herrera</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink3)">Ready to start</p></div><p class="num" style="font-size:16px;color:var(--ink3)">0</p></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section>
+
+<section class="sec" style="border-bottom:0;border-top:1px solid rgba(35,28,23,.10)">
+<div class="sech"><span class="secn">§4.8b</span><h2 class="sect">Dashboard — remaining stages &amp; states</h2></div>
+<p class="secd">Same skeleton, three different weathers. Note the stage never changes layout — only color, icon, label and copy — so returning users always know where to look.</p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>4.8 Dashboard · goal complete (102%)</b> — jade takes over the ring, the inner disc fills, the pace pill becomes a victory line, and the group streak advances. Every member row gets a check: the win belongs to everyone, including the person who walked least.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.8 Dashboard complete">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar">
+<div class="ic"><span class="mi">arrow_back</span></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:18px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Sharma Family</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">8 members · Mon–Sun</p></div>
+<div class="ic"><span class="mi" style="font-size:20px">person_add</span></div>
+</div>
+<div style="display:flex;justify-content:center;padding:6px 0 2px">
+<div style="position:relative;width:246px;height:246px;display:flex;align-items:center;justify-content:center">
+<svg width="246" height="246" viewBox="0 0 240 240" fill="none" style="position:absolute;inset:0">
+<circle cx="120" cy="120" r="104" stroke="var(--jads)" stroke-width="19"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--jadg)" stroke-width="19" stroke-linecap="round" transform="rotate(-90 120 120)"></circle>
+<circle cx="120" cy="120" r="86" fill="var(--jads)" opacity=".55"></circle>
+<circle cx="120" cy="120" r="119" stroke="var(--jadg)" stroke-width="1.5" opacity=".4"></circle>
+</svg>
+<div style="position:relative;text-align:center">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--jad);color:var(--prii);font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.02em"><span class="mi mif" style="font-size:15px">verified</span>GOAL COMPLETE</span>
+<p class="num" style="font-size:52px;margin:8px 0 0;color:var(--jad)">71,540</p>
+<p class="cap" style="margin:1px 0 0;color:var(--ink3);font-size:12px">of 70,000 · 102%</p>
+<div style="display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:5px 10px;border-radius:99px;background:var(--jads);color:var(--jad);font-size:11.5px;font-weight:700"><span class="mi mif" style="font-size:15px">local_fire_department</span>4 week streak</div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:2px 0 11px">
+<div class="pil" style="background:var(--jads)"><p class="num" style="font-size:20px;color:var(--jad)">102%</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">COMPLETED</p></div>
+<div class="pil"><p class="num" style="font-size:20px;color:var(--jad)">+1,540</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">OVER TARGET</p></div>
+<div class="pil"><p class="num" style="font-size:20px">8</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">MEMBERS</p></div>
+</div>
+<div style="border-radius:18px;background:var(--jad);padding:13px 14px;display:flex;align-items:center;gap:11px;margin-bottom:16px">
+<span class="mi mif" style="font-size:21px;color:var(--prii)">celebration</span>
+<p style="margin:0;font-size:13.5px;font-weight:700;line-height:1.35;color:var(--prii);flex:1">You did it — together. Four weeks running.</p>
+<span class="mi" style="font-size:19px;color:var(--prii)">ios_share</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p class="lbl">Leaderboard</p><span class="cap" style="color:var(--jad);font-size:10.5px;font-weight:700">EVERYONE CONTRIBUTED</span></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="card" style="border-radius:20px;padding:14px 15px;display:flex;align-items:center;gap:13px;border-color:var(--jad)">
+<div style="position:relative"><div class="av" style="width:52px;height:52px;background:#2E7D6E;font-size:17px">MS</div><span class="mi mif" style="position:absolute;bottom:-4px;right:-6px;font-size:22px;color:var(--gold)">workspace_premium</span></div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:17px;font-weight:700">Meera Sharma</p><span class="num" style="font-size:12px;color:var(--gold)">1</span></div><p style="margin:3px 0 0;font-size:12.5px;font-weight:600;color:var(--jad)">14,980 this week · personal best</p></div>
+<div style="text-align:right"><p class="num" style="font-size:17px">2,410</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:9px">TODAY</p></div>
+</div>
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)">
+<span class="num" style="font-size:14px;color:var(--pri);width:16px;text-align:center">2</span>
+<div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div>
+<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:600;color:var(--ink2)">13,420 this week</p></div>
+<span class="mi mif" style="font-size:20px;color:var(--jad)">check_circle</span>
+</div>
+<div class="lr" style="border-color:var(--jad)"><span class="mi mif" style="font-size:19px;color:var(--silv);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#3F5FA8;font-size:15px">TH</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Tomás Herrera</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">11,050 this week</p></div><span class="mi mif" style="font-size:20px;color:var(--jad)">check_circle</span></div>
+<div class="lr" style="border-color:var(--jad)"><span class="mi mif" style="font-size:19px;color:var(--brnz);width:16px">workspace_premium</span><div class="av" style="width:44px;height:44px;background:#A03C5C;font-size:15px">AB</div><div style="flex:1;min-width:0"><p style="margin:0;font-size:15.5px;font-weight:600">Aisha Bello</p><p style="margin:2px 0 0;font-size:12px;font-weight:500;color:var(--ink2)">9,320 this week</p></div><span class="mi mif" style="font-size:20px;color:var(--jad)">check_circle</span></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.8 Dashboard · warming up, behind pace, permission missing</b> — three problems at once, handled without alarm: ochre ring behind the pace tick, an honest pace line, and the permission card sitting directly under the top bar where it is impossible to miss but easy to dismiss mentally.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.8 Dashboard behind pace">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar">
+<div class="ic"><span class="mi">arrow_back</span></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:18px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em">Desk Escapees</p><p class="cap" style="margin:2px 0 0;color:var(--ink3);font-size:11px">8 members · Mon–Sun</p></div>
+<div class="ic"><span class="mi" style="font-size:20px">person_add</span></div>
+</div>
+<div style="border-radius:20px;background:var(--pris);padding:13px 14px;display:flex;align-items:center;gap:12px;margin-bottom:12px">
+<div style="width:40px;height:40px;border-radius:14px;background:var(--pri);display:flex;align-items:center;justify-content:center;color:var(--prii);flex:none"><span class="mi" style="font-size:21px">directions_walk</span></div>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">Enable step tracking</p><p class="bd" style="font-size:12px;margin-top:2px">Tap to grant permission and start counting</p></div>
+<span class="mi" style="color:var(--pri);font-size:20px">chevron_right</span>
+</div>
+<div style="display:flex;justify-content:center;padding:0 0 2px">
+<div style="position:relative;width:222px;height:222px;display:flex;align-items:center;justify-content:center">
+<svg width="222" height="222" viewBox="0 0 240 240" fill="none" style="position:absolute;inset:0">
+<circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--ambg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="477" transform="rotate(-90 120 120)" style="--o:477px;animation:ringfill 900ms cubic-bezier(.22,1.2,.3,1) both"></circle>
+<circle cx="120" cy="120" r="104" stroke="var(--ink)" stroke-width="19" stroke-dasharray="3 651" stroke-dashoffset="-464" transform="rotate(-90 120 120)" opacity=".55"></circle>
+</svg>
+<div style="position:relative;text-align:center">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;background:var(--ambs);color:var(--amb);font-size:10.5px;font-weight:800;white-space:nowrap;letter-spacing:.02em"><span class="mi" style="font-size:14px">wb_twilight</span>WARMING UP</span>
+<p class="num" style="font-size:44px;margin:7px 0 0">18,900</p>
+<p class="cap" style="margin:1px 0 0;color:var(--ink3);font-size:11.5px">of 70,000</p>
+<div style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 10px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:11px;font-weight:700"><span class="mi" style="font-size:14px">event</span>2 days left</div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:2px 0 10px">
+<div class="pil"><p class="num" style="font-size:19px;color:var(--amb)">27%</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">COMPLETED</p></div>
+<div class="pil"><p class="num" style="font-size:19px">51,100</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">REMAINING</p></div>
+<div class="pil"><p class="num" style="font-size:19px">8</p><p class="cap" style="margin:3px 0 0;color:var(--ink3);font-size:9.5px">MEMBERS</p></div>
+</div>
+<div style="border-radius:18px;background:var(--ambs);padding:12px 14px;display:flex;align-items:flex-start;gap:11px;margin-bottom:14px">
+<span class="mi" style="font-size:20px;color:var(--amb);margin-top:1px">bolt</span>
+<div style="flex:1"><p style="margin:0;font-size:13.5px;font-weight:700;line-height:1.35"><span class="num" style="font-size:15px">3,200</span> steps/day each to finish strong</p><p class="bd" style="font-size:12px;margin-top:3px">That's a lunchtime walk. A cheer helps more than you'd think.</p></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p class="lbl">Leaderboard</p><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--amb)"><span class="mi" style="font-size:14px">south_east</span>BEHIND PACE</span></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="card" style="border-radius:20px;padding:13px 15px;display:flex;align-items:center;gap:13px;border-color:var(--line2)"><div style="position:relative"><div class="av" style="width:48px;height:48px;background:#8F5E13;font-size:16px">DO</div><span class="mi mif" style="position:absolute;bottom:-4px;right:-6px;font-size:21px;color:var(--gold)">workspace_premium</span></div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:16.5px;font-weight:700">Daniel Okonkwo</p><span class="num" style="font-size:12px;color:var(--gold)">1</span></div><p style="margin:3px 0 0;font-size:12.5px;font-weight:600;color:var(--ink2)">5,120 this week</p></div><p class="num" style="font-size:16px">870</p></div>
+<div style="border-radius:20px;padding:11px 13px;display:flex;align-items:center;gap:11px;background:var(--pris);border:1.5px solid var(--pri)"><span class="num" style="font-size:14px;color:var(--pri);width:16px;text-align:center">6</span><div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:15.5px;font-weight:700">Ravi Sharma</p><span style="font-size:9px;font-weight:800;white-space:nowrap;letter-spacing:.1em;padding:2px 6px;border-radius:99px;background:var(--pri);color:var(--prii)">YOU</span></div><p style="margin:2px 0 0;font-size:12px;font-weight:600;color:var(--ink2)">Steps not connected</p></div><span class="mi" style="font-size:20px;color:var(--pri)">sync_problem</span></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.8 Dashboard · loading</b> — the ring track draws immediately at full opacity because its geometry is known; only the numbers, pills and rows are skeletons. The screen never looks broken, just quiet for 400ms.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.8 Dashboard loading">
+<div class="sb"></div>
+<div class="sc">
+<div class="tbar">
+<div class="ic"><span class="mi">arrow_back</span></div>
+<div style="flex:1"><div class="sk" style="width:140px;height:17px;margin-bottom:7px"></div><div class="sk" style="width:96px;height:10px"></div></div>
+<div class="ic"><span class="mi" style="font-size:20px">person_add</span></div>
+</div>
+<div style="display:flex;justify-content:center;padding:6px 0 2px">
+<div style="position:relative;width:246px;height:246px;display:flex;align-items:center;justify-content:center">
+<svg width="246" height="246" viewBox="0 0 240 240" fill="none" style="position:absolute;inset:0"><circle cx="120" cy="120" r="104" stroke="var(--s2)" stroke-width="19"></circle><circle cx="120" cy="120" r="104" stroke="var(--line2)" stroke-width="19" stroke-linecap="round" stroke-dasharray="110 653" transform="rotate(-90 120 120)" style="animation:spin 1.4s cubic-bezier(.4,0,.6,1) infinite;transform-origin:120px 120px"></circle></svg>
+<div style="position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
+<div class="sk" style="width:104px;height:22px;border-radius:99px"></div>
+<div class="sk" style="width:150px;height:40px"></div>
+<div class="sk" style="width:78px;height:12px"></div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:2px 0 11px">
+<div class="pil"><div class="sk" style="width:100%;height:20px;margin-bottom:7px"></div><div class="sk" style="width:70%;height:8px;margin:0 auto"></div></div>
+<div class="pil"><div class="sk" style="width:100%;height:20px;margin-bottom:7px"></div><div class="sk" style="width:70%;height:8px;margin:0 auto"></div></div>
+<div class="pil"><div class="sk" style="width:100%;height:20px;margin-bottom:7px"></div><div class="sk" style="width:70%;height:8px;margin:0 auto"></div></div>
+</div>
+<div class="sk" style="height:46px;border-radius:18px;margin-bottom:16px"></div>
+<div style="margin-bottom:10px"><p class="lbl">Leaderboard</p></div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div class="card" style="border-radius:20px;padding:14px 15px;display:flex;align-items:center;gap:13px"><div class="sk" style="width:52px;height:52px;border-radius:99px"></div><div style="flex:1"><div class="sk" style="width:60%;height:16px;margin-bottom:8px"></div><div class="sk" style="width:40%;height:10px"></div></div><div class="sk" style="width:44px;height:18px"></div></div>
+<div class="lr"><div class="sk" style="width:16px;height:14px"></div><div class="sk" style="width:44px;height:44px;border-radius:99px"></div><div style="flex:1"><div class="sk" style="width:52%;height:14px;margin-bottom:7px"></div><div class="sk" style="width:66%;height:9px"></div></div></div>
+<div class="lr" style="opacity:.8"><div class="sk" style="width:16px;height:14px"></div><div class="sk" style="width:44px;height:44px;border-radius:99px"></div><div style="flex:1"><div class="sk" style="width:44%;height:14px;margin-bottom:7px"></div><div class="sk" style="width:58%;height:9px"></div></div></div>
+<div class="lr" style="opacity:.55"><div class="sk" style="width:16px;height:14px"></div><div class="sk" style="width:44px;height:44px;border-radius:99px"></div><div style="flex:1"><div class="sk" style="width:50%;height:14px;margin-bottom:7px"></div><div class="sk" style="width:62%;height:9px"></div></div></div>
+<div class="lr" style="opacity:.3"><div class="sk" style="width:16px;height:14px"></div><div class="sk" style="width:44px;height:44px;border-radius:99px"></div><div style="flex:1"><div class="sk" style="width:46%;height:14px;margin-bottom:7px"></div><div class="sk" style="width:54%;height:9px"></div></div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;themeMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Both&quot;,&quot;Light&quot;,&quot;Dark&quot;],&quot;default&quot;:&quot;Both&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const m = this.props.themeMode ?? 'Both';
+    return { themes: m === 'Light' ? ['light'] : m === 'Dark' ? ['dark'] : ['light', 'dark'] };
+  }
+}
+</script>
+</body>
+</html>

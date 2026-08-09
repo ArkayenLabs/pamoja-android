@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL@20..48,200..700,0..1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E7E1D8;color:#231C17;font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#C34A21;text-decoration:none}
+a:hover{color:#DE5F35;text-decoration:underline}
+.mi{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-variation-settings:'FILL' 0,'wght' 400;user-select:none}
+.mif{font-variation-settings:'FILL' 1,'wght' 400}
+.ph{--bg:#FAF5EF;--s1:#FFFFFF;--s2:#F2EBE1;--s3:#FFFFFF;--ink:#231C17;--ink2:#6B5F55;--ink3:#877B70;--line:rgba(35,28,23,.09);--line2:rgba(35,28,23,.16);--pri:#C34A21;--prii:#FFFFFF;--prib:#DE5F35;--pris:#FAE6DB;--amb:#A9701A;--ambg:#E9A13E;--ambs:#FAEEDA;--jad:#0E8563;--jadg:#17A67C;--jads:#DDF2EB;--dng:#B4271F;--dngs:#FBE3E0;--gold:#B98A17;--silv:#75737C;--brnz:#9C5F35;--sh:0 1px 2px rgba(60,42,28,.05),0 8px 20px -10px rgba(60,42,28,.18);--sh2:0 2px 6px rgba(60,42,28,.08),0 24px 48px -18px rgba(60,42,28,.30);--scrim:rgba(35,28,23,.45);
+position:relative;width:392px;height:838px;flex:none;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(45,30,20,.18),0 22px 44px -16px rgba(45,30,20,.32)}
+.ph[data-t=dark]{--bg:#141110;--s1:#1E1815;--s2:#2A231E;--s3:#342B25;--ink:#F4EBE2;--ink2:#BCAEA3;--ink3:#9C8F84;--line:rgba(255,238,226,.10);--line2:rgba(255,238,226,.18);--pri:#FF7A47;--prii:#2A1207;--prib:#FF8A5B;--pris:#3A2015;--amb:#F5B463;--ambg:#F5B463;--ambs:#3A2C15;--jad:#42D6A4;--jadg:#42D6A4;--jads:#123329;--dng:#FF8E7E;--dngs:#3E1C18;--gold:#E8B93F;--silv:#C3C6D2;--brnz:#D08C5C;--sh:0 2px 6px rgba(0,0,0,.45),0 14px 30px -12px rgba(0,0,0,.6);--sh2:0 4px 12px rgba(0,0,0,.5),0 28px 56px -18px rgba(0,0,0,.75);--scrim:rgba(8,6,5,.66)}
+.ph[data-t=dark] .card{background-image:linear-gradient(180deg,rgba(255,242,232,.04),rgba(255,242,232,0) 44%)}
+.sb{height:36px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 24px;font-size:12.5px;font-weight:700;color:var(--ink);position:relative;z-index:3}
+.sb::before{content:"9:41"}
+.sb::after{content:"";width:44px;height:11px;border-radius:2px;background:linear-gradient(90deg,currentColor 0 10px,transparent 10px 13px,currentColor 13px 27px,transparent 27px 30px,currentColor 30px 44px);opacity:.5}
+.gb{height:24px;flex:none;display:flex;align-items:center;justify-content:center;position:relative;z-index:5}
+.gb::after{content:"";width:118px;height:4px;border-radius:99px;background:var(--ink);opacity:.26}
+.sc{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 20px;position:relative;z-index:2}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin:0}
+.h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:30px;line-height:1.1;letter-spacing:-.025em;margin:0}
+.h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:20px;line-height:1.22;letter-spacing:-.015em;margin:0}
+.num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:0}
+.bd{font-size:15px;line-height:1.55;color:var(--ink2);margin:0}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh)}
+.btn{height:56px;min-width:48px;border-radius:999px;background:var(--pri);color:var(--prii);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;border:0;box-shadow:0 8px 18px -10px var(--pri)}
+.btn2{height:56px;border-radius:999px;background:var(--s1);color:var(--ink);border:1.5px solid var(--line2);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px}
+.av{border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex:none}
+.fld{height:58px;border-radius:18px;background:var(--s2);border:1.5px solid var(--line);padding:0 18px;display:flex;align-items:center;gap:10px;font-size:16px;color:var(--ink);font-weight:500}
+.row{display:flex;align-items:center;gap:14px;min-height:56px}
+.sec{padding:40px 46px;border-bottom:1px solid rgba(35,28,23,.10)}
+.sech{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin:0 0 12px}
+.secn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.12em;padding:4px 8px;background:#231C17;color:#FAF5EF;border-radius:5px}
+.sect{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.24;margin:0}
+.secd{font-size:13.5px;line-height:1.5;color:#6B5F55;max-width:800px;margin:0 0 26px}
+.cap{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;color:#584D44;letter-spacing:.01em;max-width:392px;line-height:1.5}
+.cap b{font-weight:600;color:#231C17}
+.gal{display:flex;flex-wrap:wrap;gap:40px 34px;align-items:flex-start}
+.scr{display:flex;flex-direction:column;gap:12px}
+.pair{display:flex;gap:18px}
+.bar{position:absolute;left:0;right:0;bottom:0;padding:34px 20px 26px;display:flex;gap:11px;z-index:4;background:linear-gradient(180deg,transparent,var(--bg) 38%,var(--bg))}
+.gc{padding:14px 15px;display:flex;align-items:center;gap:14px}
+.sk{background:var(--s2);border-radius:8px;position:relative;overflow:hidden}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--line),transparent);animation:shim 1.6s infinite}
+@keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<section class="sec" style="border-bottom:0">
+<div class="sech"><span class="secn">§4.5–4.9</span><h2 class="sect">Home, create, invite, settings</h2></div>
+<p class="secd">Home answers one question — "how is everyone doing?" — before you tap anything. <a href="Pamoja.dc.html">← Design system</a> · <a href="Pamoja Dashboard.dc.html">Group dashboard →</a></p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>4.5 Home</b> — greeting is time-aware; the subtitle rotates every 3.2s with a cross-fade (it is live in this file — watch it). Each group card carries its own progress bar, live total, percentage and days left, so all four groups are readable without a tap. Bottom bar floats over an opaque scrim.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.5 Home">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0 4px">
+<div style="flex:1;min-width:0">
+<h1 class="h1">Good morning, Ravi</h1>
+<p class="bd" style="font-size:14.5px;margin-top:7px;color:var(--pri);font-weight:600">{{ tagline }}</p>
+</div>
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s1);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi">settings</span></div>
+</div>
+<div style="display:flex;gap:8px;padding:16px 0 20px">
+<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:99px;background:var(--pris);color:var(--pri);font-size:12.5px;font-weight:700"><span class="mi mif" style="font-size:17px">local_fire_department</span>6 day streak</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:12.5px;font-weight:700"><span class="mi" style="font-size:17px">footprint</span>4,860 today</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><p class="lbl">Your groups</p><span class="cap" style="color:var(--ink3);font-size:10.5px">4</span></div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<div class="card gc">
+<div class="av" style="width:54px;height:54px;border-radius:18px;background:#C34A21;font-size:17px">SF</div>
+<div style="flex:1;min-width:0">
+<p style="margin:0;font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sharma Family</p>
+<p class="cap" style="margin:3px 0 6px;color:var(--ink3);font-size:10.5px">70,000 STEPS / WEEK GOAL</p>
+<div style="height:7px;border-radius:99px;background:var(--s2);overflow:hidden"><div style="width:62%;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ambg),var(--prib))"></div></div>
+<p style="margin:6px 0 0;font-size:12px;font-weight:700;color:var(--ink2)">43,120<span style="color:var(--ink3);font-weight:500"> · 62% · 3 days left</span></p>
+</div>
+<span class="mi" style="color:var(--ink3)">chevron_right</span>
+</div>
+<div class="card gc">
+<div class="av" style="width:54px;height:54px;border-radius:18px;background:#2E7D6E;font-size:17px">MW</div>
+<div style="flex:1;min-width:0">
+<p style="margin:0;font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Monday Walkers</p>
+<p class="cap" style="margin:3px 0 6px;color:var(--ink3);font-size:10.5px">50,000 STEPS / WEEK GOAL</p>
+<div style="height:7px;border-radius:99px;background:var(--s2);overflow:hidden"><div style="width:77%;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ambg),var(--prib))"></div></div>
+<p style="margin:6px 0 0;font-size:12px;font-weight:700;color:var(--ink2)">38,400<span style="color:var(--ink3);font-weight:500"> · 77% · 3 days left</span></p>
+</div>
+<span class="mi" style="color:var(--ink3)">chevron_right</span>
+</div>
+<div class="card gc" style="border-color:var(--jad)">
+<div class="av" style="width:54px;height:54px;border-radius:18px;background:#A03C5C;font-size:17px">NC</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:6px"><p style="margin:0;font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Ncube Cousins</p><span class="mi mif" style="font-size:17px;color:var(--jad)">verified</span></div>
+<p class="cap" style="margin:3px 0 6px;color:var(--ink3);font-size:10.5px">35,000 STEPS / WEEK GOAL</p>
+<div style="height:7px;border-radius:99px;background:var(--jads);overflow:hidden"><div style="width:100%;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--jadg),var(--jad))"></div></div>
+<p style="margin:6px 0 0;font-size:12px;font-weight:700;color:var(--jad)">35,900<span style="font-weight:600"> · Goal hit</span></p>
+</div>
+<span class="mi" style="color:var(--ink3)">chevron_right</span>
+</div>
+<div class="card gc">
+<div class="av" style="width:54px;height:54px;border-radius:18px;background:#8F5E13;font-size:17px">DE</div>
+<div style="flex:1;min-width:0">
+<p style="margin:0;font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Desk Escapees</p>
+<p class="cap" style="margin:3px 0 6px;color:var(--ink3);font-size:10.5px">100,000 STEPS / WEEK GOAL</p>
+<div style="height:7px;border-radius:99px;background:var(--s2);overflow:hidden"><div style="width:24%;height:100%;border-radius:99px;background:var(--ambg)"></div></div>
+<p style="margin:6px 0 0;font-size:12px;font-weight:700;color:var(--ink2)">24,300<span style="color:var(--ink3);font-weight:500"> · 24% · 3 days left</span></p>
+</div>
+<span class="mi" style="color:var(--ink3)">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="bar">
+<div class="btn2" style="flex:1"><span class="mi" style="font-size:20px">link</span>Join</div>
+<div class="btn" style="flex:1.25"><span class="mi" style="font-size:21px">add</span>New group</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.5 Home · empty</b> — the dashed second ring is the invitation: your circle is drawn but not filled yet. Two real doors, and a privacy line to answer the first worry a newcomer has.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.5 Home empty">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0 4px">
+<div style="flex:1;min-width:0"><h1 class="h1">Good evening, Ravi</h1><p class="bd" style="font-size:14.5px;margin-top:7px;color:var(--pri);font-weight:600">Small steps. Big impact.</p></div>
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s1);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi">settings</span></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 6px 70px">
+<svg width="132" height="132" viewBox="0 0 132 132" fill="none" style="margin-bottom:22px"><circle cx="50" cy="66" r="30" stroke="var(--pri)" stroke-width="7"></circle><circle cx="82" cy="66" r="30" stroke="var(--jad)" stroke-width="7" stroke-dasharray="9 11"></circle><circle cx="66" cy="66" r="62" stroke="var(--line2)" stroke-width="1.5" stroke-dasharray="3 9"></circle></svg>
+<h2 class="h1" style="font-size:26px">No groups yet</h2>
+<p class="bd" style="margin-top:10px;max-width:280px">Create a group and invite friends or family, or join one with an invite link.</p>
+<div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-top:26px">
+<div class="card" style="padding:14px 15px;display:flex;align-items:center;gap:13px;text-align:left">
+<div style="width:44px;height:44px;border-radius:15px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri)"><span class="mi">group_add</span></div>
+<div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Start a group</p><p class="bd" style="font-size:12.5px;margin-top:2px">Pick a weekly target together</p></div>
+<span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span>
+</div>
+<div class="card" style="padding:14px 15px;display:flex;align-items:center;gap:13px;text-align:left">
+<div style="width:44px;height:44px;border-radius:15px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi">link</span></div>
+<div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Have an invite link?</p><p class="bd" style="font-size:12.5px;margin-top:2px">Paste it and you're in</p></div>
+<span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;margin-top:22px"><span class="mi" style="font-size:16px;color:var(--ink3)">lock</span><p class="cap" style="color:var(--ink3);font-size:11px;margin:0">Groups are private — invite only, 2 to 20 people.</p></div>
+</div>
+</div>
+<div class="bar">
+<div class="btn2" style="flex:1"><span class="mi" style="font-size:20px">link</span>Join</div>
+<div class="btn" style="flex:1.25"><span class="mi" style="font-size:21px">add</span>New group</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.5 Home · loading</b> — skeletons mirror the real card geometry (tile, two text lines, progress bar) so nothing jumps when data lands. Greeting renders instantly; only group data waits.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.5 Home loading">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0 4px">
+<div style="flex:1;min-width:0"><h1 class="h1">Good morning, Ravi</h1><p class="bd" style="font-size:14.5px;margin-top:7px;color:var(--pri);font-weight:600">Your group is counting on you.</p></div>
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s1);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink2);flex:none"><span class="mi">settings</span></div>
+</div>
+<div style="display:flex;gap:8px;padding:16px 0 20px"><div class="sk" style="width:118px;height:34px;border-radius:99px"></div><div class="sk" style="width:104px;height:34px;border-radius:99px"></div></div>
+<div style="margin-bottom:12px"><p class="lbl">Your groups</p></div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<div class="card gc"><div class="sk" style="width:54px;height:54px;border-radius:18px"></div><div style="flex:1"><div class="sk" style="width:58%;height:15px;margin-bottom:9px"></div><div class="sk" style="width:76%;height:9px;margin-bottom:10px"></div><div class="sk" style="width:100%;height:7px;border-radius:99px"></div></div></div>
+<div class="card gc"><div class="sk" style="width:54px;height:54px;border-radius:18px"></div><div style="flex:1"><div class="sk" style="width:44%;height:15px;margin-bottom:9px"></div><div class="sk" style="width:70%;height:9px;margin-bottom:10px"></div><div class="sk" style="width:100%;height:7px;border-radius:99px"></div></div></div>
+<div class="card gc" style="opacity:.72"><div class="sk" style="width:54px;height:54px;border-radius:18px"></div><div style="flex:1"><div class="sk" style="width:52%;height:15px;margin-bottom:9px"></div><div class="sk" style="width:66%;height:9px;margin-bottom:10px"></div><div class="sk" style="width:100%;height:7px;border-radius:99px"></div></div></div>
+<div class="card gc" style="opacity:.45"><div class="sk" style="width:54px;height:54px;border-radius:18px"></div><div style="flex:1"><div class="sk" style="width:48%;height:15px;margin-bottom:9px"></div><div class="sk" style="width:72%;height:9px;margin-bottom:10px"></div><div class="sk" style="width:100%;height:7px;border-radius:99px"></div></div></div>
+</div>
+</div>
+<div class="bar">
+<div class="btn2" style="flex:1"><span class="mi" style="font-size:20px">link</span>Join</div>
+<div class="btn" style="flex:1.25"><span class="mi" style="font-size:21px">add</span>New group</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.5 Join via invite link · dialog</b> — sheet-style dialog on surface-3, paste-first input with a paste affordance, and a reminder that admins hand these out.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.5 Join dialog">
+<div class="sb"></div>
+<div class="sc" style="filter:blur(1.2px);opacity:.55">
+<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0 4px">
+<div style="flex:1"><h1 class="h1">Good morning, Ravi</h1><p class="bd" style="font-size:14.5px;margin-top:7px;color:var(--pri);font-weight:600">Every step counts. Let's go!</p></div>
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s1);border:1px solid var(--line);flex:none"></div>
+</div>
+<div style="margin:52px 0 12px"><p class="lbl">Your groups</p></div>
+<div style="display:flex;flex-direction:column;gap:11px">
+<div class="card gc" style="height:88px"><div class="av" style="width:54px;height:54px;border-radius:18px;background:#C34A21;font-size:17px">SF</div><div style="flex:1"><p style="margin:0;font-size:16.5px;font-weight:700">Sharma Family</p></div></div>
+<div class="card gc" style="height:88px"><div class="av" style="width:54px;height:54px;border-radius:18px;background:#2E7D6E;font-size:17px">MW</div><div style="flex:1"><p style="margin:0;font-size:16.5px;font-weight:700">Monday Walkers</p></div></div>
+</div>
+</div>
+<div style="position:absolute;inset:0;background:var(--scrim);z-index:4"></div>
+<div style="position:absolute;left:18px;right:18px;bottom:0;top:0;display:flex;align-items:center;justify-content:center;z-index:5">
+<div style="width:100%;border-radius:28px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh2);padding:24px">
+<div style="width:48px;height:48px;border-radius:16px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri);margin-bottom:16px"><span class="mi">link</span></div>
+<h2 class="h2">Join a group</h2>
+<p class="bd" style="font-size:14px;margin:8px 0 18px">Paste the invite link shared by your group admin.</p>
+<div class="fld" style="font-size:14.5px;color:var(--ink3)">pamoja.app/j/…<span class="mi" style="margin-left:auto;color:var(--pri);font-size:20px">content_paste</span></div>
+<div style="display:flex;gap:10px;margin-top:20px"><div class="btn2" style="flex:1;height:52px;font-size:15px">Cancel</div><div class="btn" style="flex:1;height:52px;font-size:15px">Join</div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.6 Create group</b> — the goal slider snaps to five presets and the chosen value is the biggest thing on screen. Member cap uses ink, not ember, so only one control claims to be the decision.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.6 Create group">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0 2px">
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none"><span class="mi">arrow_back</span></div>
+</div>
+<div style="padding:16px 0 22px"><h1 class="h1">Create your group</h1><p class="bd" style="margin-top:9px">You can edit these anytime as admin.</p></div>
+<p class="lbl" style="margin-bottom:8px;color:var(--ink2)">Group name</p>
+<div class="fld" style="margin-bottom:20px">Sharma Family<span class="mi" style="margin-left:auto;color:var(--ink3);font-size:19px">edit</span></div>
+<div class="card" style="padding:17px 18px;margin-bottom:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px"><p class="lbl" style="font-size:10.5px">Weekly step goal</p><p class="num" style="font-size:27px;color:var(--pri)">70,000</p></div>
+<div style="position:relative;height:8px;border-radius:99px;background:var(--s2);margin:0 2px">
+<div style="position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:99px;background:var(--pri)"></div>
+<div style="position:absolute;left:25%;top:2px;width:4px;height:4px;border-radius:99px;background:var(--line2)"></div>
+<div style="position:absolute;left:75%;top:2px;width:4px;height:4px;border-radius:99px;background:var(--line2)"></div>
+<div style="position:absolute;left:calc(100% - 4px);top:2px;width:4px;height:4px;border-radius:99px;background:var(--line2)"></div>
+<div style="position:absolute;left:calc(50% - 14px);top:-10px;width:28px;height:28px;border-radius:99px;background:var(--s1);border:3.5px solid var(--pri);box-shadow:var(--sh)"></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:13px"><span class="cap" style="font-size:10.5px;color:var(--ink3)">35k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">50k</span><span class="cap" style="font-size:10.5px;color:var(--pri);font-weight:700">70k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">100k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">150k</span></div>
+<p class="bd" style="font-size:12.5px;margin-top:13px;color:var(--ink3)">About 1,250 steps a day each with 8 people.</p>
+</div>
+<div class="card" style="padding:17px 18px;margin-bottom:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px"><p class="lbl" style="font-size:10.5px">Max members</p><p style="margin:0"><span class="num" style="font-size:27px">10</span><span class="cap" style="color:var(--ink3);font-size:12px"> / 20</span></p></div>
+<div style="position:relative;height:8px;border-radius:99px;background:var(--s2);margin:0 2px"><div style="position:absolute;left:0;top:0;bottom:0;width:44%;border-radius:99px;background:var(--ink)"></div><div style="position:absolute;left:calc(44% - 14px);top:-10px;width:28px;height:28px;border-radius:99px;background:var(--s1);border:3.5px solid var(--ink);box-shadow:var(--sh)"></div></div>
+<div style="display:flex;justify-content:space-between;margin-top:13px"><span class="cap" style="font-size:10.5px;color:var(--ink3)">2</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">20</span></div>
+</div>
+<div class="card" style="padding:15px 18px;display:flex;align-items:center;gap:14px">
+<div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Members can edit goal</p><p class="bd" style="font-size:12.5px;margin-top:3px">Allow others to change the step target</p></div>
+<div style="width:52px;height:32px;border-radius:99px;background:var(--pri);position:relative;flex:none"><span style="position:absolute;top:4px;left:24px;width:24px;height:24px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35)"></span></div>
+</div>
+</div>
+<div class="bar" style="padding:34px 20px 26px"><div class="btn" style="flex:1">Create group</div></div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.6 Create group · empty + creating</b> — left: nothing typed, so the primary is disabled and the goal card is muted. Right: submitted, controls locked at 60% opacity, button owns the spinner.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.6 Create group states">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0 2px">
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none"><span class="mi">arrow_back</span></div>
+</div>
+<div style="padding:16px 0 22px"><h1 class="h1">Create your group</h1><p class="bd" style="margin-top:9px">You can edit these anytime as admin.</p></div>
+<p class="lbl" style="margin-bottom:8px;color:var(--ink2)">Group name</p>
+<div class="fld" style="margin-bottom:20px;color:var(--ink3)">e.g. Sharma Family</div>
+<div class="card" style="padding:17px 18px;margin-bottom:12px;opacity:.6">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px"><p class="lbl" style="font-size:10.5px">Weekly step goal</p><p class="num" style="font-size:27px;color:var(--ink3)">70,000</p></div>
+<div style="position:relative;height:8px;border-radius:99px;background:var(--s2);margin:0 2px"><div style="position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:99px;background:var(--ink3)"></div><div style="position:absolute;left:calc(50% - 14px);top:-10px;width:28px;height:28px;border-radius:99px;background:var(--s1);border:3.5px solid var(--ink3)"></div></div>
+<div style="display:flex;justify-content:space-between;margin-top:13px"><span class="cap" style="font-size:10.5px;color:var(--ink3)">35k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">50k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">70k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">100k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">150k</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;padding:2px 2px 0"><span class="mi" style="font-size:18px;color:var(--ink3)">info</span><p class="bd" style="font-size:12.5px;color:var(--ink3)">Name your group to continue.</p></div>
+<div style="flex:1"></div>
+</div>
+<div class="bar" style="padding:34px 20px 26px"><div class="btn" style="flex:1;background:var(--s2);color:var(--ink3);box-shadow:none">Create group</div></div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.6 Create group · creating</b> — the form dims rather than disappearing, so the user keeps their bearings.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.6 Create group loading">
+<div class="sb"></div>
+<div class="sc" style="opacity:.6">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0 2px">
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink3);flex:none"><span class="mi">arrow_back</span></div>
+</div>
+<div style="padding:16px 0 22px"><h1 class="h1">Create your group</h1><p class="bd" style="margin-top:9px">You can edit these anytime as admin.</p></div>
+<p class="lbl" style="margin-bottom:8px;color:var(--ink2)">Group name</p>
+<div class="fld" style="margin-bottom:20px">Sharma Family</div>
+<div class="card" style="padding:17px 18px;margin-bottom:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px"><p class="lbl" style="font-size:10.5px">Weekly step goal</p><p class="num" style="font-size:27px;color:var(--pri)">70,000</p></div>
+<div style="position:relative;height:8px;border-radius:99px;background:var(--s2);margin:0 2px"><div style="position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:99px;background:var(--pri)"></div><div style="position:absolute;left:calc(50% - 14px);top:-10px;width:28px;height:28px;border-radius:99px;background:var(--s1);border:3.5px solid var(--pri)"></div></div>
+<div style="display:flex;justify-content:space-between;margin-top:13px"><span class="cap" style="font-size:10.5px;color:var(--ink3)">35k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">50k</span><span class="cap" style="font-size:10.5px;color:var(--pri);font-weight:700">70k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">100k</span><span class="cap" style="font-size:10.5px;color:var(--ink3)">150k</span></div>
+</div>
+<div class="card" style="padding:17px 18px"><div style="display:flex;align-items:baseline;justify-content:space-between"><p class="lbl" style="font-size:10.5px">Max members</p><p style="margin:0"><span class="num" style="font-size:27px">10</span><span class="cap" style="color:var(--ink3);font-size:12px"> / 20</span></p></div></div>
+<div style="flex:1"></div>
+</div>
+<div class="bar" style="padding:34px 20px 26px"><div class="btn" style="flex:1;opacity:.92"><span class="mi" style="font-size:20px;animation:spin 1s linear infinite">progress_activity</span>Creating…</div></div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section>
+
+<section class="sec" style="border-bottom:0;border-top:1px solid rgba(35,28,23,.10)">
+<div class="sech"><span class="secn">§4.7 · §4.9</span><h2 class="sect">Invite success &amp; settings</h2></div>
+<p class="secd">The celebratory handoff, then the quiet utility screens. Superseded by <a href="Pamoja Invite and Join.dc.html">Pamoja Invite and Join</a>, which adds the QR code and the readable invite code. WhatsApp has been removed: Copy link is primary and Share opens the system sheet.</p>
+<div class="gal">
+
+<div class="scr"><p class="cap"><b>4.7 Group created</b> — jade completed ring with a check, the spots counter tells you the link's shelf life, and the invite link sits in a mono card you can read aloud over the phone.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.7 Group created">
+<div class="ill" style="position:absolute;left:0;right:0;top:0;height:460px;pointer-events:none;z-index:1;overflow:hidden"><svg width="392" height="460" viewBox="0 0 392 460" fill="none" style="opacity:.5"><circle cx="196" cy="180" r="110" stroke="var(--jadg)" stroke-width="1.5" stroke-opacity=".3"></circle><circle cx="196" cy="180" r="152" stroke="var(--jadg)" stroke-width="1.5" stroke-opacity=".18"></circle><circle cx="196" cy="180" r="196" stroke="var(--jadg)" stroke-width="1.5" stroke-opacity=".1"></circle></svg></div>
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;justify-content:center;padding:34px 0 8px">
+<div style="position:relative;width:132px;height:132px;display:flex;align-items:center;justify-content:center">
+<svg width="132" height="132" viewBox="0 0 132 132" fill="none" style="position:absolute;inset:0"><circle cx="66" cy="66" r="50" fill="var(--jads)"></circle><circle cx="66" cy="66" r="63" stroke="var(--jadg)" stroke-width="4" stroke-linecap="round"></circle></svg>
+<span class="mi mif" style="font-size:56px;color:var(--jad);position:relative">groups</span>
+</div>
+</div>
+<h1 class="h1" style="text-align:center;font-size:32px">Group created!</h1>
+<p class="bd" style="text-align:center;margin:11px 10px 4px">Invite your people. This link stays active until all 10 spots are filled.</p>
+<div style="display:flex;justify-content:center;margin:16px 0 22px"><span style="display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:12px;font-weight:700"><span class="mi" style="font-size:16px">person</span>1 of 10 spots filled</span></div>
+<div style="border-radius:20px;background:var(--s2);border:1.5px dashed var(--line2);padding:14px 15px;display:flex;align-items:center;gap:12px">
+<div style="flex:1;min-width:0"><p class="cap" style="color:var(--ink3);font-size:10px;margin:0 0 4px">INVITE LINK</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">pamoja.app/j/4KQ2-SHRM</p></div>
+<div style="width:48px;height:48px;border-radius:15px;background:var(--s1);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none"><span class="mi" style="font-size:21px">content_copy</span></div>
+</div>
+<div style="flex:1"></div>
+<div class="btn" style="margin-bottom:11px"><span class="mi" style="font-size:20px">content_copy</span>Copy link</div>
+<div class="btn2" style="margin-bottom:6px"><span class="mi" style="font-size:20px">ios_share</span>Share</div>
+<div style="height:48px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:15px;font-weight:700;color:var(--pri);margin-bottom:4px">Go to my group<span class="mi" style="font-size:19px">arrow_forward</span></div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.7 Link copied</b> — the card flips to jade with a check for 2s and a snackbar rises above the buttons. Haptic tick on copy.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.7 Link copied">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;justify-content:center;padding:34px 0 8px">
+<div style="position:relative;width:132px;height:132px;display:flex;align-items:center;justify-content:center">
+<svg width="132" height="132" viewBox="0 0 132 132" fill="none" style="position:absolute;inset:0"><circle cx="66" cy="66" r="50" fill="var(--jads)"></circle><circle cx="66" cy="66" r="63" stroke="var(--jadg)" stroke-width="4" stroke-linecap="round"></circle></svg>
+<span class="mi mif" style="font-size:56px;color:var(--jad);position:relative">groups</span>
+</div>
+</div>
+<h1 class="h1" style="text-align:center;font-size:32px">Group created!</h1>
+<p class="bd" style="text-align:center;margin:11px 10px 4px">Invite your people. This link stays active until all 10 spots are filled.</p>
+<div style="display:flex;justify-content:center;margin:16px 0 22px"><span style="display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:99px;background:var(--s2);color:var(--ink2);font-size:12px;font-weight:700"><span class="mi" style="font-size:16px">person</span>1 of 10 spots filled</span></div>
+<div style="border-radius:20px;background:var(--jads);border:1.5px solid var(--jad);padding:14px 15px;display:flex;align-items:center;gap:12px">
+<div style="flex:1;min-width:0"><p class="cap" style="color:var(--jad);font-size:10px;margin:0 0 4px">INVITE LINK · COPIED</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">pamoja.app/j/4KQ2-SHRM</p></div>
+<div style="width:48px;height:48px;border-radius:15px;background:var(--jad);display:flex;align-items:center;justify-content:center;color:var(--prii);flex:none"><span class="mi mif" style="font-size:22px">check</span></div>
+</div>
+<div style="flex:1"></div>
+<div style="border-radius:18px;background:var(--ink);color:var(--bg);padding:14px 16px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh2);margin-bottom:14px"><span class="mi mif" style="font-size:20px;color:var(--jadg)">check_circle</span><p style="margin:0;font-size:14px;font-weight:600;flex:1">Link copied</p></div>
+<div class="btn" style="margin-bottom:11px"><span class="mi" style="font-size:20px">content_copy</span>Copy link</div>
+<div class="btn2" style="margin-bottom:20px"><span class="mi" style="font-size:20px">ios_share</span>Share</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.9 Settings</b> — grouped list, mono section labels, icon tiles tinted by meaning. Destructive row is ink-titled with a danger tile until you commit; only the confirm button is fully red.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.9 Settings">
+<div class="sb"></div>
+<div class="sc">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0 18px">
+<div style="width:48px;height:48px;border-radius:99px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none"><span class="mi">arrow_back</span></div>
+<h1 class="h1" style="font-size:26px">Settings</h1>
+</div>
+<p class="lbl" style="margin:0 4px 10px">Profile</p>
+<div class="card" style="padding:4px 0;margin-bottom:22px">
+<div class="row" style="padding:11px 15px"><div class="av" style="width:44px;height:44px;background:#C34A21;font-size:15px">RS</div><div style="flex:1"><p class="cap" style="color:var(--ink3);font-size:10px;margin:0 0 3px">NAME</p><p style="margin:0;font-size:16px;font-weight:700">Ravi Sharma</p></div><div style="width:48px;height:48px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--pri)"><span class="mi" style="font-size:21px">edit</span></div></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:11px 15px"><div style="width:44px;height:44px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2)"><span class="mi" style="font-size:20px">fingerprint</span></div><div style="flex:1;min-width:0"><p class="cap" style="color:var(--ink3);font-size:10px;margin:0 0 3px">USER ID</p><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">u_8f3ca1b0-4d2e</p></div><div style="width:48px;height:48px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--pri)"><span class="mi" style="font-size:20px">content_copy</span></div></div>
+</div>
+<p class="lbl" style="margin:0 4px 10px">Preferences</p>
+<div class="card" style="padding:4px 0;margin-bottom:22px">
+<div class="row" style="padding:11px 15px"><div style="width:44px;height:44px;border-radius:14px;background:var(--pris);display:flex;align-items:center;justify-content:center;color:var(--pri)"><span class="mi" style="font-size:20px">notifications</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Notifications</p><p class="bd" style="font-size:12.5px;margin-top:2px">Reminders, cheers and weekly recap</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+</div>
+<p class="lbl" style="margin:0 4px 10px">Information</p>
+<div class="card" style="padding:4px 0;margin-bottom:22px">
+<div class="row" style="padding:11px 15px"><div style="width:44px;height:44px;border-radius:14px;background:var(--jads);display:flex;align-items:center;justify-content:center;color:var(--jad)"><span class="mi" style="font-size:20px">shield</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Privacy Policy</p><p class="bd" style="font-size:12.5px;margin-top:2px">Read our terms and privacy policy</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:11px 15px"><div style="width:44px;height:44px;border-radius:14px;background:var(--ambs);display:flex;align-items:center;justify-content:center;color:var(--amb)"><span class="mi" style="font-size:20px">star</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Rate Us</p><p class="bd" style="font-size:12.5px;margin-top:2px">Support us by sharing your feedback</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+</div>
+<p class="lbl" style="margin:0 4px 10px">Account actions</p>
+<div class="card" style="padding:4px 0;margin-bottom:18px">
+<div class="row" style="padding:11px 15px"><div style="width:44px;height:44px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--ink2)"><span class="mi" style="font-size:20px">logout</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700">Log Out</p><p class="bd" style="font-size:12.5px;margin-top:2px">Sign out of your account on this device</p></div><span class="mi" style="color:var(--ink3);font-size:20px">chevron_right</span></div>
+<div style="height:1px;background:var(--line);margin-left:15px"></div>
+<div class="row" style="padding:11px 15px"><div style="width:44px;height:44px;border-radius:14px;background:var(--dngs);display:flex;align-items:center;justify-content:center;color:var(--dng)"><span class="mi" style="font-size:20px">delete_forever</span></div><div style="flex:1"><p style="margin:0;font-size:15px;font-weight:700;color:var(--dng)">Delete Account</p><p class="bd" style="font-size:12.5px;margin-top:2px">Permanently wipe your profile and statistics</p></div><span class="mi" style="color:var(--dng);font-size:20px">chevron_right</span></div>
+</div>
+<p class="cap" style="text-align:center;color:var(--ink3);font-size:11px;padding-bottom:14px">Pamoja v1.0.0</p>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.9 Edit name · dialog</b> — pre-filled and selected, character counter, Save disabled until the value changes. Keyboard shown to prove the dialog clears it.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.9 Edit name dialog">
+<div class="sb"></div>
+<div class="sc" style="filter:blur(1.2px);opacity:.5">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0 18px"><div style="width:48px;height:48px;border-radius:99px;background:var(--s2)"></div><h1 class="h1" style="font-size:26px">Settings</h1></div>
+<p class="lbl" style="margin:0 4px 10px">Profile</p>
+<div class="card" style="height:150px"></div>
+</div>
+<div style="position:absolute;inset:0;background:var(--scrim);z-index:4"></div>
+<div style="position:absolute;left:18px;right:18px;top:150px;z-index:5">
+<div style="border-radius:28px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh2);padding:24px">
+<h2 class="h2">Edit name</h2>
+<p class="bd" style="font-size:13.5px;margin:8px 0 16px">Your group sees this name.</p>
+<div class="fld" style="border-color:var(--pri);border-width:2px;background:var(--s1)"><span style="background:var(--pris);border-radius:4px;padding:1px 3px">Ravi Sharma</span><span style="width:2px;height:22px;background:var(--pri)"></span></div>
+<p class="cap" style="text-align:right;color:var(--ink3);font-size:10.5px;margin:7px 2px 0">11 / 24</p>
+<div style="display:flex;gap:10px;margin-top:16px"><div class="btn2" style="flex:1;height:52px;font-size:15px">Cancel</div><div class="btn" style="flex:1;height:52px;font-size:15px;background:var(--s2);color:var(--ink3);box-shadow:none">Save</div></div>
+</div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:262px;background:var(--s2);border-top:1px solid var(--line);z-index:6;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:14px 6px 30px">
+<div style="display:flex;gap:6px;justify-content:center">
+<div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">q</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">w</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">e</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">r</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">t</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">y</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">u</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">i</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">o</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">p</div>
+</div>
+<div style="display:flex;gap:6px;justify-content:center;padding:0 16px">
+<div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">a</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">s</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">d</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">f</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">g</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">h</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">j</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">k</div><div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">l</div>
+</div>
+<div style="display:flex;gap:6px;justify-content:center">
+<div style="width:44px;height:44px;border-radius:8px;background:var(--s2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink2)"><span class="mi" style="font-size:19px">keyboard_capslock</span></div>
+<div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">z x c v b n m</div>
+<div style="width:44px;height:44px;border-radius:8px;background:var(--s2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink2)"><span class="mi" style="font-size:19px">backspace</span></div>
+</div>
+<div style="display:flex;gap:6px;justify-content:center">
+<div style="width:62px;height:44px;border-radius:8px;background:var(--s2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--ink2)">?123</div>
+<div style="flex:1;height:44px;border-radius:8px;background:var(--s1);box-shadow:var(--sh)"></div>
+<div style="width:62px;height:44px;border-radius:8px;background:var(--pri);display:flex;align-items:center;justify-content:center;color:var(--prii)"><span class="mi" style="font-size:20px">keyboard_return</span></div>
+</div>
+</div>
+<div class="gb" style="z-index:7"></div>
+</div>
+</sc-for>
+</div></div>
+
+<div class="scr"><p class="cap"><b>4.9 Delete account · confirmation</b> — danger tile, plain language, and the destructive button is wider than Cancel but still second in reading order. Nothing is red except what needs to be.</p>
+<div class="pair">
+<sc-for list="{{ themes }}" as="th" hint-placeholder-count="2">
+<div class="ph" data-t="{{ th }}" data-screen-label="4.9 Delete account dialog">
+<div class="sb"></div>
+<div class="sc" style="filter:blur(1.2px);opacity:.5">
+<div style="display:flex;align-items:center;gap:14px;padding:6px 0 18px"><div style="width:48px;height:48px;border-radius:99px;background:var(--s2)"></div><h1 class="h1" style="font-size:26px">Settings</h1></div>
+<p class="lbl" style="margin:0 4px 10px">Profile</p>
+<div class="card" style="height:150px;margin-bottom:22px"></div>
+<p class="lbl" style="margin:0 4px 10px">Account actions</p>
+<div class="card" style="height:150px"></div>
+</div>
+<div style="position:absolute;inset:0;background:var(--scrim);z-index:4"></div>
+<div style="position:absolute;left:18px;right:18px;top:0;bottom:0;display:flex;align-items:center;z-index:5">
+<div style="width:100%;border-radius:28px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh2);padding:24px">
+<div style="width:50px;height:50px;border-radius:17px;background:var(--dngs);display:flex;align-items:center;justify-content:center;color:var(--dng);margin-bottom:16px"><span class="mi" style="font-size:26px">delete_forever</span></div>
+<h2 class="h2">Delete your account?</h2>
+<p class="bd" style="font-size:14px;margin:9px 0 16px">This action is permanent and cannot be undone. All your step groups and progress history will be removed.</p>
+<div style="border-radius:16px;background:var(--s2);padding:13px 14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:20px"><span class="mi" style="font-size:19px;color:var(--ink3);margin-top:1px">groups</span><p class="bd" style="font-size:12.5px">You are the admin of Sharma Family. Admin rights pass to Meera Sharma.</p></div>
+<div style="display:flex;gap:10px"><div class="btn2" style="flex:1;height:52px;font-size:15px">Cancel</div><div class="btn" style="flex:1.35;height:52px;font-size:14.5px;background:var(--dng);color:var(--prii);box-shadow:none">Delete Permanently</div></div>
+</div>
+</div>
+<div class="gb"></div>
+</div>
+</sc-for>
+</div></div>
+
+</div>
+</section></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;themeMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Both&quot;,&quot;Light&quot;,&quot;Dark&quot;],&quot;default&quot;:&quot;Both&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { i: 0 };
+  componentDidMount() {
+    this.t = setInterval(() => this.setState(s => ({ i: (s.i + 1) % 5 })), 3200);
+  }
+  componentWillUnmount() { clearInterval(this.t); }
+  renderVals() {
+    const m = this.props.themeMode ?? 'Both';
+    const lines = ["Every step counts. Let's go!", 'Your group is counting on you.', 'Walk together, grow together.', "Today's a great day to move.", 'Small steps. Big impact.'];
+    return {
+      themes: m === 'Light' ? ['light'] : m === 'Dark' ? ['dark'] : ['light', 'dark'],
+      tagline: lines[this.state.i]
+    };
+  }
+}
+</script>
+</body>
+</html>

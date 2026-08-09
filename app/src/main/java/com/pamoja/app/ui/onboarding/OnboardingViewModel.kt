@@ -6,7 +6,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.CreateUserUseCase
-import com.pamoja.app.domain.usecase.SignInAnonymouslyUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +23,6 @@ data class OnboardingUiState(
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
     private val createUserUseCase: CreateUserUseCase,
     private val userPreferences: UserPreferences,
     private val firebaseAuth: FirebaseAuth,          // injected to check existing session
@@ -47,7 +45,7 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    fun signUpAndCreateProfile(
+    fun createProfile(
         name: String,
         age: Int?,
         height: Float?,
@@ -56,30 +54,17 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = OnboardingUiState(isLoading = true)
 
-            // ── Step 1: Get or create a Firebase anonymous user ──────────────────
-            // If the Firebase SDK already holds a current user (e.g. user tapped Back
-            // and re-submitted the form, or DataStore was wiped but Firebase token
-            // is still valid), reuse that UID instead of minting a new anonymous user.
-            // Minting a new one would orphan all existing Firestore data under the old UID.
-            val existingFirebaseUser = firebaseAuth.currentUser
-            val userId: String
-
-            if (existingFirebaseUser != null) {
-                // Reuse the existing Firebase UID
-                userId = existingFirebaseUser.uid
-            } else {
-                // First-ever launch, create an anonymous user
-                val authResult = signInAnonymouslyUseCase()
-                val authUser = authResult.getOrElse { error ->
-                    _uiState.value = OnboardingUiState(
-                        error = error.message ?: "Sign up failed. Please try again."
-                    )
-                    return@launch
-                }
-                userId = authUser.userId
+            // Sign-in is a hard gate, so reaching this screen means Firebase
+            // already holds a real account. There is nothing to create here, only
+            // a profile to attach to the UID that already exists.
+            val userId = firebaseAuth.currentUser?.uid
+            if (userId == null) {
+                _uiState.value = OnboardingUiState(
+                    error = "Your session expired. Please sign in again."
+                )
+                return@launch
             }
 
-            // ── Step 2: Write the user profile to Firestore ──────────────────────
             val user = User(
                 userId = userId,
                 name   = name,

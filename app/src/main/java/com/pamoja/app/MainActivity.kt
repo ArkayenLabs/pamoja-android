@@ -8,9 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
@@ -26,6 +24,7 @@ import com.pamoja.app.util.InviteLink
 import com.pamoja.app.util.SmartNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -41,18 +40,18 @@ private sealed interface LaunchTarget {
 /**
  * Session strategy (single source of truth = FirebaseAuth):
  *
- *  - The Firebase SDK persists the anonymous auth token across app restarts,
- *    reinstalls and DataStore clears, so auth.currentUser is authoritative.
+ *  - The Firebase SDK persists the auth token across app restarts and DataStore
+ *    clears, so auth.currentUser is authoritative for "is this person signed in".
  *
- *  - DataStore isOnboarded is only a "has the user filled their profile" flag.
- *    It is intentionally not used as the auth gate.
+ *  - DataStore isOnboarded answers a different question, "have they filled in a
+ *    profile". Both are needed because sign-in and profile setup are separate
+ *    steps: someone can authenticate and then kill the app before naming
+ *    themselves.
  *
  *  Decision tree at launch:
- *    1. FirebaseAuth.currentUser == null  -> Welcome (first run, must onboard)
- *    2. FirebaseAuth.currentUser != null  -> Home    (returning user)
- *
- *  So a user who clears app data keeps their Firebase UID and Firestore data,
- *  goes straight to Home, and never sees onboarding again.
+ *    1. currentUser == null                -> Welcome, then the sign-in gate
+ *    2. currentUser != null, not onboarded -> ProfileSetup, finish what was started
+ *    3. currentUser != null, onboarded     -> Home
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -88,22 +87,25 @@ class MainActivity : ComponentActivity() {
             PamojaTheme {
                 val navController = rememberNavController()
 
-                // Resolved synchronously so there is no loading flash. Firebase
-                // keeps the token in its own storage, so currentUser is reliable
-                // immediately at launch.
-                var startDestination by remember {
-                    mutableStateOf(
-                        if (firebaseAuth.currentUser != null) Screen.Home.route
-                        else Screen.Welcome.route
-                    )
-                }
+                // Null until the onboarding flag has been read. The NavHost is
+                // held back for that one frame rather than started at Home and
+                // then redirected, which would flash the wrong screen.
+                val startDestination by produceState<String?>(initialValue = null) {
+                    val user = firebaseAuth.currentUser
+                    value = when {
+                        user == null -> Screen.Welcome.route
 
-                // If a Firebase user exists but DataStore was cleared, for
-                // example after a backup restore, rehydrate local preferences.
-                LaunchedEffect(Unit) {
-                    firebaseAuth.currentUser?.let { user ->
-                        userPreferences.saveUserId(user.uid)
-                        userPreferences.setOnboarded(true)
+                        userPreferences.isOnboarded.first() -> {
+                            // Rehydrate in case DataStore was cleared but the
+                            // Firebase token survived, e.g. a backup restore.
+                            userPreferences.saveUserId(user.uid)
+                            Screen.Home.route
+                        }
+
+                        else -> {
+                            userPreferences.saveUserId(user.uid)
+                            Screen.ProfileSetup.route
+                        }
                     }
                 }
 
@@ -142,10 +144,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                PamojaNavGraph(
-                    navController = navController,
-                    startDestination = startDestination
-                )
+                startDestination?.let { destination ->
+                    PamojaNavGraph(
+                        navController = navController,
+                        startDestination = destination
+                    )
+                }
             }
         }
     }

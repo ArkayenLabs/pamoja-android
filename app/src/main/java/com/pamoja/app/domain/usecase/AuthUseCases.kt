@@ -20,14 +20,6 @@ class SignUpUseCase @Inject constructor(
     }
 }
 
-class SignInAnonymouslyUseCase @Inject constructor(
-    private val authRepository: AuthRepository
-) {
-    suspend operator fun invoke(): Result<User> {
-        return authRepository.signInAnonymously()
-    }
-}
-
 class SignInUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {

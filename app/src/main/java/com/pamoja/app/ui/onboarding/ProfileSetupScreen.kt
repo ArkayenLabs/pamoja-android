@@ -191,7 +191,7 @@ fun ProfileSetupScreen(
 
             Button(
                 onClick = {
-                    viewModel.signUpAndCreateProfile(
+                    viewModel.createProfile(
                         name   = name.trim(),
                         age    = age.toIntOrNull(),
                         height = height.toFloatOrNull(),

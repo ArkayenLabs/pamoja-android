@@ -34,4 +34,20 @@ object PamojaIcons {
     @DrawableRes val Camera = R.drawable.ic_camera
     @DrawableRes val Check = R.drawable.ic_check
     @DrawableRes val Medal = R.drawable.ic_medal
+    @DrawableRes val Smartphone = R.drawable.ic_smartphone
+    @DrawableRes val Mail = R.drawable.ic_mail
+    @DrawableRes val Eye = R.drawable.ic_eye
+    @DrawableRes val EyeOff = R.drawable.ic_eye_off
+    @DrawableRes val AlertCircle = R.drawable.ic_alert_circle
+    @DrawableRes val Clock = R.drawable.ic_clock
+    @DrawableRes val Refresh = R.drawable.ic_refresh
+    @DrawableRes val Search = R.drawable.ic_search
+    @DrawableRes val Close = R.drawable.ic_x
+
+    /**
+     * The Google "G". Unlike everything else here it is multi-colour and must be
+     * rendered untinted, so pass `tint = Color.Unspecified`. Google's brand rules
+     * forbid redrawing or recolouring the mark.
+     */
+    @DrawableRes val Google = R.drawable.ic_google
 }

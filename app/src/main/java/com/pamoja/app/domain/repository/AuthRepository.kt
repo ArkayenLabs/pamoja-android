@@ -10,8 +10,6 @@ data class AuthMethods(
     val hasGoogle: Boolean = false,
     val hasPhone: Boolean = false,
     val hasEmail: Boolean = false,
-    /** True when the account is still anonymous, so nothing can recover it. */
-    val isAnonymous: Boolean = true,
     val email: String? = null,
     val phoneNumber: String? = null,
 )
@@ -37,15 +35,6 @@ interface AuthRepository {
 
     /** Which providers are attached to the signed-in account. */
     suspend fun getAuthMethods(): AuthMethods
-
-    // ── Anonymous ───────────────────────────────────────────────────────────
-
-    /**
-     * Kept so a first-time user can start walking immediately, before deciding
-     * how to sign in. Every real method below LINKS to this account rather than
-     * replacing it, so nothing they created is orphaned.
-     */
-    suspend fun signInAnonymously(): Result<User>
 
     // ── Email ───────────────────────────────────────────────────────────────
 
@@ -79,10 +68,9 @@ interface AuthRepository {
 
     // ── Linking ─────────────────────────────────────────────────────────────
     //
-    // The important half. These upgrade the CURRENT account in place, keeping
-    // the same UID, so groups, memberships and step history all survive. Without
-    // them, signing in would create a brand new UID and silently strand
-    // everything the user had already built.
+    // Attaching a SECOND method to an account that is already signed in, from
+    // the account section of Settings. These keep the same UID, so groups,
+    // memberships and step history all survive.
 
     suspend fun linkGoogle(idToken: String): Result<User>
     suspend fun linkEmail(email: String, password: String): Result<User>

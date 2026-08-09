@@ -1,9 +1,10 @@
 package com.pamoja.app.ui.onboarding
 
 import android.content.Intent
-import android.net.Uri
+import androidx.annotation.DrawableRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -43,28 +39,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.HealthConnectReader
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaGreenSubtle
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoDark
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-// Permission states — drives UI
+// Permission states, drives UI
 private enum class PermState { UNKNOWN, GRANTED, DENIED, HC_UNAVAILABLE }
 
 @Composable
@@ -73,6 +62,7 @@ fun HealthConnectScreen(
     onSkip: () -> Unit,
     viewModel: HealthConnectViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val healthConnectReader = viewModel.healthConnectReader
     val userPreferences     = viewModel.userPreferences
     val scope               = rememberCoroutineScope()
@@ -114,13 +104,13 @@ fun HealthConnectScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PamojaBackground)
+            .background(colors.surfaceApp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Spacing.x6),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -128,11 +118,11 @@ fun HealthConnectScreen(
             // ── Top content ─────────────────────────────────────────────
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(Spacing.x8))
 
                 OnboardingProgressBar(currentStep = 3, totalSteps = 3)
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.x12))
 
                 // Step ring illustration
                 Box(contentAlignment = Alignment.Center) {
@@ -140,38 +130,38 @@ fun HealthConnectScreen(
                         modifier = Modifier
                             .size(120.dp)
                             .clip(CircleShape)
-                            .background(PamojaIndigoSubtle)
+                            .background(colors.accentPrimarySubtle)
                     )
                     Box(
                         modifier = Modifier
                             .size(80.dp)
-                            .clip(RoundedCornerShape(24.dp))
+                            .clip(RoundedCornerShape(PamojaRadii.xl))
                             .background(
                                 brush = Brush.linearGradient(
-                                    colors = listOf(PamojaIndigo, PamojaIndigoDark)
+                                    colors = listOf(colors.accentPrimary, colors.accentPrimaryPress)
                                 )
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.DirectionsWalk,
+                            painter            = painterResource(PamojaIcons.Footprints),
                             contentDescription = "Step tracking",
-                            tint               = PamojaWhite,
+                            tint               = colors.textOnBrand,
                             modifier           = Modifier.size(36.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(Spacing.x7))
 
                 Text(
                     text      = "Track your steps",
                     style     = MaterialTheme.typography.headlineLarge,
-                    color     = PamojaTextPrimary,
+                    color     = colors.textPrimary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(Spacing.x3))
 
                 val subtitle = when (permState) {
                     PermState.HC_UNAVAILABLE ->
@@ -179,7 +169,7 @@ fun HealthConnectScreen(
                     PermState.DENIED ->
                         "Without this permission, your steps will show as 0 to your group. You can enable it later in Health Connect settings."
                     PermState.GRANTED ->
-                        "You're all set! Pamoja will sync your steps via Health Connect — no battery drain, no background tracking."
+                        "You're all set! Pamoja will sync your steps via Health Connect, no battery drain, no background tracking."
                     else ->
                         "Pamoja uses Health Connect to count your steps. Your data stays private and is only shared with your group members."
                 }
@@ -187,58 +177,60 @@ fun HealthConnectScreen(
                 Text(
                     text      = subtitle,
                     style     = MaterialTheme.typography.bodyMedium,
-                    color     = if (permState == PermState.DENIED) MaterialTheme.colorScheme.error
-                                else PamojaTextSecondary,
+                    color     = if (permState == PermState.DENIED) colors.statusDanger
+                                else colors.textSecondary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(Spacing.x7))
 
                 // What Pamoja accesses card
+                val cardShape = RoundedCornerShape(PamojaRadii.md)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(PamojaSurface)
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .clip(cardShape)
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, cardShape)
+                        .padding(Spacing.x5),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.x4)
                 ) {
                     Text(
                         text  = "WHAT PAMOJA ACCESSES",
                         style = MaterialTheme.typography.labelSmall,
-                        color = PamojaTextSecondary
+                        color = colors.textSecondary
                     )
                     PermissionRow(
-                        icon      = Icons.AutoMirrored.Filled.DirectionsWalk,
-                        iconColor = PamojaIndigo,
-                        iconBg    = PamojaIndigoSubtle,
+                        icon      = PamojaIcons.Footprints,
+                        iconColor = colors.accentPrimary,
+                        iconBg    = colors.accentPrimarySubtle,
                         title     = "Daily step count",
-                        subtitle  = "Read from Health Connect — battery friendly"
+                        subtitle  = "Read from Health Connect, battery friendly"
                     )
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(PamojaBorder))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
                     PermissionRow(
-                        icon      = Icons.Default.Shield,
-                        iconColor = PamojaGreen,
-                        iconBg    = PamojaGreenSubtle,
+                        icon      = PamojaIcons.Shield,
+                        iconColor = colors.accentTeal,
+                        iconBg    = colors.accentTealSubtle,
                         title     = "Nothing else",
                         subtitle  = "No location, heart rate or sleep data"
                     )
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(PamojaBorder))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
                     PermissionRow(
-                        icon      = Icons.Default.Lock,
-                        iconColor = PamojaGreen,
-                        iconBg    = PamojaGreenSubtle,
+                        icon      = PamojaIcons.Lock,
+                        iconColor = colors.accentTeal,
+                        iconBg    = colors.accentTealSubtle,
                         title     = "Private by default",
                         subtitle  = "Only your group members see your steps"
                     )
                 }
 
                 if (permState == PermState.HC_UNAVAILABLE) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(Spacing.x3))
                     Text(
                         text      = "Health Connect is not available on this device.",
                         style     = MaterialTheme.typography.bodySmall,
-                        color     = MaterialTheme.colorScheme.error,
+                        color     = colors.statusDanger,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -248,9 +240,9 @@ fun HealthConnectScreen(
             Column(
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = Spacing.x4),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(Spacing.x1)
             ) {
                 when (permState) {
 
@@ -262,10 +254,10 @@ fun HealthConnectScreen(
                                 onSkip()
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(16.dp),
+                            shape    = RoundedCornerShape(PamojaRadii.md),
                             colors   = ButtonDefaults.buttonColors(
-                                containerColor = PamojaIndigo,
-                                contentColor   = PamojaWhite
+                                containerColor = colors.accentPrimary,
+                                contentColor   = colors.textOnBrand
                             )
                         ) {
                             Text(
@@ -289,18 +281,18 @@ fun HealthConnectScreen(
                                 context.startActivity(intent)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(16.dp),
+                            shape    = RoundedCornerShape(PamojaRadii.md),
                             colors   = ButtonDefaults.buttonColors(
-                                containerColor = PamojaIndigo,
-                                contentColor   = PamojaWhite
+                                containerColor = colors.accentPrimary,
+                                contentColor   = colors.textOnBrand
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Settings,
+                                painter = painterResource(PamojaIcons.Settings),
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.size(8.dp))
+                            Spacer(modifier = Modifier.size(Spacing.x2))
                             Text(
                                 text  = "Open Settings",
                                 style = MaterialTheme.typography.labelLarge
@@ -313,7 +305,7 @@ fun HealthConnectScreen(
                             Text(
                                 text  = "Skip for now",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = PamojaTextSecondary
+                                color = colors.textSecondary
                             )
                         }
                     }
@@ -323,14 +315,20 @@ fun HealthConnectScreen(
                         Button(
                             onClick  = onConnected,
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(16.dp),
+                            shape    = RoundedCornerShape(PamojaRadii.md),
                             colors   = ButtonDefaults.buttonColors(
-                                containerColor = PamojaGreen,
-                                contentColor   = PamojaWhite
+                                containerColor = colors.statusSuccess,
+                                contentColor   = colors.textOnBrand
                             )
                         ) {
+                            Icon(
+                                painter = painterResource(PamojaIcons.Check),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.size(Spacing.x2))
                             Text(
-                                text  = "Steps connected ✓",
+                                text  = "Steps connected",
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -344,10 +342,10 @@ fun HealthConnectScreen(
                                 permissionLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(16.dp),
+                            shape    = RoundedCornerShape(PamojaRadii.md),
                             colors   = ButtonDefaults.buttonColors(
-                                containerColor = PamojaIndigo,
-                                contentColor   = PamojaWhite
+                                containerColor = colors.accentPrimary,
+                                contentColor   = colors.textOnBrand
                             )
                         ) {
                             Text(
@@ -362,7 +360,7 @@ fun HealthConnectScreen(
                             Text(
                                 text  = "Skip for now",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = PamojaTextSecondary
+                                color = colors.textSecondary
                             )
                         }
                     }
@@ -380,25 +378,26 @@ fun HealthConnectScreen(
 // ─── Permission explanation row ───────────────────────────────────────────────
 @Composable
 private fun PermissionRow(
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     iconBg: Color,
     title: String,
     subtitle: String
 ) {
+    val colors = LocalPamojaColors.current
     Row(
         verticalAlignment    = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(PamojaRadii.sm))
                 .background(iconBg),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector        = icon,
+                painter            = painterResource(icon),
                 contentDescription = null,
                 tint               = iconColor,
                 modifier           = Modifier.size(20.dp)
@@ -408,12 +407,12 @@ private fun PermissionRow(
             Text(
                 text  = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = PamojaTextPrimary
+                color = colors.textPrimary
             )
             Text(
                 text  = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = PamojaTextSecondary
+                color = colors.textSecondary
             )
         }
     }

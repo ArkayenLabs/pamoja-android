@@ -1,10 +1,8 @@
 package com.pamoja.app.ui.group
 
-import android.Manifest
-import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,41 +37,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
+import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
+import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.domain.model.User
-import com.pamoja.app.ui.theme.PamojaAmber
-import com.pamoja.app.ui.theme.PamojaAmberSubtle
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoDark
-import com.pamoja.app.ui.theme.PamojaIndigoLight
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaSurfaceHigh
-import com.pamoja.app.ui.theme.PamojaSurfaceVariant
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaTextTertiary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.Gray300
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.util.InviteLink
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+
+// Medal accent for ranks 2 & 3 (rank 1 uses the theme amber). Neutral in both themes.
+private val SilverMedal = Gray300
+private val BronzeMedal = Color(0xFFCD7F32)
 
 @Composable
 fun GroupScreen(
@@ -86,6 +73,7 @@ fun GroupScreen(
     onBack: (() -> Unit)? = null,
     viewModel: GroupViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState              by viewModel.uiState.collectAsState()
     val snackbarHostState    = remember { SnackbarHostState() }
     val userPreferences      = viewModel.userPreferences
@@ -94,23 +82,23 @@ fun GroupScreen(
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
 
+    // Health Connect permissions, the same contract the onboarding screen uses.
+    //
+    // This previously requested Manifest.permission.ACTIVITY_RECOGNITION, which
+    // was broken twice over: that permission is not declared in the manifest, so
+    // Android denied it instantly without ever showing a dialog, and it is not
+    // the permission this app reads steps with anyway. It was left over from the
+    // old raw sensor implementation that has now been deleted.
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
+        contract = PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         scope.launch {
-            if (granted) {
-                userPreferences.setHealthConnectGranted(true)
-            } else {
-                userPreferences.setHealthConnectGranted(false)
-                val activity = context as? androidx.activity.ComponentActivity
-                val isPermanent = activity?.shouldShowRequestPermissionRationale(
-                    Manifest.permission.ACTIVITY_RECOGNITION
-                ) == false
-                val msg = if (isPermanent)
-                    "Permission permanently blocked — open Settings to enable step tracking."
-                else
-                    "Permission denied. Tap 'Enable steps' to try again."
-                snackbarHostState.showSnackbar(msg)
+            val hasPermission = granted.containsAll(HealthConnectReader.REQUIRED_PERMISSIONS)
+            userPreferences.setHealthConnectGranted(hasPermission)
+            if (!hasPermission) {
+                snackbarHostState.showSnackbar(
+                    "Step tracking needs permission in Health Connect."
+                )
             }
         }
     }
@@ -130,11 +118,11 @@ fun GroupScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PamojaBackground)
+            .background(colors.surfaceApp)
     ) {
         if (uiState.isLoading) {
             CircularProgressIndicator(
-                color       = PamojaIndigo,
+                color       = colors.accentPrimary,
                 strokeWidth = 2.dp,
                 modifier    = Modifier.align(Alignment.Center)
             )
@@ -148,23 +136,26 @@ fun GroupScreen(
                         memberCount = uiState.memberStepData.size,
                         onBack      = onBack,
                         onShare     = {
-                            val link = uiState.group?.inviteLink
-                            if (!link.isNullOrBlank()) {
-                                val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            if (uiState.group?.inviteLinkActive == false) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "This group's invite link is no longer active."
+                                    )
+                                }
+                            } else {
+                                // Bare verified https link, nothing wrapped around it.
+                                val sendIntent = android.content.Intent(
+                                    android.content.Intent.ACTION_SEND
+                                ).apply {
                                     type = "text/plain"
                                     putExtra(
                                         android.content.Intent.EXTRA_TEXT,
-                                        "Join my Pamoja group \"${uiState.group?.name}\"! " +
-                                        "We're tracking our steps together. Join here: $link"
+                                        InviteLink.build(groupId)
                                     )
                                 }
                                 context.startActivity(
                                     android.content.Intent.createChooser(sendIntent, "Share invite link")
                                 )
-                            } else {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Invite link not available yet.")
-                                }
                             }
                         }
                     )
@@ -185,10 +176,10 @@ fun GroupScreen(
                     Text(
                         text     = "LEADERBOARD",
                         style    = MaterialTheme.typography.labelSmall,
-                        color    = PamojaTextTertiary,
+                        color    = colors.textTertiary,
                         modifier = Modifier.padding(
-                            start = 24.dp, end = 24.dp,
-                            top = 20.dp, bottom = 10.dp
+                            start = Spacing.x6, end = Spacing.x6,
+                            top = Spacing.x5, bottom = Spacing.x3
                         )
                     )
                 }
@@ -203,24 +194,29 @@ fun GroupScreen(
                         isCurrentUser = memberData.user.userId == uiState.currentUserId
                     )
                     if (index < uiState.memberStepData.lastIndex) {
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(Spacing.x2))
                     }
                 }
 
                 // ── Health connect prompt (only when not granted) ─────────
                 if (!isHealthConnectGranted) {
                     item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(Spacing.x4))
                         HealthConnectCard(onClick = {
-                            val alreadyGranted = ContextCompat.checkSelfPermission(
-                                context, Manifest.permission.ACTIVITY_RECOGNITION
-                            ) == PackageManager.PERMISSION_GRANTED
-                            if (alreadyGranted) {
-                                scope.launch {
-                                    userPreferences.setHealthConnectGranted(true)
+                            scope.launch {
+                                val reader = viewModel.healthConnectReader
+                                when {
+                                    !reader.isAvailable() -> snackbarHostState.showSnackbar(
+                                        "Health Connect is not available on this device."
+                                    )
+                                    reader.hasPermission() -> {
+                                        // Already granted, the local flag was just stale.
+                                        userPreferences.setHealthConnectGranted(true)
+                                    }
+                                    else -> permissionLauncher.launch(
+                                        HealthConnectReader.REQUIRED_PERMISSIONS
+                                    )
                                 }
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
                             }
                         })
                     }
@@ -230,7 +226,7 @@ fun GroupScreen(
                     Spacer(
                         modifier = Modifier
                             .navigationBarsPadding()
-                            .height(32.dp)
+                            .height(Spacing.x8)
                     )
                 }
             }
@@ -251,32 +247,33 @@ fun GroupTopBar(
     onShare: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
+    val colors = LocalPamojaColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = Spacing.x2, vertical = Spacing.x2),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Back button
         if (onBack != null) {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                    painter            = painterResource(PamojaIcons.ArrowLeft),
                     contentDescription = "Back",
-                    tint               = PamojaTextSecondary,
+                    tint               = colors.textSecondary,
                     modifier           = Modifier.size(20.dp)
                 )
             }
         } else {
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(Spacing.x4))
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text     = groupName,
                 style    = MaterialTheme.typography.headlineSmall,
-                color    = PamojaTextPrimary,
+                color    = colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -284,17 +281,17 @@ fun GroupTopBar(
                 Text(
                     text  = "$memberCount members · Mon–Sun",
                     style = MaterialTheme.typography.labelSmall,
-                    color = PamojaTextTertiary
+                    color = colors.textTertiary
                 )
             }
         }
 
-        // Share invite link — available to everyone (members can also invite friends)
+        // Share invite link, available to everyone (members can also invite friends)
         IconButton(onClick = onShare) {
             Icon(
-                imageVector        = Icons.Default.Share,
+                painter            = painterResource(PamojaIcons.Share),
                 contentDescription = "Share invite link",
-                tint               = PamojaIndigo,
+                tint               = colors.accentPrimary,
                 modifier           = Modifier.size(20.dp)
             )
         }
@@ -309,25 +306,29 @@ fun GroupProgressCard(
     daysLeft: Int,
     memberCount: Int
 ) {
+    val colors = LocalPamojaColors.current
     val progress = if (weeklyTarget > 0) {
         (combinedSteps.toFloat() / weeklyTarget.toFloat()).coerceIn(0f, 1f)
     } else 0f
     val remaining = (weeklyTarget - combinedSteps).coerceAtLeast(0L)
 
-    // Ring colour changes with progress — amber early, indigo mid, green when done
+    // Ring colour changes with progress, amber early, indigo mid, teal when done.
     val ringColor = when {
-        progress >= 1f  -> PamojaGreen
-        progress >= 0.6f -> PamojaIndigo
-        else            -> PamojaAmber
+        progress >= 1f   -> colors.statusSuccess
+        progress >= 0.6f -> colors.accentPrimary
+        else             -> colors.accentAmber
     }
 
+    val cardShape = RoundedCornerShape(PamojaRadii.xl)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(PamojaSurface)
-            .padding(24.dp),
+            .padding(horizontal = Spacing.x6)
+            .shadow(10.dp, cardShape, clip = false)
+            .clip(cardShape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, cardShape)
+            .padding(Spacing.x6),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Progress ring
@@ -335,11 +336,11 @@ fun GroupProgressCard(
             contentAlignment = Alignment.Center,
             modifier         = Modifier.size(180.dp)
         ) {
-            // Track (dim background ring)
+            // Track (stage-tinted dim ring, visible in both themes)
             CircularProgressIndicator(
                 progress    = { 1f },
                 modifier    = Modifier.size(180.dp),
-                color       = PamojaSurfaceVariant,
+                color       = ringColor.copy(alpha = 0.16f),
                 strokeWidth = 14.dp,
                 strokeCap   = StrokeCap.Round
             )
@@ -355,18 +356,15 @@ fun GroupProgressCard(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text  = "%,d".format(combinedSteps),
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 38.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = PamojaTextPrimary
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 36.sp),
+                    color = colors.textPrimary
                 )
                 Text(
                     text  = "of %,d".format(weeklyTarget),
                     style = MaterialTheme.typography.bodySmall,
-                    color = PamojaTextTertiary
+                    color = colors.textTertiary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.x1))
                 Text(
                     text  = "$daysLeft days left",
                     style = MaterialTheme.typography.labelSmall,
@@ -375,12 +373,12 @@ fun GroupProgressCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(Spacing.x5))
 
         // Stat pills
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.x2)
         ) {
             StatPill(
                 label    = "completed",
@@ -408,29 +406,30 @@ fun StatPill(
     value: String,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalPamojaColors.current
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(PamojaSurfaceVariant)
-            .padding(vertical = 10.dp, horizontal = 8.dp),
+            .clip(RoundedCornerShape(PamojaRadii.sm))
+            .background(colors.surfaceSunken)
+            .padding(vertical = Spacing.x3, horizontal = Spacing.x2),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         Text(
             text  = value,
             style = MaterialTheme.typography.labelMedium,
-            color = PamojaTextPrimary
+            color = colors.textPrimary
         )
         Text(
             text  = label,
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-            color = PamojaTextTertiary
+            color = colors.textTertiary
         )
     }
 }
 
 // ─── Leaderboard row ──────────────────────────────────────────────────────────
-// Rank #1 gets a gold/amber taller card. #2+ get standard dark rows.
+// Rank #1 gets an amber-tinted, taller card; the current user gets an indigo tint.
 @Composable
 fun LeaderboardRow(
     rank: Int,
@@ -439,67 +438,63 @@ fun LeaderboardRow(
     weeklySteps: Long,
     isCurrentUser: Boolean
 ) {
+    val colors = LocalPamojaColors.current
     val isFirst = rank == 1
 
-    val cardBg = when {
-        isFirst && isCurrentUser -> Brush.linearGradient(
-            listOf(Color(0xFF2D2A50), Color(0xFF1E2130)) // indigo tint for #1 current user
-        )
-        isFirst -> Brush.linearGradient(
-            listOf(Color(0xFF2A2620), Color(0xFF1E2130)) // amber tint for #1 other
-        )
-        isCurrentUser -> Brush.linearGradient(
-            listOf(PamojaIndigoSubtle, PamojaIndigoSubtle)
-        )
-        else -> Brush.linearGradient(
-            listOf(PamojaSurface, PamojaSurface)
-        )
+    // Base surface + optional tint overlay + border, all theme-aware.
+    val tintOverlay = when {
+        isFirst       -> colors.accentAmberSubtle
+        isCurrentUser -> colors.accentPrimarySubtle
+        else          -> Color.Transparent
+    }
+    val borderColor = when {
+        isFirst       -> colors.accentAmber.copy(alpha = 0.45f)
+        isCurrentUser -> colors.accentPrimaryBorder
+        else          -> colors.borderSubtle
     }
 
-    val rankColor = when {
-        isFirst      -> PamojaAmber
-        rank == 2    -> PamojaTextSecondary
-        rank == 3    -> Color(0xFFCD7F32) // bronze
-        isCurrentUser -> PamojaIndigoLight
-        else         -> PamojaTextTertiary
+    val medalColor = when (rank) {
+        1 -> colors.accentAmber
+        2 -> SilverMedal
+        3 -> BronzeMedal
+        else -> colors.textTertiary
     }
 
-    val rankLabel = when (rank) {
-        1 -> "🥇"
-        2 -> "🥈"
-        3 -> "🥉"
-        else -> "$rank"
-    }
-
+    val rowShape = RoundedCornerShape(if (isFirst) PamojaRadii.lg else PamojaRadii.md)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .clip(RoundedCornerShape(if (isFirst) 18.dp else 14.dp))
-            .background(brush = cardBg)
+            .padding(horizontal = Spacing.x6)
+            .clip(rowShape)
+            .background(colors.surface1)
+            .background(tintOverlay)
+            .border(1.dp, borderColor, rowShape)
             .then(
-                if (isFirst) Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                else Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+                if (isFirst) Modifier.padding(horizontal = Spacing.x4, vertical = Spacing.x4)
+                else Modifier.padding(horizontal = Spacing.x3, vertical = Spacing.x3)
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
-        // Rank indicator
-        if (rank <= 3) {
-            Text(
-                text  = rankLabel,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = if (isFirst) 20.sp else 16.sp
-                ),
-                modifier = Modifier.width(if (isFirst) 28.dp else 22.dp)
-            )
-        } else {
-            Text(
-                text  = "$rank",
-                style = MaterialTheme.typography.labelMedium,
-                color = rankColor,
-                modifier = Modifier.width(22.dp)
-            )
+        // Rank indicator, medal icon for top 3, number otherwise
+        Box(
+            modifier = Modifier.width(if (isFirst) 28.dp else 22.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (rank <= 3) {
+                Icon(
+                    painter            = painterResource(PamojaIcons.Medal),
+                    contentDescription = "Rank $rank",
+                    tint               = medalColor,
+                    modifier           = Modifier.size(if (isFirst) 24.dp else 20.dp)
+                )
+            } else {
+                Text(
+                    text  = "$rank",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isCurrentUser) colors.accentPrimary else colors.textTertiary
+                )
+            }
         }
 
         // Avatar circle with initials
@@ -509,9 +504,9 @@ fun LeaderboardRow(
                 .clip(CircleShape)
                 .background(
                     brush = if (isCurrentUser)
-                        Brush.linearGradient(listOf(PamojaIndigo, PamojaIndigoDark))
+                        Brush.linearGradient(listOf(colors.accentPrimary, colors.accentPrimaryPress))
                     else
-                        Brush.linearGradient(listOf(PamojaSurfaceHigh, PamojaSurfaceVariant))
+                        Brush.linearGradient(listOf(colors.accentPrimarySubtle, colors.accentPrimarySubtle))
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -521,7 +516,7 @@ fun LeaderboardRow(
                     fontSize = if (isFirst) 14.sp else 11.sp,
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = PamojaWhite
+                color = if (isCurrentUser) colors.textOnBrand else colors.accentPrimary
             )
         }
 
@@ -529,14 +524,14 @@ fun LeaderboardRow(
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.x2)
             ) {
                 Text(
                     text     = user.name,
                     style    = if (isFirst)
-                        MaterialTheme.typography.bodyLarge.copy(color = PamojaTextPrimary)
+                        MaterialTheme.typography.bodyLarge.copy(color = colors.textPrimary)
                     else
-                        MaterialTheme.typography.bodyMedium.copy(color = PamojaTextPrimary),
+                        MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -544,23 +539,21 @@ fun LeaderboardRow(
                 if (isCurrentUser) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(PamojaIndigoSubtle)
+                            .clip(RoundedCornerShape(PamojaRadii.xs))
+                            .background(colors.accentPrimarySubtle)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text  = "you",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize   = 10.sp,
-                                color      = PamojaIndigoLight
-                            )
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = colors.accentPrimary
                         )
                     }
                 }
             }
             Text(
                 text  = "%,d this week".format(weeklySteps),
-                style = MaterialTheme.typography.bodySmall.copy(color = PamojaTextSecondary)
+                style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary)
             )
         }
 
@@ -571,15 +564,13 @@ fun LeaderboardRow(
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize   = if (isFirst) 15.sp else 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color      = if (isFirst) PamojaAmber else PamojaTextPrimary
+                    color      = if (isFirst) colors.accentAmber else colors.textPrimary
                 )
             )
             Text(
                 text  = "today",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 10.sp,
-                    color    = PamojaTextTertiary
-                )
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                color = colors.textTertiary
             )
         }
     }
@@ -588,57 +579,51 @@ fun LeaderboardRow(
 // ─── Health connect card ──────────────────────────────────────────────────────
 @Composable
 fun HealthConnectCard(onClick: () -> Unit) {
+    val colors = LocalPamojaColors.current
+    val cardShape = RoundedCornerShape(PamojaRadii.md)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(PamojaSurface)
+            .padding(horizontal = Spacing.x6)
+            .clip(cardShape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, cardShape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
         Box(
             modifier = Modifier
                 .size(38.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(PamojaIndigoSubtle),
+                .clip(RoundedCornerShape(PamojaRadii.xs))
+                .background(colors.accentPrimarySubtle),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
+                painter            = painterResource(PamojaIcons.Footprints),
                 contentDescription = null,
-                tint     = PamojaIndigo,
-                modifier = Modifier.size(18.dp)
+                tint               = colors.accentPrimary,
+                modifier           = Modifier.size(18.dp)
             )
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text  = "Enable step tracking",
-                style = MaterialTheme.typography.bodyMedium,
-                color = PamojaTextPrimary
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.textPrimary
             )
             Text(
                 text  = "Tap to grant permission and start counting",
                 style = MaterialTheme.typography.bodySmall,
-                color = PamojaTextSecondary
+                color = colors.textSecondary
             )
         }
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            painter            = painterResource(PamojaIcons.ChevronRight),
             contentDescription = null,
-            tint     = PamojaTextTertiary,
-            modifier = Modifier.size(16.dp)
+            tint               = colors.textTertiary,
+            modifier           = Modifier.size(16.dp)
         )
     }
 }
-
-// ─── Legacy GroupHeader alias ─────────────────────────────────────────────────
-// Kept so nav graph or other callers don't break
-@Composable
-fun GroupHeader(
-    groupName: String,
-    memberCount: Int,
-    isAdmin: Boolean
-) = GroupTopBar(groupName, memberCount, onShare = {}, onBack = null)

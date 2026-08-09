@@ -1,12 +1,11 @@
 package com.pamoja.app.ui.home
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,18 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,7 +36,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,12 +45,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,31 +59,21 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.ui.CreateOrJoinViewModel
-import com.pamoja.app.ui.theme.PamojaAmber
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaGreen
-import com.pamoja.app.ui.theme.PamojaGreenSubtle
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoDark
-import com.pamoja.app.ui.theme.PamojaIndigoLight
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaSurfaceVariant
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaTextTertiary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
 // ─── Colour palette for group card avatar gradients ──────────────────────────
-// Each group gets a deterministic gradient based on its name's first char,
-// so the same group always shows the same colour — not random each time.
+// Each group gets a deterministic gradient based on its name's first char, so the
+// same group always shows the same colour. Decorative (white text on top), kept
+// theme-independent on purpose for lively variety in both light and dark.
 private val avatarGradients = listOf(
     listOf(Color(0xFF6366F1), Color(0xFF4F46E5)), // indigo
-    listOf(Color(0xFF34D399), Color(0xFF059669)), // emerald
-    listOf(Color(0xFFF59E0B), Color(0xFFD97706)), // amber
+    listOf(Color(0xFF22C58B), Color(0xFF17A472)), // emerald
+    listOf(Color(0xFFF5A623), Color(0xFFDB8B12)), // amber
     listOf(Color(0xFFF87171), Color(0xFFEF4444)), // rose
     listOf(Color(0xFF60A5FA), Color(0xFF2563EB)), // blue
     listOf(Color(0xFFC084FC), Color(0xFF9333EA)), // purple
@@ -111,6 +93,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState     by viewModel.uiState.collectAsState()
     val joinUiState by joinViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -135,9 +118,33 @@ fun HomeScreen(
         }
     }
     LaunchedEffect(joinUiState.joinedGroupId) {
-        joinUiState.joinedGroupId?.let {
+        joinUiState.joinedGroupId?.let { groupId ->
+            // Opening a link for a group you are already in is legitimate, and
+            // used to land you there with no explanation at all. Say which of
+            // the two things happened before navigating.
+            val message = if (joinUiState.wasAlreadyMember) {
+                "You're already in this group"
+            } else {
+                "Joined"
+            }
             joinViewModel.clearJoinedGroupId()
-            onGroupClick(it)
+            snackbarHostState.showSnackbar(message)
+            onGroupClick(groupId)
+        }
+    }
+
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { /* no-op */ }
+
+    LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            val hasPermission = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) {
+                notificationPermissionLauncher.launch(permission)
+            }
         }
     }
 
@@ -145,13 +152,13 @@ fun HomeScreen(
     if (showJoinDialog) {
         AlertDialog(
             onDismissRequest = { showJoinDialog = false },
-            containerColor   = PamojaSurface,
-            shape            = RoundedCornerShape(20.dp),
+            containerColor   = colors.surface3,
+            shape            = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
                     text  = "Join a group",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = PamojaTextPrimary
+                    color = colors.textPrimary
                 )
             },
             text = {
@@ -159,29 +166,29 @@ fun HomeScreen(
                     Text(
                         text  = "Paste the invite link shared by your group admin.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PamojaTextSecondary
+                        color = colors.textSecondary
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(Spacing.x4))
                     OutlinedTextField(
                         value         = inviteLink,
                         onValueChange = { inviteLink = it },
                         placeholder   = {
                             Text(
-                                text  = "pamoja://join/…",
+                                text  = "Paste the invite link",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = PamojaTextTertiary
+                                color = colors.textTertiary
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape    = RoundedCornerShape(12.dp),
+                        shape    = RoundedCornerShape(PamojaRadii.sm),
                         singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = PamojaTextPrimary),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor      = PamojaIndigo,
-                            unfocusedBorderColor    = PamojaBorder,
-                            focusedContainerColor   = PamojaSurface,
-                            unfocusedContainerColor = PamojaSurface,
-                            cursorColor             = PamojaIndigo
+                            focusedBorderColor      = colors.accentPrimary,
+                            unfocusedBorderColor    = colors.borderDefault,
+                            focusedContainerColor   = colors.surfaceInput,
+                            unfocusedContainerColor = colors.surfaceInput,
+                            cursorColor             = colors.accentPrimary
                         )
                     )
                 }
@@ -194,22 +201,22 @@ fun HomeScreen(
                         inviteLink = ""
                     },
                     enabled = inviteLink.isNotBlank() && !joinUiState.isLoading,
-                    shape   = RoundedCornerShape(12.dp),
-                    colors  = ButtonDefaults.buttonColors(containerColor = PamojaIndigo)
+                    shape   = RoundedCornerShape(PamojaRadii.sm),
+                    colors  = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                 ) {
-                    Text("Join", color = PamojaWhite, style = MaterialTheme.typography.labelLarge)
+                    Text("Join", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showJoinDialog = false }) {
-                    Text("Cancel", color = PamojaTextSecondary)
+                    Text("Cancel", color = colors.textSecondary)
                 }
             }
         )
     }
 
     Scaffold(
-        containerColor = PamojaBackground,
+        containerColor = colors.surfaceApp,
         snackbarHost   = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
 
@@ -219,14 +226,12 @@ fun HomeScreen(
                 .padding(innerPadding)
         ) {
             if (uiState.isLoading) {
-                // ── Loading state ─────────────────────────────────────────
                 CircularProgressIndicator(
-                    color     = PamojaIndigo,
+                    color     = colors.accentPrimary,
                     modifier  = Modifier.align(Alignment.Center),
                     strokeWidth = 2.dp
                 )
             } else {
-                // ── Main scrollable content ───────────────────────────────
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -247,10 +252,10 @@ fun HomeScreen(
                             Text(
                                 text  = "YOUR GROUPS",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = PamojaTextTertiary,
+                                color = colors.textTertiary,
                                 modifier = Modifier.padding(
-                                    start = 24.dp, end = 24.dp,
-                                    top = 20.dp, bottom = 8.dp
+                                    start = Spacing.x6, end = Spacing.x6,
+                                    top = Spacing.x5, bottom = Spacing.x2
                                 )
                             )
                         }
@@ -262,7 +267,7 @@ fun HomeScreen(
                             group   = group,
                             onClick = { onGroupClick(group.groupId) }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(Spacing.x2))
                     }
 
                     // Empty state
@@ -276,7 +281,6 @@ fun HomeScreen(
                 }
 
                 // ── Floating bottom action bar ────────────────────────────
-                // Anchored to bottom instead of a FAB so it feels more iOS-native
                 BottomActionBar(
                     onCreateGroup = onCreateGroup,
                     onJoinGroup   = { showJoinDialog = true },
@@ -293,6 +297,7 @@ private fun HomeHeader(
     name: String,
     onSettingsClick: () -> Unit
 ) {
+    val colors = LocalPamojaColors.current
     // Time-aware greeting
     val greeting = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -303,7 +308,7 @@ private fun HomeHeader(
         }
     }
 
-    // Rotating motivational subtitles — cycles every 4 seconds
+    // Rotating motivational subtitles, cycles every 4 seconds
     val subtitles = remember {
         listOf(
             "Every step counts. Let's go!",
@@ -324,8 +329,8 @@ private fun HomeHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .padding(top = 16.dp, bottom = 4.dp)
+            .padding(horizontal = Spacing.x6)
+            .padding(top = Spacing.x4, bottom = Spacing.x1)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -335,7 +340,7 @@ private fun HomeHeader(
             Text(
                 text  = "$greeting, $name",
                 style = MaterialTheme.typography.headlineLarge,
-                color = PamojaTextPrimary,
+                color = colors.textPrimary,
                 modifier = Modifier.weight(1f)
             )
             IconButton(
@@ -343,18 +348,18 @@ private fun HomeHeader(
                 modifier = Modifier.size(48.dp) // Touch target
             ) {
                 Icon(
-                    imageVector = Icons.Default.Settings,
+                    painter = painterResource(PamojaIcons.Settings),
                     contentDescription = "Settings",
-                    tint = PamojaIndigoLight,
+                    tint = colors.accentPrimary,
                     modifier = Modifier.size(24.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(Spacing.x1))
         Text(
             text  = subtitles[subtitleIndex],
             style = MaterialTheme.typography.bodyMedium,
-            color = PamojaTextSecondary
+            color = colors.textSecondary
         )
     }
 }
@@ -362,41 +367,42 @@ private fun HomeHeader(
 // ─── Join via link card ───────────────────────────────────────────────────────
 @Composable
 private fun JoinLinkCard(onClick: () -> Unit) {
+    val colors = LocalPamojaColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(PamojaGreenSubtle)
+            .padding(horizontal = Spacing.x6, vertical = Spacing.x3)
+            .clip(RoundedCornerShape(PamojaRadii.md))
+            .background(colors.accentTealSubtle)
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
         Box(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(PamojaGreen.copy(alpha = 0.15f)),
+                .background(colors.accentTeal.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Link,
+                painter = painterResource(PamojaIcons.Link),
                 contentDescription = null,
-                tint     = PamojaGreen,
+                tint     = colors.accentTeal,
                 modifier = Modifier.size(16.dp)
             )
         }
         Text(
             text     = "Join a group via invite link",
             style    = MaterialTheme.typography.bodyMedium,
-            color    = PamojaGreen,
+            color    = colors.accentTeal,
             modifier = Modifier.weight(1f)
         )
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            painter = painterResource(PamojaIcons.ChevronRight),
             contentDescription = null,
-            tint     = PamojaGreen,
+            tint     = colors.accentTeal,
             modifier = Modifier.size(16.dp)
         )
     }
@@ -405,24 +411,27 @@ private fun JoinLinkCard(onClick: () -> Unit) {
 // ─── Group card ───────────────────────────────────────────────────────────────
 @Composable
 fun GroupCard(group: Group, onClick: () -> Unit) {
+    val colors = LocalPamojaColors.current
     val gradientColors = gradientForGroup(group.name)
+    val cardShape = RoundedCornerShape(PamojaRadii.lg)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(PamojaSurface)
+            .padding(horizontal = Spacing.x6)
+            .clip(cardShape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, cardShape)
             .clickable { onClick() }
-            .padding(16.dp),
+            .padding(Spacing.x4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
-        // Avatar — gradient box with first two letters
+        // Avatar, gradient box with first two letters
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(PamojaRadii.sm))
                 .background(
                     brush = Brush.linearGradient(colors = gradientColors)
                 ),
@@ -432,30 +441,30 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
                 text  = group.name.take(2).uppercase(),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontSize = 16.sp,
-                    color = PamojaWhite
+                    color = Color.White
                 )
             )
         }
 
         // Group info
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.x1)) {
             Text(
                 text     = group.name,
-                style    = MaterialTheme.typography.bodyLarge.copy(color = PamojaTextPrimary),
+                style    = MaterialTheme.typography.bodyLarge.copy(color = colors.textPrimary),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text  = "%,d steps / week goal".format(group.weeklyTarget),
-                style = MaterialTheme.typography.bodySmall.copy(color = PamojaTextSecondary)
+                style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary)
             )
         }
 
         // Chevron
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            painter = painterResource(PamojaIcons.ChevronRight),
             contentDescription = "Open group",
-            tint     = PamojaTextTertiary,
+            tint     = colors.textTertiary,
             modifier = Modifier.size(18.dp)
         )
     }
@@ -464,37 +473,38 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
 // ─── Empty state ─────────────────────────────────────────────────────────────
 @Composable
 private fun EmptyGroupsState() {
+    val colors = LocalPamojaColors.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 48.dp),
+            .padding(horizontal = Spacing.x6, vertical = Spacing.x12),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
         Box(
             modifier = Modifier
                 .size(72.dp)
-                .clip(RoundedCornerShape(22.dp))
-                .background(PamojaIndigoSubtle),
+                .clip(RoundedCornerShape(PamojaRadii.xl))
+                .background(colors.accentPrimarySubtle),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Groups,
+                painter = painterResource(PamojaIcons.Users),
                 contentDescription = null,
-                tint     = PamojaIndigo,
+                tint     = colors.accentPrimary,
                 modifier = Modifier.size(34.dp)
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(Spacing.x1))
         Text(
             text  = "No groups yet",
             style = MaterialTheme.typography.headlineSmall,
-            color = PamojaTextPrimary
+            color = colors.textPrimary
         )
         Text(
             text      = "Create a group and invite friends or family, or join one with an invite link.",
             style     = MaterialTheme.typography.bodyMedium,
-            color     = PamojaTextSecondary,
+            color     = colors.textSecondary,
             textAlign = TextAlign.Center
         )
     }
@@ -502,13 +512,13 @@ private fun EmptyGroupsState() {
 
 // ─── Bottom action bar ────────────────────────────────────────────────────────
 // Two equal buttons side by side, floating above nav bar.
-// More ergonomic than a single FAB — clearer call to action.
 @Composable
 private fun BottomActionBar(
     onCreateGroup: () -> Unit,
     onJoinGroup: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalPamojaColors.current
     // Gradient scrim behind the buttons so they're never transparent over content
     Box(
         modifier = modifier
@@ -516,8 +526,8 @@ private fun BottomActionBar(
             .background(
                 brush = Brush.verticalGradient(
                     colorStops = arrayOf(
-                        0f to PamojaBackground.copy(alpha = 0f),
-                        0.25f to PamojaBackground
+                        0f to colors.surfaceApp.copy(alpha = 0f),
+                        0.25f to colors.surfaceApp
                     )
                 )
             )
@@ -526,49 +536,56 @@ private fun BottomActionBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = Spacing.x6, vertical = Spacing.x4),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
         ) {
-            // Join (secondary)
+            // Join (tonal secondary)
             Button(
                 onClick  = onJoinGroup,
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-                shape  = RoundedCornerShape(14.dp),
+                shape  = RoundedCornerShape(PamojaRadii.md),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PamojaSurfaceVariant,
-                    contentColor   = PamojaTextPrimary
+                    containerColor = colors.accentPrimarySubtle,
+                    contentColor   = colors.accentPrimary
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.Link,
+                    painter = painterResource(PamojaIcons.Link),
                     contentDescription = null,
-                    modifier = Modifier.size(15.dp),
-                    tint = PamojaTextSecondary
+                    modifier = Modifier.size(16.dp),
+                    tint = colors.accentPrimary
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
                     text     = "Join",
-                    style    = MaterialTheme.typography.labelLarge.copy(color = PamojaTextPrimary),
+                    style    = MaterialTheme.typography.labelLarge,
                     maxLines = 1
                 )
             }
 
-            // Create (primary) — no leading icon so text never wraps on narrow screens
+            // Create (primary)
             Button(
                 onClick  = onCreateGroup,
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-                shape  = RoundedCornerShape(14.dp),
+                shape  = RoundedCornerShape(PamojaRadii.md),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PamojaIndigo,
-                    contentColor   = PamojaWhite
+                    containerColor = colors.accentPrimary,
+                    contentColor   = colors.textOnBrand
                 )
             ) {
+                Icon(
+                    painter = painterResource(PamojaIcons.Add),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = colors.textOnBrand
+                )
+                Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
-                    text     = "+ New group",
+                    text     = "New group",
                     style    = MaterialTheme.typography.labelLarge,
                     maxLines = 1
                 )

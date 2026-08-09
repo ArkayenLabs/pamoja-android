@@ -1,5 +1,6 @@
 package com.pamoja.app.ui.onboarding
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,10 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -31,18 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoDark
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaWhite
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 
 @Composable
 fun WelcomeScreen(
@@ -50,18 +44,18 @@ fun WelcomeScreen(
     onSignIn: () -> Unit,
     viewModel: WelcomeViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     LaunchedEffect(Unit) {
         viewModel.onScreenViewed()
     }
 
-    // Gradient background: subtle indigo tint at top fades into the dark background.
-    // This is reliable across all Android versions unlike Modifier.blur() which
-    // requires API 31+ and renders as a hard rectangle on older devices.
+    // Subtle brand tint at top fading into the app background, theme-aware.
+    val topTint = if (colors.isDark) Color(0xFF1C1A3A) else Color(0xFFECEAFB)
     val backgroundGradient = Brush.verticalGradient(
         colorStops = arrayOf(
-            0.0f to Color(0xFF1C1A3A),  // Deep indigo-tinted dark at very top
-            0.45f to PamojaBackground,  // Fades into app background colour
-            1.0f to PamojaBackground    // Solid dark from midpoint down
+            0.0f to topTint,
+            0.45f to colors.surfaceApp,
+            1.0f to colors.surfaceApp
         )
     )
 
@@ -74,7 +68,7 @@ fun WelcomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = Spacing.x7),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -83,70 +77,69 @@ fun WelcomeScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.x6))
 
-                // Step 1 of 3 — consistent with ProfileSetup (step 2) and HealthConnect (step 3)
                 OnboardingProgressBar(currentStep = 1, totalSteps = 3)
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.x12))
 
-                // App icon — indigo gradient rounded square
+                // App icon, indigo gradient rounded square
                 Box(
                     modifier = Modifier
                         .size(72.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(PamojaRadii.lg))
                         .background(
                             brush = Brush.linearGradient(
-                                colors = listOf(PamojaIndigo, PamojaIndigoDark)
+                                colors = listOf(colors.accentPrimary, colors.accentPrimaryPress)
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector        = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        painter            = painterResource(PamojaIcons.Footprints),
                         contentDescription = "Pamoja logo",
-                        tint               = PamojaWhite,
+                        tint               = colors.textOnBrand,
                         modifier           = Modifier.size(34.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.x6))
 
                 Text(
                     text  = "Pamoja",
                     style = MaterialTheme.typography.headlineLarge,
-                    color = PamojaTextPrimary
+                    color = colors.textPrimary
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Text(
                     text      = "Walk further, together.",
                     style     = MaterialTheme.typography.bodyLarge.copy(
-                        color     = PamojaTextSecondary,
+                        color     = colors.textSecondary,
                         textAlign = TextAlign.Center
                     )
                 )
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(Spacing.x10))
 
                 // Feature pills
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
                 ) {
                     FeaturePill(
-                        icon     = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        icon     = PamojaIcons.Footprints,
                         label    = "Step tracking",
                         modifier = Modifier.weight(1f)
                     )
                     FeaturePill(
-                        icon     = Icons.Default.Groups,
+                        icon     = PamojaIcons.Users,
                         label    = "Group goals",
                         modifier = Modifier.weight(1f)
                     )
                     FeaturePill(
-                        icon     = Icons.Default.Leaderboard,
+                        icon     = PamojaIcons.Trophy,
                         label    = "Leaderboard",
                         modifier = Modifier.weight(1f)
                     )
@@ -157,7 +150,7 @@ fun WelcomeScreen(
             Column(
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = Spacing.x6),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
@@ -165,10 +158,10 @@ fun WelcomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape  = RoundedCornerShape(16.dp),
+                    shape  = RoundedCornerShape(PamojaRadii.md),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PamojaIndigo,
-                        contentColor   = PamojaWhite
+                        containerColor = colors.accentPrimary,
+                        contentColor   = colors.textOnBrand
                     )
                 ) {
                     Text(
@@ -177,14 +170,14 @@ fun WelcomeScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.x4))
 
                 // Clickable sign-in link for returning users
                 TextButton(onClick = onSignIn) {
                     Text(
                         text  = "Already have an account? Sign in",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = PamojaIndigo
+                            color = colors.accentPrimary
                         )
                     )
                 }
@@ -196,28 +189,29 @@ fun WelcomeScreen(
 // ─── Feature Pill ─────────────────────────────────────────────────────────────
 @Composable
 private fun FeaturePill(
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     label: String,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalPamojaColors.current
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(PamojaIndigoSubtle)
-            .padding(vertical = 14.dp, horizontal = 8.dp),
+            .clip(RoundedCornerShape(PamojaRadii.md))
+            .background(colors.accentPrimarySubtle)
+            .padding(vertical = Spacing.x4, horizontal = Spacing.x2),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.x2)
     ) {
         Icon(
-            imageVector        = icon,
+            painter            = painterResource(icon),
             contentDescription = null,
-            tint               = PamojaIndigo,
+            tint               = colors.accentPrimary,
             modifier           = Modifier.size(20.dp)
         )
         Text(
             text  = label,
             style = MaterialTheme.typography.labelSmall.copy(
-                color     = PamojaIndigo,
+                color     = colors.accentPrimary,
                 textAlign = TextAlign.Center,
                 fontSize  = 10.sp
             )

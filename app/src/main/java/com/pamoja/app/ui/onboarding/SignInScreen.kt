@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,16 +31,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoDark
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 
 /**
  * Returning-user sign-in screen.
@@ -51,9 +46,6 @@ import com.pamoja.app.ui.theme.PamojaWhite
  * Because Pamoja uses anonymous Firebase auth, there are no credentials to enter.
  * This screen simply restores the existing anonymous session (or creates a new one
  * if the app was freshly reinstalled) and navigates the user to Home.
- *
- * Rationale: Showing an email/password form for anonymous auth is misleading and broken —
- * Firebase rejects email/password calls when only anonymous auth is enabled.
  */
 @Composable
 fun SignInScreen(
@@ -61,6 +53,7 @@ fun SignInScreen(
     onBack: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState           by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -77,11 +70,12 @@ fun SignInScreen(
         }
     }
 
+    val topTint = if (colors.isDark) Color(0xFF1C1A3A) else Color(0xFFECEAFB)
     val backgroundGradient = Brush.verticalGradient(
         colorStops = arrayOf(
-            0.0f to Color(0xFF1C1A3A),
-            0.45f to PamojaBackground,
-            1.0f to PamojaBackground
+            0.0f to topTint,
+            0.45f to colors.surfaceApp,
+            1.0f to colors.surfaceApp
         )
     )
 
@@ -94,60 +88,60 @@ fun SignInScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Spacing.x6),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.x4))
 
             // Back
             Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
                     Icon(
-                        imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                        painter            = painterResource(PamojaIcons.ArrowLeft),
                         contentDescription = "Back",
-                        tint               = PamojaTextSecondary,
+                        tint               = colors.textSecondary,
                         modifier           = Modifier.size(20.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(Spacing.x12))
 
             // Icon
             Box(
                 modifier = Modifier
                     .size(72.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(PamojaRadii.lg))
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(PamojaIndigo, PamojaIndigoDark)
+                            colors = listOf(colors.accentPrimary, colors.accentPrimaryPress)
                         )
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector        = Icons.AutoMirrored.Filled.DirectionsWalk,
+                    painter            = painterResource(PamojaIcons.Footprints),
                     contentDescription = null,
-                    tint               = PamojaWhite,
+                    tint               = colors.textOnBrand,
                     modifier           = Modifier.size(34.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(Spacing.x7))
 
             Text(
                 text      = "Welcome back",
                 style     = MaterialTheme.typography.headlineLarge,
-                color     = PamojaTextPrimary,
+                color     = colors.textPrimary,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.x3))
 
             Text(
                 text      = "Tap Continue to restore your session and pick up right where you left off.",
                 style     = MaterialTheme.typography.bodyMedium,
-                color     = PamojaTextSecondary,
+                color     = colors.textSecondary,
                 textAlign = TextAlign.Center
             )
         }
@@ -157,7 +151,7 @@ fun SignInScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+                .padding(horizontal = Spacing.x6, vertical = Spacing.x6),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
@@ -166,16 +160,16 @@ fun SignInScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape  = RoundedCornerShape(16.dp),
+                shape  = RoundedCornerShape(PamojaRadii.md),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor         = PamojaIndigo,
-                    contentColor           = PamojaWhite,
-                    disabledContainerColor = PamojaIndigoSubtle
+                    containerColor         = colors.accentPrimary,
+                    contentColor           = colors.textOnBrand,
+                    disabledContainerColor = colors.accentPrimarySubtle
                 )
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
-                        color       = PamojaWhite,
+                        color       = colors.textOnBrand,
                         strokeWidth = 2.dp,
                         modifier    = Modifier.size(20.dp)
                     )

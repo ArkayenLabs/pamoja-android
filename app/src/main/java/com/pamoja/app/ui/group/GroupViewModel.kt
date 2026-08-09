@@ -2,6 +2,7 @@ package com.pamoja.app.ui.group
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
@@ -59,6 +60,11 @@ class GroupViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val updateWeeklyTargetUseCase: UpdateWeeklyTargetUseCase,
     val userPreferences: UserPreferences,
+    // Exposed so the dashboard's "enable step tracking" card can drive the real
+    // Health Connect permission flow. It previously requested ACTIVITY_RECOGNITION,
+    // which is not declared in the manifest and is not the permission this app
+    // uses, so the card could never succeed.
+    val healthConnectReader: HealthConnectReader,
     private val workManagerScheduler: WorkManagerScheduler,
     private val analyticsManager: AnalyticsManager,
     private val syncTodayStepsUseCase: SyncTodayStepsUseCase
@@ -82,7 +88,7 @@ class GroupViewModel @Inject constructor(
                 _uiState.value = GroupUiState(error = "User not found. Please sign in again.")
                 return@launch
             }
-            // Immediately sync steps on screen open — don't wait for WorkManager
+            // Immediately sync steps on screen open, don't wait for WorkManager
             viewModelScope.launch {
                 syncTodayStepsUseCase(currentUser.userId)
             }
@@ -174,7 +180,7 @@ class GroupViewModel @Inject constructor(
                         combinedWeeklySteps = combinedWeekly
                     )
 
-                    // Log weekly goal reached — once per screen session
+                    // Log weekly goal reached, once per screen session
                     val target = group.weeklyTarget
                     if (combinedWeekly >= target && !weeklyGoalLoggedThisSession) {
                         weeklyGoalLoggedThisSession = true

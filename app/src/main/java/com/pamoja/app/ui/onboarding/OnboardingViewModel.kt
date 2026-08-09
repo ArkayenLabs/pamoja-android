@@ -59,7 +59,7 @@ class OnboardingViewModel @Inject constructor(
             // ── Step 1: Get or create a Firebase anonymous user ──────────────────
             // If the Firebase SDK already holds a current user (e.g. user tapped Back
             // and re-submitted the form, or DataStore was wiped but Firebase token
-            // is still valid) — reuse that UID instead of minting a new anonymous user.
+            // is still valid), reuse that UID instead of minting a new anonymous user.
             // Minting a new one would orphan all existing Firestore data under the old UID.
             val existingFirebaseUser = firebaseAuth.currentUser
             val userId: String
@@ -68,7 +68,7 @@ class OnboardingViewModel @Inject constructor(
                 // Reuse the existing Firebase UID
                 userId = existingFirebaseUser.uid
             } else {
-                // First-ever launch — create an anonymous user
+                // First-ever launch, create an anonymous user
                 val authResult = signInAnonymouslyUseCase()
                 val authUser = authResult.getOrElse { error ->
                     _uiState.value = OnboardingUiState(

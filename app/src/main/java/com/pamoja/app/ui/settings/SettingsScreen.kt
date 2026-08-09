@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,16 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.StarRate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,27 +51,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoLight
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaRed
-import com.pamoja.app.ui.theme.PamojaRedSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaSurfaceVariant
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaTextTertiary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 @Composable
@@ -89,6 +69,7 @@ fun SettingsScreen(
     onSignedOut: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -130,13 +111,13 @@ fun SettingsScreen(
     if (showEditNameDialog) {
         AlertDialog(
             onDismissRequest = { showEditNameDialog = false },
-            containerColor = PamojaSurface,
-            shape = RoundedCornerShape(20.dp),
+            containerColor = colors.surface3,
+            shape = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
                     text = "Edit Name",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = PamojaTextPrimary
+                    color = colors.textPrimary
                 )
             },
             text = {
@@ -147,19 +128,19 @@ fun SettingsScreen(
                         Text(
                             text = "Enter your display name",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = PamojaTextTertiary
+                            color = colors.textTertiary
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(PamojaRadii.sm),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = PamojaTextPrimary),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PamojaIndigo,
-                        unfocusedBorderColor = PamojaBorder,
-                        focusedContainerColor = PamojaSurface,
-                        unfocusedContainerColor = PamojaSurface,
-                        cursorColor = PamojaIndigo
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderDefault,
+                        focusedContainerColor = colors.surfaceInput,
+                        unfocusedContainerColor = colors.surfaceInput,
+                        cursorColor = colors.accentPrimary
                     )
                 )
             },
@@ -170,15 +151,15 @@ fun SettingsScreen(
                         showEditNameDialog = false
                     },
                     enabled = editNameInput.isNotBlank(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PamojaIndigo)
+                    shape = RoundedCornerShape(PamojaRadii.sm),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                 ) {
-                    Text("Save", color = PamojaWhite, style = MaterialTheme.typography.labelLarge)
+                    Text("Save", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = PamojaTextSecondary)
+                    Text("Cancel", color = colors.textSecondary)
                 }
             }
         )
@@ -187,20 +168,20 @@ fun SettingsScreen(
     if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            containerColor = PamojaSurface,
-            shape = RoundedCornerShape(20.dp),
+            containerColor = colors.surface3,
+            shape = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
                     text = "Delete Account",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = PamojaRed
+                    color = colors.statusDanger
                 )
             },
             text = {
                 Text(
                     text = "This action is permanent and cannot be undone. All your step groups and progress history will be removed.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = PamojaTextSecondary
+                    color = colors.textSecondary
                 )
             },
             confirmButton = {
@@ -209,15 +190,15 @@ fun SettingsScreen(
                         viewModel.deleteAccount()
                         showDeleteConfirmDialog = false
                     },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PamojaRed)
+                    shape = RoundedCornerShape(PamojaRadii.sm),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.statusDanger)
                 ) {
-                    Text("Delete Permanently", color = PamojaWhite, style = MaterialTheme.typography.labelLarge)
+                    Text("Delete Permanently", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel", color = PamojaTextSecondary)
+                    Text("Cancel", color = colors.textSecondary)
                 }
             }
         )
@@ -226,7 +207,7 @@ fun SettingsScreen(
     // ── Main UI Structure ────────────────────────────────────────────────────
 
     Scaffold(
-        containerColor = PamojaBackground,
+        containerColor = colors.surfaceApp,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(
@@ -240,22 +221,22 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = Spacing.x2, vertical = Spacing.x2),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        painter = painterResource(PamojaIcons.ArrowLeft),
                         contentDescription = "Back",
-                        tint = PamojaTextSecondary,
+                        tint = colors.textSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
                     text = "Settings",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = PamojaTextPrimary
+                    color = colors.textPrimary
                 )
             }
 
@@ -263,33 +244,29 @@ fun SettingsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .height(320.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = PamojaIndigo,
+                        color = colors.accentPrimary,
                         strokeWidth = 2.dp
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.x4))
 
                 // ─── Section: Profile ────────────────────────────────────────
-                Text(
-                    text = "PROFILE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PamojaTextTertiary,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                )
+                SectionLabel("PROFILE", color = colors.textTertiary)
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(PamojaSurface)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(horizontal = Spacing.x6)
+                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .padding(Spacing.x4),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.x4)
                 ) {
                     // Display Name Row
                     Row(
@@ -301,20 +278,20 @@ fun SettingsScreen(
                             Text(
                                 text = "Name",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = PamojaTextTertiary
+                                color = colors.textTertiary
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = uiState.userName.takeIf { it.isNotBlank() } ?: "Guest User",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = PamojaTextPrimary
+                                color = colors.textPrimary
                             )
                         }
                         IconButton(onClick = { showEditNameDialog = true }) {
                             Icon(
-                                imageVector = Icons.Default.Edit,
+                                painter = painterResource(PamojaIcons.Edit),
                                 contentDescription = "Edit Name",
-                                tint = PamojaIndigoLight,
+                                tint = colors.accentPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -330,13 +307,13 @@ fun SettingsScreen(
                             Text(
                                 text = "User ID",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = PamojaTextTertiary
+                                color = colors.textTertiary
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = uiState.userId,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = PamojaTextSecondary,
+                                color = colors.textSecondary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -352,43 +329,39 @@ fun SettingsScreen(
                             }
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ContentCopy,
+                                painter = painterResource(PamojaIcons.Copy),
                                 contentDescription = "Copy User ID",
-                                tint = PamojaTextSecondary,
+                                tint = colors.textSecondary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.x6))
 
                 // ─── Section: App Settings & Info ───────────────────────────
-                Text(
-                    text = "INFORMATION",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PamojaTextTertiary,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                )
+                SectionLabel("INFORMATION", color = colors.textTertiary)
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(PamojaSurface)
+                        .padding(horizontal = Spacing.x6)
+                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
                 ) {
                     SettingsRow(
-                        icon = Icons.Default.PrivacyTip,
+                        icon = PamojaIcons.ShieldCheck,
                         title = "Privacy Policy",
                         subtitle = "Read our terms and privacy policy",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://pamoja-app.web.app/privacy-policy"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/privacy/pamoja"))
                             context.startActivity(intent)
                         }
                     )
                     SettingsRow(
-                        icon = Icons.Default.StarRate,
+                        icon = PamojaIcons.Star,
                         title = "Rate Us",
                         subtitle = "Support us by sharing your feedback",
                         onClick = {
@@ -403,60 +376,56 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.x6))
 
                 // ─── Section: Danger Zone ────────────────────────────────────
-                Text(
-                    text = "ACCOUNT ACTIONS",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PamojaRed,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                )
+                SectionLabel("ACCOUNT ACTIONS", color = colors.statusDanger)
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(PamojaSurface)
+                        .padding(horizontal = Spacing.x6)
+                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
                 ) {
                     SettingsRow(
-                        icon = Icons.Default.ExitToApp,
+                        icon = PamojaIcons.LogOut,
                         title = "Log Out",
                         subtitle = "Sign out of your account on this device",
-                        iconColor = PamojaTextSecondary,
+                        iconColor = colors.textSecondary,
                         onClick = { viewModel.signOut() }
                     )
                     SettingsRow(
-                        icon = Icons.Default.DeleteForever,
+                        icon = PamojaIcons.Trash,
                         title = "Delete Account",
                         subtitle = "Permanently wipe your profile and statistics",
-                        iconColor = PamojaRed,
+                        iconColor = colors.statusDanger,
                         onClick = { showDeleteConfirmDialog = true }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.x12))
 
                 // App version signature
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = Spacing.x6),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Info,
+                        painter = painterResource(PamojaIcons.Info),
                         contentDescription = null,
-                        tint = PamojaTextTertiary,
+                        tint = colors.textTertiary,
                         modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
                         text = "Pamoja v1.0.0",
                         style = MaterialTheme.typography.labelSmall,
-                        color = PamojaTextTertiary,
+                        color = colors.textTertiary,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -464,7 +433,7 @@ fun SettingsScreen(
                 Spacer(
                     modifier = Modifier
                         .navigationBarsPadding()
-                        .height(32.dp)
+                        .height(Spacing.x8)
                 )
             }
         }
@@ -472,32 +441,44 @@ fun SettingsScreen(
 }
 
 @Composable
+private fun SectionLabel(text: String, color: Color) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        modifier = Modifier.padding(horizontal = Spacing.x6, vertical = Spacing.x2)
+    )
+}
+
+@Composable
 private fun SettingsRow(
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     title: String,
     subtitle: String,
-    iconColor: Color = PamojaIndigoLight,
+    iconColor: Color? = null,
     onClick: () -> Unit
 ) {
+    val colors = LocalPamojaColors.current
+    val resolvedIconColor = iconColor ?: colors.accentPrimary
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(iconColor.copy(alpha = 0.12f)),
+                .clip(RoundedCornerShape(PamojaRadii.xs))
+                .background(resolvedIconColor.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = null,
-                tint = iconColor,
+                tint = resolvedIconColor,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -505,18 +486,18 @@ private fun SettingsRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = PamojaTextPrimary
+                color = colors.textPrimary
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = PamojaTextSecondary
+                color = colors.textSecondary
             )
         }
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            painter = painterResource(PamojaIcons.ChevronRight),
             contentDescription = null,
-            tint = PamojaTextTertiary,
+            tint = colors.textTertiary,
             modifier = Modifier.size(16.dp)
         )
     }

@@ -13,14 +13,11 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -40,27 +37,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaSurfaceVariant
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaTextTertiary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 
 @Composable
 fun ProfileSetupScreen(
     onContinue: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -90,38 +82,38 @@ fun ProfileSetupScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PamojaBackground)
+            .background(colors.surfaceApp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Spacing.x6)
                 .verticalScroll(rememberScrollState())
                 .imePadding()
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Spacing.x8))
 
-            // ── iOS pill progress bar ────────────────────────────────────
+            // ── Pill progress bar ────────────────────────────────────────
             OnboardingProgressBar(currentStep = 2, totalSteps = 3)
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(Spacing.x8))
 
             Text(
                 text  = "Set up your profile",
                 style = MaterialTheme.typography.headlineLarge,
-                color = PamojaTextPrimary
+                color = colors.textPrimary
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.x2))
 
             Text(
                 text  = "Your group sees your name. Everything else is optional.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = PamojaTextSecondary
+                color = colors.textSecondary
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Spacing.x8))
 
             // ── Avatar placeholder ───────────────────────────────────────
             Box(
@@ -132,19 +124,19 @@ fun ProfileSetupScreen(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(PamojaSurfaceVariant),
+                        .background(colors.surfaceSunken),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CameraAlt,
+                        painter = painterResource(PamojaIcons.Camera),
                         contentDescription = "Add photo",
-                        tint = PamojaTextTertiary,
+                        tint = colors.textTertiary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(Spacing.x7))
 
             // ── Name field (required) ────────────────────────────────────
             DarkTextField(
@@ -154,18 +146,18 @@ fun ProfileSetupScreen(
                 placeholder = "What should we call you?"
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(Spacing.x3))
 
             // ── Optional stats row ───────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
             ) {
                 DarkTextField(
                     value       = age,
                     onValueChange = { age = it },
                     label       = "Age",
-                    placeholder = "—",
+                    placeholder = "-",
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f)
                 )
@@ -173,7 +165,7 @@ fun ProfileSetupScreen(
                     value       = height,
                     onValueChange = { height = it },
                     label       = "Height cm",
-                    placeholder = "—",
+                    placeholder = "-",
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f)
                 )
@@ -181,21 +173,21 @@ fun ProfileSetupScreen(
                     value       = weight,
                     onValueChange = { weight = it },
                     label       = "Weight kg",
-                    placeholder = "—",
+                    placeholder = "-",
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.x2))
 
             Text(
                 text  = "Age, height and weight are optional and private.",
                 style = MaterialTheme.typography.bodySmall,
-                color = PamojaTextTertiary
+                color = colors.textTertiary
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(Spacing.x8))
 
             Button(
                 onClick = {
@@ -210,12 +202,12 @@ fun ProfileSetupScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape  = RoundedCornerShape(16.dp),
+                shape  = RoundedCornerShape(PamojaRadii.md),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor         = PamojaIndigo,
-                    contentColor           = PamojaWhite,
-                    disabledContainerColor = PamojaIndigoSubtle,
-                    disabledContentColor   = PamojaTextTertiary
+                    containerColor         = colors.accentPrimary,
+                    contentColor           = colors.textOnBrand,
+                    disabledContainerColor = colors.accentPrimarySubtle,
+                    disabledContentColor   = colors.textTertiary
                 )
             ) {
                 Text(
@@ -224,7 +216,7 @@ fun ProfileSetupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(Spacing.x10))
         }
 
         SnackbarHost(
@@ -234,11 +226,11 @@ fun ProfileSetupScreen(
     }
 }
 
-// ─── iOS-style pill progress bar ─────────────────────────────────────────────
-// Active steps are filled indigo; upcoming are dim surface. More elegant than dots.
+// ─── Pill progress bar ───────────────────────────────────────────────────────
 @Composable
 fun OnboardingProgressBar(currentStep: Int, totalSteps: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    val colors = LocalPamojaColors.current
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x2)) {
         repeat(totalSteps) { index ->
             val isActive = index < currentStep
             Box(
@@ -247,7 +239,7 @@ fun OnboardingProgressBar(currentStep: Int, totalSteps: Int) {
                     .height(3.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isActive) PamojaIndigo else PamojaSurfaceVariant
+                        if (isActive) colors.accentPrimary else colors.borderStrong
                     )
             )
         }
@@ -260,9 +252,8 @@ fun ProgressDots(current: Int, total: Int) {
     OnboardingProgressBar(currentStep = current, totalSteps = total)
 }
 
-// ─── Dark themed text field ───────────────────────────────────────────────────
-// Minimal, iOS-ish: no colored container glow, just a clean surface with
-// a subtle border that highlights to indigo on focus.
+// ─── Themed text field ─────────────────────────────────────────────────────────
+// Clean surface with a subtle border that highlights to the brand hue on focus.
 @Composable
 fun DarkTextField(
     value: String,
@@ -272,13 +263,14 @@ fun DarkTextField(
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
+    val colors = LocalPamojaColors.current
     Column(modifier = modifier) {
         Text(
             text  = label,
             style = MaterialTheme.typography.labelSmall,
-            color = PamojaTextSecondary
+            color = colors.textSecondary
         )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(Spacing.x2))
         OutlinedTextField(
             value    = value,
             onValueChange = onValueChange,
@@ -286,35 +278,24 @@ fun DarkTextField(
                 Text(
                     text  = placeholder,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = PamojaTextTertiary
+                    color = colors.textTertiary
                 )
             },
             modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(12.dp),
+            shape    = RoundedCornerShape(PamojaRadii.sm),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             visualTransformation = VisualTransformation.None,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = PamojaTextPrimary),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor      = PamojaIndigo,
-                unfocusedBorderColor    = PamojaBorder,
-                focusedContainerColor   = PamojaSurface,
-                unfocusedContainerColor = PamojaSurface,
-                cursorColor             = PamojaIndigo,
-                focusedLabelColor       = PamojaIndigo,
-                unfocusedLabelColor     = PamojaTextSecondary
+                focusedBorderColor      = colors.accentPrimary,
+                unfocusedBorderColor    = colors.borderDefault,
+                focusedContainerColor   = colors.surfaceInput,
+                unfocusedContainerColor = colors.surfaceInput,
+                cursorColor             = colors.accentPrimary,
+                focusedLabelColor       = colors.accentPrimary,
+                unfocusedLabelColor     = colors.textSecondary
             )
         )
     }
 }
-
-// Legacy alias — SignInScreen references PamojaTextField
-@Composable
-fun PamojaTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text
-) = DarkTextField(value, onValueChange, label, placeholder, modifier, keyboardType)

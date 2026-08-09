@@ -1,6 +1,7 @@
 package com.pamoja.app.ui.group
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -17,8 +18,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -42,19 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.ui.onboarding.DarkTextField
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaSurfaceVariant
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaTextTertiary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 
 @Composable
 fun CreateGroupScreen(
@@ -62,6 +56,7 @@ fun CreateGroupScreen(
     onBack: () -> Unit,
     viewModel: CreateGroupViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState           by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -90,52 +85,52 @@ fun CreateGroupScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PamojaBackground)
+            .background(colors.surfaceApp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = Spacing.x6)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.x4))
 
             // ── Top bar ────────────────────────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.x1)
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
                     Icon(
-                        imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                        painter            = painterResource(PamojaIcons.ArrowLeft),
                         contentDescription = "Back",
-                        tint               = PamojaTextSecondary,
+                        tint               = colors.textSecondary,
                         modifier           = Modifier.size(20.dp)
                     )
                 }
                 Text(
                     text  = "Back",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = PamojaTextSecondary
+                    color = colors.textSecondary
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
                 text  = "Create your group",
                 style = MaterialTheme.typography.headlineLarge,
-                color = PamojaTextPrimary
+                color = colors.textPrimary
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.x2))
             Text(
                 text  = "You can edit these anytime as admin.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = PamojaTextSecondary
+                color = colors.textSecondary
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(Spacing.x7))
 
             // ── Group name ─────────────────────────────────────────────
             DarkTextField(
@@ -145,7 +140,7 @@ fun CreateGroupScreen(
                 placeholder   = "e.g. Sharma Family"
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(Spacing.x7))
 
             // ── Weekly step goal ───────────────────────────────────────
             SettingCard {
@@ -157,16 +152,16 @@ fun CreateGroupScreen(
                     Text(
                         text  = "Weekly step goal",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PamojaTextPrimary
+                        color = colors.textPrimary
                     )
                     Text(
                         text  = "%,d steps".format(selectedTarget),
                         style = MaterialTheme.typography.labelMedium,
-                        color = PamojaIndigo
+                        color = colors.accentPrimary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Slider(
                     value         = weeklyTargetIndex,
@@ -174,9 +169,9 @@ fun CreateGroupScreen(
                     valueRange    = 0f..4f,
                     steps         = 3,
                     colors = SliderDefaults.colors(
-                        thumbColor          = PamojaIndigo,
-                        activeTrackColor    = PamojaIndigo,
-                        inactiveTrackColor  = PamojaSurfaceVariant
+                        thumbColor          = colors.accentPrimary,
+                        activeTrackColor    = colors.accentPrimary,
+                        inactiveTrackColor  = colors.accentPrimarySubtle
                     )
                 )
 
@@ -188,13 +183,13 @@ fun CreateGroupScreen(
                         Text(
                             text  = label,
                             style = MaterialTheme.typography.labelSmall,
-                            color = PamojaTextTertiary
+                            color = colors.textTertiary
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.x3))
 
             // ── Max members ────────────────────────────────────────────
             SettingCard {
@@ -206,16 +201,16 @@ fun CreateGroupScreen(
                     Text(
                         text  = "Max members",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PamojaTextPrimary
+                        color = colors.textPrimary
                     )
                     Text(
                         text  = "${maxMembers.toInt()} members",
                         style = MaterialTheme.typography.labelMedium,
-                        color = PamojaIndigo
+                        color = colors.accentPrimary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Slider(
                     value         = maxMembers,
@@ -223,9 +218,9 @@ fun CreateGroupScreen(
                     valueRange    = 2f..20f,
                     steps         = 17,
                     colors = SliderDefaults.colors(
-                        thumbColor         = PamojaIndigo,
-                        activeTrackColor   = PamojaIndigo,
-                        inactiveTrackColor = PamojaSurfaceVariant
+                        thumbColor         = colors.accentPrimary,
+                        activeTrackColor   = colors.accentPrimary,
+                        inactiveTrackColor = colors.accentPrimarySubtle
                     )
                 )
 
@@ -233,20 +228,22 @@ fun CreateGroupScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("2",  style = MaterialTheme.typography.labelSmall, color = PamojaTextTertiary)
-                    Text("20", style = MaterialTheme.typography.labelSmall, color = PamojaTextTertiary)
+                    Text("2",  style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
+                    Text("20", style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Spacing.x3))
 
             // ── Members can edit goal toggle ───────────────────────────
+            val toggleShape = RoundedCornerShape(PamojaRadii.md)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(PamojaSurface)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .clip(toggleShape)
+                    .background(colors.surface1)
+                    .border(1.dp, colors.borderSubtle, toggleShape)
+                    .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -254,28 +251,28 @@ fun CreateGroupScreen(
                     Text(
                         text  = "Members can edit goal",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PamojaTextPrimary
+                        color = colors.textPrimary
                     )
                     Text(
                         text  = "Allow others to change the step target",
                         style = MaterialTheme.typography.bodySmall,
-                        color = PamojaTextSecondary
+                        color = colors.textSecondary
                     )
                 }
                 Switch(
                     checked         = canMembersEdit,
                     onCheckedChange = { canMembersEdit = it },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor   = PamojaWhite,
-                        checkedTrackColor   = PamojaIndigo,
-                        uncheckedThumbColor = PamojaTextSecondary,
-                        uncheckedTrackColor = PamojaSurfaceVariant,
-                        uncheckedBorderColor = PamojaBorder
+                        checkedThumbColor    = colors.textOnBrand,
+                        checkedTrackColor    = colors.accentPrimary,
+                        uncheckedThumbColor  = colors.textSecondary,
+                        uncheckedTrackColor  = colors.surfaceSunken,
+                        uncheckedBorderColor = colors.borderDefault
                     )
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Spacing.x8))
 
             Button(
                 onClick = {
@@ -290,12 +287,12 @@ fun CreateGroupScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape  = RoundedCornerShape(16.dp),
+                shape  = RoundedCornerShape(PamojaRadii.md),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor         = PamojaIndigo,
-                    contentColor           = PamojaWhite,
-                    disabledContainerColor = PamojaIndigoSubtle,
-                    disabledContentColor   = PamojaTextTertiary
+                    containerColor         = colors.accentPrimary,
+                    contentColor           = colors.textOnBrand,
+                    disabledContainerColor = colors.accentPrimarySubtle,
+                    disabledContentColor   = colors.textTertiary
                 )
             ) {
                 Text(
@@ -307,7 +304,7 @@ fun CreateGroupScreen(
             Spacer(
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .height(40.dp)
+                    .height(Spacing.x10)
             )
         }
 
@@ -319,15 +316,17 @@ fun CreateGroupScreen(
 }
 
 // ─── Setting card container ────────────────────────────────────────────────────
-// Wraps slider controls in a dark surface card for visual grouping
 @Composable
 private fun SettingCard(content: @Composable ColumnScope.() -> Unit) {
+    val colors = LocalPamojaColors.current
+    val cardShape = RoundedCornerShape(PamojaRadii.md)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(PamojaSurface)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .clip(cardShape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, cardShape)
+            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
         content = content
     )
 }

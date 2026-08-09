@@ -53,14 +53,14 @@ class SignInViewModel @Inject constructor(
                 // Check if Firebase already has an active anonymous session
                 val existingUser = getCurrentUserUseCase()
                 if (existingUser != null) {
-                    // Session already exists — just update DataStore and continue
+                    // Session already exists, just update DataStore and continue
                     userPreferences.saveUserId(existingUser.userId)
                     userPreferences.setOnboarded(true)
                     _uiState.value = SignInUiState(isSuccess = true)
                     return@launch
                 }
 
-                // No existing session — create a new anonymous user
+                // No existing session, create a new anonymous user
                 val result = signInAnonymouslyUseCase()
                 result.fold(
                     onSuccess = { user ->

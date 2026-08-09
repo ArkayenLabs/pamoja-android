@@ -10,6 +10,7 @@ import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.GroupRepository
+import com.pamoja.app.util.InviteLink
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -24,15 +25,28 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
     private val membershipsCollection = firestore.collection("memberships")
     private val usersCollection = firestore.collection("users")
 
+    /**
+     * Reads a user's display name, for copying onto a membership document.
+     *
+     * Called only when a membership is created, so it is one read at join time
+     * rather than one read per member on every leaderboard render.
+     */
+    private suspend fun displayNameOf(userId: String): String = runCatching {
+        usersCollection.document(userId).get().await()
+            .toObject(UserDto::class.java)?.name.orEmpty()
+    }.getOrDefault("")
+
     override suspend fun createGroup(group: Group): Result<Group> {
         return try {
             val dto = GroupDto.fromDomain(group)
             groupsCollection.document(group.groupId).set(dto).await()
             
-            // Add admin membership
+            // Add admin membership, carrying a copy of their display name so
+            // member lists never need to read user documents.
             val membership = MembershipDto(
                 userId = group.adminId,
                 groupId = group.groupId,
+                displayName = displayNameOf(group.adminId),
                 role = "admin",
                 canEditTarget = true,
                 joinedAt = System.currentTimeMillis()
@@ -69,15 +83,42 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Resolves a group from any accepted invite input: the verified https link,
+     * the legacy pamoja:// link, or a bare code.
+     *
+     * Deliberately a direct document read rather than a collection query.
+     * The previous implementation ran whereEqualTo("inviteLink", ...), which had
+     * three problems:
+     *
+     *  1. It required `list` permission on the groups collection in the security
+     *     rules, and that permits enumerating every group in the database.
+     *  2. It broke whenever the link format changed, because existing documents
+     *     store the old pamoja:// string.
+     *  3. The stored link duplicated information already present in the document
+     *     ID, so the two could drift apart.
+     *
+     * The invite code already is the group ID, so a direct get is both cheaper
+     * and format independent. Old and new links resolve identically with no
+     * data migration.
+     */
     override suspend fun getGroupByInviteLink(inviteLink: String): Result<Group> {
         return try {
-            val snapshot = groupsCollection
-                .whereEqualTo("inviteLink", inviteLink)
-                .whereEqualTo("inviteLinkActive", true)
-                .get()
-                .await()
-            val dto = snapshot.documents.firstOrNull()?.toObject(GroupDto::class.java)
-                ?: return Result.failure(Exception("Invalid or expired invite link"))
+            val code = InviteLink.parseCode(inviteLink) ?: inviteLink.trim()
+            if (code.isBlank()) {
+                return Result.failure(Exception("That invite link does not look right."))
+            }
+
+            val snapshot = groupsCollection.document(code).get().await()
+            val dto = snapshot.toObject(GroupDto::class.java)
+                ?: return Result.failure(Exception("This invite link is not valid."))
+
+            if (!dto.inviteLinkActive) {
+                return Result.failure(
+                    Exception("This invite link is no longer active. Ask the group admin for a new one.")
+                )
+            }
+
             Result.success(dto.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
@@ -87,7 +128,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
     // ── Fix 2: Atomic join with memberCount ─────────────────────────────────────
     //
     // Why a schema change is needed:
-    //   Firestore transactions can only read individual documents — they cannot
+    //   Firestore transactions can only read individual documents, they cannot
     //   run collection queries. The previous implementation counted memberships
     //   via a query and then wrote the membership document in a separate step,
     //   creating a TOCTOU race condition where concurrent joins could exceed
@@ -96,76 +137,52 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
     // Solution:
     //   Store memberCount on the group document and use a Firestore transaction
     //   to atomically read the count, validate the cap, increment the count,
-    //   and write the membership — all in one atomic operation.
+    //   and write the membership, all in one atomic operation.
     //
-    // Migration:
-    //   Existing groups created before this change will have memberCount = 0
-    //   (Kotlin default for missing Firestore fields). The transaction handles
-    //   this by falling back to a query-based count when memberCount is 0,
-    //   backfilling the field atomically on the first join.
-
     override suspend fun joinGroup(groupId: String, userId: String): Result<Unit> {
         return try {
             val groupDocRef = groupsCollection.document(groupId)
             val membershipDocRef = membershipsCollection.document("${userId}_${groupId}")
 
-            // For legacy groups without memberCount, pre-fetch the actual count
-            // so the transaction can backfill it. This query runs outside the
-            // transaction (acceptable: the transaction still validates atomically).
-            val legacyCount: Int? = run {
-                val groupSnap = groupDocRef.get().await()
-                val dto = groupSnap.toObject(GroupDto::class.java)
-                    ?: return Result.failure(Exception("Group not found"))
-                if (dto.memberCount == 0 && dto.adminId.isNotEmpty()) {
-                    // memberCount is 0 but the group has an admin — likely a legacy group.
-                    // Count actual memberships for backfill.
-                    membershipsCollection
-                        .whereEqualTo("groupId", groupId)
-                        .get()
-                        .await()
-                        .size()
-                } else {
-                    null  // memberCount is already accurate, no backfill needed
-                }
-            }
+            // Read outside the transaction. Firestore transactions cannot read
+            // other documents lazily, and the name is not part of the atomic
+            // invariant we are protecting, which is only the member cap.
+            val joinerName = displayNameOf(userId)
 
             firestore.runTransaction { transaction ->
                 val groupSnapshot = transaction.get(groupDocRef)
                 val group = groupSnapshot.toObject(GroupDto::class.java)
                     ?: throw Exception("Group not found")
 
-                // Check if already a member (idempotent join)
+                // Idempotent join. Reopening your own invite must not double count.
                 val existingMembership = transaction.get(membershipDocRef)
                 if (existingMembership.exists()) {
-                    return@runTransaction  // Already joined — no-op
+                    return@runTransaction
                 }
 
-                // Determine current count: use backfilled value for legacy groups
-                val currentCount = if (group.memberCount == 0 && legacyCount != null) {
-                    legacyCount
-                } else {
-                    group.memberCount
-                }
-
-                if (currentCount >= group.maxMemberCap) {
+                if (group.memberCount >= group.maxMemberCap) {
                     throw Exception("Group is full")
                 }
 
-                // Write membership
                 val membership = MembershipDto(
                     userId = userId,
                     groupId = groupId,
+                    displayName = joinerName,
                     role = "member",
                     canEditTarget = false,
                     joinedAt = System.currentTimeMillis()
                 )
                 transaction.set(membershipDocRef, membership)
 
-                // Atomically update member count (and backfill for legacy groups)
-                val newCount = currentCount + 1
+                val newCount = group.memberCount + 1
                 transaction.update(groupDocRef, "memberCount", newCount)
 
-                // Deactivate invite link if cap is now reached
+                // Close the invite once the group is full.
+                //
+                // KNOWN GAP: nothing sets this back to true. Today that is
+                // latent, because there is no way to leave a group. The moment
+                // leaving is added, this must be reopened when a slot frees up,
+                // or a group that fills once can never be joined again.
                 if (newCount >= group.maxMemberCap) {
                     transaction.update(groupDocRef, "inviteLinkActive", false)
                 }
@@ -196,28 +213,25 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 }
                 if (snapshot == null) return@addSnapshotListener
 
-                val userIds = snapshot.documents.mapNotNull {
-                    it.toObject(MembershipDto::class.java)?.userId
-                }
-
-                if (userIds.isEmpty()) {
-                    trySend(emptyList())
-                    return@addSnapshotListener
-                }
-
-                val tasks = userIds.map { userId ->
-                    usersCollection.document(userId).get()
-                }
-                Tasks.whenAllSuccess<DocumentSnapshot>(tasks)
-                    .addOnSuccessListener { snapshots ->
-                        val users = snapshots.mapNotNull {
-                            it.toObject(UserDto::class.java)?.toDomain()
-                        }
-                        trySend(users)
+                // Built entirely from the membership documents. This used to
+                // fan out to one users/{id} read per member, and because it sat
+                // inside a snapshot listener it re-ran on every membership
+                // change, so an 8 member group cost 8 extra reads every time
+                // anything moved.
+                //
+                // The name now lives on the membership itself, so a member list
+                // is a single query. Only fields other members are entitled to
+                // see are populated here; age, height and weight never leave the
+                // owner's own document.
+                val members = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(MembershipDto::class.java)?.let { m ->
+                        User(
+                            userId = m.userId,
+                            name = m.displayName,
+                        )
                     }
-                    .addOnFailureListener { e ->
-                        close(e)
-                    }
+                }
+                trySend(members)
             }
         awaitClose { listener.remove() }
     }

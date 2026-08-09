@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.arkayenlabs.pamoja",
+      "sha256_cert_fingerprints": [
+        "50:EE:34:74:89:6C:55:05:97:3E:13:7D:E5:B2:3E:30:25:88:41:F5:D9:64:3E:0A:C5:9B:87:D0:0E:88:91:8A",
+        "09:82:DF:6F:BA:37:00:20:A1:0C:F0:A4:FA:E0:48:AA:8F:31:0E:9F:B2:1E:3F:A5:88:CC:60:51:B4:34:4A:B6"
+      ]
+    }
+  }
+]

@@ -1,0 +1,123 @@
+<!doctype html>
+<!--
+  Pamoja, invite link landing page
+  Route: https://www.arkayenlabs.com/pamoja/join/[code]
+
+  SECURITY: this page is DELIBERATELY "dumb". It must NEVER fetch or display
+  any group information, not the group name, not the member count, not who
+  is in it. Anyone on the internet can open this URL without authenticating,
+  so anything rendered here is public. All group details are resolved inside
+  the app, after the user is authenticated.
+
+  It is also marked noindex so invite URLs never appear in search results.
+
+  This page is only ever seen by users who do NOT have the app installed.
+  If the app is installed and App Links are verified, Android opens the app
+  directly and this page is never rendered.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>You've been invited to a Pamoja group</title>
+  <style>
+    :root {
+      --bg: #f8f7fc;
+      --card: #ffffff;
+      --text: #16141f;
+      --muted: #575371;
+      --brand: #6c63e8;
+      --border: rgba(22, 20, 31, 0.10);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0b11;
+        --card: #14141f;
+        --text: #f5f4fa;
+        --muted: #a9a6c0;
+        --brand: #7b7ff2;
+        --border: rgba(255, 255, 255, 0.10);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Nunito", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 28px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+    .mark {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 24px;
+      border-radius: 20px;
+      background: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mark svg { width: 32px; height: 32px; stroke: #fff; }
+    h1 { font-size: 24px; line-height: 1.25; margin: 0 0 12px; font-weight: 800; }
+    p { font-size: 16px; line-height: 1.55; color: var(--muted); margin: 0 0 28px; }
+    .btn {
+      display: inline-block;
+      background: var(--brand);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 15px 32px;
+      border-radius: 999px;
+      transition: opacity .2s ease;
+    }
+    .btn:hover { opacity: .9; }
+    .hint { font-size: 13px; color: var(--muted); margin: 20px 0 0; }
+    .brand { font-size: 12px; color: var(--muted); margin-top: 28px; }
+    .brand a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
+        <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
+        <path d="M16 17h4"/><path d="M4 13h4"/>
+      </svg>
+    </div>
+
+    <h1>You've been invited to a Pamoja group</h1>
+    <p>Pamoja is a step challenge you do together. Install the app to accept your invite and start counting steps with your group.</p>
+
+    <a class="btn" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">
+      Get Pamoja on Google Play
+    </a>
+
+    <p class="hint">Already have the app? Open this link again from your phone and it will take you straight there.</p>
+
+    <p class="brand">
+      An <a href="https://www.arkayenlabs.com">Arkayen Labs</a> product ·
+      <a href="https://www.arkayenlabs.com/privacy/pamoja">Privacy</a> ·
+      <a href="https://www.arkayenlabs.com/terms/pamoja">Terms</a>
+    </p>
+  </main>
+</body>
+</html>

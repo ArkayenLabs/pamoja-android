@@ -2,9 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Health Connect — replaces raw ACTIVITY_RECOGNITION sensor approach -->
+    <!-- Health Connect, replaces raw ACTIVITY_RECOGNITION sensor approach -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Required so Android allows our app to talk to the Health Connect app -->
     <queries>
@@ -35,9 +36,43 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
             <intent-filter>
-        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-    </intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+
+            <!-- ── Android App Links: invite links ──────────────────────────
+                 Verified against https://www.arkayenlabs.com/.well-known/assetlinks.json
+                 (and the apex host). Because these are VERIFIED https links, no
+                 other app can hijack them and no disambiguation dialog appears.
+
+                 IMPORTANT: assetlinks.json must be served directly at BOTH hosts
+                 with no redirect. Google's verifier does not follow redirects.
+                 If the apex redirects to www, remove the apex <data> entry. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="www.arkayenlabs.com"
+                      android:pathPrefix="/pamoja/join" />
+                <!-- The apex host (arkayenlabs.com) is deliberately NOT declared.
+                     It 307-redirects to www, and Google's App Link verifier does
+                     not follow redirects, so declaring it would leave a host that
+                     can never verify. All generated links use www. -->
+
+            </intent-filter>
+
+            <!-- ── Legacy custom scheme ─────────────────────────────────────
+                 Kept only so invite links already shared during the closed test
+                 continue to work. Custom schemes are hijackable by any app, so
+                 all NEW links use the verified https form above. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="pamoja" android:host="join" />
+            </intent-filter>
         </activity>
 
         <activity-alias
@@ -51,7 +86,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Remove the default WorkManager initializer — Hilt handles it via on-demand init -->
+        <!-- Remove the default WorkManager initializer. Hilt handles it via on-demand init -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

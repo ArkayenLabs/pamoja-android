@@ -16,11 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -43,23 +40,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.ui.theme.PamojaBackground
-import com.pamoja.app.ui.theme.PamojaBorder
-import com.pamoja.app.ui.theme.PamojaIndigo
-import com.pamoja.app.ui.theme.PamojaIndigoDark
-import com.pamoja.app.ui.theme.PamojaIndigoLight
-import com.pamoja.app.ui.theme.PamojaIndigoSubtle
-import com.pamoja.app.ui.theme.PamojaSurface
-import com.pamoja.app.ui.theme.PamojaSurfaceVariant
-import com.pamoja.app.ui.theme.PamojaTextPrimary
-import com.pamoja.app.ui.theme.PamojaTextSecondary
-import com.pamoja.app.ui.theme.PamojaTextTertiary
-import com.pamoja.app.ui.theme.PamojaWhite
+import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.util.InviteLink
+import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,6 +59,7 @@ fun InviteScreen(
     onGoToGroup: () -> Unit,
     viewModel: InviteViewModel = hiltViewModel()
 ) {
+    val colors = LocalPamojaColors.current
     val uiState           by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager  = LocalClipboardManager.current
@@ -82,20 +74,24 @@ fun InviteScreen(
         }
     }
 
-    val inviteLink = uiState.group?.inviteLink ?: "pamoja://join/$groupId"
+    // Always the verified https App Link, derived from the group ID rather than
+    // read from Firestore. Existing documents still hold the old pamoja:// string,
+    // which messengers refuse to render as a tappable link, so it is never shown.
+    // Incoming links of either form still resolve, see InviteLink.parseCode.
+    val inviteLink = InviteLink.build(groupId)
     val groupName  = uiState.group?.name ?: ""
     val maxCap     = uiState.group?.maxMemberCap ?: 10
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PamojaBackground)
+            .background(colors.surfaceApp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Spacing.x6),
             verticalArrangement   = Arrangement.SpaceBetween,
             horizontalAlignment   = Alignment.CenterHorizontally
         ) {
@@ -103,81 +99,78 @@ fun InviteScreen(
             // ── Top section ───────────────────────────────────────────────
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(Spacing.x12))
 
-                // Success icon — gradient circle
+                // Success icon, gradient circle
                 Box(contentAlignment = Alignment.Center) {
                     // Outer glow
                     Box(
                         modifier = Modifier
                             .size(110.dp)
-                            .clip(RoundedCornerShape(100.dp))
-                            .background(PamojaIndigoSubtle)
+                            .clip(CircleShape)
+                            .background(colors.accentPrimarySubtle)
                     )
                     Box(
                         modifier = Modifier
                             .size(72.dp)
-                            .clip(RoundedCornerShape(22.dp))
+                            .clip(RoundedCornerShape(PamojaRadii.xl))
                             .background(
                                 brush = Brush.linearGradient(
-                                    listOf(PamojaIndigo, PamojaIndigoDark)
+                                    listOf(colors.accentPrimary, colors.accentPrimaryPress)
                                 )
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector        = Icons.Default.Groups,
+                            painter            = painterResource(PamojaIcons.Users),
                             contentDescription = "Group created",
-                            tint               = PamojaWhite,
+                            tint               = colors.textOnBrand,
                             modifier           = Modifier.size(32.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Spacing.x6))
 
                 Text(
                     text      = "Group created!",
                     style     = MaterialTheme.typography.headlineLarge,
-                    color     = PamojaTextPrimary,
+                    color     = colors.textPrimary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(Spacing.x2))
 
                 Text(
                     text      = "Invite your people. This link stays active until all $maxCap spots are filled.",
                     style     = MaterialTheme.typography.bodyMedium,
-                    color     = PamojaTextSecondary,
+                    color     = colors.textSecondary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(Spacing.x7))
 
                 // ── Invite link card ──────────────────────────────────────
+                val linkShape = RoundedCornerShape(PamojaRadii.md)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(PamojaSurface)
-                        .border(
-                            width  = 1.dp,
-                            color  = PamojaBorder,
-                            shape  = RoundedCornerShape(14.dp)
-                        )
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                        .clip(linkShape)
+                        .background(colors.surface1)
+                        .border(width = 1.dp, color = colors.borderSubtle, shape = linkShape)
+                        .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
                     Text(
                         text     = inviteLink,
                         style    = MaterialTheme.typography.bodySmall,
-                        color    = PamojaTextSecondary,
+                        color    = colors.textSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.x2))
                     IconButton(
                         onClick = {
                             clipboardManager.setText(AnnotatedString(inviteLink))
@@ -186,9 +179,9 @@ fun InviteScreen(
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector        = Icons.Default.ContentCopy,
+                            painter            = painterResource(PamojaIcons.Copy),
                             contentDescription = "Copy link",
-                            tint               = PamojaIndigoLight,
+                            tint               = colors.accentPrimary,
                             modifier           = Modifier.size(18.dp)
                         )
                     }
@@ -199,82 +192,91 @@ fun InviteScreen(
             Column(
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = Spacing.x4),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(Spacing.x3)
             ) {
-                // WhatsApp — keep the brand green but give it the same shape/height
+                // Copy link, primary.
+                // No app-specific share button here on purpose. Hardcoding
+                // WhatsApp dead-ended whenever it was not installed, and it
+                // presumes which messenger the user's group uses. The system
+                // sheet below already surfaces WhatsApp first for anyone who
+                // has it.
                 Button(
                     onClick = {
-                        val msg = "Join my Pamoja group \"$groupName\"! " +
-                                "We're tracking our steps together this week. " +
-                                "Join here: $inviteLink"
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, msg)
-                            setPackage("com.whatsapp")
-                        }
-                        try {
-                            context.startActivity(intent)
-                        } catch (_: Exception) {
-                            scope.launch { snackbarHostState.showSnackbar("WhatsApp not installed") }
-                        }
+                        clipboardManager.setText(AnnotatedString(inviteLink))
+                        scope.launch { snackbarHostState.showSnackbar("Link copied") }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape  = RoundedCornerShape(16.dp),
+                    shape  = RoundedCornerShape(PamojaRadii.md),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF25D366),
-                        contentColor   = PamojaWhite
+                        containerColor = colors.accentPrimary,
+                        contentColor   = colors.textOnBrand
                     )
                 ) {
+                    Icon(
+                        painter = painterResource(PamojaIcons.Copy),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = colors.textOnBrand
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
-                        text  = "Share on WhatsApp",
+                        text  = "Copy link",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
 
-                // More share options — secondary style
+                // Share via the system sheet, tonal secondary
                 Button(
                     onClick = {
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                "Join my Pamoja group \"$groupName\"! $inviteLink"
-                            )
+                            // The bare URL, nothing wrapped around it. Prose
+                            // before the link forced people to hand-edit the
+                            // message before it was usable, and it stops
+                            // messengers from rendering a link preview.
+                            putExtra(Intent.EXTRA_TEXT, inviteLink)
                         }
                         context.startActivity(Intent.createChooser(intent, "Share invite link"))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape  = RoundedCornerShape(16.dp),
+                    shape  = RoundedCornerShape(PamojaRadii.md),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PamojaSurfaceVariant,
-                        contentColor   = PamojaTextPrimary
+                        containerColor = colors.accentPrimarySubtle,
+                        contentColor   = colors.accentPrimary
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Share,
+                        painter = painterResource(PamojaIcons.Share),
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = PamojaTextSecondary
+                        tint = colors.accentPrimary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
                         text  = "More share options",
-                        style = MaterialTheme.typography.labelLarge.copy(color = PamojaTextPrimary)
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
 
-                // Go to group — ghost text button
+                // Go to group, ghost text button with trailing arrow icon
                 TextButton(onClick = onGoToGroup) {
                     Text(
-                        text  = "Go to my group →",
+                        text  = "Go to my group",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PamojaIndigo
+                        color = colors.accentPrimary
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.x1))
+                    Icon(
+                        painter = painterResource(PamojaIcons.ArrowRight),
+                        contentDescription = null,
+                        tint = colors.accentPrimary,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

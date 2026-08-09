@@ -24,6 +24,10 @@ keystore.properties
 CLAUDE.md
 ARCHITECTURE.md
 PROJECT.md
+.claude/settings.local.json
+
+# Generated knowledge graph — rebuild with `graphify update .`
+graphify-out/
 
 # System crash/error dumps
 *.stackdump

@@ -94,6 +94,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
 
     // Health Connect
     implementation(libs.health.connect)

@@ -74,6 +74,8 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
+firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
+firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
 
 # Health Connect
 health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }

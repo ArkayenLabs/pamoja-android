@@ -84,4 +84,74 @@ class FirebaseUserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    /**
+     * Order matters throughout.
+     *
+     * Memberships go first, each in its own transaction, because leaving a group
+     * is not just a delete: the group's memberCount has to come down with it or
+     * every remaining group is permanently one member over its real size and can
+     * refuse joins forever. Freeing a slot also revives the invite link, which
+     * is otherwise switched off at the cap and never switched back on.
+     *
+     * Steps are batched, since there is one document per user per day and a
+     * long-lived account can exceed Firestore's 500 writes per batch.
+     *
+     * The profile document goes last so that a failure part way through leaves
+     * the user still able to sign in and retry, rather than stranded with a
+     * working account and no profile.
+     */
+    override suspend fun deleteAllUserData(userId: String): Result<Unit> {
+        return try {
+            val memberships = membershipsCollection
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+
+            for (membershipDoc in memberships.documents) {
+                val groupId = membershipDoc.getString("groupId") ?: continue
+                val groupRef = firestore.collection("groups").document(groupId)
+
+                firestore.runTransaction { transaction ->
+                    val groupSnapshot = transaction.get(groupRef)
+
+                    // A count of zero means nothing to decrement. Writing -1
+                    // would also be rejected by the security rules, which require
+                    // exactly one less and never below zero, and a rejection here
+                    // would abort the whole deletion.
+                    val currentCount = groupSnapshot.getLong("memberCount") ?: 0L
+                    if (groupSnapshot.exists() && currentCount > 0) {
+                        val cap = groupSnapshot.getLong("maxMemberCap") ?: Long.MAX_VALUE
+                        val newCount = currentCount - 1
+
+                        transaction.update(groupRef, "memberCount", newCount)
+
+                        // A slot just opened, so the link works again.
+                        if (newCount < cap) {
+                            transaction.update(groupRef, "inviteLinkActive", true)
+                        }
+                    }
+
+                    transaction.delete(membershipDoc.reference)
+                }.await()
+            }
+
+            val steps = firestore.collection("steps")
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+
+            steps.documents.chunked(400).forEach { chunk ->
+                val batch = firestore.batch()
+                chunk.forEach { batch.delete(it.reference) }
+                batch.commit().await()
+            }
+
+            usersCollection.document(userId).delete().await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

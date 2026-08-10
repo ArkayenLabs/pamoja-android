@@ -2,6 +2,7 @@ package com.pamoja.app.domain.usecase
 
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthRepository
+import com.pamoja.app.domain.repository.UserRepository
 import javax.inject.Inject
 
 class SignUpUseCase @Inject constructor(
@@ -117,10 +118,56 @@ class IsUserLoggedInUseCase @Inject constructor(
     }
 }
 
+/**
+ * Erases the account completely: Firestore data first, then the Auth record.
+ *
+ * Deleting only the Auth record, which is what this used to do, leaves the user
+ * document, every membership and every step entry behind with no account able
+ * to reach them. That is a right-to-erasure failure, and the orphaned
+ * memberships also leave every group they belonged to permanently over-counted.
+ *
+ * Fails with [AuthRepository.RecentLoginRequired] when the session is too old.
+ * Nothing is deleted in that case, so the caller can re-authenticate and call
+ * again safely.
+ */
 class DeleteAccountUseCase @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
 ) {
     suspend operator fun invoke(): Result<Unit> {
+        val userId = authRepository.getCurrentUser()?.userId
+            ?: return Result.failure(Exception("No signed in user"))
+
+        // Asked before anything is destroyed. Deleting the data and only then
+        // discovering the session is too stale would erase everything and still
+        // leave the account standing.
+        if (authRepository.requiresRecentLogin()) {
+            return Result.failure(AuthRepository.RecentLoginRequired())
+        }
+
+        // Data first. The security rules key on request.auth, so once the Auth
+        // record is gone these documents can never be reached again by anyone.
+        val dataResult = userRepository.deleteAllUserData(userId)
+        if (dataResult.isFailure) {
+            return dataResult
+        }
+
         return authRepository.deleteAccount()
+    }
+}
+
+class ReauthenticateWithGoogleUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(idToken: String): Result<Unit> =
+        authRepository.reauthenticateWithGoogle(idToken)
+}
+
+class ReauthenticateWithEmailUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(password: String): Result<Unit> {
+        if (password.isBlank()) return Result.failure(Exception("Enter your password"))
+        return authRepository.reauthenticateWithEmail(password)
     }
 }

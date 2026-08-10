@@ -53,10 +53,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -74,6 +76,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val activity = context as android.app.Activity
 
     var showEditNameDialog by remember { mutableStateOf(false) }
     var editNameInput by remember { mutableStateOf("") }
@@ -198,6 +201,70 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel", color = colors.textSecondary)
+                }
+            }
+        )
+    }
+
+    // Firebase refuses to delete an account on a stale session. Sessions here
+    // last indefinitely, so this is the normal path rather than an edge case.
+    uiState.reauthRequired?.let { method ->
+        var password by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelReauth() },
+            containerColor = colors.surface3,
+            shape = RoundedCornerShape(PamojaRadii.xl),
+            title = {
+                Text(
+                    text = "Confirm it is you",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.textPrimary
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "For your safety we ask you to sign in again before " +
+                            "deleting an account. Nothing has been deleted yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textSecondary
+                    )
+                    if (method == ReauthMethod.Password) {
+                        Spacer(modifier = Modifier.height(Spacing.x4))
+                        PamojaTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = "Password",
+                            placeholder = "Your password",
+                            keyboardType = KeyboardType.Password,
+                            isPassword = true,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        when (method) {
+                            ReauthMethod.Google -> viewModel.reauthenticateWithGoogle(activity)
+                            ReauthMethod.Password -> viewModel.reauthenticateWithPassword(password)
+                        }
+                    },
+                    enabled = method == ReauthMethod.Google || password.isNotBlank(),
+                    shape = RoundedCornerShape(PamojaRadii.sm),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
+                ) {
+                    Text(
+                        text = if (method == ReauthMethod.Google) "Continue with Google" else "Confirm",
+                        color = colors.textOnBrand,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelReauth() }) {
                     Text("Cancel", color = colors.textSecondary)
                 }
             }

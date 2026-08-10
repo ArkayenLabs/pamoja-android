@@ -3,6 +3,7 @@ package com.pamoja.app.data.remote.firebase
 import android.app.Activity
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
@@ -41,7 +42,38 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
 
     override suspend fun deleteAccount(): Result<Unit> = runCatching {
         val user = auth.currentUser ?: error("No signed in user")
-        user.delete().await()
+        try {
+            user.delete().await()
+        } catch (e: FirebaseAuthRecentLoginRequiredException) {
+            throw AuthRepository.RecentLoginRequired()
+        }
+    }
+
+    // ── Re-authentication ───────────────────────────────────────────────────
+
+    /**
+     * Firebase gives no API for "would a destructive call be accepted", so this
+     * uses the documented rule it enforces internally: the sign-in must be
+     * recent. Five minutes matches Firebase's own threshold, with a margin so a
+     * check that passes here does not fail a moment later on the network.
+     */
+    override suspend fun requiresRecentLogin(): Boolean {
+        val lastSignIn = auth.currentUser?.metadata?.lastSignInTimestamp ?: return true
+        val age = System.currentTimeMillis() - lastSignIn
+        return age > RECENT_LOGIN_WINDOW_MS
+    }
+
+    override suspend fun reauthenticateWithGoogle(idToken: String): Result<Unit> = runCatching {
+        val user = auth.currentUser ?: error("No signed in user")
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        user.reauthenticate(credential).await()
+    }
+
+    override suspend fun reauthenticateWithEmail(password: String): Result<Unit> = runCatching {
+        val user = auth.currentUser ?: error("No signed in user")
+        val email = user.email ?: error("This account has no email address")
+        val credential = EmailAuthProvider.getCredential(email, password)
+        user.reauthenticate(credential).await()
     }
 
     override suspend fun getAuthMethods(): AuthMethods {
@@ -162,4 +194,9 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
             val result = user.linkWithCredential(credential).await()
             User(userId = result.user?.uid ?: error("Link failed"))
         }
+
+    private companion object {
+        /** Firebase's own threshold is five minutes; this leaves a margin. */
+        const val RECENT_LOGIN_WINDOW_MS = 4 * 60 * 1000L
+    }
 }

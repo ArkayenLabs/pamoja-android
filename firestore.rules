@@ -126,6 +126,26 @@ service cloud.firestore {
           && onlyChanged(['weeklyTarget'])
           && request.resource.data.weeklyTarget > 0
           && request.resource.data.weeklyTarget <= 1000000
+        )
+        ||
+        // --- Case D: LEAVING. The count comes down by exactly one and the
+        //     freed slot revives the invite link.
+        //
+        //     Without this, account deletion is denied for everyone who is not
+        //     the group admin, because Case A only ever permits an increase.
+        //     That would leave the membership deleted and the count permanently
+        //     too high.
+        //
+        //     exists() is evaluated against the pre-transaction state, so the
+        //     caller's membership is still present at this point even though the
+        //     same transaction is about to delete it. That is what proves they
+        //     were actually a member rather than decrementing a stranger's group.
+        (
+          isSignedIn()
+          && onlyChanged(['memberCount', 'inviteLinkActive'])
+          && request.resource.data.memberCount == resource.data.memberCount - 1
+          && request.resource.data.memberCount >= 0
+          && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
         );
 
       allow delete: if isGroupAdmin(groupId);

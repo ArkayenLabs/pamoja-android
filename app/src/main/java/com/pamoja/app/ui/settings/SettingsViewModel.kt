@@ -1,12 +1,18 @@
 package com.pamoja.app.ui.settings
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.preferences.UserPreferences
+import com.pamoja.app.data.remote.auth.GoogleCredentialClient
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
+import com.pamoja.app.domain.usecase.GetAuthMethodsUseCase
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
+import com.pamoja.app.domain.usecase.ReauthenticateWithEmailUseCase
+import com.pamoja.app.domain.usecase.ReauthenticateWithGoogleUseCase
 import com.pamoja.app.domain.usecase.SignOutUseCase
 import com.pamoja.app.domain.usecase.UpdateUserUseCase
 import com.pamoja.app.util.NotificationContext
@@ -20,13 +26,18 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** How the user must prove it is them before the account can be deleted. */
+enum class ReauthMethod { Google, Password }
+
 data class SettingsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
     val userName: String = "",
     val userId: String = "",
-    val isSignedOut: Boolean = false
+    val isSignedOut: Boolean = false,
+    /** Non-null when deletion is waiting on the user re-confirming who they are. */
+    val reauthRequired: ReauthMethod? = null,
 )
 
 @HiltViewModel
@@ -38,6 +49,10 @@ class SettingsViewModel @Inject constructor(
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val userPreferences: UserPreferences,
     private val notificationHelper: SmartNotificationHelper,
+    private val getAuthMethodsUseCase: GetAuthMethodsUseCase,
+    private val reauthenticateWithGoogleUseCase: ReauthenticateWithGoogleUseCase,
+    private val reauthenticateWithEmailUseCase: ReauthenticateWithEmailUseCase,
+    private val googleCredentialClient: GoogleCredentialClient,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -152,13 +167,85 @@ class SettingsViewModel @Inject constructor(
                     )
                 },
                 onFailure = { error ->
+                    if (error is AuthRepository.RecentLoginRequired) {
+                        // Nothing has been deleted yet. Ask them to confirm, then
+                        // this runs again from the top.
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            reauthRequired = reauthMethodForCurrentUser(),
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = error.message ?: "Failed to delete account"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    private suspend fun reauthMethodForCurrentUser(): ReauthMethod {
+        val methods = getAuthMethodsUseCase()
+        return if (methods.hasGoogle) ReauthMethod.Google else ReauthMethod.Password
+    }
+
+    /** Re-confirms via Google, then retries the deletion. */
+    fun reauthenticateWithGoogle(activity: Activity) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            val token = googleCredentialClient.getIdToken(activity).getOrElse { e ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    reauthRequired = null,
+                    error = if (e is GoogleCredentialClient.Cancelled) null else e.message,
+                )
+                return@launch
+            }
+
+            reauthenticateWithGoogleUseCase(token).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(reauthRequired = null)
+                    deleteAccount()
+                },
+                onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = error.message ?: "Failed to delete account"
+                        reauthRequired = null,
+                        error = e.message ?: "Could not confirm it is you",
                     )
                 }
             )
         }
+    }
+
+    /** Re-confirms with the account password, then retries the deletion. */
+    fun reauthenticateWithPassword(password: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            reauthenticateWithEmailUseCase(password).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(reauthRequired = null)
+                    deleteAccount()
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = if (e.message?.contains("password", ignoreCase = true) == true) {
+                            "That password is not right"
+                        } else {
+                            e.message ?: "Could not confirm it is you"
+                        },
+                    )
+                }
+            )
+        }
+    }
+
+    fun cancelReauth() {
+        _uiState.value = _uiState.value.copy(reauthRequired = null, isLoading = false)
     }
 
     /**

@@ -26,12 +26,40 @@ data class PhoneVerification(
 
 interface AuthRepository {
 
+    /**
+     * Firebase refuses destructive operations on a session that has not signed
+     * in recently, roughly within the last five minutes. Since sessions now last
+     * indefinitely, this is the normal case for account deletion rather than an
+     * edge case, so it is modelled instead of being surfaced as a raw failure.
+     */
+    class RecentLoginRequired : Exception("Please confirm it is you before deleting your account")
+
     // ── Session ─────────────────────────────────────────────────────────────
 
     suspend fun getCurrentUser(): User?
     suspend fun isUserLoggedIn(): Boolean
     suspend fun signOut(): Result<Unit>
+
+    /**
+     * Deletes the Firebase Auth account only. Firestore data must already be
+     * gone, see [UserRepository.deleteAllUserData].
+     *
+     * Fails with [RecentLoginRequired] when the session is too old, in which
+     * case the caller must re-authenticate and try again.
+     */
     suspend fun deleteAccount(): Result<Unit>
+
+    // ── Re-authentication, for destructive operations ───────────────────────
+
+    /**
+     * True when the session is too old for Firebase to accept a destructive
+     * operation. Checked before deleting anything, so a stale session is caught
+     * while the data is still intact.
+     */
+    suspend fun requiresRecentLogin(): Boolean
+
+    suspend fun reauthenticateWithGoogle(idToken: String): Result<Unit>
+    suspend fun reauthenticateWithEmail(password: String): Result<Unit>
 
     /** Which providers are attached to the signed-in account. */
     suspend fun getAuthMethods(): AuthMethods

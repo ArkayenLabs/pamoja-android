@@ -11,9 +11,48 @@ Companion to `SUMMARY.md` (which explains the *why* and the priority order).
 
 ---
 
-## PROGRESS, updated 2026-07-27
+## PROGRESS, updated 2026-08-11
 
-### ✅ Done
+> **`BACKLOG.md` is the current handoff document.** It has the full done/remaining
+> list in execution order, the Shipaton deadline, and the conventions established
+> while fixing things. Read it first. This section is a summary.
+
+### ✅ Done since 2026-07-27
+- **Real authentication.** Google, phone OTP, email. Anonymous removed entirely
+- **Account deletion actually deletes.** It previously removed only the Auth
+  record, leaving Firestore data permanently unreachable. Re-auth added for all
+  three methods
+- **Crashlytics** with mapping upload, **App Check** (enforcement still off)
+- **Firestore rules** gained a leave-group case; without it deletion was denied
+  for every non-admin
+- **Invite preview screen**, so a link no longer joins you silently
+- **Error taxonomy, connectivity observer, component library.** Home and the
+  group dashboard fully state-covered. Fixed an infinite spinner on every group
+  load failure
+- **Full string extraction.** Every screen translatable; no ViewModel holds copy
+- **Terms written and published; privacy policy rewritten** — the live one
+  described anonymous auth and denied collecting email or phone, both false now
+- Release build verified once under R8, lint at 0 errors
+
+### 🔴 Next up (blocking launch)
+1. **Run it on a real device.** Nothing since 2026-08-04 is device-verified
+2. **Deploy the legal pages**, redo the **Data Safety form**
+3. Register the **App Check debug token** before enabling enforcement
+4. Finish state coverage: create group, profile setup, settings, invite (§11)
+5. Redesign rounds §4B profile/settings and §4C notifications
+6. **RevenueCat SDK + one working IAP.** Mandatory for Shipaton, target early Sep
+
+### ⏰ Real deadline
+Shipaton submission closes **30 Sep 2026**; be live by **23 Sep**. Closed testing
+does **not** disqualify you, confirmed against RevenueCat's own guidance.
+
+### 📋 Decisions made
+- Sign-in is a hard gate, no anonymous accounts
+- Custom Compose paywall, not RevenueCat Paywalls V2
+- English only at launch, but all strings extracted
+- Entity: Balaji Thukuntala, sole proprietor, trading as Arkayen Labs
+
+### ✅ Previously done
 - **Design system ported to Compose**, full light + dark semantic token system (`PamojaColors`, `LocalPamojaColors`), `Shape.kt`, `Dimens.kt`, `Motion.kt`. No dynamic color (brand hue protected)
 - **Typography**. Baloo 2 (display) + Nunito (body) via downloadable Google Fonts + official AOSP cert array
 - **Icon system**. 22 custom Lucide vector drawables via `PamojaIcons`. **Zero emoji anywhere in the app**

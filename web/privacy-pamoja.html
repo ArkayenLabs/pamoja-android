@@ -1,0 +1,306 @@
+<!doctype html>
+<!--
+  Pamoja, Privacy Policy
+  Route: https://www.arkayenlabs.com/privacy/pamoja
+
+  SOURCE OF TRUTH: legal/PRIVACY_POLICY.md in the pamoja-android repo.
+  Edit there first, then mirror here.
+
+  REPLACES the version dated 22 June 2026, which described anonymous
+  authentication and stated that no email address or phone number was
+  collected. Both became false when sign-in was made mandatory.
+
+  The Play Data Safety form MUST agree with this page. A mismatch between the
+  app, this policy and that form is a common cause of rejection and removal.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy, Pamoja</title>
+  <style>
+    :root {
+      --bg: #f8f7fc;
+      --card: #ffffff;
+      --text: #16141f;
+      --muted: #575371;
+      --brand: #6c63e8;
+      --border: rgba(22, 20, 31, 0.10);
+      --warn-bg: rgba(214, 69, 69, 0.08);
+      --warn: #c0392b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0b11;
+        --card: #14141f;
+        --text: #f5f4fa;
+        --muted: #a9a6c0;
+        --brand: #7b7ff2;
+        --border: rgba(255, 255, 255, 0.10);
+        --warn-bg: rgba(255, 122, 122, 0.12);
+        --warn: #ff8f8f;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+    header { margin-bottom: 40px; }
+    h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .dates { color: var(--muted); font-size: 0.9rem; margin: 0; }
+    h2 { font-size: 1.15rem; margin: 40px 0 12px; letter-spacing: -0.01em; }
+    h3 { font-size: 1rem; margin: 24px 0 8px; color: var(--muted); }
+    p, li { color: var(--text); }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    a { color: var(--brand); }
+    strong { font-weight: 650; }
+    .callout {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--brand);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+    .callout.health { border-left-color: var(--warn); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.95rem;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    @media (min-width: 620px) {
+      table { display: table; white-space: normal; }
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 650; font-size: 0.85rem; }
+    footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Privacy Policy</h1>
+      <p class="dates">Pamoja &middot; Last updated 11 August 2026</p>
+    </header>
+
+    <h2>1. Introduction</h2>
+    <p>Pamoja ("together" in Swahili) is a social group step-tracking Android application operated by <strong>Balaji Thukuntala, sole proprietor, trading as Arkayen Labs</strong> ("we", "us", "our"), Mumbai, Maharashtra, India. Pamoja lets you form private walking groups, set shared weekly step goals, and track progress together on a leaderboard.</p>
+    <p>This policy explains what we collect, why, who can see it, and what choices you have. By installing or using Pamoja you agree to the practices described here.</p>
+
+    <h2>2. Accounts and sign-in</h2>
+    <p><strong>Pamoja requires an account.</strong> You create one using any of three methods:</p>
+    <table>
+      <tr><th>Method</th><th>What we receive</th></tr>
+      <tr><td>Google</td><td>Your Google account's email address, and the display name and profile picture URL attached to it</td></tr>
+      <tr><td>Phone number</td><td>Your phone number in international format</td></tr>
+      <tr><td>Email and password</td><td>Your email address. The password is handled by Firebase Authentication and <strong>we never see or store it</strong></td></tr>
+    </table>
+    <p>Whichever you choose, Firebase Authentication issues a stable user ID that identifies you across devices. Signing in again with the same method on a new phone restores your groups and history.</p>
+    <div class="callout">
+      <p><strong>This is a change from earlier versions of Pamoja</strong>, which used anonymous accounts with no email address or phone number. If you used Pamoja before this policy's date, sign-in is now required.</p>
+    </div>
+    <p>We do <strong>not</strong> collect identity documents, government identifiers, or any financial information.</p>
+
+    <h3>Phone verification</h3>
+    <p>If you sign in by phone, Firebase sends a one-time code by SMS. Your carrier's standard message rates apply. The number is used to authenticate you and to recognise you on a future device. <strong>It is never shown to other members of your groups.</strong></p>
+
+    <h2>3. What we collect</h2>
+
+    <h3>a) Account identifiers</h3>
+    <ul>
+      <li>Your <strong>email address</strong>, if you signed in with email or Google</li>
+      <li>Your <strong>phone number</strong>, if you signed in by phone</li>
+      <li>The <strong>user ID</strong> Firebase assigns to your account</li>
+    </ul>
+
+    <h3>b) Profile information</h3>
+    <ul>
+      <li><strong>Display name</strong>, shown to members of your groups</li>
+      <li><strong>Age</strong>, optional</li>
+      <li><strong>Height and weight</strong>, optional</li>
+    </ul>
+    <p>Age, height and weight are collected but <strong>not currently used by any feature</strong>, and are never shown to other members. We are reviewing whether to keep collecting them.</p>
+
+    <h3>c) Step count data</h3>
+    <ul>
+      <li>Your <strong>daily aggregated step count</strong>, read from Google Health Connect</li>
+      <li>The <strong>date</strong> each count corresponds to</li>
+    </ul>
+    <p>Only the daily total is read and uploaded. No heart rate, sleep, nutrition, exercise sessions, or any other health metric is ever accessed or stored.</p>
+
+    <h3>d) Group and membership data</h3>
+    <ul>
+      <li>Groups you create or join: group name, weekly step target, member cap</li>
+      <li>Your role in each group, admin or member</li>
+      <li>Your display name, copied onto your membership record so leaderboards can render without other members reading your profile</li>
+      <li>The time you joined</li>
+    </ul>
+
+    <h3>e) Usage and analytics data</h3>
+    <p>We use <strong>Firebase Analytics</strong> to understand how the app is used. Events logged include screen views, onboarding progress, group lifecycle events (created, joined, invite link used, weekly goal reached), and background sync outcomes.</p>
+    <p>Analytics events may include your user ID, group ID, step count and a timestamp. They do <strong>not</strong> include your display name, email address, phone number, age, height or weight.</p>
+
+    <h3>f) Crash and diagnostic data</h3>
+    <p>We use <strong>Firebase Crashlytics</strong> to find and fix crashes. When Pamoja crashes it sends a stack trace along with your device model, operating system version, available memory and storage, and a Crashlytics-generated installation identifier. Crash reports do <strong>not</strong> include your step data, display name, email address or phone number.</p>
+    <p>Crash reporting is <strong>disabled in development builds</strong> and active only in the version distributed through Google Play.</p>
+
+    <h3>g) Device integrity</h3>
+    <p>We use <strong>Firebase App Check</strong> with Google Play Integrity to confirm that requests come from a genuine, unmodified copy of Pamoja rather than a script. This checks the integrity of the app and device, not you, and returns no personal information to us.</p>
+
+    <h3>h) Data stored on your device</h3>
+    <p>Pamoja keeps a small amount of data locally using Android Jetpack DataStore: your user ID and display name, onboarding status, Health Connect permission status, active group ID, step baseline values, a pending invite code if you opened an invite link before signing in, and counters used to time and rate-limit notifications.</p>
+    <p>This never leaves your device and is deleted when you clear app data or uninstall Pamoja.</p>
+
+    <h2>4. Google Health Connect</h2>
+    <p>Pamoja reads step data through Google Health Connect. Health Connect is built into Android 14 and above, and available from the Play Store on Android 9 to 13.</p>
+    <p><strong>Permission requested:</strong> <code>android.permission.health.READ_STEPS</code>, daily step count only.</p>
+    <p>We request no other Health Connect permission. We do not read or write heart rate, sleep, blood pressure, nutrition, exercise sessions, body measurements, or any other data type.</p>
+
+    <h3>How step data flows</h3>
+    <ol>
+      <li>Health Connect stores step records from your device's sensors and any connected fitness apps</li>
+      <li>Pamoja reads your <strong>aggregated total</strong> for the current day, on your device</li>
+      <li>Only that single daily number is uploaded to Cloud Firestore, for your group's leaderboard</li>
+      <li>No individual step records, session timestamps, or source app names are transmitted</li>
+    </ol>
+
+    <h3>Limited Use disclosure</h3>
+    <div class="callout health">
+      <p>Pamoja's use and transfer of information received from Health Connect adheres to the Health Connect Permissions policy, including the Limited Use requirements. Specifically:</p>
+      <ul>
+        <li>Health Connect data is used <strong>solely</strong> to provide the group step-tracking feature visible to you in the app</li>
+        <li>Health Connect data is <strong>never</strong> used for advertising or marketing, and is never sold to data brokers</li>
+        <li>Health Connect data is <strong>never</strong> used to determine creditworthiness or for lending</li>
+        <li>Health Connect data is not transferred to any third party except as needed to provide the core feature, that is uploading your daily total to Firestore, or where required by law</li>
+        <li>Health Connect data is <strong>not used to train machine learning models</strong></li>
+      </ul>
+    </div>
+    <p>Your use of Health Connect is also governed by Google's Privacy Policy.</p>
+
+    <h2>5. Background step sync</h2>
+    <p>Pamoja uses Android WorkManager to sync your step count roughly <strong>every 30 minutes</strong>, only when the device has network connectivity and the battery is not low. Each run reads the current day's total from Health Connect and uploads that one number. No foreground service or persistent notification is used.</p>
+    <p>If Health Connect is unavailable, or you revoke step-reading permission, sync stops quietly without retrying or prompting you.</p>
+
+    <h2>6. Notifications</h2>
+    <p>Pamoja sends reminders and updates about your groups. On Android 13 and above these require your permission, which you can grant or refuse when asked and change at any time in system settings. Refusing does not affect any other part of the app.</p>
+    <p>Notifications are generated <strong>on your device</strong> from data already synced. Notification content avoids anything sensitive so it is safe on a lock screen.</p>
+
+    <h2>7. How your data is shared</h2>
+    <p>Pamoja is a private, invite-only product:</p>
+    <ul>
+      <li>Your <strong>display name, daily step count, weekly total and ranking</strong> are visible to members of groups you have joined</li>
+      <li>Your <strong>email address, phone number, age, height and weight are never visible to other members</strong></li>
+      <li>Groups are reachable only through an invite link or code shared by a member. There is no public directory</li>
+      <li>Invite links stop working once a group reaches its member cap, and work again if a place frees up</li>
+      <li>Nothing is public, and nothing is visible to anyone outside your groups</li>
+      <li>We do <strong>not</strong> sell, rent, license or share your data with advertisers, data brokers or marketing platforms</li>
+      <li>Pamoja contains <strong>no advertising</strong></li>
+    </ul>
+
+    <h2>8. Third-party services</h2>
+    <p>Pamoja relies on the following Google services. Each is governed by Google's own privacy policy.</p>
+    <table>
+      <tr><th>Service</th><th>Purpose</th></tr>
+      <tr><td>Firebase Authentication</td><td>Google, phone and email sign-in, and session management</td></tr>
+      <tr><td>Google Play Services, Credential Manager</td><td>Presenting the Google sign-in sheet and returning a sign-in token</td></tr>
+      <tr><td>Cloud Firestore</td><td>Storing profiles, groups, memberships and daily step counts</td></tr>
+      <tr><td>Firebase Analytics</td><td>Aggregated usage and onboarding funnel analytics</td></tr>
+      <tr><td>Firebase Crashlytics</td><td>Crash reports and diagnostics</td></tr>
+      <tr><td>Firebase App Check, Play Integrity</td><td>Confirming requests come from the genuine app</td></tr>
+      <tr><td>Firebase Cloud Messaging</td><td>Push notification infrastructure, present in the app for future use</td></tr>
+      <tr><td>Google Health Connect</td><td>Reading your daily step count</td></tr>
+      <tr><td>Google Play In-App Updates</td><td>Delivering app updates</td></tr>
+    </table>
+    <p>Phone sign-in additionally involves your <strong>mobile network operator</strong>, which carries the verification SMS.</p>
+
+    <h2>9. Storage and security</h2>
+    <p>Server-side data is held in Google Cloud Firestore, encrypted in transit and at rest. Firestore security rules restrict every record to its owner and to the groups they belong to; your profile document is readable only by you.</p>
+    <p>Local data sits in the app's private storage, sandboxed by Android and inaccessible to other apps.</p>
+    <p>We use industry-standard practices, but no method of transmission or storage is completely secure and we cannot guarantee absolute security.</p>
+
+    <h2>10. Android permissions</h2>
+    <table>
+      <tr><th>Permission</th><th>Why</th></tr>
+      <tr><td><code>health.READ_STEPS</code></td><td>Read your daily step count from Health Connect</td></tr>
+      <tr><td><code>INTERNET</code></td><td>Sync steps, groups and profile with our database</td></tr>
+      <tr><td><code>POST_NOTIFICATIONS</code></td><td>Send step reminders and group updates, Android 13 and above</td></tr>
+    </table>
+    <p>Pamoja does <strong>not</strong> request camera, microphone, contacts, location, file, or any other sensor access.</p>
+
+    <h2>11. Retention and deletion</h2>
+    <p>We keep your data for as long as your account exists.</p>
+
+    <h3>Deleting your account</h3>
+    <p><strong>Settings &rarr; Delete Account</strong> removes everything, in this order:</p>
+    <ol>
+      <li>Every membership you hold, with each group's member count corrected</li>
+      <li>Your entire step history</li>
+      <li>Your profile</li>
+      <li>Your authentication record</li>
+    </ol>
+    <p>For your protection we ask you to confirm your identity first, by signing in again with Google, your password, or a code sent to your phone.</p>
+    <p><strong>Deletion is immediate and permanent. It cannot be undone.</strong></p>
+
+    <h3>Deleting your account without the app</h3>
+    <div class="callout">
+      <p>If you cannot access the app, email <a href="mailto:support@arkayenlabs.com">support@arkayenlabs.com</a> from the address associated with your account, or including the phone number associated with it, and we will delete your data within 30 days.</p>
+    </div>
+
+    <h3>Other controls</h3>
+    <ul>
+      <li><strong>Revoke Health Connect permission</strong> at any time in your device's Health Connect settings. Background sync stops automatically</li>
+      <li><strong>Uninstalling</strong> removes all locally stored data and revokes Health Connect access. Your cloud data remains until you delete your account or ask us to</li>
+    </ul>
+
+    <h2>12. International transfers</h2>
+    <p>Your data is processed on Google Cloud infrastructure, which may sit in data centres outside your country of residence. By using Pamoja you consent to that transfer. Google Cloud complies with applicable frameworks for international data transfers.</p>
+
+    <h2>13. Age requirement</h2>
+    <p><strong>Pamoja is for people aged 18 and over.</strong> It is not directed at children, and we do not knowingly collect data from anyone under 18.</p>
+    <p>India's Digital Personal Data Protection Act treats everyone under 18 as a child requiring verifiable parental consent, which is why the threshold is 18 rather than 13.</p>
+    <p>If you believe someone under 18 has given us personal data, email us and we will delete it promptly.</p>
+
+    <h2>14. Your rights</h2>
+    <p>Depending on where you live, you may have the right to access your data, correct it, delete it, object to or restrict its processing, or receive it in a portable form.</p>
+    <p>Your display name is editable in the app, and full deletion is available in Settings. For anything else, email us and we will respond within 30 days.</p>
+
+    <h2>15. Changes</h2>
+    <p>We may update this policy to reflect changes in the app, our practices, or the law. Material changes update the date at the top of this page. Continued use after a change means you accept the updated policy.</p>
+
+    <h2>16. Contact</h2>
+    <div class="callout">
+      <p>
+        <strong>Balaji Thukuntala, trading as Arkayen Labs</strong><br />
+        Mumbai, Maharashtra, India<br />
+        Email: <a href="mailto:support@arkayenlabs.com">support@arkayenlabs.com</a>
+      </p>
+    </div>
+
+    <footer>
+      <p>Pamoja &middot; <a href="https://www.arkayenlabs.com/terms/pamoja">Terms of Use</a></p>
+    </footer>
+  </div>
+</body>
+</html>

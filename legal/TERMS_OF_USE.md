@@ -56,7 +56,7 @@ Pamoja requires an account. You can create one with **Google**, your **phone num
 ## 6. Groups, invites, and shared information
 
 - Anyone who has your group's invite link or code can request to join that group, subject to the group's member limit. **Treat invite links as private and share them only with people you intend to invite.**
-- Group admins may regenerate or revoke invite links, and may remove members.
+- An invite link stops working once a group is full, and works again if a place frees up.
 - **When you join a group, other members of that group can see your display name, your daily step count, your weekly step total, and your ranking.** Do not join a group if you are not comfortable sharing this.
 - Your age, height, and weight, if provided, are **never** shown to other members.
 - Choose a display name and group names that are not offensive, misleading, or infringing, and that do not contain another person's personal information.

@@ -470,9 +470,18 @@ fun SettingsScreen(
                     SettingsRow(
                         icon = PamojaIcons.ShieldCheck,
                         title = "Privacy Policy",
-                        subtitle = "Read our terms and privacy policy",
+                        subtitle = "How we handle your data, including step data",
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/privacy/pamoja"))
+                            context.startActivity(intent)
+                        }
+                    )
+                    SettingsRow(
+                        icon = PamojaIcons.Info,
+                        title = "Terms of Use",
+                        subtitle = "The agreement you accepted when you signed in",
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/terms/pamoja"))
                             context.startActivity(intent)
                         }
                     )

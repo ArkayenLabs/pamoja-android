@@ -42,11 +42,13 @@ Pamoja is provided for **general wellness and motivational purposes only**.
 
 ## 5. Your account
 
-Pamoja creates an **anonymous account** for you automatically. There is no password.
+Pamoja requires an account. You can create one with **Google**, your **phone number**, or an **email address and password**. You choose which; all three give you the same account.
 
-- Your account is tied to your app installation. **If you uninstall the app or reset your device, you may permanently lose access to your account, your groups, and your history.** We cannot recover an anonymous account.
-- You are responsible for activity that occurs through your device.
-- You may delete your account at any time from Settings, or by contacting us at **[SUPPORT EMAIL]**.
+- Your account, and the groups and step history attached to it, **follow you to a new device** when you sign in again with the same method.
+- Keep your sign-in method secure. You are responsible for activity that occurs through your account.
+- If you sign in with a phone number, that number is how we recognise you. **If you give up that number, you may lose access to your account**, and we may not be able to restore it.
+- Before deleting your account we will ask you to confirm your identity again, for your protection.
+- You may delete your account at any time from Settings, or by contacting us at **[SUPPORT EMAIL]**. Deletion permanently removes your profile, every group membership, and your entire step history. **This cannot be undone.**
 
 ## 6. Groups, invites, and shared information
 

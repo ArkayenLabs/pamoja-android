@@ -168,8 +168,8 @@ fun OtpScreen(
                 null -> uiState.error?.let {
                     PamojaNotice(
                         icon = PamojaIcons.AlertCircle,
-                        title = stringResource(R.string.auth_failed_title),
-                        body = it,
+                        title = it.authErrorTitle(),
+                        body = it.authErrorBody(),
                         tone = NoticeTone.Danger,
                     )
                 }

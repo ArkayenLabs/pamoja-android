@@ -59,6 +59,19 @@ sealed class AppError(
     class SessionExpired(detail: String = "Session expired", cause: Throwable? = null) :
         AppError(detail, cause)
 
+    /**
+     * The credential presented was rejected: wrong password, wrong SMS code.
+     *
+     * Distinct from [Validation], which is about input we can judge ourselves
+     * before asking a server. Only the server can say a password is wrong.
+     */
+    class InvalidCredentials(detail: String = "Credential rejected", cause: Throwable? = null) :
+        AppError(detail, cause)
+
+    /** A credential expired before it was used, typically an SMS code. */
+    class Expired(detail: String = "Credential expired", cause: Throwable? = null) :
+        AppError(detail, cause)
+
     /** Firebase is throttling us, typically SMS verification. */
     class RateLimited(detail: String = "Rate limited", cause: Throwable? = null) :
         AppError(detail, cause) {

@@ -42,7 +42,30 @@
     <string name="error_session_body">For your security, sessions do not last forever. Nothing has been lost.</string>
     <string name="error_rate_limited_title">Too many attempts</string>
     <string name="error_rate_limited_body">Wait a few minutes before trying again.</string>
+    <string name="error_credentials_title">That did not match</string>
+    <string name="error_credentials_body">Check what you entered and try again.</string>
+    <string name="error_expired_title">That expired</string>
+    <string name="error_expired_body">Codes and links do not last forever. Ask for a new one.</string>
     <string name="error_validation_title">Check that again</string>
+
+    <!-- ── Auth-specific error wording ────────────────────────────────── -->
+    <!-- The generic copy is too vague inside a sign-in flow, where the user
+         needs to know which of three methods to try instead. -->
+    <string name="auth_error_email_in_use_title">That email is already registered</string>
+    <string name="auth_error_email_in_use_body">Sign in instead, or use a different address.</string>
+    <string name="auth_error_no_account_title">No account with that email</string>
+    <string name="auth_error_no_account_body">Check the address, or create an account instead.</string>
+    <string name="auth_error_credentials_title">That email and password do not match</string>
+    <string name="auth_error_credentials_body">Check both, or reset your password.</string>
+    <string name="auth_error_rate_limited_title">Too many attempts</string>
+    <string name="auth_error_rate_limited_body">Wait a few minutes, or use another sign-in method.</string>
+    <string name="auth_error_offline_title">No connection</string>
+    <string name="auth_error_offline_body">Signing in needs a network. Check yours and try again.</string>
+    <string name="auth_error_sms_title">Could not send the code</string>
+    <string name="auth_error_sms_body">Try again, or sign in with Google or email instead.</string>
+    <string name="auth_error_phone_invalid">That number does not look right. Check the digits after the dial code.</string>
+    <string name="auth_error_generic_title">That did not work</string>
+    <string name="auth_error_generic_body">Try again, or use another sign-in method.</string>
     <string name="error_unknown_title">Something went wrong</string>
     <string name="error_unknown_body">That did not work, and we are not sure why. Trying again often helps.</string>
     <string name="error_snackbar_format">%1$s. %2$s</string>
@@ -308,4 +331,12 @@
     <string name="settings_rate_title">Rate Us</string>
     <string name="settings_rate_subtitle">Support us by sharing your feedback</string>
     <string name="settings_reauth_send_code">Send code</string>
+    <string name="settings_name_empty">Name cannot be empty</string>
+    <string name="settings_name_updated">Name updated</string>
+    <string name="settings_no_phone">This account has no phone number on file</string>
+    <string name="settings_reauth_failed">Could not confirm it is you</string>
+    <string name="settings_code_expired">That code expired. Send a new one.</string>
+    <string name="settings_code_wrong">That code is not right</string>
+    <string name="settings_code_send_failed">Could not send the code</string>
+    <string name="settings_debug_posted">Posted %1$d test notifications</string>
 </resources>

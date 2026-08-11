@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
@@ -71,7 +72,7 @@ fun InviteScreen(
     LaunchedEffect(groupId) { viewModel.loadGroup(groupId) }
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
             viewModel.clearError()
         }
     }

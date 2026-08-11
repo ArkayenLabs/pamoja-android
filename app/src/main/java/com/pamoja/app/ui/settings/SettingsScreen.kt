@@ -65,6 +65,7 @@ import com.pamoja.app.R
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaTextField
+import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -98,18 +99,22 @@ fun SettingsScreen(
         }
     }
 
+    // Two channels: failures that came back from a repository, and messages this
+    // screen raised itself as a resource id.
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
             viewModel.clearMessages()
         }
     }
 
-    LaunchedEffect(uiState.successMessage) {
-        uiState.successMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessages()
-        }
+    LaunchedEffect(uiState.messageRes, uiState.messageArg) {
+        val res = uiState.messageRes ?: return@LaunchedEffect
+        val message = uiState.messageArg
+            ?.let { context.getString(res, it) }
+            ?: context.getString(res)
+        snackbarHostState.showSnackbar(message)
+        viewModel.clearMessages()
     }
 
     // Initialize edit dialog field with current name when opening

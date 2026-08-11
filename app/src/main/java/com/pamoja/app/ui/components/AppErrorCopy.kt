@@ -77,6 +77,17 @@ fun Throwable.toErrorCopy(): ErrorCopy = when (val error = toAppError()) {
         retryLabel = R.string.common_try_again,
     )
 
+    is AppError.InvalidCredentials -> ErrorCopy(
+        title = R.string.error_credentials_title,
+        body = R.string.error_credentials_body,
+    )
+
+    is AppError.Expired -> ErrorCopy(
+        title = R.string.error_expired_title,
+        body = R.string.error_expired_body,
+        retryLabel = R.string.common_try_again,
+    )
+
     is AppError.Validation -> ErrorCopy(
         title = R.string.error_validation_title,
         body = R.string.error_validation_title,

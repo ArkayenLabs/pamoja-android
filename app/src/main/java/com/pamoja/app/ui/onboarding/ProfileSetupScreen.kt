@@ -42,8 +42,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.components.OnboardingProgressBar
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
@@ -59,6 +61,7 @@ fun ProfileSetupScreen(
     val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     var name   by remember { mutableStateOf("") }
     var age    by remember { mutableStateOf("") }
@@ -92,7 +95,7 @@ fun ProfileSetupScreen(
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
             viewModel.clearError()
         }
     }

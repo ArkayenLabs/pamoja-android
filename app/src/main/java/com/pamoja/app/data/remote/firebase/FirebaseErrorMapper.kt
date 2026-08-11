@@ -21,6 +21,18 @@ import java.io.IOException
  * difference between UNAVAILABLE (retry, probably offline) and FAILED_PRECONDITION
  * (a missing composite index, which no amount of retrying will fix).
  */
+/**
+ * Applies [toFirebaseAppError] to a failed Result.
+ *
+ * Lets a `runCatching { }` block keep its shape while still handing an
+ * [AppError] upwards, rather than every method growing a try/catch.
+ */
+fun <T> Result<T>.mapFirebaseError(): Result<T> =
+    fold(
+        onSuccess = { Result.success(it) },
+        onFailure = { Result.failure(it.toFirebaseAppError()) },
+    )
+
 fun Throwable.toFirebaseAppError(): AppError = when (this) {
 
     is AppError -> this
@@ -69,8 +81,14 @@ fun Throwable.toFirebaseAppError(): AppError = when (this) {
     is FirebaseAuthInvalidUserException ->
         AppError.NotFound(message ?: "No such account", this)
 
-    is FirebaseAuthInvalidCredentialsException ->
-        AppError.Validation("That email and password do not match.")
+    // Was previously mapped to Validation carrying an English sentence, which
+    // put user-facing copy in the data layer and made it untranslatable.
+    is FirebaseAuthInvalidCredentialsException -> when {
+        message?.contains("expired", ignoreCase = true) == true ->
+            AppError.Expired(message ?: "Credential expired", this)
+
+        else -> AppError.InvalidCredentials(message ?: "Credential rejected", this)
+    }
 
     is FirebaseAuthUserCollisionException ->
         AppError.Conflict(message ?: "Account already exists", this)

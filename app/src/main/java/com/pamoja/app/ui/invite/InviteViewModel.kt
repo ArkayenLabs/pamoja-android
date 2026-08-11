@@ -1,6 +1,8 @@
 package com.pamoja.app.ui.invite
 
 import androidx.lifecycle.ViewModel
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.toAppError
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.usecase.GetGroupUseCase
@@ -14,7 +16,7 @@ import javax.inject.Inject
 
 data class InviteUiState(
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: AppError? = null,
     val group: Group? = null
 )
 
@@ -38,7 +40,7 @@ class InviteViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.value = InviteUiState(
-                        error = error.message ?: "Failed to load group"
+                        error = error.toAppError()
                     )
                 }
             )

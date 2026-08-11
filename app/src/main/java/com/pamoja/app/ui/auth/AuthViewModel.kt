@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.data.remote.auth.GoogleCredentialClient
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.usecase.GetUserUseCase
 import com.pamoja.app.domain.usecase.SendPasswordResetUseCase
 import com.pamoja.app.domain.usecase.SignInUseCase
@@ -39,7 +41,7 @@ enum class OtpFailure { WrongCode, Expired, RateLimited }
 data class AuthUiState(
     /** Non-null while a method is running. Drives per-button progress. */
     val busyWith: AuthMethod? = null,
-    val error: String? = null,
+    val error: AppError? = null,
     val destination: AuthDestination? = null,
 
     // ── Phone ───────────────────────────────────────────────────────────────
@@ -92,8 +94,7 @@ class AuthViewModel @Inject constructor(
                 // failed" for it reads as an error the user has to fix.
                 _uiState.value = _uiState.value.copy(
                     busyWith = null,
-                    error = if (e is GoogleCredentialClient.Cancelled) null else e.message
-                        ?: "Could not reach Google. Check your connection and try again."
+                    error = if (e is GoogleCredentialClient.Cancelled) null else e.toAppError(),
                 )
                 return@launch
             }
@@ -103,7 +104,7 @@ class AuthViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
-                        error = e.message ?: "Google sign in failed"
+                        error = e.toAppError(),
                     )
                 }
             )
@@ -140,7 +141,7 @@ class AuthViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
-                        error = friendlyPhoneError(e),
+                        error = e.toAppError(),
                     )
                 }
             )
@@ -159,10 +160,15 @@ class AuthViewModel @Inject constructor(
             verifyPhoneCodeUseCase(verificationId, code).fold(
                 onSuccess = { onAuthenticated(it.userId) },
                 onFailure = { e ->
+                    val appError = e.toAppError()
+                    val failure = appError.toOtpFailure()
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
-                        otpFailure = classifyOtpFailure(e),
-                        error = if (classifyOtpFailure(e) == null) e.message else null,
+                        otpFailure = failure,
+                        // Only when the failure is not one of the three the OTP
+                        // screen draws itself, so the same thing is never said
+                        // in two places.
+                        error = appError.takeIf { failure == null },
                     )
                 }
             )
@@ -208,7 +214,7 @@ class AuthViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
-                        error = friendlyEmailError(e),
+                        error = e.toAppError(),
                     )
                 }
             )
@@ -223,7 +229,7 @@ class AuthViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
-                        error = friendlyEmailError(e),
+                        error = e.toAppError(),
                     )
                 }
             )
@@ -243,7 +249,7 @@ class AuthViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
-                        error = friendlyEmailError(e),
+                        error = e.toAppError(),
                     )
                 }
             )
@@ -290,65 +296,21 @@ class AuthViewModel @Inject constructor(
     }
 }
 
-// ─── Firebase error translation ──────────────────────────────────────────────
-// Firebase messages name internal codes and SDK classes. These map the ones a
-// user can actually act on; anything unrecognised falls back to plain language
-// rather than leaking the original.
-
-private fun friendlyPhoneError(e: Throwable): String {
-    val message = e.message.orEmpty()
-    return when {
-        message.contains("blocked all requests", ignoreCase = true) ||
-            message.contains("too many requests", ignoreCase = true) ->
-            "Too many attempts from this device. Wait a few minutes and try again."
-
-        message.contains("invalid format", ignoreCase = true) ||
-            message.contains("INVALID_PHONE_NUMBER", ignoreCase = true) ->
-            "That number does not look right. Check the digits after the dial code."
-
-        message.contains("quota", ignoreCase = true) ->
-            "We cannot send codes right now. Try email instead."
-
-        message.contains("network", ignoreCase = true) ->
-            "No connection. Check your network and try again."
-
-        else -> "Could not send the code. Try again, or use another method."
-    }
-}
-
-private fun classifyOtpFailure(e: Throwable): OtpFailure? {
-    val message = e.message.orEmpty()
-    return when {
-        message.contains("expired", ignoreCase = true) -> OtpFailure.Expired
-        message.contains("too many", ignoreCase = true) ||
-            message.contains("blocked", ignoreCase = true) -> OtpFailure.RateLimited
-        message.contains("invalid", ignoreCase = true) ||
-            message.contains("6 digit", ignoreCase = true) -> OtpFailure.WrongCode
-        else -> null
-    }
-}
-
-private fun friendlyEmailError(e: Throwable): String {
-    val message = e.message.orEmpty()
-    return when {
-        message.contains("email address is already in use", ignoreCase = true) ->
-            "An account already exists with this email. Sign in instead."
-
-        message.contains("password is invalid", ignoreCase = true) ||
-            message.contains("INVALID_LOGIN_CREDENTIALS", ignoreCase = true) ||
-            message.contains("credential is incorrect", ignoreCase = true) ->
-            "That email and password do not match."
-
-        message.contains("no user record", ignoreCase = true) ->
-            "No account with this email. Create one instead."
-
-        message.contains("badly formatted", ignoreCase = true) ->
-            "That email address does not look right."
-
-        message.contains("network", ignoreCase = true) ->
-            "No connection. Check your network and try again."
-
-        // Validation failures raised by the use cases are already user-facing.
-        else -> message.ifBlank { "Something went wrong. Try again." }
-    }
+/**
+ * Which of the OTP screen's three drawn states this failure is, if any.
+ *
+ * Replaces a set of functions that searched Firebase's English message text for
+ * substrings like "expired". That worked only in English and only until Google
+ * reworded anything, and it put user-facing copy in the ViewModel where it
+ * could not be translated. Classification now happens once in the data layer
+ * and this only reads the resulting type.
+ */
+private fun AppError.toOtpFailure(): OtpFailure? = when (this) {
+    is AppError.Expired -> OtpFailure.Expired
+    is AppError.RateLimited -> OtpFailure.RateLimited
+    is AppError.InvalidCredentials -> OtpFailure.WrongCode
+    // The use case rejects anything that is not six digits before it reaches
+    // the network, and that is a wrong code as far as the user is concerned.
+    is AppError.Validation -> OtpFailure.WrongCode
+    else -> null
 }

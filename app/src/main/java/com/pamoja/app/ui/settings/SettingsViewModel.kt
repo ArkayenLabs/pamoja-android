@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.data.remote.auth.GoogleCredentialClient
+import com.pamoja.app.R
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
@@ -33,8 +36,19 @@ enum class ReauthMethod { Google, Password, Phone }
 
 data class SettingsUiState(
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val successMessage: String? = null,
+
+    /** A failure that came back from a repository. The screen renders its copy. */
+    val error: AppError? = null,
+
+    /**
+     * A message this screen raised itself, as a string resource id.
+     *
+     * An Int rather than text, so the ViewModel never holds user-facing copy and
+     * never needs a Context to look one up. [messageArg] fills a format
+     * placeholder where the message has one.
+     */
+    val messageRes: Int? = null,
+    val messageArg: Int? = null,
     val userName: String = "",
     val userId: String = "",
     val isSignedOut: Boolean = false,
@@ -111,11 +125,11 @@ class SettingsViewModel @Inject constructor(
 
     fun updateUserName(newName: String) {
         if (newName.isBlank()) {
-            _uiState.value = _uiState.value.copy(error = "Name cannot be empty")
+            _uiState.value = _uiState.value.copy(messageRes = R.string.settings_name_empty)
             return
         }
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null, successMessage = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, messageRes = null)
             val currentUserId = _uiState.value.userId
             
             val user = User(userId = currentUserId, name = newName)
@@ -127,13 +141,13 @@ class SettingsViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         userName = newName,
-                        successMessage = "Name updated successfully"
+                        messageRes = R.string.settings_name_updated
                     )
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = error.message ?: "Failed to update name"
+                        error = error.toAppError()
                     )
                 }
             )
@@ -155,7 +169,7 @@ class SettingsViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = error.message ?: "Sign out failed"
+                        error = error.toAppError()
                     )
                 }
             )
@@ -185,7 +199,7 @@ class SettingsViewModel @Inject constructor(
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = error.message ?: "Failed to delete account"
+                            error = error.toAppError()
                         )
                     }
                 }
@@ -215,7 +229,8 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     reauthRequired = null,
-                    error = if (e is GoogleCredentialClient.Cancelled) null else e.message,
+                    // A dismissed Google sheet is a choice, not a failure.
+                    error = if (e is GoogleCredentialClient.Cancelled) null else e.toAppError(),
                 )
                 return@launch
             }
@@ -229,7 +244,7 @@ class SettingsViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         reauthRequired = null,
-                        error = e.message ?: "Could not confirm it is you",
+                        messageRes = R.string.settings_reauth_failed,
                     )
                 }
             )
@@ -249,11 +264,7 @@ class SettingsViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = if (e.message?.contains("password", ignoreCase = true) == true) {
-                            "That password is not right"
-                        } else {
-                            e.message ?: "Could not confirm it is you"
-                        },
+                        error = e.toAppError(),
                     )
                 }
             )
@@ -275,7 +286,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     reauthRequired = null,
-                    error = "This account has no phone number on file",
+                    messageRes = R.string.settings_no_phone,
                 )
                 return@launch
             }
@@ -291,7 +302,7 @@ class SettingsViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = e.message ?: "Could not send the code",
+                        messageRes = R.string.settings_code_send_failed,
                     )
                 }
             )
@@ -316,11 +327,10 @@ class SettingsViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = when {
-                            e.message?.contains("expired", ignoreCase = true) == true ->
-                                "That code expired. Send a new one."
-
-                            else -> "That code is not right"
+                        messageRes = if (e.toAppError() is AppError.Expired) {
+                            R.string.settings_code_expired
+                        } else {
+                            R.string.settings_code_wrong
                         },
                     )
                 }
@@ -382,12 +392,17 @@ class SettingsViewModel @Inject constructor(
             samples.forEach { notificationHelper.show(it) }
 
             _uiState.value = _uiState.value.copy(
-                successMessage = "Posted ${samples.size} test notifications"
+                messageRes = R.string.settings_debug_posted,
+                messageArg = samples.size
             )
         }
     }
 
     fun clearMessages() {
-        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+        _uiState.value = _uiState.value.copy(
+            error = null,
+            messageRes = null,
+            messageArg = null,
+        )
     }
 }

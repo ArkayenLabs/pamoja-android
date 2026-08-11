@@ -205,7 +205,9 @@ fun PhoneEntryScreen(
 
             Spacer(modifier = Modifier.height(Spacing.x3))
 
-            val helper = blurError ?: uiState.error
+            // The local blur message wins, since it is about the number just
+            // typed; a server failure is the fallback.
+            val helper = blurError ?: uiState.error?.authErrorBody()
             if (helper != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(

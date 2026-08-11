@@ -1,6 +1,8 @@
 package com.pamoja.app.ui.group
 
 import androidx.lifecycle.ViewModel
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.toAppError
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.usecase.CreateGroupUseCase
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
@@ -14,7 +16,7 @@ import javax.inject.Inject
 
 data class CreateGroupUiState(
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: AppError? = null,
     val createdGroupId: String? = null
 )
 
@@ -40,7 +42,7 @@ class CreateGroupViewModel @Inject constructor(
             val user = getCurrentUserUseCase()
             if (user == null) {
                 _uiState.value = CreateGroupUiState(
-                    error = "User not found. Please sign in again."
+                    error = AppError.SessionExpired()
                 )
                 return@launch
             }
@@ -60,7 +62,7 @@ class CreateGroupViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.value = CreateGroupUiState(
-                        error = error.message ?: "Failed to create group"
+                        error = error.toAppError()
                     )
                 }
             )

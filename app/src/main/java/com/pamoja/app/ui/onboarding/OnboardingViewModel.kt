@@ -1,6 +1,8 @@
 package com.pamoja.app.ui.onboarding
 
 import androidx.lifecycle.ViewModel
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.toAppError
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.pamoja.app.data.local.preferences.UserPreferences
@@ -17,7 +19,7 @@ import javax.inject.Inject
 
 data class OnboardingUiState(
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: AppError? = null,
     val isSuccess: Boolean = false
 )
 
@@ -60,7 +62,7 @@ class OnboardingViewModel @Inject constructor(
             val userId = firebaseAuth.currentUser?.uid
             if (userId == null) {
                 _uiState.value = OnboardingUiState(
-                    error = "Your session expired. Please sign in again."
+                    error = AppError.SessionExpired()
                 )
                 return@launch
             }
@@ -84,7 +86,7 @@ class OnboardingViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.value = OnboardingUiState(
-                        error = error.message ?: "Failed to save profile. Check your connection."
+                        error = error.toAppError()
                     )
                 }
             )

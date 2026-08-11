@@ -12,6 +12,7 @@ import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.PhoneVerification
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
@@ -31,6 +32,24 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth
 ) : AuthRepository {
 
+    /**
+     * runCatching, but mapping the failure to an AppError and never swallowing
+     * cancellation.
+     *
+     * runCatching catches Throwable, which includes CancellationException, so a
+     * cancelled coroutine was being turned into an ordinary failed Result. That
+     * makes cancellation look like an error to the caller and stops it
+     * propagating, which is exactly the bug that leaves a screen showing a
+     * failure after the user navigated away.
+     */
+    private suspend fun <T> authCatching(block: suspend () -> T): Result<T> = try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        Result.failure(e.toFirebaseAppError())
+    }
+
     // ── Session ─────────────────────────────────────────────────────────────
 
     override suspend fun getCurrentUser(): User? =
@@ -38,9 +57,9 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
 
     override suspend fun isUserLoggedIn(): Boolean = auth.currentUser != null
 
-    override suspend fun signOut(): Result<Unit> = runCatching { auth.signOut() }
+    override suspend fun signOut(): Result<Unit> = authCatching { auth.signOut() }
 
-    override suspend fun deleteAccount(): Result<Unit> = runCatching {
+    override suspend fun deleteAccount(): Result<Unit> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         try {
             user.delete().await()
@@ -63,13 +82,13 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         return age > RECENT_LOGIN_WINDOW_MS
     }
 
-    override suspend fun reauthenticateWithGoogle(idToken: String): Result<Unit> = runCatching {
+    override suspend fun reauthenticateWithGoogle(idToken: String): Result<Unit> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         user.reauthenticate(credential).await()
     }
 
-    override suspend fun reauthenticateWithEmail(password: String): Result<Unit> = runCatching {
+    override suspend fun reauthenticateWithEmail(password: String): Result<Unit> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         val email = user.email ?: error("This account has no email address")
         val credential = EmailAuthProvider.getCredential(email, password)
@@ -79,7 +98,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     override suspend fun reauthenticateWithPhone(
         verificationId: String,
         code: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         val credential = PhoneAuthProvider.getCredential(verificationId, code)
         user.reauthenticate(credential).await()
@@ -100,24 +119,24 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     // ── Email ───────────────────────────────────────────────────────────────
 
     override suspend fun signUpWithEmail(email: String, password: String): Result<User> =
-        runCatching {
+        authCatching {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             User(userId = result.user?.uid ?: error("Sign up failed"))
         }
 
     override suspend fun signInWithEmail(email: String, password: String): Result<User> =
-        runCatching {
+        authCatching {
             val result = auth.signInWithEmailAndPassword(email, password).await()
             User(userId = result.user?.uid ?: error("Sign in failed"))
         }
 
-    override suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
+    override suspend fun sendPasswordReset(email: String): Result<Unit> = authCatching {
         auth.sendPasswordResetEmail(email).await()
     }
 
     // ── Google ──────────────────────────────────────────────────────────────
 
-    override suspend fun signInWithGoogle(idToken: String): Result<User> = runCatching {
+    override suspend fun signInWithGoogle(idToken: String): Result<User> = authCatching {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val result = auth.signInWithCredential(credential).await()
         User(userId = result.user?.uid ?: error("Google sign in failed"))
@@ -128,7 +147,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     override suspend fun startPhoneVerification(
         phoneNumber: String,
         activity: Any,
-    ): Result<PhoneVerification> = runCatching {
+    ): Result<PhoneVerification> = authCatching {
         val hostActivity = activity as? Activity
             ?: error("Phone verification needs an Activity")
 
@@ -173,7 +192,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun verifyPhoneCode(verificationId: String, code: String): Result<User> =
-        runCatching {
+        authCatching {
             val credential = PhoneAuthProvider.getCredential(verificationId, code)
             val result = auth.signInWithCredential(credential).await()
             User(userId = result.user?.uid ?: error("Phone sign in failed"))
@@ -182,14 +201,14 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     // ── Explicit linking, from Settings ─────────────────────────────────────
     // Used when an already signed-in user adds a second method.
 
-    override suspend fun linkGoogle(idToken: String): Result<User> = runCatching {
+    override suspend fun linkGoogle(idToken: String): Result<User> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val result = user.linkWithCredential(credential).await()
         User(userId = result.user?.uid ?: error("Link failed"))
     }
 
-    override suspend fun linkEmail(email: String, password: String): Result<User> = runCatching {
+    override suspend fun linkEmail(email: String, password: String): Result<User> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         val credential = EmailAuthProvider.getCredential(email, password)
         val result = user.linkWithCredential(credential).await()
@@ -197,7 +216,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun linkPhone(verificationId: String, code: String): Result<User> =
-        runCatching {
+        authCatching {
             val user = auth.currentUser ?: error("No signed in user")
             val credential = PhoneAuthProvider.getCredential(verificationId, code)
             val result = user.linkWithCredential(credential).await()

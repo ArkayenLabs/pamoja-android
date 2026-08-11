@@ -134,8 +134,8 @@ fun AuthLandingScreen(
                 Spacer(modifier = Modifier.height(Spacing.x4))
                 PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
-                    title = stringResource(R.string.auth_failed_title),
-                    body = message,
+                    title = message.authErrorTitle(),
+                    body = message.authErrorBody(),
                     tone = NoticeTone.Danger,
                 )
             }

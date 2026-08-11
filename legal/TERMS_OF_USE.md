@@ -1,15 +1,18 @@
 # Terms of Use. Pamoja
 
-**Last updated: [DATE]**
-**Effective date: [DATE]**
+**Last updated: 11 August 2026**
+**Effective date: 11 August 2026**
 
-> ⚠️ **This is a working draft, not legal advice.** I am not a lawyer. Have a qualified lawyer in your jurisdiction review this before publishing, particularly the health disclaimer, liability, and governing-law sections. Placeholders marked `[LIKE THIS]` must be filled in.
+> ⚠️ **Not legal advice, and not yet reviewed by a lawyer.** All placeholders are
+> filled, but §4 (health disclaimer), §13 (liability) and §16 (governing law) are
+> the sections where a qualified lawyer in your jurisdiction earns their fee.
+> See the Status section at the bottom.
 
 ---
 
 ## 1. Agreement to these terms
 
-These Terms of Use ("Terms") govern your use of the Pamoja mobile application ("Pamoja", "the app", "we", "us", "our"), operated by **[LEGAL ENTITY NAME, e.g. Arkayen Labs / your registered name]**, **[REGISTERED ADDRESS]**.
+These Terms of Use ("Terms") govern your use of the Pamoja mobile application ("Pamoja", "the app", "we", "us", "our"), operated by **Balaji Thukuntala, sole proprietor, trading as Arkayen Labs**, Mumbai, Maharashtra, India.
 
 By downloading, accessing, or using Pamoja, you agree to these Terms. If you do not agree, do not use the app.
 
@@ -21,7 +24,7 @@ You must be at least **18 years old** to use Pamoja.
 
 Pamoja is not directed at children. We do not knowingly collect data from anyone under 18. If we learn that we have, we will delete the account and its data.
 
-> **Note to you (remove before publishing):** India's DPDP Act treats everyone under 18 as a child requiring verifiable parental consent, stricter than GDPR. Setting the minimum age at 18 avoids that compliance burden entirely. If you want under-18 users, you will need a parental-consent flow and Play Families policy compliance. Also ensure this matches the target age you declared in Play Console.
+> **Internal note, deliberately not mirrored to the published page:** India's DPDP Act treats everyone under 18 as a child requiring verifiable parental consent, stricter than GDPR. Setting the minimum age at 18 avoids that compliance burden entirely. If you want under-18 users, you will need a parental-consent flow and Play Families policy compliance. Also ensure this matches the target age you declared in Play Console.
 
 ## 3. What Pamoja does
 
@@ -48,7 +51,7 @@ Pamoja requires an account. You can create one with **Google**, your **phone num
 - Keep your sign-in method secure. You are responsible for activity that occurs through your account.
 - If you sign in with a phone number, that number is how we recognise you. **If you give up that number, you may lose access to your account**, and we may not be able to restore it.
 - Before deleting your account we will ask you to confirm your identity again, for your protection.
-- You may delete your account at any time from Settings, or by contacting us at **[SUPPORT EMAIL]**. Deletion permanently removes your profile, every group membership, and your entire step history. **This cannot be undone.**
+- You may delete your account at any time from Settings, or by contacting us at **support@arkayenlabs.com**. Deletion permanently removes your profile, every group membership, and your entire step history. **This cannot be undone.**
 
 ## 6. Groups, invites, and shared information
 
@@ -95,7 +98,7 @@ Pamoja may offer optional paid subscriptions unlocking additional features.
 
 ## 10. Intellectual property
 
-Pamoja, including its name, logo, design, and software, is owned by **[LEGAL ENTITY NAME]** and protected by intellectual property law. These Terms grant you a limited, personal, non-exclusive, non-transferable, revocable licence to use the app for your own non-commercial use.
+Pamoja, including its name, logo, design, and software, is owned by **Balaji Thukuntala, trading as Arkayen Labs** and protected by intellectual property law. These Terms grant you a limited, personal, non-exclusive, non-transferable, revocable licence to use the app for your own non-commercial use.
 
 You retain ownership of the content you create (such as your display name and group names) and grant us a licence to store, display, and process it as necessary to operate the service.
 
@@ -116,13 +119,13 @@ To the fullest extent permitted by law:
 
 - We are not liable for any indirect, incidental, special, consequential, or punitive damages, or for loss of data, profits, or goodwill.
 - We are not liable for any **personal injury or health consequence** arising from physical activity undertaken while using Pamoja.
-- Our total aggregate liability for any claim relating to Pamoja will not exceed the greater of **[AMOUNT, e.g. INR 1,000]** or the amount you paid us in the **twelve (12) months** preceding the claim.
+- Our total aggregate liability for any claim relating to Pamoja will not exceed the greater of **INR 1,000** or the amount you paid us in the **twelve (12) months** preceding the claim.
 
 Some jurisdictions do not allow certain limitations, so some of the above may not apply to you. Nothing in these Terms limits liability that cannot lawfully be limited, including for death or personal injury caused by proven negligence, or for fraud.
 
 ## 14. Indemnity
 
-You agree to indemnify and hold harmless **[LEGAL ENTITY NAME]** from any claim or demand, including reasonable legal fees, arising from your misuse of Pamoja or your breach of these Terms.
+You agree to indemnify and hold harmless **Balaji Thukuntala, trading as Arkayen Labs** from any claim or demand, including reasonable legal fees, arising from your misuse of Pamoja or your breach of these Terms.
 
 ## 15. Termination
 
@@ -132,9 +135,9 @@ We may suspend or terminate your access if you breach these Terms, if required b
 
 ## 16. Governing law and disputes
 
-These Terms are governed by the laws of **[COUNTRY, e.g. India]**, without regard to conflict-of-law rules.
+These Terms are governed by the laws of **India**, without regard to conflict-of-law rules.
 
-Any dispute will be subject to the exclusive jurisdiction of the courts of **[CITY, COUNTRY, e.g. Hyderabad, India]**.
+Any dispute will be subject to the exclusive jurisdiction of the courts of **Mumbai, India**.
 
 If you are a consumer, this does not deprive you of any protection under the mandatory law of your country of residence.
 
@@ -149,22 +152,31 @@ If you are a consumer, this does not deprive you of any protection under the man
 
 Questions about these Terms:
 
-**[LEGAL ENTITY NAME]**
-Email: **[SUPPORT EMAIL]**
+**Balaji Thukuntala, trading as Arkayen Labs**
+Email: **support@arkayenlabs.com**
 Web: [https://www.arkayenlabs.com](https://www.arkayenlabs.com)
 
 ---
 
-## Before you publish, fill these in
+## Status
 
-- [ ] `[DATE]`, last updated and effective dates
-- [ ] `[LEGAL ENTITY NAME]`, sole proprietorship or registered company name
-- [ ] `[REGISTERED ADDRESS]`
-- [ ] `[SUPPORT EMAIL]`, must be monitored; also required on your Play listing
-- [ ] `[AMOUNT]`, liability cap
-- [ ] `[COUNTRY]` / `[CITY, COUNTRY]`, governing law and jurisdiction
-- [ ] Confirm the minimum age (18 recommended) matches your Play Console target-audience declaration
-- [ ] Remove the note in §2 addressed to you
-- [ ] **Have a lawyer review it**
-- [ ] Publish at `https://www.arkayenlabs.com/terms/pamoja`
-- [ ] Add the Terms row to the app's Settings screen
+Published version lives at `web/terms-pamoja.html`. **Edit this file first, then
+mirror the change there**, so the reviewed draft and the live page never drift.
+
+- [x] Dates, entity, address, support email, liability cap and jurisdiction filled
+- [x] Terms row added to the app's Settings screen
+- [ ] Deploy `web/terms-pamoja.html` to `https://www.arkayenlabs.com/terms/pamoja`,
+      currently a soft 404 that returns HTTP 200 with a "page not found" body
+- [ ] Confirm `support@arkayenlabs.com` actually receives mail. The site currently
+      publishes `hello@arkayenlabs.com`, and Play requires a monitored address
+- [ ] Confirm the minimum age of 18 matches the Play Console target-audience
+      declaration
+- [ ] **Have a lawyer review it.** The health disclaimer (§4), the liability cap
+      (§13) and governing law (§16) are the three worth paying for
+
+### Entity note
+
+`Balaji Thukuntala, sole proprietor, trading as Arkayen Labs` is used because
+Arkayen Labs is not a registered company. An unregistered trade name cannot be
+the contracting party on its own. If it is ever incorporated, this name and §10
+both need updating.

@@ -116,8 +116,8 @@ does **not** disqualify you, confirmed against RevenueCat's own guidance.
 - [x] ✅ `keystore.properties`, `*.jks`, `*.keystore`, `local.properties` gitignored and untracked (verified)
 - [ ] 🔴 **Back up the release keystore in at least two secure locations.** If it is lost, you can never update this app again under the same package name
 - [ ] 🔴 Record the keystore password, key alias, and key password in a password manager
-- [ ] 🟠 Enable **Play App Signing** (Google holds the app signing key; you hold the upload key), this is the safety net for a lost keystore
-- [ ] 🟠 Record the **release** SHA-256 certificate fingerprint (needed for App Links `assetlinks.json`)
+- [x] ✅ **Play App Signing is enabled.** Google holds the app signing key, you hold the upload key. This is also the safety net for a lost upload keystore, since Google can issue a new one
+- [x] ✅ Release SHA-256 recorded, and `web/assetlinks.json` already lists the **right** one: the app signing SHA-256 `50:EE:34:74:…` plus the debug `09:82:DF:6F:…`. That is correct, because App Links verify against the certificate the installed app actually carries, which under Play App Signing is Google's, not the upload key's. Same omission as Firebase though: a sideloaded local release APK will fail verification
 - [ ] 🟠 Verify `google-services.json` is the production Firebase project, not a dev project
 - [ ] 🟡 Restrict the Firebase/Maps API keys in Google Cloud Console to your package name + signing certificate
 

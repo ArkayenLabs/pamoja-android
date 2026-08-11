@@ -94,6 +94,11 @@ fun Throwable.toErrorCopy(): ErrorCopy = when (val error = toAppError()) {
         body = error.field.messageRes(),
     )
 
+    is AppError.NoProviderAccount -> ErrorCopy(
+        title = R.string.auth_error_no_google_account_title,
+        body = R.string.auth_error_no_google_account_body,
+    )
+
     is AppError.Unknown -> ErrorCopy(
         title = R.string.error_unknown_title,
         body = R.string.error_unknown_body,

@@ -107,9 +107,18 @@ Target: live around **20–25 August**, which leaves roughly five weeks of slack
 
 These block progress and only you can do them.
 
-- [ ] 🔴 **Fix Google sign-in.** It failed on the 2026-08-11 device run, see §6.
-      Start with `./gradlew signingReport` and confirm that SHA-1 is registered
-      on the Firebase project. This blocks launch
+- [ ] 🟠 **Add the upload key SHA-1 to Firebase**, `31:C0:77:1F:D7:28:7E:DF:F0:
+      DD:B1:BF:54:15:58:A1:EB:2E:D5:1E`, then re-download `google-services.json`.
+      Not a launch blocker, see the signing note in §6. It only affects release
+      APKs you build and sideload yourself, which are signed with the upload key
+      rather than Google's app signing key. Cheap, and it removes a confusing
+      false failure during release testing
+- [ ] 🟠 **Re-test Google sign-in on the debug build.** Every fingerprint the
+      debug build needs is registered, so the 2026-08-11 failure was something
+      else. Most likely no Google account on that phone, which now says exactly
+      that instead of "that did not work". Any other credential failure is
+      recorded to Crashlytics as a non-fatal, so the next one is diagnosable
+      without a logcat capture
 - [ ] 🔴 **Run the *release* APK on a real phone.** A debug build was exercised
       on 2026-08-11 (§6) and most of it worked, but R8 full mode breaks
       reflection-based code in ways debug builds never reveal. Still owed: phone
@@ -306,13 +315,22 @@ A ~4 minute recorded run on a real phone, on a debug build that included the
 
 ### Failed
 - 🔴 **Google sign-in fails.** "Opening Google…" then the generic failure
-  notice. Not a cancellation, that path is silent by design. This is the
-  primary sign-in method and it is a launch blocker. Almost certainly console
-  config rather than code: the debug keystore's SHA-1 is probably not
-  registered on the Firebase project. Capture the real cause with
-  `adb logcat | grep -iE "credential|signin|GoogleId"` while reproducing, and
-  check the SHA-1 from `./gradlew signingReport` is listed in Firebase
-  → Project settings → Your apps. The release keystore needs its own entry
+  notice. Not a cancellation, that path is silent by design. Primary sign-in
+  method, so it blocks launch.
+
+  **The first guess, an unregistered debug SHA-1, was wrong**, and so was the
+  follow-up guess that the release build was broken. Resolved fully on
+  2026-08-11 against `signingReport`, `google-services.json` and the Play
+  Console certificates. See the signing note below: every fingerprint that
+  matters is registered, so config does not explain this failure.
+
+  The reason the video cannot answer this is itself a bug, now fixed:
+  `GoogleCredentialClient` threw a plain `Exception` carrying the sentence "No
+  Google account on this phone", the error pipeline correctly refuses to show
+  raw exception messages, and it degraded to "that did not work". Every Google
+  failure therefore rendered the same card. That case is now
+  `AppError.NoProviderAccount` with its own copy and no Retry, and every other
+  `GetCredentialException` is recorded to Crashlytics as a non-fatal
 - 🔴 **Terms of Use opens a hard 404** at `arkayenlabs.com/ter…`. Confirms §2's
   "deploy the legal pages", now witnessed from inside the app. Reviewers click
   these
@@ -331,6 +349,37 @@ A ~4 minute recorded run on a real phone, on a debug build that included the
 ### Still not exercised
 Phone OTP with a real SMS, account deletion, joining as a genuinely new second
 member, and anything on a release build under R8.
+
+### Signing, resolved 2026-08-11. Read this before debugging Google sign-in again
+
+Three certificates exist and it is easy to reach for the wrong one.
+
+| Fingerprint | Certificate | In Firebase |
+|---|---|---|
+| `8c:27:3a:1f…` SHA-1, `09:82:df:6f…` SHA-256 | debug keystore | yes |
+| `f7:34:8b:55…` SHA-1, `50:ee:34:74…` SHA-256 | **Play App Signing**, Google's key | yes |
+| `31:c0:77:1f…` SHA-1, `ec:3f:f2:8c…` SHA-256 | upload key, `D:\Play Console\Pamoja\upload-keystore.jks` | **no** |
+
+**Play App Signing is on, so the upload key never reaches a user's phone.**
+Google strips your signature from the AAB and re-signs with its own key. Every
+build installed from any Play track therefore carries `f7348b55`, which is
+registered, so production and closed testing are correctly configured today.
+
+The one case that breaks: **a release APK built locally and sideloaded is
+signed with the upload key**, which is not registered, so Google sign-in fails
+on it. Identical source, identical versionCode, opposite behaviour purely
+because of how it was installed. Do the R8 verification through an internal
+testing track rather than a sideload, or register the upload key so both paths
+behave the same.
+
+`google-services.json` in the repo currently matches the console exactly, so it
+only needs re-downloading if a fingerprint is added.
+
+`web/assetlinks.json` follows the same pattern and is already correct: app
+signing `50:EE:34:74…` plus debug `09:82:DF:6F…`, no upload key. So App Links
+have the identical sideload gap. One more reason to verify the release build
+through a Play track rather than by sideloading it, since a sideload would
+break Google sign-in and App Links together and look like two separate bugs.
 
 ---
 

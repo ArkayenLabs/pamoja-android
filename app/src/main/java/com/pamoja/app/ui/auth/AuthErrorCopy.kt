@@ -46,6 +46,13 @@ fun Throwable.toAuthErrorCopy(): ErrorCopy = when (toAppError()) {
         body = R.string.auth_error_offline_body,
     )
 
+    // No Retry. There is no Google account to find and pressing the button
+    // again will fail identically; the fix is in the phone's settings.
+    is AppError.NoProviderAccount -> ErrorCopy(
+        title = R.string.auth_error_no_google_account_title,
+        body = R.string.auth_error_no_google_account_body,
+    )
+
     // Validation names the exact rule that failed, so it keeps its own specific
     // wording rather than being flattened into the generic auth message. Losing
     // that distinction is what made "enter your email address" degrade to "that

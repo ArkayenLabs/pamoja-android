@@ -80,6 +80,8 @@
     <string name="auth_error_sms_title">Could not send the code</string>
     <string name="auth_error_sms_body">Try again, or sign in with Google or email instead.</string>
     <string name="auth_error_phone_invalid">That number does not look right. Check the digits after the dial code.</string>
+    <string name="auth_error_no_google_account_title">No Google account on this phone</string>
+    <string name="auth_error_no_google_account_body">Add one in your phone\'s settings, or continue with phone or email instead.</string>
     <string name="auth_error_generic_title">That did not work</string>
     <string name="auth_error_generic_body">Try again, or use another sign-in method.</string>
     <string name="error_unknown_title">Something went wrong</string>

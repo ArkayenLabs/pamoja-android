@@ -71,6 +71,15 @@ interface AuthRepository {
     suspend fun signInWithEmail(email: String, password: String): Result<User>
     suspend fun sendPasswordReset(email: String): Result<Unit>
 
+    /**
+     * Replaces the password on the signed-in account.
+     *
+     * Firebase refuses this on a session that has not signed in recently, which
+     * for this app is every session. Callers must re-authenticate immediately
+     * before calling it, which is what `ChangePasswordUseCase` does.
+     */
+    suspend fun updatePassword(newPassword: String): Result<Unit>
+
     // ── Google ──────────────────────────────────────────────────────────────
 
     /**

@@ -124,6 +124,7 @@
     <string name="phone_send_code">Send code</string>
     <string name="phone_select_country">Select country</string>
     <string name="phone_search_country">Country or dial code</string>
+    <string name="phone_label_country">Country</string>
 
     <!-- ── OTP ────────────────────────────────────────────────────────── -->
     <string name="otp_title">Enter your code</string>
@@ -435,6 +436,60 @@
     <string name="notif_quiet_from">From</string>
     <string name="notif_quiet_to">To</string>
     <string name="notif_quiet_all_day">This covers the whole day, so nothing would ever arrive.</string>
+
+    <!-- ── Account, the sign-in methods attached to this account ──────── -->
+    <string name="settings_section_account">ACCOUNT</string>
+    <string name="settings_account_title">Sign-in methods</string>
+    <string name="settings_account_none">No sign-in method connected</string>
+    <string name="settings_account_one">%1$s only. Add a second way in.</string>
+    <string name="settings_account_many">%1$s connected</string>
+    <string name="account_method_separator">, </string>
+
+    <string name="account_title">Account</string>
+    <string name="account_subtitle">Any of these signs you into the same account. Adding one never starts a new one, and never touches your groups or step history.</string>
+    <string name="account_section_methods">SIGN-IN METHODS</string>
+    <string name="account_section_password">PASSWORD</string>
+    <string name="account_method_google">Google</string>
+    <string name="account_method_phone">Phone</string>
+    <string name="account_method_email">Email</string>
+    <string name="account_connected">Connected</string>
+    <string name="account_not_connected">Not connected</string>
+    <string name="account_add">Add</string>
+    <string name="account_add_failed_title">That did not work</string>
+    <string name="account_offline_note">Adding a sign-in method needs a connection.</string>
+
+    <!-- The exposure this account is carrying, said before the list rather than
+         left to be worked out from it. -->
+    <string name="account_none_title">No way back into this account</string>
+    <string name="account_none_body">Nothing is connected yet, so if this app is removed there is no way to prove the account is yours. Add a method below.</string>
+    <string name="account_single_title">One way in</string>
+    <string name="account_single_body">If you lose access to it, you lose your groups and your step history with it. A second method takes a minute and there is no way to add one later from a phone you no longer have.</string>
+
+    <string name="account_add_email_title">Add email sign-in</string>
+    <string name="account_add_email_body">A password is a way back in that does not depend on your phone or your Google account.</string>
+    <string name="account_add_phone_title">Add phone sign-in</string>
+    <string name="account_add_phone_body">We text a code to confirm the number is yours.</string>
+    <string name="account_phone_code_body">Enter the code we sent to %1$s.</string>
+
+    <string name="account_change_password">Change password</string>
+    <string name="account_change_password_sub">You will need your current one</string>
+    <string name="account_change_password_body">Enter your current password first. Nothing changes if it does not match.</string>
+    <string name="account_change_password_confirm">Change it</string>
+    <string name="account_password_current">Current password</string>
+    <string name="account_password_new">New password</string>
+
+    <!-- Failures. A collision means something different in each flow, which is
+         why one shared sentence would be wrong in all three. -->
+    <string name="account_conflict_google">That Google account already belongs to a different Pamoja account. Sign in with it instead, or pick another one.</string>
+    <string name="account_conflict_phone">That number already belongs to a different Pamoja account. Sign in with it instead, or use another number.</string>
+    <string name="account_conflict_email">That email already belongs to a different Pamoja account. Sign in with it instead, or use another address.</string>
+    <string name="account_password_wrong_current">That is not your current password. Nothing has been changed.</string>
+    <string name="account_phone_wrong_code">That code is not right. Check the message and try again.</string>
+
+    <string name="account_google_added">Google added. You can now sign in with it.</string>
+    <string name="account_email_added">Email added. You can now sign in with it.</string>
+    <string name="account_phone_added">Phone added. You can now sign in with it.</string>
+    <string name="account_password_changed">Password changed</string>
 
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so

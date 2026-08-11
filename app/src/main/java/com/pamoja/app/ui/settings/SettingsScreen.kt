@@ -66,6 +66,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaTextField
@@ -83,6 +84,7 @@ fun SettingsScreen(
     onSignedOut: () -> Unit,
     onEditProfile: () -> Unit,
     onNotificationSettings: () -> Unit,
+    onAccount: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -445,6 +447,30 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
+                // ─── Section: Account ────────────────────────────────────────
+                SectionLabel(stringResource(R.string.settings_section_account), color = colors.textTertiary)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.x6)
+                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                ) {
+                    SettingsRow(
+                        icon = PamojaIcons.Shield,
+                        title = stringResource(R.string.settings_account_title),
+                        // Names the methods rather than saying "manage", so an
+                        // account with only one way in says so from here without
+                        // having to be opened.
+                        subtitle = authMethodsSummary(uiState.authMethods),
+                        onClick = onAccount,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.x6))
+
                 // ─── Section: Preferences ───────────────────────────────────
                 SectionLabel(stringResource(R.string.settings_section_preferences), color = colors.textTertiary)
 
@@ -719,6 +745,30 @@ private fun profileSummary(age: Int?, height: Float?, weight: Float?): String {
         stringResource(R.string.profile_details_empty)
     } else {
         parts.joinToString(stringResource(R.string.profile_detail_separator))
+    }
+}
+
+/**
+ * The one-line summary on the Account row.
+ *
+ * Written to be read at a glance from Settings: an account with a single method
+ * is one lost phone away from losing every group, so that case says what to do
+ * rather than merely listing what is connected.
+ */
+@Composable
+private fun authMethodsSummary(methods: AuthMethods): String {
+    val names = buildList {
+        if (methods.hasGoogle) add(stringResource(R.string.account_method_google))
+        if (methods.hasPhone) add(stringResource(R.string.account_method_phone))
+        if (methods.hasEmail) add(stringResource(R.string.account_method_email))
+    }
+    return when (names.size) {
+        0 -> stringResource(R.string.settings_account_none)
+        1 -> stringResource(R.string.settings_account_one, names.first())
+        else -> stringResource(
+            R.string.settings_account_many,
+            names.joinToString(stringResource(R.string.account_method_separator)),
+        )
     }
 }
 

@@ -134,6 +134,11 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         auth.sendPasswordResetEmail(email).await()
     }
 
+    override suspend fun updatePassword(newPassword: String): Result<Unit> = authCatching {
+        val user = auth.currentUser ?: error("No signed in user")
+        user.updatePassword(newPassword).await()
+    }
+
     // ── Google ──────────────────────────────────────────────────────────────
 
     override suspend fun signInWithGoogle(idToken: String): Result<User> = authCatching {

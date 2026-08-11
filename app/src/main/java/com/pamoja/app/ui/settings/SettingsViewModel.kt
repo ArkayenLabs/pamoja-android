@@ -10,6 +10,7 @@ import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
 import com.pamoja.app.domain.usecase.GetAuthMethodsUseCase
@@ -79,6 +80,8 @@ data class SettingsUiState(
     val age: Int? = null,
     val height: Float? = null,
     val weight: Float? = null,
+    /** Which sign-in methods are attached, summarised on the Account row. */
+    val authMethods: AuthMethods = AuthMethods(),
     val theme: ThemePreference = ThemePreference.System,
     val healthStatus: HealthStatus = HealthStatus.Connected,
     /** Epoch millis of the last successful sync, 0 when it has never happened. */
@@ -116,6 +119,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadUserDetails()
+        loadAuthMethods()
         refreshHealthStatus()
         viewModelScope.launch {
             userPreferences.themePreference.collect { theme ->
@@ -168,6 +172,19 @@ class SettingsViewModel @Inject constructor(
     /** Re-reads the profile, for coming back from the editor with it changed. */
     fun refresh() {
         loadUserDetails()
+        loadAuthMethods()
+    }
+
+    /**
+     * Which sign-in methods are attached, for the Account row's summary.
+     *
+     * providerData is already on the signed-in FirebaseUser, so this costs no
+     * network call and can safely be repeated every time the screen returns.
+     */
+    private fun loadAuthMethods() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(authMethods = getAuthMethodsUseCase())
+        }
     }
 
     private fun loadUserDetails() {

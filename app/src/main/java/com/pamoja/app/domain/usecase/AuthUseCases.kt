@@ -169,6 +169,87 @@ class DeleteAccountUseCase @Inject constructor(
     }
 }
 
+// ── Adding a second sign-in method ──────────────────────────────────────────
+//
+// Linking rather than signing in: the UID is kept, so groups, memberships and
+// step history all survive. An account with one method is one lost phone or one
+// forgotten password away from losing all of it, which is what these are for.
+//
+// The interesting failure is a collision: the credential already belongs to a
+// different Pamoja account. Firebase reports it as
+// FirebaseAuthUserCollisionException and the data layer maps it to
+// AppError.Conflict, so callers match on the type rather than the wording.
+
+class LinkGoogleUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(idToken: String): Result<User> {
+        if (idToken.isBlank()) return Result.failure(AppError.Unknown("Google returned a blank token"))
+        return authRepository.linkGoogle(idToken)
+    }
+}
+
+class LinkEmailUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(email: String, password: String): Result<User> {
+        val trimmed = email.trim()
+        if (trimmed.isBlank()) return Result.failure(AppError.Validation(ValidationField.EmailMissing))
+        if (!trimmed.looksLikeEmail()) {
+            return Result.failure(AppError.Validation(ValidationField.EmailMalformed))
+        }
+        // Same floor as signing up, so a password that could not have created an
+        // account cannot be attached to one either.
+        if (password.length < 6) {
+            return Result.failure(AppError.Validation(ValidationField.PasswordTooShort))
+        }
+        return authRepository.linkEmail(trimmed, password)
+    }
+}
+
+class LinkPhoneUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(verificationId: String, code: String): Result<User> {
+        if (code.length != 6 || !code.all { it.isDigit() }) {
+            return Result.failure(AppError.Validation(ValidationField.OtpIncomplete))
+        }
+        return authRepository.linkPhone(verificationId, code)
+    }
+}
+
+/**
+ * Changes the account password, proving ownership first.
+ *
+ * Two repository calls in a fixed order, for the same reason
+ * [DeleteAccountUseCase] sequences two: Firebase rejects a password change on a
+ * stale session, and sessions here last indefinitely, so re-authenticating is
+ * the normal path rather than a recovery path.
+ *
+ * Asking for the current password is not only Firebase's requirement. It is what
+ * stops an unlocked phone left on a table from becoming a permanent account
+ * takeover.
+ */
+class ChangePasswordUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(currentPassword: String, newPassword: String): Result<Unit> {
+        if (currentPassword.isBlank()) {
+            return Result.failure(AppError.Validation(ValidationField.PasswordMissing))
+        }
+        if (newPassword.length < 6) {
+            return Result.failure(AppError.Validation(ValidationField.PasswordTooShort))
+        }
+
+        // Nothing has changed yet if this fails, so a wrong current password
+        // leaves the account exactly as it was.
+        val reauthenticated = authRepository.reauthenticateWithEmail(currentPassword)
+        if (reauthenticated.isFailure) return reauthenticated
+
+        return authRepository.updatePassword(newPassword)
+    }
+}
+
 class ReauthenticateWithGoogleUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {

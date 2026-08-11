@@ -37,6 +37,9 @@ sealed class Screen(val route: String) {
     /** Editing the profile captured during onboarding, reachable from Settings. */
     object EditProfile : Screen("edit_profile")
 
+    /** Connected sign-in methods, adding another, and changing the password. */
+    object Account : Screen("account")
+
     /** Per-channel notification control and quiet hours. */
     object NotificationSettings : Screen("notification_settings")
 }

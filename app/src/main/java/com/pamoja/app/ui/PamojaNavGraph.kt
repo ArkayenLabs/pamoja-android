@@ -185,6 +185,17 @@ fun PamojaNavGraph(
                 },
                 onNotificationSettings = {
                     navController.navigate(Screen.NotificationSettings.route)
+                },
+                onAccount = {
+                    navController.navigate(Screen.Account.route)
+                }
+            )
+        }
+
+        composable(Screen.Account.route) {
+            com.pamoja.app.ui.account.AccountScreen(
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

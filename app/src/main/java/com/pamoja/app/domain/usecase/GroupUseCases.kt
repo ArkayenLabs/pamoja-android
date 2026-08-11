@@ -1,5 +1,6 @@
 package com.pamoja.app.domain.usecase
 
+import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
@@ -55,19 +56,67 @@ class JoinGroupUseCase @Inject constructor(
     private val groupRepository: GroupRepository
 ) {
     suspend operator fun invoke(inviteLink: String, userId: String): Result<Unit> {
-        if (inviteLink.isBlank()) return Result.failure(Exception("Invite link cannot be empty"))
-        if (userId.isBlank()) return Result.failure(Exception("User ID cannot be empty"))
+        if (inviteLink.isBlank()) {
+            return Result.failure(AppError.Validation("Enter an invite link or code"))
+        }
+        if (userId.isBlank()) return Result.failure(AppError.SessionExpired())
 
-        val groupResult = groupRepository.getGroupByInviteLink(inviteLink)
-        val group = groupResult.getOrElse {
+        val group = groupRepository.getGroupByInviteLink(inviteLink).getOrElse {
             return Result.failure(it)
         }
 
         if (!group.inviteLinkActive) {
-            return Result.failure(Exception("This invite link is no longer active"))
+            return Result.failure(AppError.Conflict("Invite link is not active"))
         }
 
         return groupRepository.joinGroup(group.groupId, userId)
+    }
+}
+
+/**
+ * What a person sees before committing to a join.
+ *
+ * [isAlreadyMember] and [isFull] are resolved here rather than being discovered
+ * by attempting the join and reading the failure, because a preview that can
+ * only tell you it failed is not a preview.
+ */
+data class InvitePreview(
+    val group: Group,
+    val isAlreadyMember: Boolean,
+    val isFull: Boolean,
+)
+
+/**
+ * Resolves an invite without joining anything.
+ *
+ * Deliberately read-only. Opening a link used to join silently and land the
+ * user in a group they had not agreed to be in.
+ */
+class ResolveInviteUseCase @Inject constructor(
+    private val groupRepository: GroupRepository
+) {
+    suspend operator fun invoke(codeOrLink: String, userId: String): Result<InvitePreview> {
+        if (codeOrLink.isBlank()) {
+            return Result.failure(AppError.Validation("Enter an invite link or code"))
+        }
+
+        val group = groupRepository.getGroupByInviteLink(codeOrLink).getOrElse {
+            return Result.failure(it)
+        }
+
+        val isAlreadyMember =
+            groupRepository.getMembership(userId, group.groupId).getOrNull() != null
+
+        return Result.success(
+            InvitePreview(
+                group = group,
+                isAlreadyMember = isAlreadyMember,
+                // Being a member already means the cap is irrelevant: they are
+                // inside it. Otherwise a full group they belong to would show
+                // as a dead end instead of offering the way in.
+                isFull = !isAlreadyMember && group.memberCount >= group.maxMemberCap,
+            )
+        )
     }
 }
 

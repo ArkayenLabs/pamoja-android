@@ -114,12 +114,11 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             val dto = snapshot.toObject(GroupDto::class.java)
                 ?: return Result.failure(AppError.NotFound("Invite code resolved to no group"))
 
-            if (!dto.inviteLinkActive) {
-                return Result.failure(
-                    Exception("This invite link is no longer active. Ask the group admin for a new one.")
-                )
-            }
-
+            // Resolves regardless of inviteLinkActive, and JoinGroupUseCase
+            // enforces it instead. Refusing here meant a full group could not
+            // even be read, so the join preview had no name or member count to
+            // show and had to fall back to a generic failure. Resolution is a
+            // read; whether joining is permitted is policy, and belongs above.
             Result.success(dto.toDomain())
         } catch (e: Exception) {
             Result.failure(e.toFirebaseAppError())
@@ -161,8 +160,10 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                     return@runTransaction
                 }
 
+                // Typed, so the join screen can tell "full" apart from a generic
+                // failure and offer the right dead end rather than a Retry.
                 if (group.memberCount >= group.maxMemberCap) {
-                    throw Exception("Group is full")
+                    throw AppError.Conflict("Group is full")
                 }
 
                 val membership = MembershipDto(
@@ -180,10 +181,10 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
 
                 // Close the invite once the group is full.
                 //
-                // KNOWN GAP: nothing sets this back to true. Today that is
-                // latent, because there is no way to leave a group. The moment
-                // leaving is added, this must be reopened when a slot frees up,
-                // or a group that fills once can never be joined again.
+                // Reopened by deleteAllUserData when an account leaves and frees
+                // a slot. If any other way of leaving a group is added later, it
+                // must do the same, or a group that fills once can never be
+                // joined again.
                 if (newCount >= group.maxMemberCap) {
                     transaction.update(groupDocRef, "inviteLinkActive", false)
                 }

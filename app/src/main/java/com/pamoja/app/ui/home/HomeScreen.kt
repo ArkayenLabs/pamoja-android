@@ -95,6 +95,7 @@ fun HomeScreen(
     onCreateGroup: () -> Unit,
     onSettingsClick: () -> Unit,
     onSessionExpired: () -> Unit,
+    onOpenInvite: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
@@ -124,25 +125,12 @@ fun HomeScreen(
             viewModel.clearError()
         }
     }
-    LaunchedEffect(joinUiState.error) {
-        joinUiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            joinViewModel.clearError()
-        }
-    }
-    LaunchedEffect(joinUiState.joinedGroupId) {
-        joinUiState.joinedGroupId?.let { groupId ->
-            // Opening a link for a group you are already in is legitimate, and
-            // used to land you there with no explanation at all. Say which of
-            // the two things happened before navigating.
-            val message = if (joinUiState.wasAlreadyMember) {
-                "You're already in this group"
-            } else {
-                "Joined"
-            }
-            joinViewModel.clearJoinedGroupId()
-            snackbarHostState.showSnackbar(message)
-            onGroupClick(groupId)
+    // An invite captured before this person had an account. Opens the preview
+    // rather than joining, so they see the group before they are in it.
+    LaunchedEffect(joinUiState.pendingCode) {
+        joinUiState.pendingCode?.let { code ->
+            joinViewModel.clearPendingCode()
+            onOpenInvite(code)
         }
     }
 
@@ -209,15 +197,19 @@ fun HomeScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        joinViewModel.joinGroup(inviteLink.trim())
+                        // Opens the preview instead of joining. The dialog has no
+                        // room to explain a full group or a dead code, and the
+                        // preview handles all of it in one place.
+                        val code = joinViewModel.normalise(inviteLink)
                         showJoinDialog = false
                         inviteLink = ""
+                        onOpenInvite(code)
                     },
-                    enabled = inviteLink.isNotBlank() && !joinUiState.isLoading,
+                    enabled = inviteLink.isNotBlank(),
                     shape   = RoundedCornerShape(PamojaRadii.sm),
                     colors  = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                 ) {
-                    Text("Join", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
+                    Text("Continue", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {

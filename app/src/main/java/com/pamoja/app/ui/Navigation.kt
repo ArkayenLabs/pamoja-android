@@ -27,5 +27,10 @@ sealed class Screen(val route: String) {
     object Group : Screen("group/{groupId}") {
         fun createRoute(groupId: String) = "group/$groupId"
     }
+
+    /** Invite preview. Resolves a code and asks before joining anything. */
+    object JoinPreview : Screen("join/{code}") {
+        fun createRoute(code: String) = "join/$code"
+    }
     object Settings : Screen("settings")
 }

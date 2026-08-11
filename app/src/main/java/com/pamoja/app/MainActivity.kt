@@ -127,15 +127,18 @@ class MainActivity : ComponentActivity() {
                         }
 
                         is LaunchTarget.Invite -> {
-                            // Persisted rather than acted on here, so the invite
-                            // survives onboarding. CreateOrJoinViewModel picks it
-                            // up when Home appears, which is the first moment a
-                            // join can actually succeed.
+                            // Persisted so the invite survives sign-in and
+                            // profile setup for someone who does not have an
+                            // account yet.
                             userPreferences.savePendingInviteCode(t.code)
 
+                            // Opens the preview rather than joining. A link used
+                            // to join silently, so the first thing anyone learned
+                            // about a group was that they were already in it.
                             if (firebaseAuth.currentUser != null) {
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Home.route) { inclusive = true }
+                                navController.navigate(
+                                    Screen.JoinPreview.createRoute(t.code)
+                                ) {
                                     launchSingleTop = true
                                 }
                             }

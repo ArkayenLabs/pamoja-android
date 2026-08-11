@@ -21,6 +21,7 @@ import com.pamoja.app.ui.auth.ForgotPasswordScreen
 import com.pamoja.app.ui.auth.OtpScreen
 import com.pamoja.app.ui.auth.PhoneEntryScreen
 import com.pamoja.app.ui.group.CreateGroupScreen
+import com.pamoja.app.ui.join.JoinGroupScreen
 import com.pamoja.app.ui.group.GroupScreen
 import com.pamoja.app.ui.home.HomeScreen
 import com.pamoja.app.ui.invite.InviteScreen
@@ -162,6 +163,9 @@ fun PamojaNavGraph(
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onOpenInvite = { code ->
+                    navController.navigate(Screen.JoinPreview.createRoute(code))
                 }
             )
         }
@@ -215,6 +219,32 @@ fun PamojaNavGraph(
             GroupScreen(
                 groupId = groupId,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.JoinPreview.route,
+            arguments = listOf(navArgument("code") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val code = backStackEntry.arguments?.getString("code").orEmpty()
+            JoinGroupScreen(
+                code = code,
+                onJoined = { groupId ->
+                    // The preview is popped so the back gesture from the group
+                    // does not return to an invite that has been accepted.
+                    navController.navigate(Screen.Group.createRoute(groupId)) {
+                        popUpTo(Screen.JoinPreview.route) { inclusive = true }
+                    }
+                },
+                onCancel = {
+                    if (!navController.popBackStack()) {
+                        // Arrived straight from a link, so there is no back stack
+                        // to return to.
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.JoinPreview.route) { inclusive = true }
+                        }
+                    }
+                },
             )
         }
     }

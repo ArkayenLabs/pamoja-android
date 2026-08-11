@@ -46,6 +46,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -138,21 +140,21 @@ fun OtpScreen(
             Spacer(modifier = Modifier.height(Spacing.x4))
 
             when (uiState.otpFailure) {
-                OtpFailure.WrongCode -> AuthNotice(
+                OtpFailure.WrongCode -> PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
                     title = "That code is not right",
                     body = "Check the digits and try again.",
                     tone = NoticeTone.Danger,
                 )
 
-                OtpFailure.Expired -> AuthNotice(
+                OtpFailure.Expired -> PamojaNotice(
                     icon = PamojaIcons.Clock,
                     title = "This code expired",
                     body = "Codes last a few minutes. Send a fresh one below.",
                     tone = NoticeTone.Warning,
                 )
 
-                OtpFailure.RateLimited -> AuthNotice(
+                OtpFailure.RateLimited -> PamojaNotice(
                     icon = PamojaIcons.Lock,
                     title = "Too many attempts",
                     body = "For safety we have paused code checks on this number. " +
@@ -161,7 +163,7 @@ fun OtpScreen(
                 )
 
                 null -> uiState.error?.let {
-                    AuthNotice(
+                    PamojaNotice(
                         icon = PamojaIcons.AlertCircle,
                         title = "That did not work",
                         body = it,

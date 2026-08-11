@@ -128,61 +128,6 @@ fun AuthBackButton(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-enum class NoticeTone { Neutral, Info, Danger, Warning, Success }
-
-/**
- * The card used for reassurance, inline failures and conflict states.
- *
- * Failures appear here rather than in a snackbar so they stay on screen while
- * the user acts on them, and so they sit next to the thing that failed.
- */
-@Composable
-fun AuthNotice(
-    @DrawableRes icon: Int,
-    title: String,
-    body: String,
-    tone: NoticeTone = NoticeTone.Neutral,
-    modifier: Modifier = Modifier,
-) {
-    val colors = LocalPamojaColors.current
-
-    val (container, accent) = when (tone) {
-        NoticeTone.Neutral -> colors.surfaceSunken to colors.textSecondary
-        NoticeTone.Info -> colors.statusInfoSubtle to colors.statusInfo
-        NoticeTone.Danger -> colors.statusDangerSubtle to colors.statusDanger
-        NoticeTone.Warning -> colors.statusWarningSubtle to colors.statusWarning
-        NoticeTone.Success -> colors.statusSuccessSubtle to colors.statusSuccess
-    }
-
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(PamojaRadii.md),
-        color = container,
-    ) {
-        Row(modifier = Modifier.padding(Spacing.x4)) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(Spacing.x3))
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.textPrimary,
-                )
-                Spacer(modifier = Modifier.height(Spacing.x1))
-                Text(
-                    text = body,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-            }
-        }
-    }
-}
 
 /**
  * One sign-in method.

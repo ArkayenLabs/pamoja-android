@@ -35,6 +35,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pamoja.app.ui.components.PamojaTextField
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -154,7 +156,7 @@ fun EmailAuthScreen(
 
             uiState.error?.let { message ->
                 Spacer(modifier = Modifier.height(Spacing.x5))
-                AuthNotice(
+                PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
                     title = "That did not work",
                     body = message,

@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -116,7 +118,7 @@ fun AuthLandingScreen(
 
             // Reassurance sits above the buttons, not buried under them, because
             // it is the answer to the question the buttons provoke.
-            AuthNotice(
+            PamojaNotice(
                 icon = PamojaIcons.Shield,
                 title = "We only store what signs you in",
                 body = "No contacts, no social graph, nothing posted anywhere.",
@@ -126,7 +128,7 @@ fun AuthLandingScreen(
             // strand someone who could happily use email.
             uiState.error?.let { message ->
                 Spacer(modifier = Modifier.height(Spacing.x4))
-                AuthNotice(
+                PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
                     title = "That did not work",
                     body = message,

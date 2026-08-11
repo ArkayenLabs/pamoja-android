@@ -52,6 +52,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.ui.theme.Gray300
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.pamoja.app.ui.components.PamojaNotice
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.GroupDashboardSkeleton
+import com.pamoja.app.ui.components.OfflineBanner
+import com.pamoja.app.ui.components.PamojaEmptyState
+import com.pamoja.app.ui.components.PamojaErrorState
+import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -104,11 +115,28 @@ fun GroupScreen(
     }
 
     LaunchedEffect(groupId) { viewModel.loadGroup(groupId) }
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+
+    // Only action failures reach the snackbar. Load failures own the screen
+    // instead, so the user is never told the same thing in two places at once.
+    LaunchedEffect(uiState.actionError) {
+        uiState.actionError?.let {
+            snackbarHostState.showSnackbar(it.toSnackbarMessage())
+            viewModel.clearActionError()
         }
+    }
+
+    // Health Connect access can be revoked from outside the app entirely, and
+    // nothing tells us when it happens. Re-checking on every resume is the only
+    // reliable signal, and it is cheap.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshHealthConnectStatus()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val today      = LocalDate.now()
@@ -120,11 +148,26 @@ fun GroupScreen(
             .fillMaxSize()
             .background(colors.surfaceApp)
     ) {
-        if (uiState.isLoading) {
-            CircularProgressIndicator(
-                color       = colors.accentPrimary,
-                strokeWidth = 2.dp,
-                modifier    = Modifier.align(Alignment.Center)
+        if (uiState.showSkeleton) {
+            // Shaped like the ring and leaderboard that follow, so the layout
+            // does not jump when the real numbers land.
+            GroupDashboardSkeleton(modifier = Modifier.fillMaxSize())
+        } else if (uiState.isGroupUnavailable) {
+            // Deleted, or we were removed. Retrying cannot fix either, so the
+            // only honest action is a way back.
+            PamojaEmptyState(
+                icon = PamojaIcons.Users,
+                title = "This group is no longer available",
+                body = "It may have been deleted, or you may no longer be a member.",
+                actionLabel = "Back to your groups",
+                onAction = { onBack?.invoke() },
+                modifier = Modifier.align(Alignment.Center),
+            )
+        } else if (uiState.fatalError != null && !uiState.hasContent) {
+            PamojaErrorState(
+                error = uiState.fatalError!!,
+                onRetry = { viewModel.retry() },
+                modifier = Modifier.align(Alignment.Center),
             )
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -161,6 +204,15 @@ fun GroupScreen(
                     )
                 }
 
+                item {
+                    OfflineBanner(
+                        isOffline = uiState.isOffline,
+                        lastUpdatedLabel = if (uiState.hasContent) {
+                            "Showing the last totals that reached this phone"
+                        } else null,
+                    )
+                }
+
                 // ── Progress ring card ─────────────────────────────────────
                 item {
                     GroupProgressCard(
@@ -169,6 +221,22 @@ fun GroupScreen(
                         daysLeft      = daysLeft,
                         memberCount   = uiState.memberStepData.size
                     )
+                }
+
+                // Partial failure: the group and its members are here, the step
+                // totals are not. Says so rather than showing a row of zeroes
+                // that reads as "nobody has walked".
+                if (uiState.stepsError != null) {
+                    item {
+                        PamojaNotice(
+                            icon = PamojaIcons.AlertCircle,
+                            title = "Step totals did not load",
+                            body = "Everyone's names are here, but their counts could not be " +
+                                "fetched. The numbers below may be incomplete.",
+                            tone = NoticeTone.Warning,
+                            modifier = Modifier.padding(horizontal = Spacing.x6),
+                        )
+                    }
                 }
 
                 // ── Leaderboard section label ─────────────────────────────
@@ -195,6 +263,19 @@ fun GroupScreen(
                     )
                     if (index < uiState.memberStepData.lastIndex) {
                         Spacer(modifier = Modifier.height(Spacing.x2))
+                    }
+                }
+
+                // Everyone is on zero. A brand new group is the most common
+                // reason, so this reads as a starting line rather than a fault.
+                if (uiState.showNoStepsYet) {
+                    item {
+                        PamojaEmptyState(
+                            icon = PamojaIcons.Footprints,
+                            title = "No steps yet this week",
+                            body = "The board fills up as everyone walks. Yours will show " +
+                                "here within about half an hour of your first steps.",
+                        )
                     }
                 }
 

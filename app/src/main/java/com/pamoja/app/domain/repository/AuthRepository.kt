@@ -60,6 +60,7 @@ interface AuthRepository {
 
     suspend fun reauthenticateWithGoogle(idToken: String): Result<Unit>
     suspend fun reauthenticateWithEmail(password: String): Result<Unit>
+    suspend fun reauthenticateWithPhone(verificationId: String, code: String): Result<Unit>
 
     /** Which providers are attached to the signed-in account. */
     suspend fun getAuthMethods(): AuthMethods

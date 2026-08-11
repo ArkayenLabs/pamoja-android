@@ -51,8 +51,6 @@ import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
 
-private const val OTP_LENGTH = 6
-
 @Composable
 fun OtpScreen(
     viewModel: AuthViewModel,
@@ -254,76 +252,3 @@ fun OtpScreen(
     }
 }
 
-/**
- * Six boxes driven by one hidden field.
- *
- * A field per box fights SMS autofill, which delivers the whole code at once,
- * and makes backspace behaviour strange. One field keeps autofill working and
- * the boxes become presentation.
- */
-@Composable
-private fun OtpBoxes(
-    code: String,
-    onCodeChange: (String) -> Unit,
-    hasError: Boolean,
-    focusRequester: FocusRequester,
-) {
-    val colors = LocalPamojaColors.current
-
-    Box {
-        BasicTextField(
-            value = code,
-            onValueChange = { new ->
-                val digits = new.filter { it.isDigit() }.take(OTP_LENGTH)
-                onCodeChange(digits)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            // Transparent so the real boxes below are what the user sees, while
-            // this field keeps focus, the keyboard and autofill.
-            textStyle = TextStyle(color = Color.Transparent),
-            cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.Transparent),
-            decorationBox = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.x2),
-                ) {
-                    repeat(OTP_LENGTH) { index ->
-                        val char = code.getOrNull(index)
-                        val isCursor = index == code.length
-
-                        val borderColor = when {
-                            hasError -> colors.statusDanger
-                            isCursor -> colors.accentPrimary
-                            char != null -> colors.borderStrong
-                            else -> colors.borderDefault
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(60.dp)
-                                .background(colors.surfaceInput, RoundedCornerShape(PamojaRadii.sm))
-                                .border(
-                                    width = if (isCursor || hasError) 2.dp else 1.dp,
-                                    color = borderColor,
-                                    shape = RoundedCornerShape(PamojaRadii.sm),
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = char?.toString() ?: "",
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = if (hasError) colors.statusDanger else colors.textPrimary,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-            },
-        )
-    }
-}

@@ -76,6 +76,15 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         user.reauthenticate(credential).await()
     }
 
+    override suspend fun reauthenticateWithPhone(
+        verificationId: String,
+        code: String,
+    ): Result<Unit> = runCatching {
+        val user = auth.currentUser ?: error("No signed in user")
+        val credential = PhoneAuthProvider.getCredential(verificationId, code)
+        user.reauthenticate(credential).await()
+    }
+
     override suspend fun getAuthMethods(): AuthMethods {
         val user = auth.currentUser ?: return AuthMethods()
         val providers = user.providerData.map { it.providerId }

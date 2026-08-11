@@ -53,11 +53,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pamoja.app.ui.auth.OTP_LENGTH
+import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -211,6 +214,16 @@ fun SettingsScreen(
     // last indefinitely, so this is the normal path rather than an edge case.
     uiState.reauthRequired?.let { method ->
         var password by remember { mutableStateOf("") }
+        var otpCode by remember { mutableStateOf("") }
+        val otpFocusRequester = remember { FocusRequester() }
+
+        // Phone runs in two steps inside one dialog: send the SMS, then enter the
+        // code. This flag is what tells them apart.
+        val awaitingCode = uiState.reauthVerificationId != null
+
+        LaunchedEffect(awaitingCode) {
+            if (awaitingCode) otpFocusRequester.requestFocus()
+        }
 
         AlertDialog(
             onDismissRequest = { viewModel.cancelReauth() },
@@ -226,11 +239,23 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "For your safety we ask you to sign in again before " +
-                            "deleting an account. Nothing has been deleted yet.",
+                        text = when {
+                            method == ReauthMethod.Phone && awaitingCode ->
+                                "Enter the code we sent to ${uiState.reauthPhoneNumber}. " +
+                                    "Nothing has been deleted yet."
+
+                            method == ReauthMethod.Phone ->
+                                "For your safety we text a code to the number on this " +
+                                    "account before deleting it. Nothing has been deleted yet."
+
+                            else ->
+                                "For your safety we ask you to sign in again before " +
+                                    "deleting an account. Nothing has been deleted yet."
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textSecondary
                     )
+
                     if (method == ReauthMethod.Password) {
                         Spacer(modifier = Modifier.height(Spacing.x4))
                         PamojaTextField(
@@ -242,6 +267,16 @@ fun SettingsScreen(
                             isPassword = true,
                         )
                     }
+
+                    if (method == ReauthMethod.Phone && awaitingCode) {
+                        Spacer(modifier = Modifier.height(Spacing.x4))
+                        OtpBoxes(
+                            code = otpCode,
+                            onCodeChange = { otpCode = it },
+                            hasError = uiState.error != null,
+                            focusRequester = otpFocusRequester,
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -250,14 +285,28 @@ fun SettingsScreen(
                         when (method) {
                             ReauthMethod.Google -> viewModel.reauthenticateWithGoogle(activity)
                             ReauthMethod.Password -> viewModel.reauthenticateWithPassword(password)
+                            ReauthMethod.Phone ->
+                                if (awaitingCode) {
+                                    viewModel.reauthenticateWithPhone(otpCode)
+                                } else {
+                                    viewModel.sendReauthCode(activity)
+                                }
                         }
                     },
-                    enabled = method == ReauthMethod.Google || password.isNotBlank(),
+                    enabled = !uiState.isLoading && when (method) {
+                        ReauthMethod.Google -> true
+                        ReauthMethod.Password -> password.isNotBlank()
+                        ReauthMethod.Phone -> !awaitingCode || otpCode.length == OTP_LENGTH
+                    },
                     shape = RoundedCornerShape(PamojaRadii.sm),
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                 ) {
                     Text(
-                        text = if (method == ReauthMethod.Google) "Continue with Google" else "Confirm",
+                        text = when {
+                            method == ReauthMethod.Google -> "Continue with Google"
+                            method == ReauthMethod.Phone && !awaitingCode -> "Send code"
+                            else -> "Confirm"
+                        },
                         color = colors.textOnBrand,
                         style = MaterialTheme.typography.labelLarge
                     )

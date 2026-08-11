@@ -13,7 +13,9 @@ import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
 import com.pamoja.app.domain.usecase.ReauthenticateWithEmailUseCase
 import com.pamoja.app.domain.usecase.ReauthenticateWithGoogleUseCase
+import com.pamoja.app.domain.usecase.ReauthenticateWithPhoneUseCase
 import com.pamoja.app.domain.usecase.SignOutUseCase
+import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
 import com.pamoja.app.domain.usecase.UpdateUserUseCase
 import com.pamoja.app.util.NotificationContext
 import com.pamoja.app.util.SmartNotificationEngine
@@ -27,7 +29,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /** How the user must prove it is them before the account can be deleted. */
-enum class ReauthMethod { Google, Password }
+enum class ReauthMethod { Google, Password, Phone }
 
 data class SettingsUiState(
     val isLoading: Boolean = false,
@@ -38,6 +40,10 @@ data class SettingsUiState(
     val isSignedOut: Boolean = false,
     /** Non-null when deletion is waiting on the user re-confirming who they are. */
     val reauthRequired: ReauthMethod? = null,
+    /** The number the re-verification code went to, shown so a wrong one is spotted. */
+    val reauthPhoneNumber: String? = null,
+    /** Set once the SMS is away, which is what swaps the dialog to code entry. */
+    val reauthVerificationId: String? = null,
 )
 
 @HiltViewModel
@@ -52,6 +58,8 @@ class SettingsViewModel @Inject constructor(
     private val getAuthMethodsUseCase: GetAuthMethodsUseCase,
     private val reauthenticateWithGoogleUseCase: ReauthenticateWithGoogleUseCase,
     private val reauthenticateWithEmailUseCase: ReauthenticateWithEmailUseCase,
+    private val reauthenticateWithPhoneUseCase: ReauthenticateWithPhoneUseCase,
+    private val startPhoneVerificationUseCase: StartPhoneVerificationUseCase,
     private val googleCredentialClient: GoogleCredentialClient,
 ) : ViewModel() {
 
@@ -154,10 +162,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun deleteAccount() {
+    fun deleteAccount(justReauthenticated: Boolean = false) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val result = deleteAccountUseCase()
+            val result = deleteAccountUseCase(justReauthenticated)
             result.fold(
                 onSuccess = {
                     userPreferences.clearAll()
@@ -185,9 +193,17 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Google first because it is one tap, then password, then phone, which costs
+     * a real SMS. Accounts with several methods get the cheapest one.
+     */
     private suspend fun reauthMethodForCurrentUser(): ReauthMethod {
         val methods = getAuthMethodsUseCase()
-        return if (methods.hasGoogle) ReauthMethod.Google else ReauthMethod.Password
+        return when {
+            methods.hasGoogle -> ReauthMethod.Google
+            methods.hasEmail -> ReauthMethod.Password
+            else -> ReauthMethod.Phone
+        }
     }
 
     /** Re-confirms via Google, then retries the deletion. */
@@ -207,7 +223,7 @@ class SettingsViewModel @Inject constructor(
             reauthenticateWithGoogleUseCase(token).fold(
                 onSuccess = {
                     _uiState.value = _uiState.value.copy(reauthRequired = null)
-                    deleteAccount()
+                    deleteAccount(justReauthenticated = true)
                 },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
@@ -228,7 +244,7 @@ class SettingsViewModel @Inject constructor(
             reauthenticateWithEmailUseCase(password).fold(
                 onSuccess = {
                     _uiState.value = _uiState.value.copy(reauthRequired = null)
-                    deleteAccount()
+                    deleteAccount(justReauthenticated = true)
                 },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
@@ -244,8 +260,81 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Sends a fresh SMS to the number already on the account.
+     *
+     * The number is read from Firebase rather than typed, so there is nothing to
+     * mistype and no way to aim the message somewhere else.
+     */
+    fun sendReauthCode(activity: Activity) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            val phoneNumber = getAuthMethodsUseCase().phoneNumber
+            if (phoneNumber.isNullOrBlank()) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    reauthRequired = null,
+                    error = "This account has no phone number on file",
+                )
+                return@launch
+            }
+
+            startPhoneVerificationUseCase(phoneNumber, activity).fold(
+                onSuccess = { verification ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        reauthPhoneNumber = phoneNumber,
+                        reauthVerificationId = verification.verificationId,
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = e.message ?: "Could not send the code",
+                    )
+                }
+            )
+        }
+    }
+
+    /** Confirms the SMS code, then retries the deletion. */
+    fun reauthenticateWithPhone(code: String) {
+        val verificationId = _uiState.value.reauthVerificationId ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            reauthenticateWithPhoneUseCase(verificationId, code).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        reauthRequired = null,
+                        reauthVerificationId = null,
+                        reauthPhoneNumber = null,
+                    )
+                    deleteAccount(justReauthenticated = true)
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = when {
+                            e.message?.contains("expired", ignoreCase = true) == true ->
+                                "That code expired. Send a new one."
+
+                            else -> "That code is not right"
+                        },
+                    )
+                }
+            )
+        }
+    }
+
     fun cancelReauth() {
-        _uiState.value = _uiState.value.copy(reauthRequired = null, isLoading = false)
+        _uiState.value = _uiState.value.copy(
+            reauthRequired = null,
+            reauthVerificationId = null,
+            reauthPhoneNumber = null,
+            isLoading = false,
+        )
     }
 
     /**

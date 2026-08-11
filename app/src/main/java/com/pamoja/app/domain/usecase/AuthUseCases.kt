@@ -134,14 +134,25 @@ class DeleteAccountUseCase @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
 ) {
-    suspend operator fun invoke(): Result<Unit> {
+    /**
+     * [justReauthenticated] skips the staleness pre-check on the retry that
+     * follows a successful re-authentication.
+     *
+     * The pre-check reads lastSignInTimestamp, and Firebase does not document
+     * whether reauthenticate() refreshes it. If it does not, the check would
+     * keep reporting a stale session and the confirmation dialog would reappear
+     * forever. Skipping it costs nothing: deleteAccount still raises
+     * RecentLoginRequired if the server disagrees, which lands the user back at
+     * the dialog exactly once rather than in a loop.
+     */
+    suspend operator fun invoke(justReauthenticated: Boolean = false): Result<Unit> {
         val userId = authRepository.getCurrentUser()?.userId
             ?: return Result.failure(Exception("No signed in user"))
 
         // Asked before anything is destroyed. Deleting the data and only then
         // discovering the session is too stale would erase everything and still
         // leave the account standing.
-        if (authRepository.requiresRecentLogin()) {
+        if (!justReauthenticated && authRepository.requiresRecentLogin()) {
             return Result.failure(AuthRepository.RecentLoginRequired())
         }
 
@@ -169,5 +180,16 @@ class ReauthenticateWithEmailUseCase @Inject constructor(
     suspend operator fun invoke(password: String): Result<Unit> {
         if (password.isBlank()) return Result.failure(Exception("Enter your password"))
         return authRepository.reauthenticateWithEmail(password)
+    }
+}
+
+class ReauthenticateWithPhoneUseCase @Inject constructor(
+    private val authRepository: AuthRepository
+) {
+    suspend operator fun invoke(verificationId: String, code: String): Result<Unit> {
+        if (code.length != 6 || !code.all { it.isDigit() }) {
+            return Result.failure(Exception("Enter the 6 digit code"))
+        }
+        return authRepository.reauthenticateWithPhone(verificationId, code)
     }
 }

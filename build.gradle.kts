@@ -1,3 +1,15 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // No plugin marker is published for this one, so it cannot be declared
+        // in the plugins block by id like every other plugin here.
+        classpath(libs.oss.licenses.plugin)
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false

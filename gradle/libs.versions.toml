@@ -45,6 +45,13 @@ googleid = "1.1.1"
 zxingCore = "3.5.4"
 playServicesCodeScanner = "16.1.0"
 
+# Open source licences. The plugin reads the POM of every dependency at build
+# time and generates the licence text as raw resources, so the list can never
+# drift from what actually ships. Only the plugin is needed: the companion
+# play-services-oss-licenses library exists to draw Google's own screen, which
+# would look nothing like the rest of this app.
+ossLicenses = "0.13.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -108,6 +115,10 @@ androidx-credentials-play-services = { group = "androidx.credentials", name = "c
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+
+# Applied through a buildscript classpath rather than the plugins DSL, because
+# this one publishes no plugin marker artifact and so cannot be resolved by id.
+oss-licenses-plugin = { group = "com.google.android.gms", name = "oss-licenses-plugin", version.ref = "ossLicenses" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

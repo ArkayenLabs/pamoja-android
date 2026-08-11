@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    // Classpath-applied, see the buildscript block in the root build file.
+    id("com.google.android.gms.oss-licenses-plugin")
     kotlin("kapt")
 }
 

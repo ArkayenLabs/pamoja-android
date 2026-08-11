@@ -188,6 +188,17 @@ fun PamojaNavGraph(
                 },
                 onAccount = {
                     navController.navigate(Screen.Account.route)
+                },
+                onLicenses = {
+                    navController.navigate(Screen.Licenses.route)
+                }
+            )
+        }
+
+        composable(Screen.Licenses.route) {
+            com.pamoja.app.ui.licenses.LicensesScreen(
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

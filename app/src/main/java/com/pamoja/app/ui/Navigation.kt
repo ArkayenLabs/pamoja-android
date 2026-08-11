@@ -40,6 +40,9 @@ sealed class Screen(val route: String) {
     /** Connected sign-in methods, adding another, and changing the password. */
     object Account : Screen("account")
 
+    /** Open source licences, generated at build time. Legally required. */
+    object Licenses : Screen("licenses")
+
     /** Per-channel notification control and quiet hours. */
     object NotificationSettings : Screen("notification_settings")
 }

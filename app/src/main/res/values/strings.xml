@@ -491,6 +491,17 @@
     <string name="account_phone_added">Phone added. You can now sign in with it.</string>
     <string name="account_password_changed">Password changed</string>
 
+    <!-- ── Open source licences ───────────────────────────────────────── -->
+    <string name="settings_licenses_title">Open source licences</string>
+    <string name="settings_licenses_subtitle">The software Pamoja is built on</string>
+    <string name="licenses_title">Open source licences</string>
+    <string name="licenses_link_body">This component\'s licence is published here.</string>
+    <string name="licenses_open_link">Open licence</string>
+    <!-- Reachable on a debug build, where the Gradle plugin has no dependency
+         list to generate from. -->
+    <string name="licenses_empty_title">Licences are not in this build</string>
+    <string name="licenses_empty_body">They are generated for release builds. Install a release build to read them.</string>
+
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so
          "1 members" is the first thing a new admin reads. Android picks the
@@ -498,6 +509,12 @@
     <plurals name="member_count">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
+    </plurals>
+    <!-- Never one in practice, but a count followed by a noun is exactly the
+         shape that produced "1 members" on the group dashboard. -->
+    <plurals name="licenses_subtitle">
+        <item quantity="one">Pamoja is built on %1$d open source component. Thank you to whoever wrote it.</item>
+        <item quantity="other">Pamoja is built on %1$d open source components. Thank you to everyone who wrote them.</item>
     </plurals>
     <!-- The bare noun, for a stat tile that shows the number separately. -->
     <plurals name="member_label">

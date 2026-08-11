@@ -85,6 +85,7 @@ fun SettingsScreen(
     onEditProfile: () -> Unit,
     onNotificationSettings: () -> Unit,
     onAccount: () -> Unit,
+    onLicenses: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -560,6 +561,12 @@ fun SettingsScreen(
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/terms/pamoja"))
                             context.startActivity(intent)
                         }
+                    )
+                    SettingsRow(
+                        icon = PamojaIcons.Info,
+                        title = stringResource(R.string.settings_licenses_title),
+                        subtitle = stringResource(R.string.settings_licenses_subtitle),
+                        onClick = onLicenses,
                     )
                     SettingsRow(
                         icon = PamojaIcons.Star,

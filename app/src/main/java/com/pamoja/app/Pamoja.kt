@@ -5,8 +5,6 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -43,20 +41,15 @@ class PamojaApp : Application(), Configuration.Provider {
      *
      * Installing the provider is safe on its own. Nothing is rejected until
      * enforcement is switched on per-service in the Firebase console, which is
-     * the point at which the debug token below must already be registered or
+     * the point at which the debug token must already be registered or
      * development builds will start failing every Firestore call.
+     *
+     * Which provider is installed is decided by the build variant rather than
+     * here, in `AppCheckProvider.kt`, because the debug factory is a debug-only
+     * dependency and so does not exist to be named in a release build.
      */
     private fun initializeAppCheck() {
         FirebaseApp.initializeApp(this)
-
-        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-            if (BuildConfig.DEBUG) {
-                // Prints a token to logcat on first run. Register it under
-                // App Check, Apps, Manage debug tokens.
-                DebugAppCheckProviderFactory.getInstance()
-            } else {
-                PlayIntegrityAppCheckProviderFactory.getInstance()
-            }
-        )
+        FirebaseAppCheck.getInstance().installPamojaProvider()
     }
 }

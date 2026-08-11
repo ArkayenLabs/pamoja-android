@@ -29,7 +29,7 @@ class FirebaseStepRepositoryImpl @Inject constructor(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -43,7 +43,7 @@ class FirebaseStepRepositoryImpl @Inject constructor(
                 ?: return Result.success(StepEntry(userId = userId, stepCount = 0L, date = date))
             Result.success(dto.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -109,7 +109,7 @@ class FirebaseStepRepositoryImpl @Inject constructor(
             )
             saveStepEntry(entry)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 }

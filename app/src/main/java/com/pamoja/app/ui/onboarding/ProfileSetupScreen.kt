@@ -42,6 +42,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pamoja.app.ui.components.OnboardingProgressBar
+import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -139,43 +141,55 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.height(Spacing.x7))
 
             // ── Name field (required) ────────────────────────────────────
-            DarkTextField(
+            PamojaTextField(
                 value       = name,
                 onValueChange = { name = it },
                 label       = "Name",
-                placeholder = "What should we call you?"
+                placeholder = "What should we call you?",
+                validate    = { input ->
+                    when {
+                        input.isBlank() -> "Your group needs something to call you"
+                        input.trim().length > 50 -> "That is a little long, keep it under 50"
+                        else -> null
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(Spacing.x3))
 
             // ── Optional stats row ───────────────────────────────────────
+            // Ranges are wide on purpose. These are optional fields and the
+            // point is to catch a mistyped digit, not to police anyone's body.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
             ) {
-                DarkTextField(
+                PamojaTextField(
                     value       = age,
                     onValueChange = { age = it },
                     label       = "Age",
                     placeholder = "-",
                     keyboardType = KeyboardType.Number,
-                    modifier    = Modifier.weight(1f)
+                    modifier    = Modifier.weight(1f),
+                    validate    = { it.validOptionalNumber(13..120, "age") }
                 )
-                DarkTextField(
+                PamojaTextField(
                     value       = height,
                     onValueChange = { height = it },
                     label       = "Height cm",
                     placeholder = "-",
                     keyboardType = KeyboardType.Number,
-                    modifier    = Modifier.weight(1f)
+                    modifier    = Modifier.weight(1f),
+                    validate    = { it.validOptionalNumber(50..250, "height") }
                 )
-                DarkTextField(
+                PamojaTextField(
                     value       = weight,
                     onValueChange = { weight = it },
                     label       = "Weight kg",
                     placeholder = "-",
                     keyboardType = KeyboardType.Number,
-                    modifier    = Modifier.weight(1f)
+                    modifier    = Modifier.weight(1f),
+                    validate    = { it.validOptionalNumber(20..300, "weight") }
                 )
             }
 
@@ -226,76 +240,14 @@ fun ProfileSetupScreen(
     }
 }
 
-// ─── Pill progress bar ───────────────────────────────────────────────────────
-@Composable
-fun OnboardingProgressBar(currentStep: Int, totalSteps: Int) {
-    val colors = LocalPamojaColors.current
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x2)) {
-        repeat(totalSteps) { index ->
-            val isActive = index < currentStep
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(3.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isActive) colors.accentPrimary else colors.borderStrong
-                    )
-            )
-        }
-    }
-}
-
-// ─── ProgressDots (legacy alias kept for HealthConnectScreen) ─────────────────
-@Composable
-fun ProgressDots(current: Int, total: Int) {
-    OnboardingProgressBar(currentStep = current, totalSteps = total)
-}
-
-// ─── Themed text field ─────────────────────────────────────────────────────────
-// Clean surface with a subtle border that highlights to the brand hue on focus.
-@Composable
-fun DarkTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text
-) {
-    val colors = LocalPamojaColors.current
-    Column(modifier = modifier) {
-        Text(
-            text  = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.textSecondary
-        )
-        Spacer(modifier = Modifier.height(Spacing.x2))
-        OutlinedTextField(
-            value    = value,
-            onValueChange = onValueChange,
-            placeholder = {
-                Text(
-                    text  = placeholder,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textTertiary
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(PamojaRadii.sm),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            visualTransformation = VisualTransformation.None,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor      = colors.accentPrimary,
-                unfocusedBorderColor    = colors.borderDefault,
-                focusedContainerColor   = colors.surfaceInput,
-                unfocusedContainerColor = colors.surfaceInput,
-                cursorColor             = colors.accentPrimary,
-                focusedLabelColor       = colors.accentPrimary,
-                unfocusedLabelColor     = colors.textSecondary
-            )
-        )
-    }
+/**
+ * Optional numeric field check.
+ *
+ * Blank passes, because these fields are genuinely optional and flagging an
+ * empty one would be nagging. Anything present has to be a plausible number.
+ */
+private fun String.validOptionalNumber(range: IntRange, fieldName: String): String? {
+    if (isBlank()) return null
+    val value = toIntOrNull() ?: return "Enter your $fieldName as a number"
+    return if (value in range) null else "That $fieldName does not look right"
 }

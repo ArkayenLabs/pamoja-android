@@ -44,7 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.ui.onboarding.DarkTextField
+import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -133,11 +133,18 @@ fun CreateGroupScreen(
             Spacer(modifier = Modifier.height(Spacing.x7))
 
             // ── Group name ─────────────────────────────────────────────
-            DarkTextField(
+            PamojaTextField(
                 value         = groupName,
                 onValueChange = { groupName = it },
                 label         = "Group name",
-                placeholder   = "e.g. Sharma Family"
+                placeholder   = "e.g. Sharma Family",
+                validate      = { input ->
+                    when {
+                        input.isBlank() -> "Give the group a name"
+                        input.trim().length > 50 -> "That is a little long, keep it under 50"
+                        else -> null
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(Spacing.x7))

@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.pamoja.app.data.remote.model.GroupDto
 import com.pamoja.app.data.remote.model.MembershipDto
 import com.pamoja.app.data.remote.model.UserDto
+import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
@@ -58,7 +59,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 
             Result.success(group)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -66,10 +67,10 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         return try {
             val snapshot = groupsCollection.document(groupId).get().await()
             val dto = snapshot.toObject(GroupDto::class.java)
-                ?: return Result.failure(Exception("Group not found"))
+                ?: return Result.failure(AppError.NotFound("Group document missing"))
             Result.success(dto.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -79,7 +80,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             groupsCollection.document(group.groupId).set(dto).await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -106,12 +107,12 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         return try {
             val code = InviteLink.parseCode(inviteLink) ?: inviteLink.trim()
             if (code.isBlank()) {
-                return Result.failure(Exception("That invite link does not look right."))
+                return Result.failure(AppError.Validation("That invite link does not look right."))
             }
 
             val snapshot = groupsCollection.document(code).get().await()
             val dto = snapshot.toObject(GroupDto::class.java)
-                ?: return Result.failure(Exception("This invite link is not valid."))
+                ?: return Result.failure(AppError.NotFound("Invite code resolved to no group"))
 
             if (!dto.inviteLinkActive) {
                 return Result.failure(
@@ -121,7 +122,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
 
             Result.success(dto.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -190,7 +191,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -243,10 +244,10 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 .get()
                 .await()
             val dto = snapshot.toObject(MembershipDto::class.java)
-                ?: return Result.failure(Exception("Membership not found"))
+                ?: return Result.failure(AppError.NotFound("Membership document missing"))
             Result.success(dto.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -293,7 +294,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -304,7 +305,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -315,7 +316,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 }

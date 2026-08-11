@@ -2,6 +2,7 @@ package com.pamoja.app.data.remote.firebase
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pamoja.app.data.remote.model.UserDto
+import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.UserRepository
 import kotlinx.coroutines.tasks.await
@@ -20,7 +21,7 @@ class FirebaseUserRepositoryImpl @Inject constructor(
             usersCollection.document(user.userId).set(dto).await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -28,10 +29,10 @@ class FirebaseUserRepositoryImpl @Inject constructor(
         return try {
             val snapshot = usersCollection.document(userId).get().await()
             val dto = snapshot.toObject(UserDto::class.java)
-                ?: return Result.failure(Exception("User not found"))
+                ?: return Result.failure(AppError.NotFound("User document missing"))
             Result.success(dto.toDomain())
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -70,7 +71,7 @@ class FirebaseUserRepositoryImpl @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -81,7 +82,7 @@ class FirebaseUserRepositoryImpl @Inject constructor(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 
@@ -151,7 +152,7 @@ class FirebaseUserRepositoryImpl @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toFirebaseAppError())
         }
     }
 }

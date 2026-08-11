@@ -59,6 +59,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.ui.CreateOrJoinViewModel
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.ui.components.GroupListSkeleton
+import com.pamoja.app.ui.components.OfflineBanner
+import com.pamoja.app.ui.components.PamojaErrorState
+import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -101,14 +106,22 @@ fun HomeScreen(
     var inviteLink     by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            if (it.contains("Session expired")) {
-                viewModel.clearError()
-                onSessionExpired()
-            } else {
-                snackbarHostState.showSnackbar(it)
-                viewModel.clearError()
-            }
+        val error = uiState.error ?: return@LaunchedEffect
+
+        // Matched on type rather than by searching the message for "Session
+        // expired", which broke the moment any wording changed.
+        if (error is AppError.SessionExpired) {
+            viewModel.clearError()
+            onSessionExpired()
+            return@LaunchedEffect
+        }
+
+        // Only a passing note when there is still content behind it. With
+        // nothing to show, the full error state renders instead and a snackbar
+        // on top of it would be saying the same thing twice.
+        if (uiState.showErrorSnackbar) {
+            snackbarHostState.showSnackbar(error.toSnackbarMessage())
+            viewModel.clearError()
         }
     }
     LaunchedEffect(joinUiState.error) {
@@ -225,11 +238,12 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    color     = colors.accentPrimary,
-                    modifier  = Modifier.align(Alignment.Center),
-                    strokeWidth = 2.dp
+            if (uiState.showErrorState) {
+                // Nothing loaded, so the failure IS the screen.
+                PamojaErrorState(
+                    error = uiState.error!!,
+                    onRetry = { viewModel.retry() },
+                    modifier = Modifier.align(Alignment.Center),
                 )
             } else {
                 LazyColumn(
@@ -244,6 +258,30 @@ fun HomeScreen(
                                 ?.firstOrNull() ?: "there",
                             onSettingsClick = onSettingsClick
                         )
+                    }
+
+                    // Sits under the greeting rather than over the content, so
+                    // it states a condition without hiding anything.
+                    item {
+                        OfflineBanner(
+                            isOffline = uiState.isOffline,
+                            lastUpdatedLabel = if (uiState.hasContent) {
+                                "Showing your groups as they were when you were last online"
+                            } else null,
+                        )
+                    }
+
+                    // Skeleton matches the real card's shape, so nothing jumps
+                    // when the groups arrive.
+                    if (!uiState.hasLoadedOnce) {
+                        item {
+                            GroupListSkeleton(
+                                modifier = Modifier.padding(
+                                    horizontal = Spacing.x6,
+                                    vertical = Spacing.x5,
+                                )
+                            )
+                        }
                     }
 
                     // Section label
@@ -270,8 +308,9 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(Spacing.x2))
                     }
 
-                    // Empty state
-                    if (uiState.groups.isEmpty()) {
+                    // Only once we know the list is genuinely empty, rather than
+                    // still arriving. Otherwise this flashes before content.
+                    if (uiState.showEmptyState) {
                         item {
                             EmptyGroupsState()
                         }

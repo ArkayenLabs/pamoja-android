@@ -1,6 +1,6 @@
 package com.pamoja.app.ui.auth
 
-import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -63,7 +63,9 @@ fun PhoneEntryScreen(
 ) {
     val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsState()
-    val activity = LocalContext.current as Activity
+    // LocalActivity rather than casting LocalContext, which throws when the
+    // context is wrapped rather than being the Activity itself.
+    val activity = LocalActivity.current
 
     var showCountryPicker by remember { mutableStateOf(false) }
     var blurError by remember { mutableStateOf<String?>(null) }
@@ -236,7 +238,7 @@ fun PhoneEntryScreen(
                         // click handler is not a composable scope.
                         blurError = tooShortMessage
                     } else {
-                        viewModel.sendCode(activity)
+                        activity?.let(viewModel::sendCode)
                     }
                 },
                 enabled = uiState.busyWith == null && uiState.phoneNumber.isNotBlank(),

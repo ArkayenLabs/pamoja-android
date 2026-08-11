@@ -58,6 +58,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.NoticeTone
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupDashboardSkeleton
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaEmptyState
@@ -93,6 +95,13 @@ fun GroupScreen(
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
 
+    // Snackbar text is shown from coroutine scopes and permission callbacks,
+    // none of which are composable scopes.
+    val healthPermissionNeeded = stringResource(R.string.group_health_permission_needed)
+    val inviteInactive = stringResource(R.string.group_invite_inactive)
+    val healthUnavailable = stringResource(R.string.group_health_unavailable)
+    val shareChooserTitle = stringResource(R.string.group_share_invite)
+
     // Health Connect permissions, the same contract the onboarding screen uses.
     //
     // This previously requested Manifest.permission.ACTIVITY_RECOGNITION, which
@@ -107,9 +116,7 @@ fun GroupScreen(
             val hasPermission = granted.containsAll(HealthConnectReader.REQUIRED_PERMISSIONS)
             userPreferences.setHealthConnectGranted(hasPermission)
             if (!hasPermission) {
-                snackbarHostState.showSnackbar(
-                    "Step tracking needs permission in Health Connect."
-                )
+                snackbarHostState.showSnackbar(healthPermissionNeeded)
             }
         }
     }
@@ -157,9 +164,9 @@ fun GroupScreen(
             // only honest action is a way back.
             PamojaEmptyState(
                 icon = PamojaIcons.Users,
-                title = "This group is no longer available",
-                body = "It may have been deleted, or you may no longer be a member.",
-                actionLabel = "Back to your groups",
+                title = stringResource(R.string.group_unavailable_title),
+                body = stringResource(R.string.group_unavailable_body),
+                actionLabel = stringResource(R.string.common_back_to_groups),
                 onAction = { onBack?.invoke() },
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -181,9 +188,7 @@ fun GroupScreen(
                         onShare     = {
                             if (uiState.group?.inviteLinkActive == false) {
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "This group's invite link is no longer active."
-                                    )
+                                    snackbarHostState.showSnackbar(inviteInactive)
                                 }
                             } else {
                                 // Bare verified https link, nothing wrapped around it.
@@ -197,7 +202,7 @@ fun GroupScreen(
                                     )
                                 }
                                 context.startActivity(
-                                    android.content.Intent.createChooser(sendIntent, "Share invite link")
+                                    android.content.Intent.createChooser(sendIntent, shareChooserTitle)
                                 )
                             }
                         }
@@ -208,7 +213,7 @@ fun GroupScreen(
                     OfflineBanner(
                         isOffline = uiState.isOffline,
                         lastUpdatedLabel = if (uiState.hasContent) {
-                            "Showing the last totals that reached this phone"
+                            stringResource(R.string.offline_group_stale)
                         } else null,
                     )
                 }
@@ -230,9 +235,8 @@ fun GroupScreen(
                     item {
                         PamojaNotice(
                             icon = PamojaIcons.AlertCircle,
-                            title = "Step totals did not load",
-                            body = "Everyone's names are here, but their counts could not be " +
-                                "fetched. The numbers below may be incomplete.",
+                            title = stringResource(R.string.group_steps_failed_title),
+                            body = stringResource(R.string.group_steps_failed_body),
                             tone = NoticeTone.Warning,
                             modifier = Modifier.padding(horizontal = Spacing.x6),
                         )
@@ -242,7 +246,7 @@ fun GroupScreen(
                 // ── Leaderboard section label ─────────────────────────────
                 item {
                     Text(
-                        text     = "LEADERBOARD",
+                        text     = stringResource(R.string.group_leaderboard),
                         style    = MaterialTheme.typography.labelSmall,
                         color    = colors.textTertiary,
                         modifier = Modifier.padding(
@@ -272,9 +276,8 @@ fun GroupScreen(
                     item {
                         PamojaEmptyState(
                             icon = PamojaIcons.Footprints,
-                            title = "No steps yet this week",
-                            body = "The board fills up as everyone walks. Yours will show " +
-                                "here within about half an hour of your first steps.",
+                            title = stringResource(R.string.group_no_steps_title),
+                            body = stringResource(R.string.group_no_steps_body),
                         )
                     }
                 }
@@ -287,9 +290,7 @@ fun GroupScreen(
                             scope.launch {
                                 val reader = viewModel.healthConnectReader
                                 when {
-                                    !reader.isAvailable() -> snackbarHostState.showSnackbar(
-                                        "Health Connect is not available on this device."
-                                    )
+                                    !reader.isAvailable() -> snackbarHostState.showSnackbar(healthUnavailable)
                                     reader.hasPermission() -> {
                                         // Already granted, the local flag was just stale.
                                         userPreferences.setHealthConnectGranted(true)
@@ -341,7 +342,7 @@ fun GroupTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     painter            = painterResource(PamojaIcons.ArrowLeft),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.group_back_desc),
                     tint               = colors.textSecondary,
                     modifier           = Modifier.size(20.dp)
                 )
@@ -371,7 +372,7 @@ fun GroupTopBar(
         IconButton(onClick = onShare) {
             Icon(
                 painter            = painterResource(PamojaIcons.Share),
-                contentDescription = "Share invite link",
+                contentDescription = stringResource(R.string.group_share_desc),
                 tint               = colors.accentPrimary,
                 modifier           = Modifier.size(20.dp)
             )
@@ -441,7 +442,7 @@ fun GroupProgressCard(
                     color = colors.textPrimary
                 )
                 Text(
-                    text  = "of %,d".format(weeklyTarget),
+                    text  = stringResource(R.string.group_of_target, "%,d".format(weeklyTarget)),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textTertiary
                 )
@@ -462,17 +463,17 @@ fun GroupProgressCard(
             horizontalArrangement = Arrangement.spacedBy(Spacing.x2)
         ) {
             StatPill(
-                label    = "completed",
+                label    = stringResource(R.string.group_stat_completed),
                 value    = "${(progress * 100).toInt()}%",
                 modifier = Modifier.weight(1f)
             )
             StatPill(
-                label    = "remaining",
+                label    = stringResource(R.string.group_stat_remaining),
                 value    = "%,d".format(remaining),
                 modifier = Modifier.weight(1f)
             )
             StatPill(
-                label    = "members",
+                label    = stringResource(R.string.group_stat_members),
                 value    = "$memberCount",
                 modifier = Modifier.weight(1f)
             )
@@ -565,7 +566,7 @@ fun LeaderboardRow(
             if (rank <= 3) {
                 Icon(
                     painter            = painterResource(PamojaIcons.Medal),
-                    contentDescription = "Rank $rank",
+                    contentDescription = stringResource(R.string.group_rank_desc, rank),
                     tint               = medalColor,
                     modifier           = Modifier.size(if (isFirst) 24.dp else 20.dp)
                 )
@@ -625,7 +626,7 @@ fun LeaderboardRow(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text  = "you",
+                            text  = stringResource(R.string.group_you),
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                             color = colors.accentPrimary
                         )
@@ -649,7 +650,7 @@ fun LeaderboardRow(
                 )
             )
             Text(
-                text  = "today",
+                text  = stringResource(R.string.group_today),
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 color = colors.textTertiary
             )
@@ -690,12 +691,12 @@ fun HealthConnectCard(onClick: () -> Unit) {
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text  = "Enable step tracking",
+                text  = stringResource(R.string.group_enable_tracking_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary
             )
             Text(
-                text  = "Tap to grant permission and start counting",
+                text  = stringResource(R.string.group_enable_tracking_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary
             )

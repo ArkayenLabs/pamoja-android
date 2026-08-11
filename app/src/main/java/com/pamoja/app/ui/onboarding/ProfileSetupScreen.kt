@@ -42,6 +42,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.OnboardingProgressBar
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
@@ -62,6 +64,20 @@ fun ProfileSetupScreen(
     var age    by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
+
+    // Resolved up here because every validate lambda below runs on focus change,
+    // outside composable scope.
+    val nameRequired = stringResource(R.string.profile_name_required)
+    val nameTooLong = stringResource(R.string.profile_name_too_long)
+    val ageField = stringResource(R.string.profile_field_age)
+    val heightField = stringResource(R.string.profile_field_height)
+    val weightField = stringResource(R.string.profile_field_weight)
+    val ageNaN = stringResource(R.string.profile_number_invalid, ageField)
+    val ageRange = stringResource(R.string.profile_number_range, ageField)
+    val heightNaN = stringResource(R.string.profile_number_invalid, heightField)
+    val heightRange = stringResource(R.string.profile_number_range, heightField)
+    val weightNaN = stringResource(R.string.profile_number_invalid, weightField)
+    val weightRange = stringResource(R.string.profile_number_range, weightField)
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -102,7 +118,7 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.height(Spacing.x8))
 
             Text(
-                text  = "Set up your profile",
+                text  = stringResource(R.string.profile_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.textPrimary
             )
@@ -110,7 +126,7 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.height(Spacing.x2))
 
             Text(
-                text  = "Your group sees your name. Everything else is optional.",
+                text  = stringResource(R.string.profile_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary
             )
@@ -131,7 +147,7 @@ fun ProfileSetupScreen(
                 ) {
                     Icon(
                         painter = painterResource(PamojaIcons.Camera),
-                        contentDescription = "Add photo",
+                        contentDescription = stringResource(R.string.profile_add_photo),
                         tint = colors.textTertiary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -144,12 +160,12 @@ fun ProfileSetupScreen(
             PamojaTextField(
                 value       = name,
                 onValueChange = { name = it },
-                label       = "Name",
-                placeholder = "What should we call you?",
+                label       = stringResource(R.string.profile_name_label),
+                placeholder = stringResource(R.string.profile_name_placeholder),
                 validate    = { input ->
                     when {
-                        input.isBlank() -> "Your group needs something to call you"
-                        input.trim().length > 50 -> "That is a little long, keep it under 50"
+                        input.isBlank() -> nameRequired
+                        input.trim().length > 50 -> nameTooLong
                         else -> null
                     }
                 }
@@ -167,36 +183,36 @@ fun ProfileSetupScreen(
                 PamojaTextField(
                     value       = age,
                     onValueChange = { age = it },
-                    label       = "Age",
-                    placeholder = "-",
+                    label       = stringResource(R.string.profile_age_label),
+                    placeholder = stringResource(R.string.profile_optional_placeholder),
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f),
-                    validate    = { it.validOptionalNumber(13..120, "age") }
+                    validate    = { it.validOptionalNumber(13..120, ageNaN, ageRange) }
                 )
                 PamojaTextField(
                     value       = height,
                     onValueChange = { height = it },
-                    label       = "Height cm",
-                    placeholder = "-",
+                    label       = stringResource(R.string.profile_height_label),
+                    placeholder = stringResource(R.string.profile_optional_placeholder),
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f),
-                    validate    = { it.validOptionalNumber(50..250, "height") }
+                    validate    = { it.validOptionalNumber(50..250, heightNaN, heightRange) }
                 )
                 PamojaTextField(
                     value       = weight,
                     onValueChange = { weight = it },
-                    label       = "Weight kg",
-                    placeholder = "-",
+                    label       = stringResource(R.string.profile_weight_label),
+                    placeholder = stringResource(R.string.profile_optional_placeholder),
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f),
-                    validate    = { it.validOptionalNumber(20..300, "weight") }
+                    validate    = { it.validOptionalNumber(20..300, weightNaN, weightRange) }
                 )
             }
 
             Spacer(modifier = Modifier.height(Spacing.x2))
 
             Text(
-                text  = "Age, height and weight are optional and private.",
+                text  = stringResource(R.string.profile_optional_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textTertiary
             )
@@ -225,7 +241,7 @@ fun ProfileSetupScreen(
                 )
             ) {
                 Text(
-                    text  = if (uiState.isLoading) "Creating account…" else "Continue",
+                    text  = stringResource(if (uiState.isLoading) R.string.profile_creating else R.string.common_continue),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -245,9 +261,16 @@ fun ProfileSetupScreen(
  *
  * Blank passes, because these fields are genuinely optional and flagging an
  * empty one would be nagging. Anything present has to be a plausible number.
+ *
+ * Messages are passed in already resolved. This runs from a focus-change
+ * callback, which is not a composable scope, so it cannot look them up itself.
  */
-private fun String.validOptionalNumber(range: IntRange, fieldName: String): String? {
+private fun String.validOptionalNumber(
+    range: IntRange,
+    notANumber: String,
+    outOfRange: String,
+): String? {
     if (isBlank()) return null
-    val value = toIntOrNull() ?: return "Enter your $fieldName as a number"
-    return if (value in range) null else "That $fieldName does not look right"
+    val value = toIntOrNull() ?: return notANumber
+    return if (value in range) null else outOfRange
 }

@@ -59,6 +59,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.compose.LocalActivity
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaTextField
@@ -79,11 +82,15 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val activity = context as android.app.Activity
+    val activity = LocalActivity.current
 
     var showEditNameDialog by remember { mutableStateOf(false) }
     var editNameInput by remember { mutableStateOf("") }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+    // Used inside click handlers and coroutine scopes.
+    val userIdClipLabel = stringResource(R.string.settings_user_id_clip)
+    val userIdCopiedMessage = stringResource(R.string.settings_user_id_copied)
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
@@ -121,7 +128,7 @@ fun SettingsScreen(
             shape = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
-                    text = "Edit Name",
+                    text = stringResource(R.string.settings_edit_name),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.textPrimary
                 )
@@ -132,7 +139,7 @@ fun SettingsScreen(
                     onValueChange = { editNameInput = it },
                     placeholder = {
                         Text(
-                            text = "Enter your display name",
+                            text = stringResource(R.string.settings_name_placeholder),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.textTertiary
                         )
@@ -160,12 +167,12 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(PamojaRadii.sm),
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                 ) {
-                    Text("Save", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.settings_save), color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEditNameDialog = false }) {
-                    Text("Cancel", color = colors.textSecondary)
+                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
                 }
             }
         )
@@ -178,14 +185,14 @@ fun SettingsScreen(
             shape = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
-                    text = "Delete Account",
+                    text = stringResource(R.string.settings_delete_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.statusDanger
                 )
             },
             text = {
                 Text(
-                    text = "This action is permanent and cannot be undone. All your step groups and progress history will be removed.",
+                    text = stringResource(R.string.settings_delete_warning),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.textSecondary
                 )
@@ -199,12 +206,12 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(PamojaRadii.sm),
                     colors = ButtonDefaults.buttonColors(containerColor = colors.statusDanger)
                 ) {
-                    Text("Delete Permanently", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.settings_delete_confirm), color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel", color = colors.textSecondary)
+                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
                 }
             }
         )
@@ -231,7 +238,7 @@ fun SettingsScreen(
             shape = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
-                    text = "Confirm it is you",
+                    text = stringResource(R.string.settings_reauth_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.textPrimary
                 )
@@ -241,16 +248,13 @@ fun SettingsScreen(
                     Text(
                         text = when {
                             method == ReauthMethod.Phone && awaitingCode ->
-                                "Enter the code we sent to ${uiState.reauthPhoneNumber}. " +
-                                    "Nothing has been deleted yet."
+                                stringResource(R.string.settings_reauth_code_body, uiState.reauthPhoneNumber.orEmpty())
 
                             method == ReauthMethod.Phone ->
-                                "For your safety we text a code to the number on this " +
-                                    "account before deleting it. Nothing has been deleted yet."
+                                stringResource(R.string.settings_reauth_phone_body)
 
                             else ->
-                                "For your safety we ask you to sign in again before " +
-                                    "deleting an account. Nothing has been deleted yet."
+                                stringResource(R.string.settings_reauth_body)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textSecondary
@@ -261,8 +265,8 @@ fun SettingsScreen(
                         PamojaTextField(
                             value = password,
                             onValueChange = { password = it },
-                            label = "Password",
-                            placeholder = "Your password",
+                            label = stringResource(R.string.password_label),
+                            placeholder = stringResource(R.string.password_placeholder_existing),
                             keyboardType = KeyboardType.Password,
                             isPassword = true,
                         )
@@ -283,13 +287,13 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         when (method) {
-                            ReauthMethod.Google -> viewModel.reauthenticateWithGoogle(activity)
+                            ReauthMethod.Google -> activity?.let(viewModel::reauthenticateWithGoogle)
                             ReauthMethod.Password -> viewModel.reauthenticateWithPassword(password)
                             ReauthMethod.Phone ->
                                 if (awaitingCode) {
                                     viewModel.reauthenticateWithPhone(otpCode)
                                 } else {
-                                    viewModel.sendReauthCode(activity)
+                                    activity?.let(viewModel::sendReauthCode)
                                 }
                         }
                     },
@@ -303,9 +307,9 @@ fun SettingsScreen(
                 ) {
                     Text(
                         text = when {
-                            method == ReauthMethod.Google -> "Continue with Google"
-                            method == ReauthMethod.Phone && !awaitingCode -> "Send code"
-                            else -> "Confirm"
+                            method == ReauthMethod.Google -> stringResource(R.string.auth_continue_google)
+                            method == ReauthMethod.Phone && !awaitingCode -> stringResource(R.string.settings_reauth_send_code)
+                            else -> stringResource(R.string.common_confirm)
                         },
                         color = colors.textOnBrand,
                         style = MaterialTheme.typography.labelLarge
@@ -314,7 +318,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.cancelReauth() }) {
-                    Text("Cancel", color = colors.textSecondary)
+                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
                 }
             }
         )
@@ -343,14 +347,14 @@ fun SettingsScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         painter = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.settings_back_desc),
                         tint = colors.textSecondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
-                    text = "Settings",
+                    text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.headlineMedium,
                     color = colors.textPrimary
                 )
@@ -372,7 +376,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(Spacing.x4))
 
                 // ─── Section: Profile ────────────────────────────────────────
-                SectionLabel("PROFILE", color = colors.textTertiary)
+                SectionLabel(stringResource(R.string.settings_section_profile), color = colors.textTertiary)
 
                 Column(
                     modifier = Modifier
@@ -392,13 +396,13 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Name",
+                                text = stringResource(R.string.settings_name_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.textTertiary
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = uiState.userName.takeIf { it.isNotBlank() } ?: "Guest User",
+                                text = uiState.userName.takeIf { it.isNotBlank() } ?: stringResource(R.string.settings_name_fallback),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = colors.textPrimary
                             )
@@ -406,7 +410,7 @@ fun SettingsScreen(
                         IconButton(onClick = { showEditNameDialog = true }) {
                             Icon(
                                 painter = painterResource(PamojaIcons.Edit),
-                                contentDescription = "Edit Name",
+                                contentDescription = stringResource(R.string.settings_edit_name),
                                 tint = colors.accentPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -421,7 +425,7 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "User ID",
+                                text = stringResource(R.string.settings_user_id),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.textTertiary
                             )
@@ -437,16 +441,16 @@ fun SettingsScreen(
                         IconButton(
                             onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("Pamoja User ID", uiState.userId)
+                                val clip = ClipData.newPlainText(userIdClipLabel, uiState.userId)
                                 clipboard.setPrimaryClip(clip)
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("User ID copied to clipboard")
+                                    snackbarHostState.showSnackbar(userIdCopiedMessage)
                                 }
                             }
                         ) {
                             Icon(
                                 painter = painterResource(PamojaIcons.Copy),
-                                contentDescription = "Copy User ID",
+                                contentDescription = stringResource(R.string.settings_copy_user_id),
                                 tint = colors.textSecondary,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -457,7 +461,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
                 // ─── Section: App Settings & Info ───────────────────────────
-                SectionLabel("INFORMATION", color = colors.textTertiary)
+                SectionLabel(stringResource(R.string.settings_section_information), color = colors.textTertiary)
 
                 Column(
                     modifier = Modifier
@@ -469,8 +473,8 @@ fun SettingsScreen(
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.ShieldCheck,
-                        title = "Privacy Policy",
-                        subtitle = "How we handle your data, including step data",
+                        title = stringResource(R.string.settings_privacy_title),
+                        subtitle = stringResource(R.string.settings_privacy_subtitle),
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/privacy/pamoja"))
                             context.startActivity(intent)
@@ -478,8 +482,8 @@ fun SettingsScreen(
                     )
                     SettingsRow(
                         icon = PamojaIcons.Info,
-                        title = "Terms of Use",
-                        subtitle = "The agreement you accepted when you signed in",
+                        title = stringResource(R.string.settings_terms_title),
+                        subtitle = stringResource(R.string.settings_terms_subtitle),
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/terms/pamoja"))
                             context.startActivity(intent)
@@ -487,8 +491,8 @@ fun SettingsScreen(
                     )
                     SettingsRow(
                         icon = PamojaIcons.Star,
-                        title = "Rate Us",
-                        subtitle = "Support us by sharing your feedback",
+                        title = stringResource(R.string.settings_rate_title),
+                        subtitle = stringResource(R.string.settings_rate_subtitle),
                         onClick = {
                             val packageName = context.packageName
                             val intent = try {
@@ -504,7 +508,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
                 // ─── Section: Danger Zone ────────────────────────────────────
-                SectionLabel("ACCOUNT ACTIONS", color = colors.statusDanger)
+                SectionLabel(stringResource(R.string.settings_account_actions), color = colors.statusDanger)
 
                 Column(
                     modifier = Modifier
@@ -516,15 +520,15 @@ fun SettingsScreen(
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.LogOut,
-                        title = "Log Out",
-                        subtitle = "Sign out of your account on this device",
+                        title = stringResource(R.string.settings_logout_title),
+                        subtitle = stringResource(R.string.settings_logout_subtitle),
                         iconColor = colors.textSecondary,
                         onClick = { viewModel.signOut() }
                     )
                     SettingsRow(
                         icon = PamojaIcons.Trash,
-                        title = "Delete Account",
-                        subtitle = "Permanently wipe your profile and statistics",
+                        title = stringResource(R.string.settings_delete_title),
+                        subtitle = stringResource(R.string.settings_delete_subtitle),
                         iconColor = colors.statusDanger,
                         onClick = { showDeleteConfirmDialog = true }
                     )
@@ -534,7 +538,7 @@ fun SettingsScreen(
                 if (com.pamoja.app.BuildConfig.DEBUG) {
                     Spacer(modifier = Modifier.height(Spacing.x8))
 
-                    SectionLabel("DEBUG", color = colors.textTertiary)
+                    SectionLabel(stringResource(R.string.settings_debug), color = colors.textTertiary)
 
                     Column(
                         modifier = Modifier
@@ -546,8 +550,8 @@ fun SettingsScreen(
                     ) {
                         SettingsRow(
                             icon = PamojaIcons.Notification,
-                            title = "Send test notifications",
-                            subtitle = "One per channel, bypassing quiet hours and throttling",
+                            title = stringResource(R.string.settings_debug_notifications_title),
+                            subtitle = stringResource(R.string.settings_debug_notifications_subtitle),
                             iconColor = colors.textSecondary,
                             onClick = { viewModel.sendDebugNotifications() }
                         )
@@ -572,7 +576,7 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
-                        text = "Pamoja v1.0.0",
+                        text = stringResource(R.string.settings_version, "1.0.0"),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.textTertiary,
                         textAlign = TextAlign.Center

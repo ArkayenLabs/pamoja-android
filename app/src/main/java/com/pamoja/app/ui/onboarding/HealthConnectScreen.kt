@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.HealthConnectReader
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.OnboardingProgressBar
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -146,7 +148,7 @@ fun HealthConnectScreen(
                     ) {
                         Icon(
                             painter            = painterResource(PamojaIcons.Footprints),
-                            contentDescription = "Step tracking",
+                            contentDescription = stringResource(R.string.hc_icon_desc),
                             tint               = colors.textOnBrand,
                             modifier           = Modifier.size(36.dp)
                         )
@@ -156,7 +158,7 @@ fun HealthConnectScreen(
                 Spacer(modifier = Modifier.height(Spacing.x7))
 
                 Text(
-                    text      = "Track your steps",
+                    text      = stringResource(R.string.hc_title),
                     style     = MaterialTheme.typography.headlineLarge,
                     color     = colors.textPrimary,
                     textAlign = TextAlign.Center
@@ -166,13 +168,13 @@ fun HealthConnectScreen(
 
                 val subtitle = when (permState) {
                     PermState.HC_UNAVAILABLE ->
-                        "Health Connect is not available on this device. Step tracking won't be available."
+                        stringResource(R.string.hc_body_unavailable)
                     PermState.DENIED ->
-                        "Without this permission, your steps will show as 0 to your group. You can enable it later in Health Connect settings."
+                        stringResource(R.string.hc_body_denied)
                     PermState.GRANTED ->
-                        "You're all set! Pamoja will sync your steps via Health Connect, no battery drain, no background tracking."
+                        stringResource(R.string.hc_body_granted)
                     else ->
-                        "Pamoja uses Health Connect to count your steps. Your data stays private and is only shared with your group members."
+                        stringResource(R.string.hc_body_default)
                 }
 
                 Text(
@@ -197,7 +199,7 @@ fun HealthConnectScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.x4)
                 ) {
                     Text(
-                        text  = "WHAT PAMOJA ACCESSES",
+                        text  = stringResource(R.string.hc_access_header),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.textSecondary
                     )
@@ -205,31 +207,31 @@ fun HealthConnectScreen(
                         icon      = PamojaIcons.Footprints,
                         iconColor = colors.accentPrimary,
                         iconBg    = colors.accentPrimarySubtle,
-                        title     = "Daily step count",
-                        subtitle  = "Read from Health Connect, battery friendly"
+                        title     = stringResource(R.string.hc_access_steps_title),
+                        subtitle  = stringResource(R.string.hc_access_steps_sub)
                     )
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
                     PermissionRow(
                         icon      = PamojaIcons.Shield,
                         iconColor = colors.accentTeal,
                         iconBg    = colors.accentTealSubtle,
-                        title     = "Nothing else",
-                        subtitle  = "No location, heart rate or sleep data"
+                        title     = stringResource(R.string.hc_access_nothing_title),
+                        subtitle  = stringResource(R.string.hc_access_nothing_sub)
                     )
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
                     PermissionRow(
                         icon      = PamojaIcons.Lock,
                         iconColor = colors.accentTeal,
                         iconBg    = colors.accentTealSubtle,
-                        title     = "Private by default",
-                        subtitle  = "Only your group members see your steps"
+                        title     = stringResource(R.string.hc_access_private_title),
+                        subtitle  = stringResource(R.string.hc_access_private_sub)
                     )
                 }
 
                 if (permState == PermState.HC_UNAVAILABLE) {
                     Spacer(modifier = Modifier.height(Spacing.x3))
                     Text(
-                        text      = "Health Connect is not available on this device.",
+                        text      = stringResource(R.string.hc_unavailable_short),
                         style     = MaterialTheme.typography.bodySmall,
                         color     = colors.statusDanger,
                         textAlign = TextAlign.Center
@@ -262,7 +264,7 @@ fun HealthConnectScreen(
                             )
                         ) {
                             Text(
-                                text  = "Continue without steps",
+                                text  = stringResource(R.string.hc_continue_without),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -295,7 +297,7 @@ fun HealthConnectScreen(
                             )
                             Spacer(modifier = Modifier.size(Spacing.x2))
                             Text(
-                                text  = "Open Settings",
+                                text  = stringResource(R.string.hc_open_settings),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -304,7 +306,7 @@ fun HealthConnectScreen(
                             onSkip()
                         }) {
                             Text(
-                                text  = "Skip for now",
+                                text  = stringResource(R.string.hc_skip),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colors.textSecondary
                             )
@@ -329,7 +331,7 @@ fun HealthConnectScreen(
                             )
                             Spacer(modifier = Modifier.size(Spacing.x2))
                             Text(
-                                text  = "Steps connected",
+                                text  = stringResource(R.string.hc_connected),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -350,7 +352,7 @@ fun HealthConnectScreen(
                             )
                         ) {
                             Text(
-                                text  = "Connect Health Connect",
+                                text  = stringResource(R.string.hc_connect),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -359,7 +361,7 @@ fun HealthConnectScreen(
                             onSkip()
                         }) {
                             Text(
-                                text  = "Skip for now",
+                                text  = stringResource(R.string.hc_skip),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colors.textSecondary
                             )

@@ -60,6 +60,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.ui.CreateOrJoinViewModel
 import com.pamoja.app.domain.error.AppError
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupListSkeleton
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
@@ -157,7 +159,7 @@ fun HomeScreen(
             shape            = RoundedCornerShape(PamojaRadii.xl),
             title = {
                 Text(
-                    text  = "Join a group",
+                    text  = stringResource(R.string.home_join_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.textPrimary
                 )
@@ -165,7 +167,7 @@ fun HomeScreen(
             text = {
                 Column {
                     Text(
-                        text  = "Paste the invite link shared by your group admin.",
+                        text  = stringResource(R.string.home_join_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textSecondary
                     )
@@ -175,7 +177,7 @@ fun HomeScreen(
                         onValueChange = { inviteLink = it },
                         placeholder   = {
                             Text(
-                                text  = "Paste the invite link",
+                                text  = stringResource(R.string.home_join_placeholder),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colors.textTertiary
                             )
@@ -209,12 +211,12 @@ fun HomeScreen(
                     shape   = RoundedCornerShape(PamojaRadii.sm),
                     colors  = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                 ) {
-                    Text("Continue", color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.common_continue), color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showJoinDialog = false }) {
-                    Text("Cancel", color = colors.textSecondary)
+                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
                 }
             }
         )
@@ -247,7 +249,7 @@ fun HomeScreen(
                             name = uiState.userName
                                 .takeIf { it.isNotBlank() }
                                 ?.split(" ")
-                                ?.firstOrNull() ?: "there",
+                                ?.firstOrNull() ?: stringResource(R.string.home_greeting_fallback),
                             onSettingsClick = onSettingsClick
                         )
                     }
@@ -258,7 +260,7 @@ fun HomeScreen(
                         OfflineBanner(
                             isOffline = uiState.isOffline,
                             lastUpdatedLabel = if (uiState.hasContent) {
-                                "Showing your groups as they were when you were last online"
+                                stringResource(R.string.offline_home_stale)
                             } else null,
                         )
                     }
@@ -280,7 +282,7 @@ fun HomeScreen(
                     if (uiState.groups.isNotEmpty()) {
                         item {
                             Text(
-                                text  = "YOUR GROUPS",
+                                text  = stringResource(R.string.home_your_groups),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.textTertiary,
                                 modifier = Modifier.padding(
@@ -329,26 +331,26 @@ private fun HomeHeader(
     onSettingsClick: () -> Unit
 ) {
     val colors = LocalPamojaColors.current
-    // Time-aware greeting
-    val greeting = remember {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    // Time-aware greeting. The hour is remembered, not the resolved string:
+    // stringResource cannot be called inside remember, and resolving outside it
+    // also means the greeting follows a language change.
+    val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val greeting = stringResource(
         when {
-            hour < 12 -> "Good morning"
-            hour < 17 -> "Good afternoon"
-            else      -> "Good evening"
+            hour < 12 -> R.string.home_good_morning
+            hour < 17 -> R.string.home_good_afternoon
+            else -> R.string.home_good_evening
         }
-    }
+    )
 
     // Rotating motivational subtitles, cycles every 4 seconds
-    val subtitles = remember {
-        listOf(
-            "Every step counts. Let's go!",
-            "Your group is counting on you.",
-            "Walk together, grow together.",
-            "Today's a great day to move.",
-            "Small steps. Big impact."
-        )
-    }
+    val subtitles = listOf(
+        stringResource(R.string.home_tagline_1),
+        stringResource(R.string.home_tagline_2),
+        stringResource(R.string.home_tagline_3),
+        stringResource(R.string.home_tagline_4),
+        stringResource(R.string.home_tagline_5),
+    )
     var subtitleIndex by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -380,7 +382,7 @@ private fun HomeHeader(
             ) {
                 Icon(
                     painter = painterResource(PamojaIcons.Settings),
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.home_settings_desc),
                     tint = colors.accentPrimary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -425,7 +427,7 @@ private fun JoinLinkCard(onClick: () -> Unit) {
             )
         }
         Text(
-            text     = "Join a group via invite link",
+            text     = stringResource(R.string.home_join_cta),
             style    = MaterialTheme.typography.bodyMedium,
             color    = colors.accentTeal,
             modifier = Modifier.weight(1f)
@@ -494,7 +496,7 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
         // Chevron
         Icon(
             painter = painterResource(PamojaIcons.ChevronRight),
-            contentDescription = "Open group",
+            contentDescription = stringResource(R.string.home_open_group_desc),
             tint     = colors.textTertiary,
             modifier = Modifier.size(18.dp)
         )
@@ -528,12 +530,12 @@ private fun EmptyGroupsState() {
         }
         Spacer(modifier = Modifier.height(Spacing.x1))
         Text(
-            text  = "No groups yet",
+            text  = stringResource(R.string.home_empty_title),
             style = MaterialTheme.typography.headlineSmall,
             color = colors.textPrimary
         )
         Text(
-            text      = "Create a group and invite friends or family, or join one with an invite link.",
+            text      = stringResource(R.string.home_empty_body),
             style     = MaterialTheme.typography.bodyMedium,
             color     = colors.textSecondary,
             textAlign = TextAlign.Center
@@ -590,7 +592,7 @@ private fun BottomActionBar(
                 )
                 Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
-                    text     = "Join",
+                    text     = stringResource(R.string.home_join_short),
                     style    = MaterialTheme.typography.labelLarge,
                     maxLines = 1
                 )
@@ -616,7 +618,7 @@ private fun BottomActionBar(
                 )
                 Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
-                    text     = "New group",
+                    text     = stringResource(R.string.home_new_group),
                     style    = MaterialTheme.typography.labelLarge,
                     maxLines = 1
                 )

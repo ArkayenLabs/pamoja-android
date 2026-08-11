@@ -1,6 +1,6 @@
 package com.pamoja.app.ui.auth
 
-import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,7 +51,9 @@ fun AuthLandingScreen(
 ) {
     val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsState()
-    val activity = LocalContext.current as Activity
+    // LocalActivity rather than casting LocalContext, which throws when the
+    // context is wrapped rather than being the Activity itself.
+    val activity = LocalActivity.current
 
     val topTint = if (colors.isDark) colors.surfaceSunken else colors.accentPrimarySubtle
     val background = Brush.verticalGradient(
@@ -144,7 +146,7 @@ fun AuthLandingScreen(
                 icon = PamojaIcons.Google,
                 label = stringResource(R.string.auth_continue_google),
                 loadingLabel = stringResource(R.string.auth_opening_google),
-                onClick = { viewModel.signInWithGoogle(activity) },
+                onClick = { activity?.let(viewModel::signInWithGoogle) },
                 isLoading = uiState.busyWith == AuthMethod.Google,
                 enabled = uiState.busyWith == null,
                 filled = true,

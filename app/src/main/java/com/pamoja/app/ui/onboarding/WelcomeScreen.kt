@@ -33,6 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.OnboardingProgressBar
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -98,7 +100,7 @@ fun WelcomeScreen(
                 ) {
                     Icon(
                         painter            = painterResource(PamojaIcons.Footprints),
-                        contentDescription = "Pamoja logo",
+                        contentDescription = stringResource(R.string.welcome_logo_desc),
                         tint               = colors.textOnBrand,
                         modifier           = Modifier.size(34.dp)
                     )
@@ -107,7 +109,7 @@ fun WelcomeScreen(
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
                 Text(
-                    text  = "Pamoja",
+                    text  = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineLarge,
                     color = colors.textPrimary
                 )
@@ -115,7 +117,7 @@ fun WelcomeScreen(
                 Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Text(
-                    text      = "Walk further, together.",
+                    text      = stringResource(R.string.welcome_tagline),
                     style     = MaterialTheme.typography.bodyLarge.copy(
                         color     = colors.textSecondary,
                         textAlign = TextAlign.Center
@@ -131,17 +133,17 @@ fun WelcomeScreen(
                 ) {
                     FeaturePill(
                         icon     = PamojaIcons.Footprints,
-                        label    = "Step tracking",
+                        label    = stringResource(R.string.welcome_feature_steps),
                         modifier = Modifier.weight(1f)
                     )
                     FeaturePill(
                         icon     = PamojaIcons.Users,
-                        label    = "Group goals",
+                        label    = stringResource(R.string.welcome_feature_goals),
                         modifier = Modifier.weight(1f)
                     )
                     FeaturePill(
                         icon     = PamojaIcons.Trophy,
-                        label    = "Leaderboard",
+                        label    = stringResource(R.string.welcome_feature_leaderboard),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -166,7 +168,7 @@ fun WelcomeScreen(
                     )
                 ) {
                     Text(
-                        text  = "Get started",
+                        text  = stringResource(R.string.welcome_get_started),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -176,7 +178,7 @@ fun WelcomeScreen(
                 // Clickable sign-in link for returning users
                 TextButton(onClick = onSignIn) {
                     Text(
-                        text  = "Already have an account? Sign in",
+                        text  = stringResource(R.string.welcome_have_account),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = colors.accentPrimary
                         )

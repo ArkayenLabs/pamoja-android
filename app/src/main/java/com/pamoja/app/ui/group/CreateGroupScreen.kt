@@ -44,6 +44,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -64,6 +66,10 @@ fun CreateGroupScreen(
     var weeklyTargetIndex  by remember { mutableFloatStateOf(2f) }
     var maxMembers         by remember { mutableFloatStateOf(10f) }
     var canMembersEdit     by remember { mutableStateOf(true) }
+
+    // Hoisted: validate runs outside composable scope.
+    val nameRequired = stringResource(R.string.create_group_name_required)
+    val nameTooLong = stringResource(R.string.create_group_name_too_long)
 
     val stepPresets      = listOf(35_000, 50_000, 70_000, 100_000, 150_000)
     val stepPresetLabels = listOf("35k", "50k", "70k", "100k", "150k")
@@ -104,13 +110,13 @@ fun CreateGroupScreen(
                 IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
                     Icon(
                         painter            = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.common_back),
                         tint               = colors.textSecondary,
                         modifier           = Modifier.size(20.dp)
                     )
                 }
                 Text(
-                    text  = "Back",
+                    text  = stringResource(R.string.common_back),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.textSecondary
                 )
@@ -119,13 +125,13 @@ fun CreateGroupScreen(
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
-                text  = "Create your group",
+                text  = stringResource(R.string.create_group_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.textPrimary
             )
             Spacer(modifier = Modifier.height(Spacing.x2))
             Text(
-                text  = "You can edit these anytime as admin.",
+                text  = stringResource(R.string.create_group_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary
             )
@@ -136,12 +142,12 @@ fun CreateGroupScreen(
             PamojaTextField(
                 value         = groupName,
                 onValueChange = { groupName = it },
-                label         = "Group name",
-                placeholder   = "e.g. Sharma Family",
+                label         = stringResource(R.string.create_group_name_label),
+                placeholder   = stringResource(R.string.create_group_name_placeholder),
                 validate      = { input ->
                     when {
-                        input.isBlank() -> "Give the group a name"
-                        input.trim().length > 50 -> "That is a little long, keep it under 50"
+                        input.isBlank() -> nameRequired
+                        input.trim().length > 50 -> nameTooLong
                         else -> null
                     }
                 }
@@ -157,7 +163,7 @@ fun CreateGroupScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text  = "Weekly step goal",
+                        text  = stringResource(R.string.create_group_weekly_goal),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textPrimary
                     )
@@ -206,7 +212,7 @@ fun CreateGroupScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text  = "Max members",
+                        text  = stringResource(R.string.create_group_max_members),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textPrimary
                     )
@@ -256,12 +262,12 @@ fun CreateGroupScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text  = "Members can edit goal",
+                        text  = stringResource(R.string.create_group_members_edit),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textPrimary
                     )
                     Text(
-                        text  = "Allow others to change the step target",
+                        text  = stringResource(R.string.create_group_members_edit_sub),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary
                     )
@@ -303,7 +309,7 @@ fun CreateGroupScreen(
                 )
             ) {
                 Text(
-                    text  = if (uiState.isLoading) "Creating…" else "Create group",
+                    text  = stringResource(if (uiState.isLoading) R.string.create_group_creating else R.string.create_group_submit),
                     style = MaterialTheme.typography.labelLarge
                 )
             }

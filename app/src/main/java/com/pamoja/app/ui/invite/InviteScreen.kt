@@ -46,6 +46,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
@@ -79,6 +81,11 @@ fun InviteScreen(
     // which messengers refuse to render as a tappable link, so it is never shown.
     // Incoming links of either form still resolve, see InviteLink.parseCode.
     val inviteLink = InviteLink.build(groupId)
+
+    // Resolved here because both are used inside click handlers and coroutine
+    // scopes, neither of which is a composable scope.
+    val linkCopiedMessage = stringResource(R.string.invite_link_copied)
+    val shareChooserTitle = stringResource(R.string.invite_share_chooser)
     val groupName  = uiState.group?.name ?: ""
     val maxCap     = uiState.group?.maxMemberCap ?: 10
 
@@ -123,7 +130,7 @@ fun InviteScreen(
                     ) {
                         Icon(
                             painter            = painterResource(PamojaIcons.Users),
-                            contentDescription = "Group created",
+                            contentDescription = stringResource(R.string.invite_created_desc),
                             tint               = colors.textOnBrand,
                             modifier           = Modifier.size(32.dp)
                         )
@@ -133,7 +140,7 @@ fun InviteScreen(
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
                 Text(
-                    text      = "Group created!",
+                    text      = stringResource(R.string.invite_created_title),
                     style     = MaterialTheme.typography.headlineLarge,
                     color     = colors.textPrimary,
                     textAlign = TextAlign.Center
@@ -142,7 +149,7 @@ fun InviteScreen(
                 Spacer(modifier = Modifier.height(Spacing.x2))
 
                 Text(
-                    text      = "Invite your people. This link stays active until all $maxCap spots are filled.",
+                    text      = stringResource(R.string.invite_subtitle, maxCap),
                     style     = MaterialTheme.typography.bodyMedium,
                     color     = colors.textSecondary,
                     textAlign = TextAlign.Center
@@ -174,13 +181,13 @@ fun InviteScreen(
                     IconButton(
                         onClick = {
                             clipboardManager.setText(AnnotatedString(inviteLink))
-                            scope.launch { snackbarHostState.showSnackbar("Link copied") }
+                            scope.launch { snackbarHostState.showSnackbar(linkCopiedMessage) }
                         },
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             painter            = painterResource(PamojaIcons.Copy),
-                            contentDescription = "Copy link",
+                            contentDescription = stringResource(R.string.invite_copy_desc),
                             tint               = colors.accentPrimary,
                             modifier           = Modifier.size(18.dp)
                         )
@@ -205,7 +212,7 @@ fun InviteScreen(
                 Button(
                     onClick = {
                         clipboardManager.setText(AnnotatedString(inviteLink))
-                        scope.launch { snackbarHostState.showSnackbar("Link copied") }
+                        scope.launch { snackbarHostState.showSnackbar(linkCopiedMessage) }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -224,7 +231,7 @@ fun InviteScreen(
                     )
                     Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
-                        text  = "Copy link",
+                        text  = stringResource(R.string.invite_copy),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -240,7 +247,7 @@ fun InviteScreen(
                             // messengers from rendering a link preview.
                             putExtra(Intent.EXTRA_TEXT, inviteLink)
                         }
-                        context.startActivity(Intent.createChooser(intent, "Share invite link"))
+                        context.startActivity(Intent.createChooser(intent, shareChooserTitle))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -259,7 +266,7 @@ fun InviteScreen(
                     )
                     Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
-                        text  = "More share options",
+                        text  = stringResource(R.string.invite_more_options),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -267,7 +274,7 @@ fun InviteScreen(
                 // Go to group, ghost text button with trailing arrow icon
                 TextButton(onClick = onGoToGroup) {
                     Text(
-                        text  = "Go to my group",
+                        text  = stringResource(R.string.invite_go_to_group),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.accentPrimary
                     )

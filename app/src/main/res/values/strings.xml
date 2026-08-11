@@ -54,6 +54,12 @@
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
     <string name="welcome_get_started">Get started</string>
+    <string name="welcome_logo_desc">Pamoja logo</string>
+    <string name="welcome_tagline">Walk further, together.</string>
+    <string name="welcome_feature_steps">Step tracking</string>
+    <string name="welcome_feature_goals">Group goals</string>
+    <string name="welcome_feature_leaderboard">Leaderboard</string>
+    <string name="welcome_have_account">Already have an account? Sign in</string>
 
     <!-- ── Auth landing ───────────────────────────────────────────────── -->
     <string name="auth_landing_title">Keep your groups safe</string>
@@ -155,6 +161,24 @@
     <string name="home_your_groups">YOUR GROUPS</string>
     <string name="home_join_title">Join a group</string>
     <string name="home_greeting_fallback">there</string>
+    <string name="home_join_body">Paste the invite link shared by your group admin.</string>
+    <string name="home_join_placeholder">Paste the invite link</string>
+    <string name="home_join_cta">Join a group via invite link</string>
+    <string name="home_settings_desc">Settings</string>
+    <string name="home_open_group_desc">Open group</string>
+    <string name="home_empty_title">No groups yet</string>
+    <string name="home_empty_body">Create a group and invite friends or family, or join one with an invite link.</string>
+    <string name="home_join_short">Join</string>
+    <string name="home_new_group">New group</string>
+    <string name="home_good_morning">Good morning</string>
+    <string name="home_good_afternoon">Good afternoon</string>
+    <string name="home_good_evening">Good evening</string>
+    <!-- Rotating encouragement under the greeting. Keep these short and warm. -->
+    <string name="home_tagline_1">Every step counts. Let\'s go!</string>
+    <string name="home_tagline_2">Your group is counting on you.</string>
+    <string name="home_tagline_3">Walk together, grow together.</string>
+    <string name="home_tagline_4">Today\'s a great day to move.</string>
+    <string name="home_tagline_5">Small steps. Big impact.</string>
 
     <!-- ── Create group ───────────────────────────────────────────────── -->
     <string name="create_group_title">Create your group</string>
@@ -165,6 +189,43 @@
     <string name="create_group_name_too_long">That is a little long, keep it under 50</string>
     <string name="create_group_weekly_goal">Weekly step goal</string>
     <string name="create_group_steps_format">%1$s steps</string>
+    <string name="create_group_max_members">Max members</string>
+    <string name="create_group_members_edit">Members can edit goal</string>
+    <string name="create_group_members_edit_sub">Allow others to change the step target</string>
+    <string name="create_group_creating">Creating…</string>
+    <string name="create_group_submit">Create group</string>
+
+    <!-- ── Health Connect ─────────────────────────────────────────────── -->
+    <string name="hc_icon_desc">Step tracking</string>
+    <string name="hc_title">Track your steps</string>
+    <string name="hc_body_unavailable">Health Connect is not available on this device. Step tracking won\'t be available.</string>
+    <string name="hc_body_denied">Without this permission, your steps will show as 0 to your group. You can enable it later in Health Connect settings.</string>
+    <string name="hc_body_granted">You\'re all set! Pamoja will sync your steps via Health Connect, no battery drain, no background tracking.</string>
+    <string name="hc_body_default">Pamoja uses Health Connect to count your steps. Your data stays private and is only shared with your group members.</string>
+    <string name="hc_access_header">WHAT PAMOJA ACCESSES</string>
+    <string name="hc_access_steps_title">Daily step count</string>
+    <string name="hc_access_steps_sub">Read from Health Connect, battery friendly</string>
+    <string name="hc_access_nothing_title">Nothing else</string>
+    <string name="hc_access_nothing_sub">No location, heart rate or sleep data</string>
+    <string name="hc_access_private_title">Private by default</string>
+    <string name="hc_access_private_sub">Only your group members see your steps</string>
+    <string name="hc_unavailable_short">Health Connect is not available on this device.</string>
+    <string name="hc_continue_without">Continue without steps</string>
+    <string name="hc_open_settings">Open Settings</string>
+    <string name="hc_skip">Skip for now</string>
+    <string name="hc_connected">Steps connected</string>
+    <string name="hc_connect">Connect Health Connect</string>
+
+    <!-- ── Invite ─────────────────────────────────────────────────────── -->
+    <string name="invite_created_desc">Group created</string>
+    <string name="invite_created_title">Group created!</string>
+    <string name="invite_subtitle">Invite your people. This link stays active until all %1$d spots are filled.</string>
+    <string name="invite_link_copied">Link copied</string>
+    <string name="invite_copy_desc">Copy link</string>
+    <string name="invite_copy">Copy link</string>
+    <string name="invite_share_chooser">Share invite link</string>
+    <string name="invite_more_options">More share options</string>
+    <string name="invite_go_to_group">Go to my group</string>
 
     <!-- ── Group dashboard ────────────────────────────────────────────── -->
     <string name="group_leaderboard">LEADERBOARD</string>
@@ -178,6 +239,17 @@
     <string name="group_invite_inactive">This group\'s invite link is no longer active.</string>
     <string name="group_health_permission_needed">Step tracking needs permission in Health Connect.</string>
     <string name="group_health_unavailable">Health Connect is not available on this device.</string>
+    <string name="group_back_desc">Back</string>
+    <string name="group_share_desc">Share invite link</string>
+    <string name="group_of_target">of %1$s</string>
+    <string name="group_stat_completed">completed</string>
+    <string name="group_stat_remaining">remaining</string>
+    <string name="group_stat_members">members</string>
+    <string name="group_rank_desc">Rank %1$d</string>
+    <string name="group_you">you</string>
+    <string name="group_today">today</string>
+    <string name="group_enable_tracking_title">Enable step tracking</string>
+    <string name="group_enable_tracking_body">Tap to grant permission and start counting</string>
 
     <!-- ── Join preview ───────────────────────────────────────────────── -->
     <string name="join_invited_to">You have been invited to</string>
@@ -220,4 +292,20 @@
     <string name="settings_debug_notifications_title">Send test notifications</string>
     <string name="settings_debug_notifications_subtitle">One per channel, bypassing quiet hours and throttling</string>
     <string name="settings_version">Pamoja v%1$s</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_back_desc">Back</string>
+    <string name="settings_section_profile">PROFILE</string>
+    <string name="settings_section_information">INFORMATION</string>
+    <string name="settings_edit_name">Edit Name</string>
+    <string name="settings_name_placeholder">Enter your display name</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_name_label">Name</string>
+    <string name="settings_name_fallback">Guest User</string>
+    <string name="settings_user_id">User ID</string>
+    <string name="settings_user_id_clip">Pamoja User ID</string>
+    <string name="settings_user_id_copied">User ID copied to clipboard</string>
+    <string name="settings_copy_user_id">Copy User ID</string>
+    <string name="settings_rate_title">Rate Us</string>
+    <string name="settings_rate_subtitle">Support us by sharing your feedback</string>
+    <string name="settings_reauth_send_code">Send code</string>
 </resources>

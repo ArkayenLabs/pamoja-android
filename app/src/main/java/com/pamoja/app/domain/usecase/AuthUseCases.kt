@@ -1,5 +1,7 @@
 package com.pamoja.app.domain.usecase
 
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.UserRepository
@@ -10,12 +12,12 @@ class SignUpUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(email: String, password: String): Result<User> {
         val trimmed = email.trim()
-        if (trimmed.isBlank()) return Result.failure(Exception("Enter your email address"))
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(trimmed).matches()) {
-            return Result.failure(Exception("That email address does not look right"))
+        if (trimmed.isBlank()) return Result.failure(AppError.Validation(ValidationField.EmailMissing))
+        if (!trimmed.looksLikeEmail()) {
+            return Result.failure(AppError.Validation(ValidationField.EmailMalformed))
         }
         if (password.length < 6) {
-            return Result.failure(Exception("Password must be at least 6 characters"))
+            return Result.failure(AppError.Validation(ValidationField.PasswordTooShort))
         }
         return authRepository.signUpWithEmail(trimmed, password)
     }
@@ -26,8 +28,8 @@ class SignInUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(email: String, password: String): Result<User> {
         val trimmed = email.trim()
-        if (trimmed.isBlank()) return Result.failure(Exception("Enter your email address"))
-        if (password.isBlank()) return Result.failure(Exception("Enter your password"))
+        if (trimmed.isBlank()) return Result.failure(AppError.Validation(ValidationField.EmailMissing))
+        if (password.isBlank()) return Result.failure(AppError.Validation(ValidationField.PasswordMissing))
         return authRepository.signInWithEmail(trimmed, password)
     }
 }
@@ -37,7 +39,7 @@ class SendPasswordResetUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(email: String): Result<Unit> {
         val trimmed = email.trim()
-        if (trimmed.isBlank()) return Result.failure(Exception("Enter your email address"))
+        if (trimmed.isBlank()) return Result.failure(AppError.Validation(ValidationField.EmailMissing))
         return authRepository.sendPasswordReset(trimmed)
     }
 }
@@ -46,7 +48,7 @@ class SignInWithGoogleUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     suspend operator fun invoke(idToken: String): Result<User> {
-        if (idToken.isBlank()) return Result.failure(Exception("Google sign in was cancelled"))
+        if (idToken.isBlank()) return Result.failure(AppError.Unknown("Google returned a blank token"))
         return authRepository.signInWithGoogle(idToken)
     }
 }
@@ -67,11 +69,11 @@ class StartPhoneVerificationUseCase @Inject constructor(
     ): Result<com.pamoja.app.domain.repository.PhoneVerification> {
         val trimmed = phoneNumber.replace(" ", "").replace("-", "")
         if (!trimmed.startsWith("+")) {
-            return Result.failure(Exception("Include the country code, for example +91"))
+            return Result.failure(AppError.Validation(ValidationField.PhoneMissingCountryCode))
         }
         val digits = trimmed.drop(1)
         if (digits.length !in 8..15 || !digits.all { it.isDigit() }) {
-            return Result.failure(Exception("That phone number does not look right"))
+            return Result.failure(AppError.Validation(ValidationField.PhoneMalformed))
         }
         return authRepository.startPhoneVerification(trimmed, activity)
     }
@@ -82,7 +84,7 @@ class VerifyPhoneCodeUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(verificationId: String, code: String): Result<User> {
         if (code.length != 6 || !code.all { it.isDigit() }) {
-            return Result.failure(Exception("Enter the 6 digit code"))
+            return Result.failure(AppError.Validation(ValidationField.OtpIncomplete))
         }
         return authRepository.verifyPhoneCode(verificationId, code)
     }
@@ -147,7 +149,7 @@ class DeleteAccountUseCase @Inject constructor(
      */
     suspend operator fun invoke(justReauthenticated: Boolean = false): Result<Unit> {
         val userId = authRepository.getCurrentUser()?.userId
-            ?: return Result.failure(Exception("No signed in user"))
+            ?: return Result.failure(AppError.SessionExpired())
 
         // Asked before anything is destroyed. Deleting the data and only then
         // discovering the session is too stale would erase everything and still
@@ -178,7 +180,7 @@ class ReauthenticateWithEmailUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     suspend operator fun invoke(password: String): Result<Unit> {
-        if (password.isBlank()) return Result.failure(Exception("Enter your password"))
+        if (password.isBlank()) return Result.failure(AppError.Validation(ValidationField.PasswordMissing))
         return authRepository.reauthenticateWithEmail(password)
     }
 }
@@ -188,8 +190,23 @@ class ReauthenticateWithPhoneUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(verificationId: String, code: String): Result<Unit> {
         if (code.length != 6 || !code.all { it.isDigit() }) {
-            return Result.failure(Exception("Enter the 6 digit code"))
+            return Result.failure(AppError.Validation(ValidationField.OtpIncomplete))
         }
         return authRepository.reauthenticateWithPhone(verificationId, code)
     }
 }
+/**
+ * A deliberately loose email check.
+ *
+ * Replaces android.util.Patterns.EMAIL_ADDRESS, which was the one Android
+ * dependency in the domain layer and broke the rule that this layer stays pure
+ * Kotlin. It was also untestable without an instrumented test, since Patterns
+ * returns null on the JVM.
+ *
+ * Loose on purpose. The only authority on whether an address exists is the mail
+ * server, so this catches obvious typos and lets the server judge the rest.
+ * Strict client-side email regexes are famous for rejecting valid addresses.
+ */
+private val EMAIL_SHAPE = Regex("""^[^@\s]+@[^@\s]+\.[^@\s]{2,}$""")
+
+private fun String.looksLikeEmail(): Boolean = EMAIL_SHAPE.matches(this)

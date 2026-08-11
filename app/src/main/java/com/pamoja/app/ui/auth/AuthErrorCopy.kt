@@ -6,6 +6,7 @@ import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.ui.components.ErrorCopy
+import com.pamoja.app.ui.components.messageRes
 
 /**
  * Sign-in flavoured wording for the shared error taxonomy.
@@ -45,12 +46,13 @@ fun Throwable.toAuthErrorCopy(): ErrorCopy = when (toAppError()) {
         body = R.string.auth_error_offline_body,
     )
 
-    // Validation carries wording written for a human by whoever raised it,
-    // which for auth is the use cases checking email shape and OTP length.
+    // Validation names the exact rule that failed, so it keeps its own specific
+    // wording rather than being flattened into the generic auth message. Losing
+    // that distinction is what made "enter your email address" degrade to "that
+    // did not work".
     is AppError.Validation -> ErrorCopy(
-        title = R.string.auth_error_generic_title,
-        body = R.string.auth_error_generic_body,
-        bodyOverride = (toAppError() as AppError.Validation).userMessage,
+        title = R.string.error_validation_title,
+        body = (toAppError() as AppError.Validation).field.messageRes(),
     )
 
     else -> ErrorCopy(

@@ -1,6 +1,7 @@
 package com.pamoja.app.domain.usecase
 
 import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
@@ -19,10 +20,10 @@ class CreateGroupUseCase @Inject constructor(
         maxMemberCap: Int,
         canMembersEditTarget: Boolean
     ): Result<Group> {
-        if (name.isBlank()) return Result.failure(Exception("Group name cannot be empty"))
-        if (adminId.isBlank()) return Result.failure(Exception("Admin ID cannot be empty"))
-        if (weeklyTarget <= 0) return Result.failure(Exception("Weekly target must be greater than 0"))
-        if (maxMemberCap < 2) return Result.failure(Exception("Group must allow at least 2 members"))
+        if (name.isBlank()) return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
+        if (adminId.isBlank()) return Result.failure(AppError.SessionExpired())
+        if (weeklyTarget <= 0) return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
+        if (maxMemberCap < 2) return Result.failure(AppError.Validation(ValidationField.MemberCapTooSmall))
 
         val groupId = UUID.randomUUID().toString()
         val inviteLink = "pamoja://join/$groupId"
@@ -47,7 +48,7 @@ class GetGroupUseCase @Inject constructor(
     private val groupRepository: GroupRepository
 ) {
     suspend operator fun invoke(groupId: String): Result<Group> {
-        if (groupId.isBlank()) return Result.failure(Exception("Group ID cannot be empty"))
+        if (groupId.isBlank()) return Result.failure(AppError.Validation(ValidationField.InviteCodeMissing))
         return groupRepository.getGroup(groupId)
     }
 }
@@ -57,7 +58,7 @@ class JoinGroupUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(inviteLink: String, userId: String): Result<Unit> {
         if (inviteLink.isBlank()) {
-            return Result.failure(AppError.Validation("Enter an invite link or code"))
+            return Result.failure(AppError.Validation(ValidationField.InviteCodeMissing))
         }
         if (userId.isBlank()) return Result.failure(AppError.SessionExpired())
 
@@ -97,7 +98,7 @@ class ResolveInviteUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(codeOrLink: String, userId: String): Result<InvitePreview> {
         if (codeOrLink.isBlank()) {
-            return Result.failure(AppError.Validation("Enter an invite link or code"))
+            return Result.failure(AppError.Validation(ValidationField.InviteCodeMissing))
         }
 
         val group = groupRepository.getGroupByInviteLink(codeOrLink).getOrElse {
@@ -145,7 +146,7 @@ class UpdateWeeklyTargetUseCase @Inject constructor(
         userId: String,
         group: Group
     ): Result<Unit> {
-        if (target <= 0) return Result.failure(Exception("Target must be greater than 0"))
+        if (target <= 0) return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
 
         val membership = groupRepository.getMembership(userId, groupId).getOrElse {
             return Result.failure(it)
@@ -155,7 +156,7 @@ class UpdateWeeklyTargetUseCase @Inject constructor(
         val canEdit = group.canMembersEditTarget
 
         if (!isAdmin && !canEdit) {
-            return Result.failure(Exception("You don't have permission to edit the target"))
+            return Result.failure(AppError.Validation(ValidationField.NotAllowedToEditTarget))
         }
 
         return groupRepository.updateWeeklyTarget(groupId, target)

@@ -79,12 +79,14 @@ sealed class AppError(
     }
 
     /**
-     * Input the user can fix, with wording already written for them.
+     * Input the user can fix.
      *
-     * The one case where the message IS user-facing, because only the caller
-     * knows which field is wrong and why.
+     * Carries [field] rather than a sentence. The domain knows which rule
+     * failed; the UI decides how to say it, which is what makes these messages
+     * translatable and keeps copy out of pure Kotlin.
      */
-    class Validation(val userMessage: String) : AppError(userMessage)
+    class Validation(val field: ValidationField) :
+        AppError("Validation failed: $field")
 
     /** Anything unrecognised. Always worth reporting. */
     class Unknown(detail: String = "Unexpected error", cause: Throwable? = null) :

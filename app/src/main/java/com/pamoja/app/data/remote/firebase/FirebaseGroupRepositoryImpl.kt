@@ -7,6 +7,7 @@ import com.pamoja.app.data.remote.model.GroupDto
 import com.pamoja.app.data.remote.model.MembershipDto
 import com.pamoja.app.data.remote.model.UserDto
 import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
@@ -107,7 +108,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         return try {
             val code = InviteLink.parseCode(inviteLink) ?: inviteLink.trim()
             if (code.isBlank()) {
-                return Result.failure(AppError.Validation("That invite link does not look right."))
+                return Result.failure(AppError.Validation(ValidationField.InviteCodeMalformed))
             }
 
             val snapshot = groupsCollection.document(code).get().await()

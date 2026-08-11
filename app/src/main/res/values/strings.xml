@@ -48,6 +48,22 @@
     <string name="error_expired_body">Codes and links do not last forever. Ask for a new one.</string>
     <string name="error_validation_title">Check that again</string>
 
+    <!-- ── Validation, one per ValidationField ────────────────────────── -->
+    <string name="validation_email_missing">Enter your email address</string>
+    <string name="validation_email_malformed">That email address does not look right</string>
+    <string name="validation_password_missing">Enter your password</string>
+    <string name="validation_password_too_short">Use at least 6 characters</string>
+    <string name="validation_phone_country_code">Include the country code, for example +91</string>
+    <string name="validation_phone_malformed">That phone number does not look right</string>
+    <string name="validation_otp_incomplete">Enter the 6 digit code</string>
+    <string name="validation_group_name_missing">Give the group a name</string>
+    <string name="validation_weekly_target">Pick a weekly target above zero</string>
+    <string name="validation_member_cap">A group needs room for at least 2 people</string>
+    <string name="validation_invite_missing">Enter an invite link or code</string>
+    <string name="validation_invite_malformed">That invite link does not look right</string>
+    <string name="validation_display_name_missing">Enter a name</string>
+    <string name="validation_not_allowed_target">Only the admin can change this group\'s target</string>
+
     <!-- ── Auth-specific error wording ────────────────────────────────── -->
     <!-- The generic copy is too vague inside a sign-in flow, where the user
          needs to know which of three methods to try instead. -->

@@ -32,7 +32,7 @@ interface AuthRepository {
      * indefinitely, this is the normal case for account deletion rather than an
      * edge case, so it is modelled instead of being surfaced as a raw failure.
      */
-    class RecentLoginRequired : Exception("Please confirm it is you before deleting your account")
+    class RecentLoginRequired : Exception("Recent login required for destructive operation")
 
     // ── Session ─────────────────────────────────────────────────────────────
 

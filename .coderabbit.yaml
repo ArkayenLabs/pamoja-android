@@ -1,0 +1,80 @@
+# CodeRabbit configuration for Pamoja
+# https://docs.coderabbit.ai/guides/configure-coderabbit
+#
+# DELIBERATELY DORMANT FOR NOW.
+#
+# auto_review is disabled because the redesign is mid-flight and screens are
+# still being rewritten. Reviewing them now would generate findings against code
+# that is about to be replaced, and the noise would train us to ignore it.
+#
+# TO TURN IT ON after the redesign, set reviews.auto_review.enabled to true.
+# Until then it can still be invoked on demand by commenting "@coderabbitai
+# review" on a pull request.
+
+language: en-GB
+
+reviews:
+  # Terse over chatty. This project already documents intent in comments and
+  # commit messages, so a review that restates what the code does is noise.
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+
+  auto_review:
+    enabled: false
+    drafts: false
+    base_branches:
+      - main
+      - dev
+
+  path_filters:
+    # Generated, vendored, or not source.
+    - "!**/build/**"
+    - "!graphify-out/**"
+    - "!design/**"
+    - "!**/*.jks"
+    - "!**/google-services.json"
+
+  path_instructions:
+    - path: "app/src/main/java/com/pamoja/app/domain/**"
+      instructions: >
+        This layer must stay pure Kotlin. Flag any Android or Firebase import,
+        including fully qualified references such as android.util.Patterns.
+        User-facing text does not belong here either: validation failures carry
+        a ValidationField and the UI supplies the wording.
+
+    - path: "app/src/main/java/com/pamoja/app/data/**"
+      instructions: >
+        Firebase exceptions must be mapped to AppError at this boundary via
+        toFirebaseAppError. Nothing above this layer should ever see a
+        FirebaseFirestoreException. Flag any user-facing English string.
+        Flag runCatching around suspend work, which swallows
+        CancellationException; authCatching is the correct helper.
+
+    - path: "app/src/main/java/com/pamoja/app/ui/**"
+      instructions: >
+        Colours come from LocalPamojaColors, never MaterialTheme.colorScheme or
+        raw hex. Icons come from PamojaIcons; emoji are banned as icons, labels
+        or list markers. Every user-facing string must be a stringResource, not
+        a literal. Never render exception.message; use toErrorCopy or
+        toSnackbarMessage. Flag LocalContext.current cast to Activity, which
+        throws on a wrapped context; LocalActivity is correct.
+
+    - path: "**/*ViewModel.kt"
+      instructions: >
+        ViewModels must not hold user-facing copy or a Context. Errors are
+        AppError; a ViewModel's own messages are string resource ids as Int.
+        Flag any error classification that matches on message text rather than
+        on exception type.
+
+    - path: "firestore.rules"
+      instructions: >
+        Check every rule against the client code that has to satisfy it. Flag
+        any rule permitting list on users or groups, and any group update case
+        that does not bound memberCount against maxMemberCap.
+
+chat:
+  auto_reply: true

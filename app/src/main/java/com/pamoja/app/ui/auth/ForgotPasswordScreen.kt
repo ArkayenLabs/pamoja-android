@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
@@ -49,6 +51,9 @@ fun ForgotPasswordScreen(
 
     // Carried forward so nothing is retyped.
     var email by remember { mutableStateOf(prefilledEmail) }
+
+    // Hoisted: validate runs on focus change, outside composable scope.
+    val emailRequired = stringResource(R.string.email_required)
 
     val sentTo = uiState.resetEmailSentTo
 
@@ -78,7 +83,7 @@ fun ForgotPasswordScreen(
 
             if (sentTo == null) {
                 Text(
-                    text = "Reset your password",
+                    text = stringResource(R.string.reset_title),
                     style = MaterialTheme.typography.headlineLarge,
                     color = colors.textPrimary,
                 )
@@ -86,7 +91,7 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Text(
-                    text = "We will email you a link to set a new one.",
+                    text = stringResource(R.string.reset_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.textSecondary,
                 )
@@ -96,12 +101,12 @@ fun ForgotPasswordScreen(
                 PamojaTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = "Email",
-                    placeholder = "you@example.com",
+                    label = stringResource(R.string.email_label),
+                    placeholder = stringResource(R.string.email_placeholder),
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done,
                     validate = { input ->
-                        if (input.isBlank()) "Enter your email address" else null
+                        if (input.isBlank()) emailRequired else null
                     },
                 )
 
@@ -109,7 +114,7 @@ fun ForgotPasswordScreen(
                     Spacer(modifier = Modifier.height(Spacing.x5))
                     PamojaNotice(
                         icon = PamojaIcons.AlertCircle,
-                        title = "That did not work",
+                        title = stringResource(R.string.auth_failed_title),
                         body = message,
                         tone = NoticeTone.Danger,
                     )
@@ -138,12 +143,12 @@ fun ForgotPasswordScreen(
                             modifier = Modifier.size(20.dp),
                         )
                     } else {
-                        Text(text = "Send reset link", style = MaterialTheme.typography.labelLarge)
+                        Text(text = stringResource(R.string.reset_send), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             } else {
                 Text(
-                    text = "Check your inbox",
+                    text = stringResource(R.string.reset_sent_title),
                     style = MaterialTheme.typography.headlineLarge,
                     color = colors.textPrimary,
                 )
@@ -151,7 +156,7 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Text(
-                    text = "We sent a reset link to $sentTo.",
+                    text = stringResource(R.string.reset_sent_body, sentTo),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.textSecondary,
                 )
@@ -162,8 +167,8 @@ fun ForgotPasswordScreen(
                 // that is the only situation in which this screen is read twice.
                 PamojaNotice(
                     icon = PamojaIcons.Info,
-                    title = "Nothing after a minute?",
-                    body = "Check your spam folder, or send it again below.",
+                    title = stringResource(R.string.reset_nothing_title),
+                    body = stringResource(R.string.reset_nothing_body),
                     tone = NoticeTone.Info,
                 )
 
@@ -182,7 +187,7 @@ fun ForgotPasswordScreen(
                         disabledContainerColor = colors.accentPrimarySubtle,
                     ),
                 ) {
-                    Text(text = "Resend", style = MaterialTheme.typography.labelLarge)
+                    Text(text = stringResource(R.string.reset_resend), style = MaterialTheme.typography.labelLarge)
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.x2))
@@ -195,7 +200,7 @@ fun ForgotPasswordScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "Back to sign in",
+                        text = stringResource(R.string.reset_back_to_signin),
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.accentPrimary,
                     )

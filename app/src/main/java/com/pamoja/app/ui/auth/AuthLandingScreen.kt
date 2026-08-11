@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
@@ -101,7 +103,7 @@ fun AuthLandingScreen(
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
-                text = "Keep your groups safe",
+                text = stringResource(R.string.auth_landing_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.textPrimary,
             )
@@ -109,7 +111,7 @@ fun AuthLandingScreen(
             Spacer(modifier = Modifier.height(Spacing.x3))
 
             Text(
-                text = "Sign in so your groups and step history follow you to a new phone.",
+                text = stringResource(R.string.auth_landing_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
             )
@@ -120,8 +122,8 @@ fun AuthLandingScreen(
             // it is the answer to the question the buttons provoke.
             PamojaNotice(
                 icon = PamojaIcons.Shield,
-                title = "We only store what signs you in",
-                body = "No contacts, no social graph, nothing posted anywhere.",
+                title = stringResource(R.string.auth_reassurance_title),
+                body = stringResource(R.string.auth_reassurance_body),
             )
 
             // A failure keeps every method available. A Google outage should not
@@ -130,7 +132,7 @@ fun AuthLandingScreen(
                 Spacer(modifier = Modifier.height(Spacing.x4))
                 PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
-                    title = "That did not work",
+                    title = stringResource(R.string.auth_failed_title),
                     body = message,
                     tone = NoticeTone.Danger,
                 )
@@ -140,8 +142,8 @@ fun AuthLandingScreen(
 
             AuthMethodButton(
                 icon = PamojaIcons.Google,
-                label = "Continue with Google",
-                loadingLabel = "Opening Google…",
+                label = stringResource(R.string.auth_continue_google),
+                loadingLabel = stringResource(R.string.auth_opening_google),
                 onClick = { viewModel.signInWithGoogle(activity) },
                 isLoading = uiState.busyWith == AuthMethod.Google,
                 enabled = uiState.busyWith == null,
@@ -153,8 +155,8 @@ fun AuthLandingScreen(
 
             AuthMethodButton(
                 icon = PamojaIcons.Smartphone,
-                label = "Continue with phone",
-                loadingLabel = "Continue with phone",
+                label = stringResource(R.string.auth_continue_phone),
+                loadingLabel = stringResource(R.string.auth_continue_phone),
                 onClick = onChoosePhone,
                 isLoading = false,
                 enabled = uiState.busyWith == null,
@@ -165,8 +167,8 @@ fun AuthLandingScreen(
 
             AuthMethodButton(
                 icon = PamojaIcons.Mail,
-                label = "Continue with email",
-                loadingLabel = "Continue with email",
+                label = stringResource(R.string.auth_continue_email),
+                loadingLabel = stringResource(R.string.auth_continue_email),
                 onClick = onChooseEmail,
                 isLoading = false,
                 enabled = uiState.busyWith == null,
@@ -176,7 +178,7 @@ fun AuthLandingScreen(
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
-                text = "By continuing you agree to our Terms and Privacy Policy.",
+                text = stringResource(R.string.auth_legal_line),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textTertiary,
                 modifier = Modifier.fillMaxWidth(),

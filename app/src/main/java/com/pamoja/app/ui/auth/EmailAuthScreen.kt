@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
@@ -59,6 +61,12 @@ fun EmailAuthScreen(
 
     val isValid = email.isNotBlank() && password.length >= if (isSignUp) 8 else 1
 
+    // Hoisted because the validate lambdas run on focus change, which is not a
+    // composable scope and cannot call stringResource.
+    val emailRequired = stringResource(R.string.email_required)
+    val emailInvalid = stringResource(R.string.email_invalid)
+    val passwordTooShort = stringResource(R.string.password_too_short)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +87,7 @@ fun EmailAuthScreen(
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
-                text = if (isSignUp) "Sign up with email" else "Welcome back",
+                text = stringResource(if (isSignUp) R.string.email_signup_title else R.string.email_signin_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.textPrimary,
             )
@@ -88,9 +96,9 @@ fun EmailAuthScreen(
 
             Text(
                 text = if (isSignUp) {
-                    "One account keeps your groups and history safe."
+                    stringResource(R.string.email_signup_subtitle)
                 } else {
-                    "Sign in to pick up where you left off."
+                    stringResource(R.string.email_signin_subtitle)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
@@ -101,17 +109,17 @@ fun EmailAuthScreen(
             PamojaTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = "Email",
-                placeholder = "you@example.com",
+                label = stringResource(R.string.email_label),
+                placeholder = stringResource(R.string.email_placeholder),
                 keyboardType = KeyboardType.Email,
                 supportingText = if (isSignUp) {
-                    "Used to sign in and to reset your password. Never shown to your group."
+                    stringResource(R.string.email_supporting)
                 } else null,
                 validate = { input ->
                     when {
-                        input.isBlank() -> "Enter your email address"
+                        input.isBlank() -> emailRequired
                         !android.util.Patterns.EMAIL_ADDRESS.matcher(input.trim())
-                            .matches() -> "That email address does not look right"
+                            .matches() -> emailInvalid
 
                         else -> null
                     }
@@ -123,14 +131,14 @@ fun EmailAuthScreen(
             PamojaTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = "Password",
-                placeholder = if (isSignUp) "At least 8 characters" else "Your password",
+                label = stringResource(R.string.password_label),
+                placeholder = stringResource(if (isSignUp) R.string.password_placeholder_new else R.string.password_placeholder_existing),
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
                 isPassword = true,
                 validate = if (isSignUp) {
                     { input ->
-                        if (input.length < 8) "Use at least 8 characters" else null
+                        if (input.length < 8) passwordTooShort else null
                     }
                 } else null,
             )
@@ -147,7 +155,7 @@ fun EmailAuthScreen(
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
                 ) {
                     Text(
-                        text = "Forgot password?",
+                        text = stringResource(R.string.email_forgot),
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.accentPrimary,
                     )
@@ -158,7 +166,7 @@ fun EmailAuthScreen(
                 Spacer(modifier = Modifier.height(Spacing.x5))
                 PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
-                    title = "That did not work",
+                    title = stringResource(R.string.auth_failed_title),
                     body = message,
                     tone = NoticeTone.Danger,
                 )
@@ -194,7 +202,7 @@ fun EmailAuthScreen(
                     )
                 } else {
                     Text(
-                        text = if (isSignUp) "Create account" else "Sign in",
+                        text = stringResource(if (isSignUp) R.string.email_create_account else R.string.common_sign_in),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
@@ -207,7 +215,7 @@ fun EmailAuthScreen(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = if (isSignUp) "Already have an account?" else "New to Pamoja?",
+                    text = stringResource(if (isSignUp) R.string.email_have_account else R.string.email_new_here),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.textSecondary,
                 )
@@ -218,7 +226,7 @@ fun EmailAuthScreen(
                     },
                 ) {
                     Text(
-                        text = if (isSignUp) "Sign in" else "Create one",
+                        text = stringResource(if (isSignUp) R.string.common_sign_in else R.string.email_create_one),
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.accentPrimary,
                     )
@@ -248,10 +256,10 @@ private fun PasswordStrength(password: String) {
 
     val (label, tint) = when {
         password.isEmpty() -> "" to colors.borderStrong
-        score <= 1 -> "Too short" to colors.statusDanger
-        score == 2 -> "Getting there" to colors.statusWarning
-        score == 3 -> "Good password" to colors.statusSuccess
-        else -> "Strong password" to colors.statusSuccess
+        score <= 1 -> stringResource(R.string.password_strength_short) to colors.statusDanger
+        score == 2 -> stringResource(R.string.password_strength_ok) to colors.statusWarning
+        score == 3 -> stringResource(R.string.password_strength_good) to colors.statusSuccess
+        else -> stringResource(R.string.password_strength_strong) to colors.statusSuccess
     }
 
     Column {
@@ -271,8 +279,8 @@ private fun PasswordStrength(password: String) {
             Spacer(modifier = Modifier.height(Spacing.x2))
             Text(
                 text = when {
-                    !hasLength -> "$label. Use at least 8 characters."
-                    !hasNumberOrSymbol -> "$label. Add a number or symbol to strengthen it."
+                    !hasLength -> stringResource(R.string.password_needs_length, label)
+                    !hasNumberOrSymbol -> stringResource(R.string.password_needs_symbol, label)
                     else -> label
                 },
                 style = MaterialTheme.typography.bodySmall,

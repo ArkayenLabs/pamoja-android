@@ -120,7 +120,7 @@ fun GroupScreen(
     // instead, so the user is never told the same thing in two places at once.
     LaunchedEffect(uiState.actionError) {
         uiState.actionError?.let {
-            snackbarHostState.showSnackbar(it.toSnackbarMessage())
+            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
             viewModel.clearActionError()
         }
     }

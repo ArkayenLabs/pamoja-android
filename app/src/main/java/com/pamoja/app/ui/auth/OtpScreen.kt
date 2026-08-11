@@ -46,6 +46,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
@@ -97,7 +99,7 @@ fun OtpScreen(
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
-                text = "Enter your code",
+                text = stringResource(R.string.otp_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.textPrimary,
             )
@@ -107,7 +109,7 @@ fun OtpScreen(
             // The number is restated in full so a mistyped digit is caught here
             // rather than after a code that could never have arrived.
             Text(
-                text = "Sent to ${uiState.country.dialCode} ${uiState.phoneNumber}",
+                text = stringResource(R.string.otp_sent_to, uiState.country.dialCode, uiState.phoneNumber),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
             )
@@ -122,7 +124,7 @@ fun OtpScreen(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
             ) {
                 Text(
-                    text = "Wrong number? Go back",
+                    text = stringResource(R.string.otp_wrong_number),
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.accentPrimary,
                 )
@@ -142,30 +144,29 @@ fun OtpScreen(
             when (uiState.otpFailure) {
                 OtpFailure.WrongCode -> PamojaNotice(
                     icon = PamojaIcons.AlertCircle,
-                    title = "That code is not right",
-                    body = "Check the digits and try again.",
+                    title = stringResource(R.string.otp_wrong_code_title),
+                    body = stringResource(R.string.otp_wrong_code_body),
                     tone = NoticeTone.Danger,
                 )
 
                 OtpFailure.Expired -> PamojaNotice(
                     icon = PamojaIcons.Clock,
-                    title = "This code expired",
-                    body = "Codes last a few minutes. Send a fresh one below.",
+                    title = stringResource(R.string.otp_expired_title),
+                    body = stringResource(R.string.otp_expired_body),
                     tone = NoticeTone.Warning,
                 )
 
                 OtpFailure.RateLimited -> PamojaNotice(
                     icon = PamojaIcons.Lock,
-                    title = "Too many attempts",
-                    body = "For safety we have paused code checks on this number. " +
-                        "Try again in a few minutes, or use email instead.",
+                    title = stringResource(R.string.otp_rate_limited_title),
+                    body = stringResource(R.string.otp_rate_limited_body),
                     tone = NoticeTone.Danger,
                 )
 
                 null -> uiState.error?.let {
                     PamojaNotice(
                         icon = PamojaIcons.AlertCircle,
-                        title = "That did not work",
+                        title = stringResource(R.string.auth_failed_title),
                         body = it,
                         tone = NoticeTone.Danger,
                     )
@@ -179,7 +180,7 @@ fun OtpScreen(
             val secondsLeft = uiState.resendSecondsLeft
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Did not get it?",
+                    text = stringResource(R.string.otp_no_code),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary,
                 )
@@ -193,7 +194,7 @@ fun OtpScreen(
                     )
                     Spacer(modifier = Modifier.width(Spacing.x1))
                     Text(
-                        text = "Resend in 0:${secondsLeft.toString().padStart(2, '0')}",
+                        text = stringResource(R.string.otp_resend_in, secondsLeft),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textTertiary,
                     )
@@ -206,7 +207,7 @@ fun OtpScreen(
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
                     ) {
                         Text(
-                            text = "Send a new code",
+                            text = stringResource(R.string.otp_send_new),
                             style = MaterialTheme.typography.labelLarge,
                             color = colors.accentPrimary,
                         )
@@ -237,14 +238,14 @@ fun OtpScreen(
                         modifier = Modifier.size(20.dp),
                     )
                 } else {
-                    Text(text = "Verify", style = MaterialTheme.typography.labelLarge)
+                    Text(text = stringResource(R.string.otp_verify), style = MaterialTheme.typography.labelLarge)
                 }
             }
 
             Spacer(modifier = Modifier.height(Spacing.x4))
 
             Text(
-                text = "If your phone offers to fill the code, tapping it fills every box at once.",
+                text = stringResource(R.string.otp_autofill_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textTertiary,
             )

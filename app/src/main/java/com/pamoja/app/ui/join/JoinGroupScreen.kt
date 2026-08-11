@@ -35,6 +35,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
@@ -113,7 +115,7 @@ fun JoinGroupScreen(
                     .padding(bottom = Spacing.x6),
             ) {
                 Text(
-                    text = "Back to your groups",
+                    text = stringResource(R.string.common_back_to_groups),
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.accentPrimary,
                 )
@@ -162,7 +164,7 @@ private fun InvitePreviewContent(
         Spacer(modifier = Modifier.height(Spacing.x5))
 
         Text(
-            text = if (state.isAlreadyMember) "You are already in" else "You have been invited to",
+            text = stringResource(if (state.isAlreadyMember) R.string.join_already_in else R.string.join_invited_to),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.textSecondary,
             textAlign = TextAlign.Center,
@@ -187,12 +189,12 @@ private fun InvitePreviewContent(
         ) {
             InviteStat(
                 value = "${group.memberCount}",
-                label = if (group.memberCount == 1) "member" else "members",
+                label = stringResource(if (group.memberCount == 1) R.string.join_members_one else R.string.join_members_other),
                 modifier = Modifier.weight(1f),
             )
             InviteStat(
                 value = "%,d".format(group.weeklyTarget),
-                label = "steps a week, together",
+                label = stringResource(R.string.join_target_label),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -202,29 +204,28 @@ private fun InvitePreviewContent(
         when {
             state.isAlreadyMember -> PamojaNotice(
                 icon = PamojaIcons.Check,
-                title = "You are already a member",
-                body = "Nothing to do. Open the group to see how everyone is doing.",
+                title = stringResource(R.string.join_already_member_title),
+                body = stringResource(R.string.join_already_member_body),
                 tone = NoticeTone.Success,
             )
 
             state.isFull -> PamojaNotice(
                 icon = PamojaIcons.Users,
-                title = "This group is full",
-                body = "It has reached its limit of ${group.maxMemberCap} members. " +
-                    "Ask the admin to make room, or start a group of your own.",
+                title = stringResource(R.string.join_full_title),
+                body = stringResource(R.string.join_full_body, group.maxMemberCap),
                 tone = NoticeTone.Warning,
             )
 
             state.isOffline -> PamojaNotice(
                 icon = PamojaIcons.AlertCircle,
-                title = "You are offline",
-                body = "Joining needs a connection. This invite will still work once you are back.",
+                title = stringResource(R.string.join_offline_title),
+                body = stringResource(R.string.join_offline_body),
                 tone = NoticeTone.Warning,
             )
 
             state.joinError != null -> PamojaNotice(
                 icon = PamojaIcons.AlertCircle,
-                title = "Could not join",
+                title = stringResource(R.string.join_failed_title),
                 body = state.joinError.toJoinFailureBody(),
                 tone = NoticeTone.Danger,
             )
@@ -244,7 +245,7 @@ private fun InvitePreviewContent(
                     contentColor = colors.textOnBrand,
                 ),
             ) {
-                Text(text = "Open group", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.join_open_group), style = MaterialTheme.typography.labelLarge)
             }
         } else {
             Button(
@@ -269,7 +270,7 @@ private fun InvitePreviewContent(
                     )
                 } else {
                     Text(
-                        text = if (state.isFull) "Group is full" else "Join group",
+                        text = stringResource(if (state.isFull) R.string.join_button_full else R.string.join_button),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
@@ -283,7 +284,7 @@ private fun InvitePreviewContent(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = if (state.isAlreadyMember) "Not now" else "Cancel",
+                text = stringResource(if (state.isAlreadyMember) R.string.common_not_now else R.string.common_cancel),
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.textSecondary,
             )
@@ -361,15 +362,16 @@ private fun InvitePreviewSkeleton() {
  * The generic copy would say "someone got there first, refresh", which is not
  * what a person needs when the thing that happened is that a group filled up.
  */
+@Composable
 private fun Throwable.toJoinFailureBody(): String = when (this) {
     is com.pamoja.app.domain.error.AppError.Conflict ->
-        "Someone took the last place while you were deciding."
+        stringResource(R.string.join_failed_taken)
 
     is com.pamoja.app.domain.error.AppError.Offline ->
-        "You are offline. Try again once you have a connection."
+        stringResource(R.string.join_failed_offline)
 
     is com.pamoja.app.domain.error.AppError.PermissionDenied ->
-        "This invite is no longer accepting new members."
+        stringResource(R.string.join_failed_closed)
 
-    else -> "That did not work. Try again in a moment."
+    else -> stringResource(R.string.join_failed_generic)
 }

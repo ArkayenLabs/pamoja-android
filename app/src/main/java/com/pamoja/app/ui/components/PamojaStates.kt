@@ -29,6 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -122,6 +125,7 @@ fun PamojaErrorState(
 ) {
     val colors = LocalPamojaColors.current
     val copy = error.toErrorCopy()
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -147,7 +151,7 @@ fun PamojaErrorState(
         Spacer(modifier = Modifier.height(Spacing.x5))
 
         Text(
-            text = copy.title,
+            text = stringResource(copy.title),
             style = MaterialTheme.typography.headlineSmall,
             color = colors.textPrimary,
             textAlign = TextAlign.Center,
@@ -156,7 +160,7 @@ fun PamojaErrorState(
         Spacer(modifier = Modifier.height(Spacing.x2))
 
         Text(
-            text = copy.body,
+            text = copy.body(context),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.textSecondary,
             textAlign = TextAlign.Center,
@@ -173,7 +177,7 @@ fun PamojaErrorState(
                     contentColor = colors.textOnBrand,
                 ),
             ) {
-                Text(text = copy.retryLabel, style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(copy.retryLabel), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -216,7 +220,7 @@ fun OfflineBanner(
             Spacer(modifier = Modifier.width(Spacing.x3))
             Column {
                 Text(
-                    text = "You are offline",
+                    text = stringResource(R.string.offline_banner_title),
                     style = MaterialTheme.typography.labelLarge,
                     color = colors.textPrimary,
                 )

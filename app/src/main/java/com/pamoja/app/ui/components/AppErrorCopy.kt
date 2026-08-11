@@ -1,88 +1,109 @@
 package com.pamoja.app.ui.components
 
+import android.content.Context
+import androidx.annotation.StringRes
+import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 
 /**
  * What the user actually reads when something fails.
  *
- * [title] states what happened, [body] says what to do about it. Both are
- * plain language: no error codes, no "an error occurred", and never the
- * original exception text.
+ * Resource IDs rather than resolved strings, so the copy is translatable and so
+ * nothing here can accidentally carry an exception message. [title] states what
+ * happened, [body] says what to do about it.
  */
 data class ErrorCopy(
-    val title: String,
-    val body: String,
-    /** Null when retrying cannot help, which is when the Retry button is hidden. */
-    val retryLabel: String? = null,
-)
+    @StringRes val title: Int,
+    @StringRes val body: Int,
+    /** Null when retrying cannot help, which is when Retry is hidden. */
+    @StringRes val retryLabel: Int? = null,
+    /**
+     * Only set for validation failures, where the message was written for a
+     * human by whoever raised it and there is no resource for it. Overrides
+     * [body] when present.
+     */
+    val bodyOverride: String? = null,
+) {
+    fun body(context: Context): String = bodyOverride ?: context.getString(body)
+}
 
 /**
  * Maps an error to its wording.
  *
  * Deliberately a UI-layer concern. The domain classifies failures; how they are
  * phrased is a design decision, and keeping it here means copy can be reworded
- * without touching a repository.
+ * or translated without touching a repository.
  */
 fun Throwable.toErrorCopy(): ErrorCopy = when (val error = toAppError()) {
 
     is AppError.Offline -> ErrorCopy(
-        title = "You are offline",
-        body = "Check your connection. Your steps keep counting and will sync when you are back.",
-        retryLabel = "Try again",
+        title = R.string.error_offline_title,
+        body = R.string.error_offline_body,
+        retryLabel = R.string.common_try_again,
     )
 
     is AppError.Network -> ErrorCopy(
-        title = "That took too long",
-        body = "The connection dropped partway. Give it another go.",
-        retryLabel = "Try again",
+        title = R.string.error_network_title,
+        body = R.string.error_network_body,
+        retryLabel = R.string.common_try_again,
     )
 
     is AppError.PermissionDenied -> ErrorCopy(
-        title = "You cannot do that",
-        body = "You may have been removed from this group, or it no longer exists.",
+        title = R.string.error_permission_title,
+        body = R.string.error_permission_body,
     )
 
     is AppError.NotFound -> ErrorCopy(
-        title = "Not found",
-        body = "This may have been deleted, or the link may be wrong.",
+        title = R.string.error_not_found_title,
+        body = R.string.error_not_found_body,
     )
 
     is AppError.Conflict -> ErrorCopy(
-        title = "Something changed",
-        body = "Someone got there first. Refresh to see how things stand now.",
-        retryLabel = "Refresh",
+        title = R.string.error_conflict_title,
+        body = R.string.error_conflict_body,
+        retryLabel = R.string.common_refresh,
     )
 
     is AppError.SessionExpired -> ErrorCopy(
-        title = "Please sign in again",
-        body = "For your security, sessions do not last forever. Nothing has been lost.",
-        retryLabel = "Sign in",
+        title = R.string.error_session_title,
+        body = R.string.error_session_body,
+        retryLabel = R.string.common_sign_in,
     )
 
     is AppError.RateLimited -> ErrorCopy(
-        title = "Too many attempts",
-        body = "Wait a few minutes before trying again.",
-        retryLabel = "Try again",
+        title = R.string.error_rate_limited_title,
+        body = R.string.error_rate_limited_body,
+        retryLabel = R.string.common_try_again,
     )
 
-    // Already written for a human by whoever raised it.
     is AppError.Validation -> ErrorCopy(
-        title = "Check that again",
-        body = error.userMessage,
+        title = R.string.error_validation_title,
+        body = R.string.error_validation_title,
+        bodyOverride = error.userMessage,
     )
 
     is AppError.Unknown -> ErrorCopy(
-        title = "Something went wrong",
-        body = "That did not work, and we are not sure why. Trying again often helps.",
-        retryLabel = "Try again",
+        title = R.string.error_unknown_title,
+        body = R.string.error_unknown_body,
+        retryLabel = R.string.common_try_again,
     )
 }
 
-/** One-liner for a snackbar, where there is no room for a title and a body. */
-fun Throwable.toSnackbarMessage(): String = toErrorCopy().let { copy ->
-    when (toAppError()) {
-        is AppError.Validation -> copy.body
-        else -> "${copy.title}. ${copy.body}"
+/**
+ * One line for a snackbar, where there is no room for a title and a body.
+ *
+ * Takes a Context because snackbars are shown from LaunchedEffect, which is not
+ * a composable scope and cannot call stringResource.
+ */
+fun Throwable.toSnackbarMessage(context: Context): String {
+    val copy = toErrorCopy()
+    return when (toAppError()) {
+        is AppError.Validation -> copy.body(context)
+        else -> context.getString(
+            R.string.error_snackbar_format,
+            context.getString(copy.title),
+            copy.body(context),
+        )
     }
 }

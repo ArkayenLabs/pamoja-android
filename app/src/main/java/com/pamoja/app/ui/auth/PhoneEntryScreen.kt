@@ -48,6 +48,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -83,6 +85,7 @@ fun PhoneEntryScreen(
 
     val digits = uiState.phoneNumber.length
     val isComplete = digits in uiState.country.nationalDigits
+    val tooShortMessage = stringResource(R.string.phone_too_short, uiState.country.name)
 
     Box(
         modifier = Modifier
@@ -104,7 +107,7 @@ fun PhoneEntryScreen(
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Text(
-                text = "What is your number?",
+                text = stringResource(R.string.phone_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.textPrimary,
             )
@@ -112,7 +115,7 @@ fun PhoneEntryScreen(
             Spacer(modifier = Modifier.height(Spacing.x3))
 
             Text(
-                text = "We will text you a code to confirm it is you.",
+                text = stringResource(R.string.phone_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
             )
@@ -120,7 +123,7 @@ fun PhoneEntryScreen(
             Spacer(modifier = Modifier.height(Spacing.x8))
 
             Text(
-                text = "Phone number",
+                text = stringResource(R.string.phone_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.textSecondary,
             )
@@ -173,7 +176,7 @@ fun PhoneEntryScreen(
                     },
                     placeholder = {
                         Text(
-                            text = "Your number",
+                            text = stringResource(R.string.phone_placeholder),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.textTertiary,
                         )
@@ -218,7 +221,7 @@ fun PhoneEntryScreen(
                 }
             } else {
                 Text(
-                    text = "Standard message rates may apply. Your number is never shown to your group.",
+                    text = stringResource(R.string.phone_helper),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textTertiary,
                 )
@@ -229,8 +232,9 @@ fun PhoneEntryScreen(
             Button(
                 onClick = {
                     if (!isComplete) {
-                        blurError = "That number looks too short for ${uiState.country.name}. " +
-                            "Check the digits after the dial code."
+                        // Resolved here rather than inside the lambda, since a
+                        // click handler is not a composable scope.
+                        blurError = tooShortMessage
                     } else {
                         viewModel.sendCode(activity)
                     }
@@ -254,7 +258,7 @@ fun PhoneEntryScreen(
                         modifier = Modifier.size(20.dp),
                     )
                 } else {
-                    Text(text = "Send code", style = MaterialTheme.typography.labelLarge)
+                    Text(text = stringResource(R.string.phone_send_code), style = MaterialTheme.typography.labelLarge)
                 }
             }
 
@@ -296,7 +300,7 @@ private fun CountryPickerSheet(
     ) {
         Column(modifier = Modifier.padding(horizontal = Spacing.x6)) {
             Text(
-                text = "Select country",
+                text = stringResource(R.string.phone_select_country),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colors.textPrimary,
             )
@@ -308,7 +312,7 @@ private fun CountryPickerSheet(
                 onValueChange = { query = it },
                 placeholder = {
                     Text(
-                        text = "Country or dial code",
+                        text = stringResource(R.string.phone_search_country),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textTertiary,
                     )
@@ -423,7 +427,7 @@ private fun CountryRow(
                 Spacer(modifier = Modifier.width(Spacing.x3))
                 Icon(
                     painter = painterResource(PamojaIcons.Check),
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(R.string.common_selected),
                     tint = colors.accentPrimary,
                     modifier = Modifier.size(18.dp),
                 )

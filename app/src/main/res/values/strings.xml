@@ -1,3 +1,223 @@
 <resources>
+    <!--
+      Naming: <area>_<element>. Areas match the ui/ package names, so a string
+      is findable from the screen it appears on and vice versa.
+
+      Country names are NOT here. They come from Locale.getDisplayCountry(), so
+      they are already localised in every language Android supports. See
+      ui/auth/Country.kt.
+
+      Translators: %1$s style placeholders must keep their numbering, and the
+      order they appear in a sentence may differ per language. German runs about
+      30% longer than English, so avoid padding these out.
+    -->
     <string name="app_name">Pamoja</string>
+
+    <!-- ── Common ─────────────────────────────────────────────────────── -->
+    <string name="common_cancel">Cancel</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_back">Back</string>
+    <string name="common_not_now">Not now</string>
+    <string name="common_try_again">Try again</string>
+    <string name="common_refresh">Refresh</string>
+    <string name="common_sign_in">Sign in</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_show_password">Show password</string>
+    <string name="common_hide_password">Hide password</string>
+    <string name="common_selected">Selected</string>
+    <string name="common_back_to_groups">Back to your groups</string>
+
+    <!-- ── Errors ─────────────────────────────────────────────────────── -->
+    <string name="error_offline_title">You are offline</string>
+    <string name="error_offline_body">Check your connection. Your steps keep counting and will sync when you are back.</string>
+    <string name="error_network_title">That took too long</string>
+    <string name="error_network_body">The connection dropped partway. Give it another go.</string>
+    <string name="error_permission_title">You cannot do that</string>
+    <string name="error_permission_body">You may have been removed from this group, or it no longer exists.</string>
+    <string name="error_not_found_title">Not found</string>
+    <string name="error_not_found_body">This may have been deleted, or the link may be wrong.</string>
+    <string name="error_conflict_title">Something changed</string>
+    <string name="error_conflict_body">Someone got there first. Refresh to see how things stand now.</string>
+    <string name="error_session_title">Please sign in again</string>
+    <string name="error_session_body">For your security, sessions do not last forever. Nothing has been lost.</string>
+    <string name="error_rate_limited_title">Too many attempts</string>
+    <string name="error_rate_limited_body">Wait a few minutes before trying again.</string>
+    <string name="error_validation_title">Check that again</string>
+    <string name="error_unknown_title">Something went wrong</string>
+    <string name="error_unknown_body">That did not work, and we are not sure why. Trying again often helps.</string>
+    <string name="error_snackbar_format">%1$s. %2$s</string>
+
+    <!-- ── Offline banner ─────────────────────────────────────────────── -->
+    <string name="offline_banner_title">You are offline</string>
+    <string name="offline_home_stale">Showing your groups as they were when you were last online</string>
+    <string name="offline_group_stale">Showing the last totals that reached this phone</string>
+
+    <!-- ── Welcome ────────────────────────────────────────────────────── -->
+    <string name="welcome_get_started">Get started</string>
+
+    <!-- ── Auth landing ───────────────────────────────────────────────── -->
+    <string name="auth_landing_title">Keep your groups safe</string>
+    <string name="auth_landing_subtitle">Sign in so your groups and step history follow you to a new phone.</string>
+    <string name="auth_reassurance_title">We only store what signs you in</string>
+    <string name="auth_reassurance_body">No contacts, no social graph, nothing posted anywhere.</string>
+    <string name="auth_failed_title">That did not work</string>
+    <string name="auth_continue_google">Continue with Google</string>
+    <string name="auth_opening_google">Opening Google…</string>
+    <string name="auth_continue_phone">Continue with phone</string>
+    <string name="auth_continue_email">Continue with email</string>
+    <string name="auth_legal_line">By continuing you agree to our Terms and Privacy Policy.</string>
+
+    <!-- ── Phone entry ────────────────────────────────────────────────── -->
+    <string name="phone_title">What is your number?</string>
+    <string name="phone_subtitle">We will text you a code to confirm it is you.</string>
+    <string name="phone_label">Phone number</string>
+    <string name="phone_placeholder">Your number</string>
+    <string name="phone_helper">Standard message rates may apply. Your number is never shown to your group.</string>
+    <string name="phone_too_short">That number looks too short for %1$s. Check the digits after the dial code.</string>
+    <string name="phone_send_code">Send code</string>
+    <string name="phone_select_country">Select country</string>
+    <string name="phone_search_country">Country or dial code</string>
+
+    <!-- ── OTP ────────────────────────────────────────────────────────── -->
+    <string name="otp_title">Enter your code</string>
+    <string name="otp_sent_to">Sent to %1$s %2$s</string>
+    <string name="otp_wrong_number">Wrong number? Go back</string>
+    <string name="otp_wrong_code_title">That code is not right</string>
+    <string name="otp_wrong_code_body">Check the digits and try again.</string>
+    <string name="otp_expired_title">This code expired</string>
+    <string name="otp_expired_body">Codes last a few minutes. Send a fresh one below.</string>
+    <string name="otp_rate_limited_title">Too many attempts</string>
+    <string name="otp_rate_limited_body">For safety we have paused code checks on this number. Try again in a few minutes, or use email instead.</string>
+    <string name="otp_no_code">Did not get it?</string>
+    <string name="otp_resend_in">Resend in 0:%1$02d</string>
+    <string name="otp_send_new">Send a new code</string>
+    <string name="otp_verify">Verify</string>
+    <string name="otp_autofill_hint">If your phone offers to fill the code, tapping it fills every box at once.</string>
+
+    <!-- ── Email auth ─────────────────────────────────────────────────── -->
+    <string name="email_signup_title">Sign up with email</string>
+    <string name="email_signin_title">Welcome back</string>
+    <string name="email_signup_subtitle">One account keeps your groups and history safe.</string>
+    <string name="email_signin_subtitle">Sign in to pick up where you left off.</string>
+    <string name="email_label">Email</string>
+    <string name="email_placeholder">you@example.com</string>
+    <string name="email_supporting">Used to sign in and to reset your password. Never shown to your group.</string>
+    <string name="email_required">Enter your email address</string>
+    <string name="email_invalid">That email address does not look right</string>
+    <string name="password_label">Password</string>
+    <string name="password_placeholder_new">At least 8 characters</string>
+    <string name="password_placeholder_existing">Your password</string>
+    <string name="password_too_short">Use at least 8 characters</string>
+    <string name="password_strength_short">Too short</string>
+    <string name="password_strength_ok">Getting there</string>
+    <string name="password_strength_good">Good password</string>
+    <string name="password_strength_strong">Strong password</string>
+    <string name="password_needs_length">%1$s. Use at least 8 characters.</string>
+    <string name="password_needs_symbol">%1$s. Add a number or symbol to strengthen it.</string>
+    <string name="email_forgot">Forgot password?</string>
+    <string name="email_create_account">Create account</string>
+    <string name="email_have_account">Already have an account?</string>
+    <string name="email_new_here">New to Pamoja?</string>
+    <string name="email_create_one">Create one</string>
+
+    <!-- ── Forgot password ────────────────────────────────────────────── -->
+    <string name="reset_title">Reset your password</string>
+    <string name="reset_subtitle">We will email you a link to set a new one.</string>
+    <string name="reset_send">Send reset link</string>
+    <string name="reset_sent_title">Check your inbox</string>
+    <string name="reset_sent_body">We sent a reset link to %1$s.</string>
+    <string name="reset_nothing_title">Nothing after a minute?</string>
+    <string name="reset_nothing_body">Check your spam folder, or send it again below.</string>
+    <string name="reset_resend">Resend</string>
+    <string name="reset_back_to_signin">Back to sign in</string>
+
+    <!-- ── Profile setup ──────────────────────────────────────────────── -->
+    <string name="profile_title">Set up your profile</string>
+    <string name="profile_subtitle">Your group sees your name. Everything else is optional.</string>
+    <string name="profile_add_photo">Add photo</string>
+    <string name="profile_name_label">Name</string>
+    <string name="profile_name_placeholder">What should we call you?</string>
+    <string name="profile_name_required">Your group needs something to call you</string>
+    <string name="profile_name_too_long">That is a little long, keep it under 50</string>
+    <string name="profile_age_label">Age</string>
+    <string name="profile_height_label">Height cm</string>
+    <string name="profile_weight_label">Weight kg</string>
+    <string name="profile_optional_placeholder">-</string>
+    <string name="profile_optional_note">Age, height and weight are optional and private.</string>
+    <string name="profile_number_invalid">Enter your %1$s as a number</string>
+    <string name="profile_number_range">That %1$s does not look right</string>
+    <string name="profile_field_age">age</string>
+    <string name="profile_field_height">height</string>
+    <string name="profile_field_weight">weight</string>
+    <string name="profile_creating">Creating account…</string>
+
+    <!-- ── Home ───────────────────────────────────────────────────────── -->
+    <string name="home_your_groups">YOUR GROUPS</string>
+    <string name="home_join_title">Join a group</string>
+    <string name="home_greeting_fallback">there</string>
+
+    <!-- ── Create group ───────────────────────────────────────────────── -->
+    <string name="create_group_title">Create your group</string>
+    <string name="create_group_subtitle">You can edit these anytime as admin.</string>
+    <string name="create_group_name_label">Group name</string>
+    <string name="create_group_name_placeholder">e.g. Sharma Family</string>
+    <string name="create_group_name_required">Give the group a name</string>
+    <string name="create_group_name_too_long">That is a little long, keep it under 50</string>
+    <string name="create_group_weekly_goal">Weekly step goal</string>
+    <string name="create_group_steps_format">%1$s steps</string>
+
+    <!-- ── Group dashboard ────────────────────────────────────────────── -->
+    <string name="group_leaderboard">LEADERBOARD</string>
+    <string name="group_unavailable_title">This group is no longer available</string>
+    <string name="group_unavailable_body">It may have been deleted, or you may no longer be a member.</string>
+    <string name="group_steps_failed_title">Step totals did not load</string>
+    <string name="group_steps_failed_body">Everyone\'s names are here, but their counts could not be fetched. The numbers below may be incomplete.</string>
+    <string name="group_no_steps_title">No steps yet this week</string>
+    <string name="group_no_steps_body">The board fills up as everyone walks. Yours will show here within about half an hour of your first steps.</string>
+    <string name="group_share_invite">Share invite link</string>
+    <string name="group_invite_inactive">This group\'s invite link is no longer active.</string>
+    <string name="group_health_permission_needed">Step tracking needs permission in Health Connect.</string>
+    <string name="group_health_unavailable">Health Connect is not available on this device.</string>
+
+    <!-- ── Join preview ───────────────────────────────────────────────── -->
+    <string name="join_invited_to">You have been invited to</string>
+    <string name="join_already_in">You are already in</string>
+    <string name="join_members_one">member</string>
+    <string name="join_members_other">members</string>
+    <string name="join_target_label">steps a week, together</string>
+    <string name="join_already_member_title">You are already a member</string>
+    <string name="join_already_member_body">Nothing to do. Open the group to see how everyone is doing.</string>
+    <string name="join_full_title">This group is full</string>
+    <string name="join_full_body">It has reached its limit of %1$d members. Ask the admin to make room, or start a group of your own.</string>
+    <string name="join_offline_title">You are offline</string>
+    <string name="join_offline_body">Joining needs a connection. This invite will still work once you are back.</string>
+    <string name="join_failed_title">Could not join</string>
+    <string name="join_failed_taken">Someone took the last place while you were deciding.</string>
+    <string name="join_failed_offline">You are offline. Try again once you have a connection.</string>
+    <string name="join_failed_closed">This invite is no longer accepting new members.</string>
+    <string name="join_failed_generic">That did not work. Try again in a moment.</string>
+    <string name="join_open_group">Open group</string>
+    <string name="join_button">Join group</string>
+    <string name="join_button_full">Group is full</string>
+
+    <!-- ── Settings ───────────────────────────────────────────────────── -->
+    <string name="settings_privacy_title">Privacy Policy</string>
+    <string name="settings_privacy_subtitle">How we handle your data, including step data</string>
+    <string name="settings_terms_title">Terms of Use</string>
+    <string name="settings_terms_subtitle">The agreement you accepted when you signed in</string>
+    <string name="settings_account_actions">ACCOUNT ACTIONS</string>
+    <string name="settings_logout_title">Log Out</string>
+    <string name="settings_logout_subtitle">Sign out of your account on this device</string>
+    <string name="settings_delete_title">Delete Account</string>
+    <string name="settings_delete_subtitle">Permanently wipe your profile and statistics</string>
+    <string name="settings_delete_confirm">Delete Permanently</string>
+    <string name="settings_delete_warning">This action is permanent and cannot be undone. All your step groups and progress history will be removed.</string>
+    <string name="settings_reauth_title">Confirm it is you</string>
+    <string name="settings_reauth_body">For your safety we ask you to sign in again before deleting an account. Nothing has been deleted yet.</string>
+    <string name="settings_reauth_phone_body">For your safety we text a code to the number on this account before deleting it. Nothing has been deleted yet.</string>
+    <string name="settings_reauth_code_body">Enter the code we sent to %1$s. Nothing has been deleted yet.</string>
+    <string name="settings_debug">DEBUG</string>
+    <string name="settings_debug_notifications_title">Send test notifications</string>
+    <string name="settings_debug_notifications_subtitle">One per channel, bypassing quiet hours and throttling</string>
+    <string name="settings_version">Pamoja v%1$s</string>
 </resources>

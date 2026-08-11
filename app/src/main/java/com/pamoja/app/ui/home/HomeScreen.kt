@@ -100,6 +100,7 @@ fun HomeScreen(
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
+    val context = LocalContext.current
     val uiState     by viewModel.uiState.collectAsState()
     val joinUiState by joinViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -121,7 +122,7 @@ fun HomeScreen(
         // nothing to show, the full error state renders instead and a snackbar
         // on top of it would be saying the same thing twice.
         if (uiState.showErrorSnackbar) {
-            snackbarHostState.showSnackbar(error.toSnackbarMessage())
+            snackbarHostState.showSnackbar(error.toSnackbarMessage(context))
             viewModel.clearError()
         }
     }
@@ -134,7 +135,6 @@ fun HomeScreen(
         }
     }
 
-    val context = LocalContext.current
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { /* no-op */ }

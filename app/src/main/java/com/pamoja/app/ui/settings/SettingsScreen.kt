@@ -82,6 +82,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
     onEditProfile: () -> Unit,
+    onNotificationSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -451,6 +452,24 @@ fun SettingsScreen(
                     selected = uiState.theme,
                     onSelect = viewModel::setTheme,
                 )
+
+                Spacer(modifier = Modifier.height(Spacing.x3))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.x6)
+                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                ) {
+                    SettingsRow(
+                        icon = PamojaIcons.Bell,
+                        title = stringResource(R.string.settings_notifications_title),
+                        subtitle = stringResource(R.string.settings_notifications_sub),
+                        onClick = onNotificationSettings,
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 

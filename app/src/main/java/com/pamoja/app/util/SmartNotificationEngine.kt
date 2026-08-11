@@ -67,6 +67,18 @@ enum class NotificationCategory(val channelId: String) {
     RECAP("pamoja_recap"),
 }
 
+/**
+ * Minutes from midnight to a wall-clock time.
+ *
+ * Quiet hours are stored as an Int because a formatted string would break the
+ * moment the device locale or timezone changed. Coerced rather than trusted, so
+ * a corrupt value cannot throw inside the notification path.
+ */
+fun minuteOfDayToTime(minuteOfDay: Int): LocalTime {
+    val safe = minuteOfDay.coerceIn(0, 24 * 60 - 1)
+    return LocalTime.of(safe / 60, safe % 60)
+}
+
 data class PamojaNotification(
     val category: NotificationCategory,
     val title: String,
@@ -108,12 +120,25 @@ data class NotificationContext(
     /** Day of year. Rotates wording so repeated types do not read identically.
      *  Deterministic, so tests stay stable and nothing extra is persisted. */
     val rotationSeed: Int = 0,
+
+    /**
+     * Categories the user has switched off in Settings.
+     *
+     * Carried here rather than read by the engine, so the engine stays pure
+     * Kotlin with no dependency on storage, and every gate input arrives the
+     * same way.
+     */
+    val mutedCategories: Set<NotificationCategory> = emptySet(),
+
+    /** User-chosen quiet window. Defaults match what used to be hardcoded. */
+    val quietStart: LocalTime = LocalTime.of(22, 0),
+    val quietEnd: LocalTime = LocalTime.of(8, 0),
 )
 
 object SmartNotificationEngine {
 
-    private val QUIET_START: LocalTime = LocalTime.of(22, 0)
-    private val QUIET_END: LocalTime = LocalTime.of(8, 0)
+    // Quiet hours are no longer constants. They arrive on NotificationContext
+    // because the user chooses them in Settings.
 
     /** Fogg's Ability condition. Telling someone at 21:30 they need 4,000 steps
      *  is a prompt they cannot act on, and it teaches them to ignore us. */
@@ -157,12 +182,17 @@ object SmartNotificationEngine {
     // ── Gatekeeping ─────────────────────────────────────────────────────────
 
     private fun isAllowed(n: PamojaNotification, ctx: NotificationContext): Boolean {
+        // Checked before anything else, including the achievement override
+        // below. A switch the user turned off is a decision, not a heuristic,
+        // and nothing the engine believes about value should overrule it.
+        if (n.category in ctx.mutedCategories) return false
+
         // Hitting the goal is the emotional peak of the product. Rare, and
         // unambiguously welcome, so it is the only thing that overrides quiet
         // hours and backoff.
         if (n.category == NotificationCategory.ACHIEVEMENT && ctx.goalReachedJustNow) return true
 
-        if (isQuietHours(ctx.now)) return false
+        if (isQuietHours(ctx.now, ctx.quietStart, ctx.quietEnd)) return false
         if (ctx.hoursSinceLastNotification < MIN_HOURS_BETWEEN_NOTIFICATIONS) return false
         if (ctx.consecutiveIgnored >= IGNORES_BEFORE_DEEP_BACKOFF) return false
         if (ctx.consecutiveIgnored >= IGNORES_BEFORE_BACKOFF &&
@@ -173,8 +203,19 @@ object SmartNotificationEngine {
         return true
     }
 
-    private fun isQuietHours(now: LocalTime): Boolean =
-        now.isAfter(QUIET_START) || now.isBefore(QUIET_END)
+    /**
+     * Handles a window that wraps past midnight, which the usual one is.
+     *
+     * 22:00 to 08:00 means "after 22:00 OR before 08:00", but a user who sets
+     * 09:00 to 17:00 means "after 09:00 AND before 17:00". Treating both the
+     * same way silences the app all day for anyone who picks a daytime window.
+     */
+    private fun isQuietHours(now: LocalTime, start: LocalTime, end: LocalTime): Boolean =
+        if (start <= end) {
+            now >= start && now < end
+        } else {
+            now >= start || now < end
+        }
 
     private fun isInNudgeWindow(now: LocalTime): Boolean =
         !now.isBefore(NUDGE_WINDOW_START) && !now.isAfter(NUDGE_WINDOW_END)

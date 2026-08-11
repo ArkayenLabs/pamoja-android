@@ -16,7 +16,9 @@ import com.pamoja.app.domain.usecase.GetGroupStepsForWeekUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.SmartNotificationEngine
+import com.pamoja.app.util.NotificationCategory
 import com.pamoja.app.util.NotificationContext
+import com.pamoja.app.util.minuteOfDayToTime
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -224,6 +226,20 @@ class StepSyncWorker @AssistedInject constructor(
                 // Day of year rotates the wording so repeated notification types
                 // don't read identically every time.
                 rotationSeed = today.dayOfYear,
+                // What the user chose in Settings. An unrecognised stored name
+                // is ignored rather than crashing, so a category renamed in a
+                // later release cannot brick notifications for existing users.
+                mutedCategories = (userPreferences.mutedNotificationCategories.firstOrNull() ?: emptySet())
+                    .mapNotNull { name ->
+                        NotificationCategory.entries.firstOrNull { it.name == name }
+                    }
+                    .toSet(),
+                quietStart = minuteOfDayToTime(
+                    userPreferences.quietHoursStartMinute.firstOrNull() ?: (22 * 60)
+                ),
+                quietEnd = minuteOfDayToTime(
+                    userPreferences.quietHoursEndMinute.firstOrNull() ?: (8 * 60)
+                ),
             )
 
             val notification = SmartNotificationEngine.select(context)

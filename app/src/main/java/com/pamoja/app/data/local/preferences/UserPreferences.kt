@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.pamoja.app.domain.model.ThemePreference
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -63,6 +64,16 @@ class UserPreferences @Inject constructor(
         // When steps last actually reached Firestore. Written only on a
         // successful sync, so "last synced" never claims a run that failed.
         val KEY_LAST_SYNC_TIME           = longPreferencesKey("last_sync_time")
+
+        // Categories the user has switched OFF, not the ones left on. Storing
+        // the exclusions means a category added in a later release is on by
+        // default rather than silently missing for existing users.
+        val KEY_MUTED_CATEGORIES         = stringSetPreferencesKey("muted_notification_categories")
+
+        // Minutes from midnight, so a time survives locale and timezone changes
+        // that a formatted string would not.
+        val KEY_QUIET_START_MINUTE       = intPreferencesKey("quiet_hours_start_minute")
+        val KEY_QUIET_END_MINUTE         = intPreferencesKey("quiet_hours_end_minute")
     }
 
     val userId: Flow<String?>  = context.dataStore.data.map { it[KEY_USER_ID] }
@@ -100,6 +111,34 @@ class UserPreferences @Inject constructor(
 
     suspend fun saveLastSyncTime(timestamp: Long) {
         context.dataStore.edit { it[KEY_LAST_SYNC_TIME] = timestamp }
+    }
+
+    /** Names of the notification categories the user has switched off. */
+    val mutedNotificationCategories: Flow<Set<String>> = context.dataStore.data.map {
+        it[KEY_MUTED_CATEGORIES] ?: emptySet()
+    }
+
+    suspend fun setCategoryMuted(categoryName: String, muted: Boolean) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[KEY_MUTED_CATEGORIES] ?: emptySet()
+            prefs[KEY_MUTED_CATEGORIES] =
+                if (muted) current + categoryName else current - categoryName
+        }
+    }
+
+    /** Defaults to the 22:00 to 08:00 window the engine used to hardcode. */
+    val quietHoursStartMinute: Flow<Int> = context.dataStore.data.map {
+        it[KEY_QUIET_START_MINUTE] ?: (22 * 60)
+    }
+    val quietHoursEndMinute: Flow<Int> = context.dataStore.data.map {
+        it[KEY_QUIET_END_MINUTE] ?: (8 * 60)
+    }
+
+    suspend fun saveQuietHours(startMinute: Int, endMinute: Int) {
+        context.dataStore.edit {
+            it[KEY_QUIET_START_MINUTE] = startMinute
+            it[KEY_QUIET_END_MINUTE] = endMinute
+        }
     }
 
     suspend fun saveLastKnownGroupTotal(total: Long) {

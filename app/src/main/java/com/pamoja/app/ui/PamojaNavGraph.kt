@@ -182,12 +182,23 @@ fun PamojaNavGraph(
                 },
                 onEditProfile = {
                     navController.navigate(Screen.EditProfile.route)
+                },
+                onNotificationSettings = {
+                    navController.navigate(Screen.NotificationSettings.route)
                 }
             )
         }
 
         composable(Screen.EditProfile.route) {
             com.pamoja.app.ui.profile.EditProfileScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.NotificationSettings.route) {
+            com.pamoja.app.ui.notifications.NotificationSettingsScreen(
                 onBack = {
                     navController.popBackStack()
                 }

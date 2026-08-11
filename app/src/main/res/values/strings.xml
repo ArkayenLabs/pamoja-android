@@ -207,11 +207,14 @@
     <string name="home_greeting_fallback">there</string>
     <string name="home_join_body">Paste the invite link shared by your group admin.</string>
     <string name="home_join_placeholder">Paste the invite link</string>
+    <string name="home_join_scan">Or scan their QR code</string>
+    <string name="home_join_qr_not_pamoja">That QR code is not a Pamoja invite</string>
+    <string name="home_join_qr_failed">Could not read that code. Try again, or paste the link.</string>
     <string name="home_join_cta">Join a group via invite link</string>
     <string name="home_settings_desc">Settings</string>
     <string name="home_open_group_desc">Open group</string>
     <string name="home_empty_title">No groups yet</string>
-    <string name="home_empty_body">Create a group and invite friends or family, or join one with an invite link.</string>
+    <string name="home_empty_body">Create a group and invite your people, or join one with an invite link.</string>
     <string name="home_join_short">Join</string>
     <string name="home_new_group">New group</string>
     <string name="home_good_morning">Good morning</string>
@@ -228,7 +231,7 @@
     <string name="create_group_title">Create your group</string>
     <string name="create_group_subtitle">You can edit these anytime as admin.</string>
     <string name="create_group_name_label">Group name</string>
-    <string name="create_group_name_placeholder">e.g. Sharma Family</string>
+    <string name="create_group_name_placeholder">e.g. Morning Walkers</string>
     <string name="create_group_name_required">Give the group a name</string>
     <string name="create_group_name_too_long">That is a little long, keep it under 50</string>
     <string name="create_group_weekly_goal">Weekly step goal</string>
@@ -273,6 +276,7 @@
     <string name="invite_share_chooser">Share invite link</string>
     <string name="invite_more_options">More share options</string>
     <string name="invite_go_to_group">Go to my group</string>
+    <string name="invite_qr_hint">Standing next to them? Let them scan this.</string>
     <string name="invite_group_label">Invite people to</string>
     <string name="invite_details_failed_title">Could not load the group details</string>
     <string name="invite_details_failed_body">The link below still works. Share it now, or retry to see the group.</string>
@@ -406,6 +410,31 @@
     <string name="settings_health_synced_minutes">Synced %1$d min ago</string>
     <string name="settings_health_synced_hours">Synced %1$d h ago</string>
     <string name="settings_health_synced_days">Synced %1$d d ago</string>
+
+    <!-- ── Notification settings ──────────────────────────────────────── -->
+    <string name="notif_title">Notifications</string>
+    <string name="notif_subtitle">Choose what is worth interrupting you for.</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_sub">What we send, and when we stay quiet</string>
+    <string name="notif_blocked_title">Notifications are turned off</string>
+    <string name="notif_blocked_body">Android is blocking everything from Pamoja, so nothing below can reach you until you allow them.</string>
+    <string name="notif_blocked_action">Open system settings</string>
+    <string name="notif_all_muted_title">Everything is switched off</string>
+    <string name="notif_all_muted_body">You will not hear from Pamoja at all, including when your group hits its goal.</string>
+    <string name="notif_section_types">WHAT TO SEND</string>
+    <string name="notif_achievement_title">Goals and achievements</string>
+    <string name="notif_achievement_sub">Your group hit its weekly goal, streaks, milestones</string>
+    <string name="notif_group_title">Group activity</string>
+    <string name="notif_group_sub">Someone joined, someone passed you on the leaderboard</string>
+    <string name="notif_reminder_title">Step reminders</string>
+    <string name="notif_reminder_sub">A nudge when there is still time in the day to act on it</string>
+    <string name="notif_recap_title">Weekly recap</string>
+    <string name="notif_recap_sub">How your group did, once a week</string>
+    <string name="notif_section_quiet">QUIET HOURS</string>
+    <string name="notif_quiet_body">Nothing arrives during this window. Hitting your weekly goal is the one exception.</string>
+    <string name="notif_quiet_from">From</string>
+    <string name="notif_quiet_to">To</string>
+    <string name="notif_quiet_all_day">This covers the whole day, so nothing would ever arrive.</string>
 
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so

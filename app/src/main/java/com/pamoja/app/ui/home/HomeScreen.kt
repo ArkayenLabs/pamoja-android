@@ -44,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
@@ -68,6 +69,9 @@ import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.util.InviteLink
+import com.pamoja.app.util.QrScanner
+import kotlinx.coroutines.launch
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.delay
@@ -106,8 +110,13 @@ fun HomeScreen(
     val uiState     by viewModel.uiState.collectAsState()
     val joinUiState by joinViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showJoinDialog by remember { mutableStateOf(false) }
     var inviteLink     by remember { mutableStateOf("") }
+
+    // Hoisted: shown from the scanner callback, which is not a composable scope.
+    val qrNotPamojaMessage = stringResource(R.string.home_join_qr_not_pamoja)
+    val qrFailedMessage    = stringResource(R.string.home_join_qr_failed)
 
     LaunchedEffect(uiState.error) {
         val error = uiState.error ?: return@LaunchedEffect
@@ -194,6 +203,57 @@ fun HomeScreen(
                             cursorColor             = colors.accentPrimary
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(Spacing.x3))
+
+                    // The in-person path. Someone standing next to you shows
+                    // their invite screen and this reads it, instead of them
+                    // dictating a URL.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(PamojaRadii.sm))
+                            .clickable {
+                                QrScanner.scan(context) { result ->
+                                    result.onSuccess { raw ->
+                                        val code = joinViewModel.normalise(raw)
+                                        if (InviteLink.isInviteLink(raw) || code.isNotBlank()) {
+                                            showJoinDialog = false
+                                            inviteLink = ""
+                                            onOpenInvite(code)
+                                        } else {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(qrNotPamojaMessage)
+                                            }
+                                        }
+                                    }
+                                    // A cancelled scan is a choice, so it says
+                                    // nothing and leaves the dialog as it was.
+                                    result.onFailure { e ->
+                                        if (e !is QrScanner.Cancelled) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(qrFailedMessage)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(vertical = Spacing.x3),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            painter = painterResource(PamojaIcons.QrCode),
+                            contentDescription = null,
+                            tint = colors.accentPrimary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.x2))
+                        Text(
+                            text  = stringResource(R.string.home_join_scan),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colors.accentPrimary,
+                        )
+                    }
                 }
             },
             confirmButton = {

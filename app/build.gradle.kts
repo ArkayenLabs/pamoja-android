@@ -118,6 +118,10 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
+
+    // QR, for joining a group in person
+    implementation(libs.zxing.core)
+    implementation(libs.play.services.code.scanner)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.text.google.fonts)
 

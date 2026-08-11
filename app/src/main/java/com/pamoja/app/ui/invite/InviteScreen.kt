@@ -51,6 +51,7 @@ import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaNotice
+import com.pamoja.app.ui.components.PamojaQrCode
 import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -206,7 +207,23 @@ fun InviteScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.x7))
+                Spacer(modifier = Modifier.height(Spacing.x6))
+
+                // ── QR, for handing the invite to someone standing there ──
+                // Faster than reading a URL aloud, which is what this flow
+                // used to require for anyone not on a messaging app.
+                PamojaQrCode(content = inviteLink)
+
+                Spacer(modifier = Modifier.height(Spacing.x3))
+
+                Text(
+                    text      = stringResource(R.string.invite_qr_hint),
+                    style     = MaterialTheme.typography.bodySmall,
+                    color     = colors.textTertiary,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.x5))
 
                 // ── Invite link card ──────────────────────────────────────
                 val linkShape = RoundedCornerShape(PamojaRadii.md)

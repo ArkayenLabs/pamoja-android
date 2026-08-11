@@ -40,6 +40,8 @@ object PamojaIcons {
     @DrawableRes val EyeOff = R.drawable.ic_eye_off
     @DrawableRes val AlertCircle = R.drawable.ic_alert_circle
     @DrawableRes val Clock = R.drawable.ic_clock
+    @DrawableRes val Bell = R.drawable.ic_bell
+    @DrawableRes val QrCode = R.drawable.ic_qr_code
     @DrawableRes val Refresh = R.drawable.ic_refresh
     @DrawableRes val Search = R.drawable.ic_search
     @DrawableRes val Close = R.drawable.ic_x

@@ -19,6 +19,19 @@ keystore.properties
 *.jks
 *.keystore
 
+# Internal planning and working notes. Kept on disk, out of the repo.
+# CHECKLIST.md in particular carries pricing, revenue modelling and tax
+# position, none of which belongs in a public repository.
+BACKLOG.md
+CHECKLIST.md
+SUMMARY.md
+design/
+rules/
+
+# Tooling output
+graphify-out/
+.kotlin/
+
 # Agent configurations & instruction files
 .agents/
 CLAUDE.md

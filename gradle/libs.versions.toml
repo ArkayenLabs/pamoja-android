@@ -39,6 +39,12 @@ coroutines = "1.10.2"
 credentials = "1.3.0"
 googleid = "1.1.1"
 
+# QR. zxing core is pure Java with no Android dependency, used only to generate
+# the invite code. Scanning uses Google's Code Scanner, which runs inside Play
+# services, so the app needs no CAMERA permission and no custom camera UI.
+zxingCore = "3.5.4"
+playServicesCodeScanner = "16.1.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -97,6 +103,10 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 # Google Sign-In (Credential Manager)
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
+
+# QR
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
+play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [plugins]

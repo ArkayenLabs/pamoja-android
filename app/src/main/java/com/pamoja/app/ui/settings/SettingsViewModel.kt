@@ -8,7 +8,6 @@ import com.pamoja.app.data.remote.auth.GoogleCredentialClient
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
-import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
 import com.pamoja.app.domain.usecase.GetAuthMethodsUseCase
@@ -19,7 +18,6 @@ import com.pamoja.app.domain.usecase.ReauthenticateWithGoogleUseCase
 import com.pamoja.app.domain.usecase.ReauthenticateWithPhoneUseCase
 import com.pamoja.app.domain.usecase.SignOutUseCase
 import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
-import com.pamoja.app.domain.usecase.UpdateUserUseCase
 import com.pamoja.app.util.NotificationContext
 import com.pamoja.app.util.SmartNotificationEngine
 import com.pamoja.app.util.SmartNotificationHelper
@@ -51,6 +49,15 @@ data class SettingsUiState(
     val messageArg: Int? = null,
     val userName: String = "",
     val userId: String = "",
+    /**
+     * Shown as a one-line summary in the profile header.
+     *
+     * Collected during onboarding and, until the profile editor existed,
+     * displayed nowhere at all.
+     */
+    val age: Int? = null,
+    val height: Float? = null,
+    val weight: Float? = null,
     val isSignedOut: Boolean = false,
     /** Non-null when deletion is waiting on the user re-confirming who they are. */
     val reauthRequired: ReauthMethod? = null,
@@ -64,7 +71,6 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val getUserUseCase: GetUserUseCase,
-    private val updateUserUseCase: UpdateUserUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val userPreferences: UserPreferences,
@@ -81,6 +87,11 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
+        loadUserDetails()
+    }
+
+    /** Re-reads the profile, for coming back from the editor with it changed. */
+    fun refresh() {
         loadUserDetails()
     }
 
@@ -110,7 +121,10 @@ class SettingsViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             userId = user.userId,
-                            userName = user.name
+                            userName = user.name,
+                            age = user.age,
+                            height = user.height,
+                            weight = user.weight
                         )
                     },
                     onFailure = {
@@ -120,37 +134,6 @@ class SettingsViewModel @Inject constructor(
             } else {
                 _uiState.value = _uiState.value.copy(isLoading = false)
             }
-        }
-    }
-
-    fun updateUserName(newName: String) {
-        if (newName.isBlank()) {
-            _uiState.value = _uiState.value.copy(messageRes = R.string.settings_name_empty)
-            return
-        }
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null, messageRes = null)
-            val currentUserId = _uiState.value.userId
-            
-            val user = User(userId = currentUserId, name = newName)
-            val result = updateUserUseCase(user)
-            
-            result.fold(
-                onSuccess = {
-                    userPreferences.saveUserName(newName)
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        userName = newName,
-                        messageRes = R.string.settings_name_updated
-                    )
-                },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = error.toAppError()
-                    )
-                }
-            )
         }
     }
 

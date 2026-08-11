@@ -33,4 +33,7 @@ sealed class Screen(val route: String) {
         fun createRoute(code: String) = "join/$code"
     }
     object Settings : Screen("settings")
+
+    /** Editing the profile captured during onboarding, reachable from Settings. */
+    object EditProfile : Screen("edit_profile")
 }

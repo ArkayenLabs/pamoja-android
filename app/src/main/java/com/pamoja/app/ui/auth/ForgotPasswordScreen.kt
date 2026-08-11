@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,10 @@ fun ForgotPasswordScreen(
 
     // Hoisted: validate runs on focus change, outside composable scope.
     val emailRequired = stringResource(R.string.email_required)
+
+    // Shared ViewModel: a failure from an earlier auth screen would otherwise
+    // still be showing here, unrelated to resetting a password.
+    LaunchedEffect(Unit) { viewModel.clearError() }
 
     val sentTo = uiState.resetEmailSentTo
 

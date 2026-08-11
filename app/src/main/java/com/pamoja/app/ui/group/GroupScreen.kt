@@ -58,6 +58,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.NoticeTone
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupDashboardSkeleton
@@ -361,7 +362,10 @@ fun GroupTopBar(
             )
             if (memberCount > 0) {
                 Text(
-                    text  = "$memberCount members · Mon–Sun",
+                    text  = stringResource(
+                        R.string.group_header_subtitle,
+                        pluralStringResource(R.plurals.member_count, memberCount, memberCount)
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.textTertiary
                 )
@@ -473,7 +477,9 @@ fun GroupProgressCard(
                 modifier = Modifier.weight(1f)
             )
             StatPill(
-                label    = stringResource(R.string.group_stat_members),
+                // The label carries the noun, so it has to agree with the
+                // number sitting above it.
+                label    = pluralStringResource(R.plurals.member_label, memberCount),
                 value    = "$memberCount",
                 modifier = Modifier.weight(1f)
             )

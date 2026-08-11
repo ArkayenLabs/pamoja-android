@@ -45,6 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
@@ -233,8 +234,9 @@ fun CreateGroupScreen(
                         color = colors.textPrimary
                     )
                     Text(
-                        text  = stringResource(
-                            R.string.create_group_members_format,
+                        text  = pluralStringResource(
+                            R.plurals.member_count,
+                            maxMembers.toInt(),
                             maxMembers.toInt()
                         ),
                         style = MaterialTheme.typography.labelMedium,

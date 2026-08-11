@@ -6,11 +6,15 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.pamoja.app.R
+import com.pamoja.app.domain.error.AppError
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /**
@@ -33,7 +37,20 @@ class GoogleCredentialClient @Inject constructor(
     /** Raised when the user dismissed the sheet. Not an error worth showing. */
     class Cancelled : Exception("Google sign in was cancelled")
 
-    suspend fun getIdToken(activity: Activity): Result<String> = runCatching {
+    /**
+     * Not `runCatching`. That swallows [CancellationException], which turns a
+     * coroutine cancelled by ordinary navigation into a sign-in failure the
+     * user then sees an error card about.
+     */
+    private inline fun <T> credentialCatching(block: () -> T): Result<T> = try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        Result.failure(e)
+    }
+
+    suspend fun getIdToken(activity: Activity): Result<String> = credentialCatching {
         val option = GetGoogleIdOption.Builder()
             .setServerClientId(context.getString(R.string.default_web_client_id))
             // False so every Google account on the device is offered, not only
@@ -52,7 +69,18 @@ class GoogleCredentialClient @Inject constructor(
         } catch (e: GetCredentialCancellationException) {
             throw Cancelled()
         } catch (e: NoCredentialException) {
-            throw Exception("No Google account on this phone. Add one in Settings, or use phone or email instead.")
+            // Typed, not a message. The old code threw a plain Exception whose
+            // helpful text was then correctly discarded by the error pipeline,
+            // so the one failure the user could actually fix arrived as
+            // "that did not work".
+            throw AppError.NoProviderAccount(cause = e)
+        } catch (e: GetCredentialException) {
+            // Everything else here is a configuration or Play Services problem
+            // that the user cannot act on and we cannot diagnose from the
+            // generic card they see. Record the real type so the next failure
+            // is answerable without a logcat capture.
+            FirebaseCrashlytics.getInstance().recordException(e)
+            throw e
         }
 
         val credential = response.credential

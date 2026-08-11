@@ -88,6 +88,17 @@ sealed class AppError(
     class Validation(val field: ValidationField) :
         AppError("Validation failed: $field")
 
+    /**
+     * The device has no account for the sign-in method being attempted.
+     *
+     * Its own case because the user can fix it in a minute and nothing else
+     * can: retrying will fail identically forever. Folded into [Unknown] it
+     * produced "that did not work", which is the least useful thing to say to
+     * someone who simply has no Google account on their phone.
+     */
+    class NoProviderAccount(detail: String = "No account for this provider", cause: Throwable? = null) :
+        AppError(detail, cause)
+
     /** Anything unrecognised. Always worth reporting. */
     class Unknown(detail: String = "Unexpected error", cause: Throwable? = null) :
         AppError(detail, cause) {

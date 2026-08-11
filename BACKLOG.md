@@ -107,9 +107,13 @@ Target: live around **20–25 August**, which leaves roughly five weeks of slack
 
 These block progress and only you can do them.
 
-- [ ] 🔴 **Run the release APK on a real phone.** Google sign-in, phone OTP with
-      a real SMS, create a group, join via link, Health Connect sync. An emulator
-      cannot do SMS, real step data, or App Links verification
+- [ ] 🔴 **Fix Google sign-in.** It failed on the 2026-08-11 device run, see §6.
+      Start with `./gradlew signingReport` and confirm that SHA-1 is registered
+      on the Firebase project. This blocks launch
+- [ ] 🔴 **Run the *release* APK on a real phone.** A debug build was exercised
+      on 2026-08-11 (§6) and most of it worked, but R8 full mode breaks
+      reflection-based code in ways debug builds never reveal. Still owed: phone
+      OTP with a real SMS, account deletion, and a genuine second member joining
 - [ ] 🔴 **Register the App Check debug token** before enabling enforcement.
       Run a debug build, `adb logcat | grep -i DebugAppCheck`, paste it into
       Firebase App Check → Apps → Manage debug tokens. Enabling enforcement
@@ -179,10 +183,38 @@ settings. Covering the current one first means building it twice. Do it as part
 of §4B.
 
 ### 3.2 The redesign proper
-`design/DESIGN_BRIEF.md` rounds still to run, in the order the brief gives:
-- **§4B profile and settings.** There is no profile screen at all;
-  `ProfileSetupScreen` is onboarding-only and unreachable afterwards, so photo,
-  age, height and weight are captured once and can never be edited
+`design/DESIGN_BRIEF.md` rounds still to run, in the order the brief gives.
+
+**§4B profile and settings, started 2026-08-11.**
+
+Done:
+- **Profile editor** at `ui/profile/`, reachable from a profile header at the
+  top of Settings. Name, age, height and weight, all editable and clearable,
+  with the same validation rules as onboarding so a value onboarding would
+  reject cannot become acceptable later. Full state coverage: load skeleton,
+  load failure with retry, offline gate, saving, save failure inline, success
+- **Fixed a data-loss bug found on the way.** The Settings rename dialog built
+  a `User` from just the id and the new name, and `updateUser` writes the whole
+  document with `set()`. Renaming yourself erased your age, height, weight and
+  deviceToken. The dialog is gone; the editor copies onto the loaded document
+
+Still to do in §4B, roughly in value order:
+- **Theme selector, System / Light / Dark.** 🔴 The app has a full light and
+  dark system and still no way for a user to choose
+- **Health Connect status, last synced, and Sync now.** The predictable #1
+  support issue, since after onboarding there is no way to see or fix it
+- **Notification settings screen**, per-channel toggles and quiet hours
+- **Account section**: which sign-in method is connected, add a second method,
+  change password. `AuthRepository.linkGoogle/linkEmail/linkPhone` already
+  exist and are unused, this is what they were written for
+- **Open source licences.** Legally required. Use `oss-licenses-plugin`
+- **Avatar upload.** Needs a Firebase Storage bucket, rules and a cost surface,
+  so it is a genuine piece of work rather than a UI job. The editor currently
+  shows initials and says photos are coming; onboarding's camera icon is still
+  a dead control
+- Export my data, contact support, units, week start day
+
+Then:
 - **§4C notifications**, including the settings screen for per-channel control
 - **§5 small additions**
 
@@ -235,8 +267,8 @@ Most were established by fixing the same bug more than once.
 
 ## 5. KNOWN GAPS, deliberately left
 
-- **No profile screen.** Age, height and weight are collected and never used,
-  which is a data-minimisation liability. Either use them or drop the fields
+- ~~**No profile screen.**~~ Done 2026-08-11, see §3.2. Age, height and weight
+  are now shown in Settings and editable
 - **`AuthRepository.linkGoogle/linkEmail/linkPhone` are unused.** Written for
   adding a second sign-in method from Settings, which is not built yet
 - **FCM ships in the APK unused.** No `FirebaseMessagingService`, no
@@ -250,9 +282,59 @@ Most were established by fixing the same bug more than once.
 
 ---
 
-## 6. VERIFIED WORKING ON DEVICE, 2026-08-04
+## 6. DEVICE RUN, 2026-08-11
 
-Predates this session's work. Everything since is unverified.
+A ~4 minute recorded run on a real phone, on a debug build that included the
+§3.1 state-coverage work. Supersedes the 2026-08-04 run below.
+
+### Worked
+- **Email sign-up and sign-in**, including sign out and sign back in
+- **Profile setup**, Health Connect connect, and **real step data syncing**
+  (1,568 steps landed on the dashboard and the leaderboard)
+- **Group creation** end to end, with the goal and cap sliders and the
+  members-can-edit toggle all persisting what was set
+- **Invite screen showing the group name and the real cap of 12**, which is the
+  §3.1 change verified on device
+- **Copy link, the system share sheet, and the bare URL** rendering as a
+  tappable link
+- **The invite link opening the app** and the preview correctly saying
+  "already a member" rather than joining silently
+- **The web fallback page** for people without the app
+- **Notifications**, three channels posted, and the rewritten tone reads
+  correctly ("320 from Priya. That is 3 minutes of walking.")
+- Privacy Policy link opens and renders
+
+### Failed
+- 🔴 **Google sign-in fails.** "Opening Google…" then the generic failure
+  notice. Not a cancellation, that path is silent by design. This is the
+  primary sign-in method and it is a launch blocker. Almost certainly console
+  config rather than code: the debug keystore's SHA-1 is probably not
+  registered on the Firebase project. Capture the real cause with
+  `adb logcat | grep -iE "credential|signin|GoogleId"` while reproducing, and
+  check the SHA-1 from `./gradlew signingReport` is listed in Firebase
+  → Project settings → Your apps. The release keystore needs its own entry
+- 🔴 **Terms of Use opens a hard 404** at `arkayenlabs.com/ter…`. Confirms §2's
+  "deploy the legal pages", now witnessed from inside the app. Reviewers click
+  these
+- 🟠 **Home greeted "Good afternoon, there"** while Settings showed the name
+  correctly. Fixed: `getCurrentUser()` returns `User(userId = uid)` with a
+  blank name, so the greeting fell back for every user on every sign-in
+  method. Home now reads the profile
+- 🟠 **"1 members"** on the group dashboard, in the header and the stat tile.
+  Fixed with a `member_count` plural. The string was also hardcoded English,
+  which the extraction pass had missed
+- 🟠 **A failed Google attempt followed the user onto the email screen** and sat
+  under the password field saying "That did not work" while they typed. Every
+  auth screen shares one ViewModel and nothing cleared the error on
+  navigation. Fixed
+
+### Still not exercised
+Phone OTP with a real SMS, account deletion, joining as a genuinely new second
+member, and anything on a release build under R8.
+
+---
+
+## 6B. VERIFIED WORKING ON DEVICE, 2026-08-04
 
 - Step sync and leaderboard totals
 - Light and dark theme across every screen

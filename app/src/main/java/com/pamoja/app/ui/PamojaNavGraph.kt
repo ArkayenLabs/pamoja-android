@@ -179,6 +179,17 @@ fun PamojaNavGraph(
                     navController.navigate(Screen.Welcome.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
+                }
+            )
+        }
+
+        composable(Screen.EditProfile.route) {
+            com.pamoja.app.ui.profile.EditProfileScreen(
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

@@ -195,7 +195,7 @@ does **not** disqualify you, confirmed against RevenueCat's own guidance.
 - [ ] 🟠 Right to erasure, in-app delete exists ✅; verify it is **complete** (user doc + memberships + all step entries + Auth account)
 - [ ] 🟠 Right to rectification, name is editable ✅
 - [ ] 🟠 Lawful basis for processing documented
-- [ ] 🟠 **Data minimisation**, age/height/weight are collected but unused. Either use them or remove the fields
+- [x] ✅ **Data minimisation**, age/height/weight are now shown in the Settings profile header and are editable and clearable in the profile editor. They were previously write-once and displayed nowhere, which was the hard part to justify
 - [ ] 🟡 Data portability, an export path
 - [ ] 🟡 Confirm the Firestore region and whether data residency matters for your primary market
 - [ ] 🟡 Cookie/consent not applicable (no web view), confirm
@@ -619,9 +619,10 @@ Everything today is a periodic nudge. The notifications that actually drive rete
 
 ### 11C.1 Profile
 
-- [ ] 🔴 **Profile header at the top of Settings**, avatar, display name, and a summary stat (member since / total steps / current streak). Tapping it opens the profile editor
-- [ ] 🔴 **Edit Profile screen**, name, photo, age, height, weight, all editable (currently only name is, via a dialog)
-- [ ] 🟠 **Avatar upload**, the camera icon exists in onboarding but does nothing; either implement it or remove it
+- [x] ✅ **Profile header at the top of Settings**, initials avatar, display name, and the age/height/weight summary. The whole row is the tap target and it opens the editor
+- [x] ✅ **Edit Profile screen**, name, age, height, weight all editable, with the same validation rules as onboarding. **Photo is not included**, see below
+- [ ] 🟠 **Avatar upload.** Still outstanding, and it is bigger than it looks: there is no Firebase Storage bucket in this project, so it means a new dependency, its own security rules, and a new cost surface. The editor shows initials and says photos are coming. The dead camera icon in onboarding still needs the same treatment
+- [x] ✅ **Fixed: renaming yourself wiped your profile.** The old Settings rename dialog built a `User` from just the id and the new name, and `updateUser` writes the whole document with `set()`, so age, height, weight and deviceToken were erased on every rename. The dialog is gone, replaced by the editor, which copies onto the loaded document
 - [ ] 🟡 Personal stats view, totals, averages, best day, streak history
 
 ### 11C.2 Settings, what is missing

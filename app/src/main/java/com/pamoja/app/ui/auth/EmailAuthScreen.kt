@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,12 @@ fun EmailAuthScreen(
     val emailRequired = stringResource(R.string.email_required)
     val emailInvalid = stringResource(R.string.email_invalid)
     val passwordTooShort = stringResource(R.string.password_too_short)
+
+    // Every auth screen shares one ViewModel, so a failure raised on the
+    // landing screen arrives here still set. A failed Google attempt used to
+    // follow the user onto this form and sit under the password field saying
+    // "That did not work" about something they were no longer doing.
+    LaunchedEffect(Unit) { viewModel.clearError() }
 
     Box(
         modifier = Modifier

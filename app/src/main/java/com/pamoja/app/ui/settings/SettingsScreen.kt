@@ -32,8 +32,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -66,6 +64,7 @@ import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toSnackbarMessage
+import com.pamoja.app.ui.profile.ProfileAvatar
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -76,6 +75,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
+    onEditProfile: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -85,8 +85,6 @@ fun SettingsScreen(
     val context = LocalContext.current
     val activity = LocalActivity.current
 
-    var showEditNameDialog by remember { mutableStateOf(false) }
-    var editNameInput by remember { mutableStateOf("") }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     // Used inside click handlers and coroutine scopes.
@@ -117,71 +115,16 @@ fun SettingsScreen(
         viewModel.clearMessages()
     }
 
-    // Initialize edit dialog field with current name when opening
-    LaunchedEffect(showEditNameDialog) {
-        if (showEditNameDialog) {
-            editNameInput = uiState.userName
-        }
-    }
+    // Reload on return, so a name changed in the editor is reflected here rather
+    // than showing the value this screen loaded before navigating away.
+    LaunchedEffect(Unit) { viewModel.refresh() }
 
     // ── Dialogs ──────────────────────────────────────────────────────────────
-
-    if (showEditNameDialog) {
-        AlertDialog(
-            onDismissRequest = { showEditNameDialog = false },
-            containerColor = colors.surface3,
-            shape = RoundedCornerShape(PamojaRadii.xl),
-            title = {
-                Text(
-                    text = stringResource(R.string.settings_edit_name),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.textPrimary
-                )
-            },
-            text = {
-                OutlinedTextField(
-                    value = editNameInput,
-                    onValueChange = { editNameInput = it },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.settings_name_placeholder),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.textTertiary
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = colors.accentPrimary,
-                        unfocusedBorderColor = colors.borderDefault,
-                        focusedContainerColor = colors.surfaceInput,
-                        unfocusedContainerColor = colors.surfaceInput,
-                        cursorColor = colors.accentPrimary
-                    )
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.updateUserName(editNameInput.trim())
-                        showEditNameDialog = false
-                    },
-                    enabled = editNameInput.isNotBlank(),
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
-                ) {
-                    Text(stringResource(R.string.settings_save), color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditNameDialog = false }) {
-                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
-                }
-            }
-        )
-    }
+    //
+    // The rename dialog that used to live here is gone, replaced by the profile
+    // editor. It built a User from just the id and the new name and handed it to
+    // updateUser, which writes the whole document, so renaming yourself silently
+    // erased your age, height and weight.
 
     if (showDeleteConfirmDialog) {
         AlertDialog(
@@ -393,33 +336,51 @@ fun SettingsScreen(
                         .padding(Spacing.x4),
                     verticalArrangement = Arrangement.spacedBy(Spacing.x4)
                 ) {
-                    // Display Name Row
+                    // Profile header. The whole row is the target, not just the
+                    // pencil, because a 18dp icon is well under the 48dp minimum
+                    // and the row is what reads as tappable.
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(PamojaRadii.sm))
+                            .clickable(onClick = onEditProfile)
+                            .padding(vertical = Spacing.x1),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        ProfileAvatar(
+                            name = uiState.userName.takeIf { it.isNotBlank() }
+                                ?: stringResource(R.string.settings_name_fallback),
+                            size = 48.dp,
+                        )
+
+                        Spacer(modifier = Modifier.width(Spacing.x4))
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(R.string.settings_name_label),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.textTertiary
+                                text = uiState.userName.takeIf { it.isNotBlank() }
+                                    ?: stringResource(R.string.settings_name_fallback),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = colors.textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = uiState.userName.takeIf { it.isNotBlank() } ?: stringResource(R.string.settings_name_fallback),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = colors.textPrimary
+                                // Shows the details the app already holds. They
+                                // were collected at onboarding and then never
+                                // displayed anywhere, which is hard to justify.
+                                text = profileSummary(uiState.age, uiState.height, uiState.weight),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary,
                             )
                         }
-                        IconButton(onClick = { showEditNameDialog = true }) {
-                            Icon(
-                                painter = painterResource(PamojaIcons.Edit),
-                                contentDescription = stringResource(R.string.settings_edit_name),
-                                tint = colors.accentPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+
+                        Icon(
+                            painter = painterResource(PamojaIcons.Edit),
+                            contentDescription = stringResource(R.string.settings_open_profile),
+                            tint = colors.accentPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
 
                     // User ID Row
@@ -658,5 +619,25 @@ private fun SettingsRow(
             tint = colors.textTertiary,
             modifier = Modifier.size(16.dp)
         )
+    }
+}
+
+/**
+ * The one-line summary under the name in the profile header.
+ *
+ * Falls back to an invitation rather than an empty line, since a blank subtitle
+ * under a tappable row gives no reason to tap it.
+ */
+@Composable
+private fun profileSummary(age: Int?, height: Float?, weight: Float?): String {
+    val parts = buildList {
+        age?.let { add(stringResource(R.string.profile_detail_age, it)) }
+        height?.let { add(stringResource(R.string.profile_detail_height, it.toInt())) }
+        weight?.let { add(stringResource(R.string.profile_detail_weight, it.toInt())) }
+    }
+    return if (parts.isEmpty()) {
+        stringResource(R.string.profile_details_empty)
+    } else {
+        parts.joinToString(stringResource(R.string.profile_detail_separator))
     }
 }

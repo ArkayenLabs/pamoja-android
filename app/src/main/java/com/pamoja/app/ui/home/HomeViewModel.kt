@@ -3,17 +3,20 @@ package com.pamoja.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.connectivity.ConnectivityObserver
+import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserGroupsUseCase
+import com.pamoja.app.domain.usecase.GetUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,6 +53,8 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val getUserGroupsUseCase: GetUserGroupsUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val userPreferences: UserPreferences,
     private val analyticsManager: AnalyticsManager,
     private val connectivityObserver: ConnectivityObserver,
 ) : ViewModel() {
@@ -83,7 +88,20 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
-            _uiState.value = _uiState.value.copy(userName = user.name, isLoading = false)
+            // The auth record carries a UID and nothing else, so user.name here
+            // is always blank and the greeting fell back to "there" for
+            // everyone, on every sign-in method. The display name lives on the
+            // Firestore profile. Cache first so the greeting is right on the
+            // first frame, then confirm against the document.
+            val cachedName = userPreferences.userName.firstOrNull().orEmpty()
+            _uiState.value = _uiState.value.copy(userName = cachedName, isLoading = false)
+
+            getUserUseCase(user.userId).onSuccess { profile ->
+                if (profile.name.isNotBlank()) {
+                    if (profile.name != cachedName) userPreferences.saveUserName(profile.name)
+                    _uiState.value = _uiState.value.copy(userName = profile.name)
+                }
+            }
 
             if (!homeScreenReachedLogged) {
                 homeScreenReachedLogged = true

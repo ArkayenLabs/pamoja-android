@@ -236,7 +236,6 @@
     <string name="create_group_members_edit_sub">Allow others to change the step target</string>
     <string name="create_group_creating">Creating…</string>
     <string name="create_group_submit">Create group</string>
-    <string name="create_group_members_format">%1$d members</string>
     <string name="create_group_offline_title">You are offline</string>
     <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you are back.</string>
     <string name="create_group_failed_title">Could not create the group</string>
@@ -278,6 +277,7 @@
     <string name="invite_offline_body">The link below still works offline. Share it now, or retry once you are back.</string>
 
     <!-- ── Group dashboard ────────────────────────────────────────────── -->
+    <string name="group_header_subtitle">%1$s · Mon–Sun</string>
     <string name="group_leaderboard">LEADERBOARD</string>
     <string name="group_unavailable_title">This group is no longer available</string>
     <string name="group_unavailable_body">It may have been deleted, or you may no longer be a member.</string>
@@ -294,7 +294,6 @@
     <string name="group_of_target">of %1$s</string>
     <string name="group_stat_completed">completed</string>
     <string name="group_stat_remaining">remaining</string>
-    <string name="group_stat_members">members</string>
     <string name="group_rank_desc">Rank %1$d</string>
     <string name="group_you">you</string>
     <string name="group_today">today</string>
@@ -346,10 +345,6 @@
     <string name="settings_back_desc">Back</string>
     <string name="settings_section_profile">PROFILE</string>
     <string name="settings_section_information">INFORMATION</string>
-    <string name="settings_edit_name">Edit Name</string>
-    <string name="settings_name_placeholder">Enter your display name</string>
-    <string name="settings_save">Save</string>
-    <string name="settings_name_label">Name</string>
     <string name="settings_name_fallback">Guest User</string>
     <string name="settings_user_id">User ID</string>
     <string name="settings_user_id_clip">Pamoja User ID</string>
@@ -358,12 +353,42 @@
     <string name="settings_rate_title">Rate Us</string>
     <string name="settings_rate_subtitle">Support us by sharing your feedback</string>
     <string name="settings_reauth_send_code">Send code</string>
-    <string name="settings_name_empty">Name cannot be empty</string>
-    <string name="settings_name_updated">Name updated</string>
     <string name="settings_no_phone">This account has no phone number on file</string>
     <string name="settings_reauth_failed">Could not confirm it is you</string>
     <string name="settings_code_expired">That code expired. Send a new one.</string>
     <string name="settings_code_wrong">That code is not right</string>
     <string name="settings_code_send_failed">Could not send the code</string>
     <string name="settings_debug_posted">Posted %1$d test notifications</string>
+
+    <!-- ── Edit profile ───────────────────────────────────────────────── -->
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_edit_subtitle">Your group sees your name. Everything else is private to you.</string>
+    <string name="profile_edit_save">Save changes</string>
+    <string name="profile_edit_saving">Saving…</string>
+    <string name="profile_edit_saved">Profile updated</string>
+    <string name="profile_edit_failed_title">Could not save your changes</string>
+    <string name="profile_edit_offline_title">You are offline</string>
+    <string name="profile_edit_offline_body">Saving needs a connection. Your changes stay here until you are back.</string>
+    <string name="profile_edit_photo_soon">Photos are coming soon. Your initials stand in for now.</string>
+    <!-- Compact summary under the name in Settings, e.g. "22 yrs · 170 cm · 65 kg" -->
+    <string name="profile_detail_age">%1$d yrs</string>
+    <string name="profile_detail_height">%1$d cm</string>
+    <string name="profile_detail_weight">%1$d kg</string>
+    <string name="profile_detail_separator"> · </string>
+    <string name="profile_details_empty">Add your details</string>
+    <string name="settings_open_profile">Edit your profile</string>
+
+    <!-- ── Plurals ────────────────────────────────────────────────────── -->
+    <!-- A one-member group is the normal state right after creating one, so
+         "1 members" is the first thing a new admin reads. Android picks the
+         form per language, which "%d members" could never do. -->
+    <plurals name="member_count">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
+    <!-- The bare noun, for a stat tile that shows the number separately. -->
+    <plurals name="member_label">
+        <item quantity="one">member</item>
+        <item quantity="other">members</item>
+    </plurals>
 </resources>

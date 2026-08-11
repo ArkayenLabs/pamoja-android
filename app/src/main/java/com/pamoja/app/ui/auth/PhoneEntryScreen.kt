@@ -76,6 +76,9 @@ fun PhoneEntryScreen(
         if (uiState.phoneNumber.isBlank()) {
             viewModel.onCountryChange(Country.fromLocale())
         }
+        // Shared ViewModel: a failure from the landing screen would otherwise
+        // still be on display here, attached to a method the user has left.
+        viewModel.clearError()
     }
 
     LaunchedEffect(uiState.codeSent) {

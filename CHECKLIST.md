@@ -634,8 +634,8 @@ Everything today is a periodic nudge. The notifications that actually drive rete
 - [ ] 🟡 Week start day (currently hardcoded Monday)
 
 **Health**
-- [ ] 🟠 **Health Connect status + reconnect**, after onboarding there is no way to see whether it is connected or to fix it. This is the #1 predictable support issue
-- [ ] 🟠 "Last synced" timestamp + a manual **Sync now**
+- [x] ✅ **Health Connect status + reconnect.** Three states, not a Boolean: connected, permission not granted, and Health Connect absent from the device. Each has its own wording and its own action, since "unavailable" cannot be fixed by granting and "not connected" cannot be fixed by installing. Re-read on every `ON_RESUME`, so revoking permission in system settings is reflected when you come back
+- [x] ✅ **"Last synced" timestamp + a manual Sync now.** The timestamp is written only after the Firestore write succeeds, so it never reports a run that read Health Connect and then failed to save. Sync now enqueues the real `StepSyncWorker` rather than duplicating its logic, so the manual and scheduled paths cannot drift
 
 **Legal & about**
 - [ ] 🔴 **Open source licences**, legally required for the OSS you bundle. Use Google's `oss-licenses-plugin`, which generates the screen automatically from your dependencies

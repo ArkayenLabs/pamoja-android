@@ -215,9 +215,15 @@ Also done:
   the one thing `clearAll()` preserves on sign out, because it describes the
   phone rather than the account
 
+- **Health Connect status, last synced, and Sync now.** Three states rather
+  than a Boolean (connected, permission missing, Health Connect absent),
+  each with its own action. Status is re-read on `ON_RESUME` so a revocation
+  in system settings shows up. `lastSyncTime` is written only after the
+  Firestore write lands, so it cannot claim a failed run, and Sync now
+  enqueues the real `StepSyncWorker` so the manual path cannot drift from
+  the scheduled one
+
 Still to do in §4B, roughly in value order:
-- **Health Connect status, last synced, and Sync now.** The predictable #1
-  support issue, since after onboarding there is no way to see or fix it
 - **Notification settings screen**, per-channel toggles and quiet hours
 - **Account section**: which sign-in method is connected, add a second method,
   change password. `AuthRepository.linkGoogle/linkEmail/linkPhone` already

@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,6 +60,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.LocalActivity
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.ThemePreference
@@ -120,6 +124,18 @@ fun SettingsScreen(
     // Reload on return, so a name changed in the editor is reflected here rather
     // than showing the value this screen loaded before navigating away.
     LaunchedEffect(Unit) { viewModel.refresh() }
+
+    // Health Connect permission can be revoked in system settings while the app
+    // is alive, so the status is re-read whenever this screen resumes rather
+    // than trusted from construction.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshHealthStatus()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     // ── Dialogs ──────────────────────────────────────────────────────────────
     //
@@ -438,6 +454,39 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
+                // ─── Section: Health ────────────────────────────────────────
+                SectionLabel(stringResource(R.string.settings_section_health), color = colors.textTertiary)
+
+                HealthSection(
+                    status = uiState.healthStatus,
+                    lastSyncTime = uiState.lastSyncTime,
+                    isSyncing = uiState.isSyncing,
+                    onSyncNow = viewModel::syncNow,
+                    onFix = {
+                        // Health Connect owns the permission, so the fix is over
+                        // there. Falls back to the Play listing when the app is
+                        // absent, which is the Android 13-and-below case.
+                        val intent = if (uiState.healthStatus == HealthStatus.Unavailable) {
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("market://details?id=$HEALTH_CONNECT_PACKAGE")
+                            )
+                        } else {
+                            Intent(HEALTH_CONNECT_SETTINGS_ACTION)
+                        }
+                        runCatching { context.startActivity(intent) }.onFailure {
+                            context.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE")
+                                )
+                            )
+                        }
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.x6))
+
                 // ─── Section: App Settings & Info ───────────────────────────
                 SectionLabel(stringResource(R.string.settings_section_information), color = colors.textTertiary)
 
@@ -736,4 +785,165 @@ private fun ThemePreference.labelRes(): Int = when (this) {
     ThemePreference.System -> R.string.settings_theme_system
     ThemePreference.Light -> R.string.settings_theme_light
     ThemePreference.Dark -> R.string.settings_theme_dark
+}
+
+/** Health Connect's package, for the settings deep link and the store fallback. */
+private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
+private const val HEALTH_CONNECT_SETTINGS_ACTION =
+    "androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"
+
+/**
+ * Whether steps are actually reaching us, and how to fix it when they are not.
+ *
+ * This is the single most predictable support question for the app: after
+ * onboarding there was previously no way to see whether Health Connect was
+ * still connected, and revoking it in system settings left the group quietly
+ * seeing zero with nothing on screen to explain why.
+ */
+@Composable
+private fun HealthSection(
+    status: HealthStatus,
+    lastSyncTime: Long,
+    isSyncing: Boolean,
+    onSyncNow: () -> Unit,
+    onFix: () -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.md)
+
+    val (title, subtitle) = when (status) {
+        HealthStatus.Connected ->
+            R.string.settings_health_connected to R.string.settings_health_connected_sub
+        HealthStatus.NotConnected ->
+            R.string.settings_health_not_connected to R.string.settings_health_not_connected_sub
+        HealthStatus.Unavailable ->
+            R.string.settings_health_unavailable to R.string.settings_health_unavailable_sub
+    }
+
+    val accent = when (status) {
+        HealthStatus.Connected -> colors.statusSuccess
+        HealthStatus.NotConnected -> colors.statusWarning
+        HealthStatus.Unavailable -> colors.textTertiary
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.x6)
+            .clip(shape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, shape)
+            .padding(Spacing.x4),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // A dot as well as the wording, so the state is not carried by
+            // colour alone.
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(RoundedCornerShape(PamojaRadii.xs))
+                    .background(accent)
+            )
+            Spacer(modifier = Modifier.width(Spacing.x3))
+            Text(
+                text = stringResource(title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.textPrimary,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.x2))
+
+        Text(
+            text = stringResource(subtitle),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textSecondary,
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.x4))
+
+        Text(
+            text = lastSyncedLabel(lastSyncTime),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.x3))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x3)) {
+            // Syncing is pointless without permission, so the primary action
+            // becomes the thing that would actually help.
+            if (status == HealthStatus.Connected) {
+                Button(
+                    onClick = onSyncNow,
+                    enabled = !isSyncing,
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    shape = RoundedCornerShape(PamojaRadii.sm),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentPrimarySubtle,
+                        contentColor = colors.accentPrimary,
+                        disabledContainerColor = colors.surfaceSunken,
+                        disabledContentColor = colors.textTertiary,
+                    ),
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            color = colors.textTertiary,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.x2))
+                    }
+                    Text(
+                        text = stringResource(
+                            if (isSyncing) R.string.settings_health_syncing
+                            else R.string.settings_health_sync_now
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onFix,
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    shape = RoundedCornerShape(PamojaRadii.sm),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentPrimary,
+                        contentColor = colors.textOnBrand,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (status == HealthStatus.Unavailable) R.string.settings_health_install
+                            else R.string.settings_health_fix
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * "Synced 12 min ago", at the coarsest unit that is still honest.
+ *
+ * Anything under a minute is "moments ago" rather than a second count, because
+ * a number ticking once a second reads as something being wrong.
+ */
+@Composable
+private fun lastSyncedLabel(lastSyncTime: Long): String {
+    if (lastSyncTime <= 0L) return stringResource(R.string.settings_health_never_synced)
+
+    val elapsed = System.currentTimeMillis() - lastSyncTime
+    val minutes = elapsed / 60_000
+    val hours = minutes / 60
+    val days = hours / 24
+
+    return when {
+        minutes < 1 -> stringResource(R.string.settings_health_synced_moments)
+        minutes < 60 -> stringResource(R.string.settings_health_synced_minutes, minutes.toInt())
+        hours < 24 -> stringResource(R.string.settings_health_synced_hours, hours.toInt())
+        else -> stringResource(R.string.settings_health_synced_days, days.toInt())
+    }
 }

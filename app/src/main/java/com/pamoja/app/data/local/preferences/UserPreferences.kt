@@ -59,6 +59,10 @@ class UserPreferences @Inject constructor(
         // A property of this phone, not of the account, which is why it is the
         // one key that survives clearAll(). See the note there.
         val KEY_THEME                    = stringPreferencesKey("theme_preference")
+
+        // When steps last actually reached Firestore. Written only on a
+        // successful sync, so "last synced" never claims a run that failed.
+        val KEY_LAST_SYNC_TIME           = longPreferencesKey("last_sync_time")
     }
 
     val userId: Flow<String?>  = context.dataStore.data.map { it[KEY_USER_ID] }
@@ -87,6 +91,15 @@ class UserPreferences @Inject constructor(
 
     suspend fun saveThemePreference(preference: ThemePreference) {
         context.dataStore.edit { it[KEY_THEME] = preference.name }
+    }
+
+    /** 0 when steps have never successfully synced on this install. */
+    val lastSyncTime: Flow<Long> = context.dataStore.data.map {
+        it[KEY_LAST_SYNC_TIME] ?: 0L
+    }
+
+    suspend fun saveLastSyncTime(timestamp: Long) {
+        context.dataStore.edit { it[KEY_LAST_SYNC_TIME] = timestamp }
     }
 
     suspend fun saveLastKnownGroupTotal(total: Long) {

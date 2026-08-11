@@ -3,6 +3,7 @@ package com.pamoja.app.ui.settings
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.data.remote.auth.GoogleCredentialClient
 import com.pamoja.app.R
@@ -22,6 +23,7 @@ import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
 import com.pamoja.app.util.NotificationContext
 import com.pamoja.app.util.SmartNotificationEngine
 import com.pamoja.app.util.SmartNotificationHelper
+import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +34,24 @@ import javax.inject.Inject
 
 /** How the user must prove it is them before the account can be deleted. */
 enum class ReauthMethod { Google, Password, Phone }
+
+/**
+ * Whether steps can reach us, and if not, why not.
+ *
+ * The three cases need different words and different actions, which is the
+ * whole reason this is not a Boolean: [Unavailable] cannot be fixed by granting
+ * anything, and [NotConnected] cannot be fixed by installing anything.
+ */
+enum class HealthStatus {
+    /** Permission granted, steps are flowing. */
+    Connected,
+
+    /** Health Connect is present but the read permission is not granted. */
+    NotConnected,
+
+    /** No Health Connect on this device at all, so nothing to grant. */
+    Unavailable,
+}
 
 data class SettingsUiState(
     val isLoading: Boolean = false,
@@ -60,6 +80,10 @@ data class SettingsUiState(
     val height: Float? = null,
     val weight: Float? = null,
     val theme: ThemePreference = ThemePreference.System,
+    val healthStatus: HealthStatus = HealthStatus.Connected,
+    /** Epoch millis of the last successful sync, 0 when it has never happened. */
+    val lastSyncTime: Long = 0L,
+    val isSyncing: Boolean = false,
     val isSignedOut: Boolean = false,
     /** Non-null when deletion is waiting on the user re-confirming who they are. */
     val reauthRequired: ReauthMethod? = null,
@@ -83,6 +107,8 @@ class SettingsViewModel @Inject constructor(
     private val reauthenticateWithPhoneUseCase: ReauthenticateWithPhoneUseCase,
     private val startPhoneVerificationUseCase: StartPhoneVerificationUseCase,
     private val googleCredentialClient: GoogleCredentialClient,
+    private val healthConnectReader: HealthConnectReader,
+    private val workManagerScheduler: WorkManagerScheduler,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -90,11 +116,44 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadUserDetails()
+        refreshHealthStatus()
         viewModelScope.launch {
             userPreferences.themePreference.collect { theme ->
                 _uiState.value = _uiState.value.copy(theme = theme)
             }
         }
+        viewModelScope.launch {
+            userPreferences.lastSyncTime.collect { time ->
+                _uiState.value = _uiState.value.copy(lastSyncTime = time)
+            }
+        }
+        viewModelScope.launch {
+            workManagerScheduler.manualSyncState().collect { infos ->
+                _uiState.value = _uiState.value.copy(
+                    isSyncing = infos.any { !it.state.isFinished },
+                )
+            }
+        }
+    }
+
+    /**
+     * Re-checks Health Connect. Called on entering Settings, not just at
+     * construction, because permission can be revoked in system settings while
+     * the app is alive and the app would otherwise keep claiming Connected.
+     */
+    fun refreshHealthStatus() {
+        viewModelScope.launch {
+            val status = when {
+                !healthConnectReader.isAvailable() -> HealthStatus.Unavailable
+                healthConnectReader.hasPermission() -> HealthStatus.Connected
+                else -> HealthStatus.NotConnected
+            }
+            _uiState.value = _uiState.value.copy(healthStatus = status)
+        }
+    }
+
+    fun syncNow() {
+        workManagerScheduler.syncNow()
     }
 
     /**

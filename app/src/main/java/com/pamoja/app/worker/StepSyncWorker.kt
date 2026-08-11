@@ -93,6 +93,11 @@ class StepSyncWorker @AssistedInject constructor(
             Log.i(TAG, "Sync success | steps=$todaySteps | duration=${durationMs}ms")
             analyticsManager.logStepsSyncSuccess(user.userId, todaySteps, durationMs)
 
+            // Recorded only here, after the write landed. Settings reads this to
+            // say when steps last reached the server, so it must never count a
+            // run that read Health Connect and then failed to save.
+            userPreferences.saveLastSyncTime(System.currentTimeMillis())
+
             // ── Smart Notifications Trigger ──────────────────────────────
             checkAndTriggerNotification(user.userId, todaySteps)
 

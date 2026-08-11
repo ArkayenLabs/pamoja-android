@@ -389,6 +389,24 @@
     <string name="settings_theme_system_sub">Follows your phone, including its evening switch</string>
     <string name="settings_theme_fixed_sub">Stays this way whatever your phone does</string>
 
+    <!-- ── Health section in Settings ─────────────────────────────────── -->
+    <string name="settings_section_health">HEALTH</string>
+    <string name="settings_health_connected">Steps are syncing</string>
+    <string name="settings_health_connected_sub">Pamoja reads your daily step count from Health Connect.</string>
+    <string name="settings_health_not_connected">Steps are not syncing</string>
+    <string name="settings_health_not_connected_sub">Pamoja does not have permission to read your steps, so your group sees you at zero.</string>
+    <string name="settings_health_unavailable">Health Connect is not on this phone</string>
+    <string name="settings_health_unavailable_sub">Step tracking needs it. Install it from the Play Store, then come back here.</string>
+    <string name="settings_health_fix">Open Health Connect</string>
+    <string name="settings_health_install">Get Health Connect</string>
+    <string name="settings_health_sync_now">Sync now</string>
+    <string name="settings_health_syncing">Syncing…</string>
+    <string name="settings_health_never_synced">Not synced yet</string>
+    <string name="settings_health_synced_moments">Synced moments ago</string>
+    <string name="settings_health_synced_minutes">Synced %1$d min ago</string>
+    <string name="settings_health_synced_hours">Synced %1$d h ago</string>
+    <string name="settings_health_synced_days">Synced %1$d d ago</string>
+
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so
          "1 members" is the first thing a new admin reads. Android picks the

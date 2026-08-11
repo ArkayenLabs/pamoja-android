@@ -15,18 +15,18 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -47,8 +47,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.toSnackbarMessage
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.OfflineBanner
+import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.PamojaTextField
+import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -62,8 +65,6 @@ fun CreateGroupScreen(
 ) {
     val colors = LocalPamojaColors.current
     val uiState           by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
 
     var groupName          by remember { mutableStateOf("") }
     var weeklyTargetIndex  by remember { mutableFloatStateOf(2f) }
@@ -74,6 +75,18 @@ fun CreateGroupScreen(
     val nameRequired = stringResource(R.string.create_group_name_required)
     val nameTooLong = stringResource(R.string.create_group_name_too_long)
 
+    // One rule, two callers: the field checks it on blur, the button checks it
+    // every recomposition. Previously the button only asked isNotBlank(), so a
+    // name of pure spaces passed the gate and arrived at Firestore trimmed to "".
+    val nameErrorFor: (String) -> String? = { input ->
+        when {
+            input.isBlank() -> nameRequired
+            input.trim().length > 50 -> nameTooLong
+            else -> null
+        }
+    }
+    val nameError = nameErrorFor(groupName)
+
     val stepPresets      = listOf(35_000, 50_000, 70_000, 100_000, 150_000)
     val stepPresetLabels = listOf("35k", "50k", "70k", "100k", "150k")
     val selectedTarget   = stepPresets[weeklyTargetIndex.toInt()]
@@ -82,12 +95,6 @@ fun CreateGroupScreen(
         uiState.createdGroupId?.let {
             viewModel.clearCreatedGroupId()
             onGroupCreated(it)
-        }
-    }
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
-            viewModel.clearError()
         }
     }
 
@@ -100,6 +107,14 @@ fun CreateGroupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+        ) {
+        // Outside the scroll region, so the condition stays on screen rather
+        // than scrolling away while the user is still offline.
+        OfflineBanner(isOffline = uiState.isOffline)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(horizontal = Spacing.x6)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -147,13 +162,8 @@ fun CreateGroupScreen(
                 onValueChange = { groupName = it },
                 label         = stringResource(R.string.create_group_name_label),
                 placeholder   = stringResource(R.string.create_group_name_placeholder),
-                validate      = { input ->
-                    when {
-                        input.isBlank() -> nameRequired
-                        input.trim().length > 50 -> nameTooLong
-                        else -> null
-                    }
-                }
+                enabled       = !uiState.isLoading,
+                validate      = nameErrorFor,
             )
 
             Spacer(modifier = Modifier.height(Spacing.x7))
@@ -171,7 +181,10 @@ fun CreateGroupScreen(
                         color = colors.textPrimary
                     )
                     Text(
-                        text  = "%,d steps".format(selectedTarget),
+                        text  = stringResource(
+                            R.string.create_group_steps_format,
+                            "%,d".format(selectedTarget)
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.accentPrimary
                     )
@@ -220,7 +233,10 @@ fun CreateGroupScreen(
                         color = colors.textPrimary
                     )
                     Text(
-                        text  = "${maxMembers.toInt()} members",
+                        text  = stringResource(
+                            R.string.create_group_members_format,
+                            maxMembers.toInt()
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.accentPrimary
                     )
@@ -288,7 +304,28 @@ fun CreateGroupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.x8))
+            Spacer(modifier = Modifier.height(Spacing.x6))
+
+            // Both of these sit next to the button they block, and both persist.
+            // A snackbar used to carry the failure and then vanish, leaving a
+            // form that had silently done nothing.
+            if (uiState.isOffline) {
+                PamojaNotice(
+                    icon  = PamojaIcons.AlertCircle,
+                    title = stringResource(R.string.create_group_offline_title),
+                    body  = stringResource(R.string.create_group_offline_body),
+                    tone  = NoticeTone.Warning,
+                )
+                Spacer(modifier = Modifier.height(Spacing.x3))
+            } else if (uiState.error != null) {
+                PamojaNotice(
+                    icon  = PamojaIcons.AlertCircle,
+                    title = stringResource(R.string.create_group_failed_title),
+                    body  = uiState.error!!.toErrorCopy().body(LocalContext.current),
+                    tone  = NoticeTone.Danger,
+                )
+                Spacer(modifier = Modifier.height(Spacing.x3))
+            }
 
             Button(
                 onClick = {
@@ -299,7 +336,7 @@ fun CreateGroupScreen(
                         canMembersEditTarget = canMembersEdit
                     )
                 },
-                enabled  = groupName.isNotBlank() && !uiState.isLoading,
+                enabled  = nameError == null && uiState.canSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -311,9 +348,28 @@ fun CreateGroupScreen(
                     disabledContentColor   = colors.textTertiary
                 )
             ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(18.dp),
+                        color       = colors.textTertiary,
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.x2))
+                }
                 Text(
                     text  = stringResource(if (uiState.isLoading) R.string.create_group_creating else R.string.create_group_submit),
                     style = MaterialTheme.typography.labelLarge
+                )
+            }
+
+            // Why the button is dead. Only once they have actually typed
+            // something, since nagging an untouched empty form is just noise.
+            if (groupName.isNotEmpty() && nameError != null) {
+                Spacer(modifier = Modifier.height(Spacing.x2))
+                Text(
+                    text  = nameError,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.statusDanger,
                 )
             }
 
@@ -323,11 +379,7 @@ fun CreateGroupScreen(
                     .height(Spacing.x10)
             )
         }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier  = Modifier.align(Alignment.BottomCenter)
-        )
+        }
     }
 }
 

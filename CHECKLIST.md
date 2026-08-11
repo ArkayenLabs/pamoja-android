@@ -38,7 +38,8 @@ Companion to `SUMMARY.md` (which explains the *why* and the priority order).
 1. **Run it on a real device.** Nothing since 2026-08-04 is device-verified
 2. **Deploy the legal pages**, redo the **Data Safety form**
 3. Register the **App Check debug token** before enabling enforcement
-4. Finish state coverage: create group, profile setup, settings, invite (§11)
+4. Finish state coverage: create group ✅, profile setup ✅, invite ✅ (§11).
+   Settings is folded into the §4B redesign round, which rewrites that screen
 5. Redesign rounds §4B profile/settings and §4C notifications
 6. **RevenueCat SDK + one working IAP.** Mandatory for Shipaton, target early Sep
 
@@ -482,11 +483,11 @@ Today every repository returns `Result.failure(Exception("..."))` and screens pu
 - [ ] 🔴 **Home**, loading skeleton · no groups (exists ✅, verify) · load failed + retry · offline w/ cached groups · session expired (partially handled ✅)
 - [ ] 🔴 **Group dashboard**, loading skeleton · group has no steps yet · member list failed · steps failed but group loaded (partial) · offline/stale · Health Connect revoked · group deleted while viewing
 - [ ] 🔴 **Join flow**, validating · invalid code · expired link · **group full** · already a member · network failure
-- [ ] 🔴 **Create group**, inline validation on name · submitting · failed + retry · success
-- [ ] 🔴 **Profile setup**, inline validation on name · numeric validation on age/height/weight · submitting · failed
+- [x] ✅ **Create group**, inline validation on name · submitting · failed + retry · success · offline blocks the write with an explanation (it used to hang forever)
+- [x] ✅ **Profile setup**, inline validation on name · numeric validation on age/height/weight · submitting · failed · offline. Submit is now gated on validity, not `isNotBlank()`
 - [ ] 🔴 **Health permission**, all four states exist ✅ · add **revoked mid-session** · add Health Connect needs update
 - [ ] 🔴 **Settings**, loading · delete in progress · delete failed · sign-out failed · offline (disable destructive actions)
-- [ ] 🟠 **Invite**, link still generating · generation failed · copy confirmation ✅
+- [x] ✅ **Invite**, details loading (skeleton, not a defaulted cap presented as fact) · details failed → link still works, retry just the details · offline · copy confirmation ✅
 - [ ] 🟠 **Sign in**, loading ✅ · failed + retry · no network
 
 ### 11.6 Form validation

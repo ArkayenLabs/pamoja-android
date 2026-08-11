@@ -1,6 +1,7 @@
 package com.pamoja.app.ui.group
 
 import androidx.lifecycle.ViewModel
+import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import androidx.lifecycle.viewModelScope
@@ -17,18 +18,42 @@ import javax.inject.Inject
 data class CreateGroupUiState(
     val isLoading: Boolean = false,
     val error: AppError? = null,
-    val createdGroupId: String? = null
-)
+    val createdGroupId: String? = null,
+    val isOffline: Boolean = false,
+) {
+    /**
+     * Creating a group cannot be queued.
+     *
+     * Firestore's write Task only completes once the server acknowledges it, so
+     * calling this offline suspends forever and the button spins with nothing
+     * behind it. Better to say so up front than to fake progress.
+     */
+    val canSubmit: Boolean get() = !isLoading && !isOffline
+}
 
 @HiltViewModel
 class CreateGroupViewModel @Inject constructor(
     private val createGroupUseCase: CreateGroupUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val connectivityObserver: ConnectivityObserver,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
     val uiState: StateFlow<CreateGroupUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            connectivityObserver.isOnline.collect { online ->
+                _uiState.value = _uiState.value.copy(
+                    isOffline = !online,
+                    // A failure caused by having no network has nothing left to
+                    // say once the network is back.
+                    error = if (online) null else _uiState.value.error,
+                )
+            }
+        }
+    }
 
     fun createGroup(
         name: String,
@@ -37,12 +62,15 @@ class CreateGroupViewModel @Inject constructor(
         canMembersEditTarget: Boolean
     ) {
         viewModelScope.launch {
-            _uiState.value = CreateGroupUiState(isLoading = true)
+            // copy, not a fresh state: rebuilding it dropped isOffline back to
+            // false on every submit, which un-hid the very control being guarded.
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             val user = getCurrentUserUseCase()
             if (user == null) {
-                _uiState.value = CreateGroupUiState(
-                    error = AppError.SessionExpired()
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = AppError.SessionExpired(),
                 )
                 return@launch
             }
@@ -57,12 +85,16 @@ class CreateGroupViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { group ->
-                    _uiState.value = CreateGroupUiState(createdGroupId = group.groupId)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        createdGroupId = group.groupId,
+                    )
                     analyticsManager.logGroupCreated(group.groupId, name)
                 },
                 onFailure = { error ->
-                    _uiState.value = CreateGroupUiState(
-                        error = error.toAppError()
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.toAppError(),
                     )
                 }
             )
@@ -71,9 +103,5 @@ class CreateGroupViewModel @Inject constructor(
 
     fun clearCreatedGroupId() {
         _uiState.value = _uiState.value.copy(createdGroupId = null)
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
     }
 }

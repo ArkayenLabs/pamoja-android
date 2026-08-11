@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,12 +21,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,9 +43,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.toSnackbarMessage
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.OnboardingProgressBar
+import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.PamojaTextField
+import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -60,7 +61,6 @@ fun ProfileSetupScreen(
 ) {
     val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     var name   by remember { mutableStateOf("") }
@@ -82,6 +82,26 @@ fun ProfileSetupScreen(
     val weightNaN = stringResource(R.string.profile_number_invalid, weightField)
     val weightRange = stringResource(R.string.profile_number_range, weightField)
 
+    // Each rule is defined once and asked twice: by the field on blur, and by
+    // the button on every recomposition. The button used to ask only
+    // name.isNotBlank(), so a name of pure spaces and an age of 999 both got
+    // through to Firestore untouched.
+    val nameErrorFor: (String) -> String? = { input ->
+        when {
+            input.isBlank() -> nameRequired
+            input.trim().length > 50 -> nameTooLong
+            else -> null
+        }
+    }
+    val ageErrorFor: (String) -> String? = { it.validOptionalNumber(13..120, ageNaN, ageRange) }
+    val heightErrorFor: (String) -> String? = { it.validOptionalNumber(50..250, heightNaN, heightRange) }
+    val weightErrorFor: (String) -> String? = { it.validOptionalNumber(20..300, weightNaN, weightRange) }
+
+    val firstError = nameErrorFor(name)
+        ?: ageErrorFor(age)
+        ?: heightErrorFor(height)
+        ?: weightErrorFor(weight)
+
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             viewModel.clearSuccess()
@@ -93,13 +113,6 @@ fun ProfileSetupScreen(
         viewModel.onProfileSetupStarted()
     }
 
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
-            viewModel.clearError()
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -109,6 +122,14 @@ fun ProfileSetupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+        ) {
+        // Outside the scroll region so it stays put, and above the progress bar
+        // because being offline changes whether this step can finish at all.
+        OfflineBanner(isOffline = uiState.isOffline)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(horizontal = Spacing.x6)
                 .verticalScroll(rememberScrollState())
                 .imePadding()
@@ -165,13 +186,8 @@ fun ProfileSetupScreen(
                 onValueChange = { name = it },
                 label       = stringResource(R.string.profile_name_label),
                 placeholder = stringResource(R.string.profile_name_placeholder),
-                validate    = { input ->
-                    when {
-                        input.isBlank() -> nameRequired
-                        input.trim().length > 50 -> nameTooLong
-                        else -> null
-                    }
-                }
+                enabled     = !uiState.isLoading,
+                validate    = nameErrorFor,
             )
 
             Spacer(modifier = Modifier.height(Spacing.x3))
@@ -190,7 +206,8 @@ fun ProfileSetupScreen(
                     placeholder = stringResource(R.string.profile_optional_placeholder),
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f),
-                    validate    = { it.validOptionalNumber(13..120, ageNaN, ageRange) }
+                    enabled     = !uiState.isLoading,
+                    validate    = ageErrorFor,
                 )
                 PamojaTextField(
                     value       = height,
@@ -199,7 +216,8 @@ fun ProfileSetupScreen(
                     placeholder = stringResource(R.string.profile_optional_placeholder),
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f),
-                    validate    = { it.validOptionalNumber(50..250, heightNaN, heightRange) }
+                    enabled     = !uiState.isLoading,
+                    validate    = heightErrorFor,
                 )
                 PamojaTextField(
                     value       = weight,
@@ -208,7 +226,8 @@ fun ProfileSetupScreen(
                     placeholder = stringResource(R.string.profile_optional_placeholder),
                     keyboardType = KeyboardType.Number,
                     modifier    = Modifier.weight(1f),
-                    validate    = { it.validOptionalNumber(20..300, weightNaN, weightRange) }
+                    enabled     = !uiState.isLoading,
+                    validate    = weightErrorFor,
                 )
             }
 
@@ -220,7 +239,28 @@ fun ProfileSetupScreen(
                 color = colors.textTertiary
             )
 
-            Spacer(modifier = Modifier.height(Spacing.x8))
+            Spacer(modifier = Modifier.height(Spacing.x6))
+
+            // Inline and persistent. A snackbar carried this before, so a failed
+            // save announced itself for four seconds and then left the user
+            // looking at a filled-in form with no idea it had not been saved.
+            if (uiState.isOffline) {
+                PamojaNotice(
+                    icon  = PamojaIcons.AlertCircle,
+                    title = stringResource(R.string.profile_offline_title),
+                    body  = stringResource(R.string.profile_offline_body),
+                    tone  = NoticeTone.Warning,
+                )
+                Spacer(modifier = Modifier.height(Spacing.x3))
+            } else if (uiState.error != null) {
+                PamojaNotice(
+                    icon  = PamojaIcons.AlertCircle,
+                    title = stringResource(R.string.profile_failed_title),
+                    body  = uiState.error!!.toErrorCopy().body(context),
+                    tone  = NoticeTone.Danger,
+                )
+                Spacer(modifier = Modifier.height(Spacing.x3))
+            }
 
             Button(
                 onClick = {
@@ -231,7 +271,7 @@ fun ProfileSetupScreen(
                         weight = weight.toFloatOrNull()
                     )
                 },
-                enabled  = name.isNotBlank() && !uiState.isLoading,
+                enabled  = firstError == null && uiState.canSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -243,19 +283,36 @@ fun ProfileSetupScreen(
                     disabledContentColor   = colors.textTertiary
                 )
             ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(18.dp),
+                        color       = colors.textTertiary,
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.x2))
+                }
                 Text(
                     text  = stringResource(if (uiState.isLoading) R.string.profile_creating else R.string.common_continue),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
 
+            // Why Continue is dead. Skipped while the form is still untouched,
+            // because an empty optional field is not a mistake worth flagging.
+            val anythingTyped = name.isNotEmpty() || age.isNotEmpty() ||
+                height.isNotEmpty() || weight.isNotEmpty()
+            if (anythingTyped && firstError != null) {
+                Spacer(modifier = Modifier.height(Spacing.x2))
+                Text(
+                    text  = firstError,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.statusDanger,
+                )
+            }
+
             Spacer(modifier = Modifier.height(Spacing.x10))
         }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier  = Modifier.align(Alignment.BottomCenter)
-        )
+        }
     }
 }
 

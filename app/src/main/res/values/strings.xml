@@ -195,6 +195,9 @@
     <string name="profile_field_height">height</string>
     <string name="profile_field_weight">weight</string>
     <string name="profile_creating">Creating account…</string>
+    <string name="profile_offline_title">You are offline</string>
+    <string name="profile_offline_body">Setting up your profile needs a connection. Your answers stay here until you are back.</string>
+    <string name="profile_failed_title">Could not save your profile</string>
 
     <!-- ── Home ───────────────────────────────────────────────────────── -->
     <string name="home_your_groups">YOUR GROUPS</string>
@@ -233,6 +236,10 @@
     <string name="create_group_members_edit_sub">Allow others to change the step target</string>
     <string name="create_group_creating">Creating…</string>
     <string name="create_group_submit">Create group</string>
+    <string name="create_group_members_format">%1$d members</string>
+    <string name="create_group_offline_title">You are offline</string>
+    <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you are back.</string>
+    <string name="create_group_failed_title">Could not create the group</string>
 
     <!-- ── Health Connect ─────────────────────────────────────────────── -->
     <string name="hc_icon_desc">Step tracking</string>
@@ -265,6 +272,10 @@
     <string name="invite_share_chooser">Share invite link</string>
     <string name="invite_more_options">More share options</string>
     <string name="invite_go_to_group">Go to my group</string>
+    <string name="invite_group_label">Invite people to</string>
+    <string name="invite_details_failed_title">Could not load the group details</string>
+    <string name="invite_details_failed_body">The link below still works. Share it now, or retry to see the group.</string>
+    <string name="invite_offline_body">The link below still works offline. Share it now, or retry once you are back.</string>
 
     <!-- ── Group dashboard ────────────────────────────────────────────── -->
     <string name="group_leaderboard">LEADERBOARD</string>

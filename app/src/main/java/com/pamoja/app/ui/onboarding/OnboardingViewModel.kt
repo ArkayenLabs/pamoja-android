@@ -5,6 +5,7 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.CreateUserUseCase
@@ -20,15 +21,26 @@ import javax.inject.Inject
 data class OnboardingUiState(
     val isLoading: Boolean = false,
     val error: AppError? = null,
-    val isSuccess: Boolean = false
-)
+    val isSuccess: Boolean = false,
+    val isOffline: Boolean = false,
+) {
+    /**
+     * The profile write cannot be queued offline.
+     *
+     * Firestore only completes a write Task once the server acknowledges it, so
+     * finishing onboarding without a network would suspend forever on a
+     * spinner. Saying so leaves the user somewhere they can act.
+     */
+    val canSubmit: Boolean get() = !isLoading && !isOffline
+}
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val createUserUseCase: CreateUserUseCase,
     private val userPreferences: UserPreferences,
     private val firebaseAuth: FirebaseAuth,          // injected to check existing session
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val connectivityObserver: ConnectivityObserver,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
@@ -38,6 +50,17 @@ class OnboardingViewModel @Inject constructor(
     val user: StateFlow<User?> = _user.asStateFlow()
 
     private var profileSetupStartedLogged = false
+
+    init {
+        viewModelScope.launch {
+            connectivityObserver.isOnline.collect { online ->
+                _uiState.value = _uiState.value.copy(
+                    isOffline = !online,
+                    error = if (online) null else _uiState.value.error,
+                )
+            }
+        }
+    }
 
     /** Call when ProfileSetupScreen enters composition. Logs once per session. */
     fun onProfileSetupStarted() {
@@ -54,15 +77,18 @@ class OnboardingViewModel @Inject constructor(
         weight: Float?
     ) {
         viewModelScope.launch {
-            _uiState.value = OnboardingUiState(isLoading = true)
+            // copy, not a fresh state, or isOffline resets to false on submit
+            // and the guard un-hides the control it exists to block.
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             // Sign-in is a hard gate, so reaching this screen means Firebase
             // already holds a real account. There is nothing to create here, only
             // a profile to attach to the UID that already exists.
             val userId = firebaseAuth.currentUser?.uid
             if (userId == null) {
-                _uiState.value = OnboardingUiState(
-                    error = AppError.SessionExpired()
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = AppError.SessionExpired(),
                 )
                 return@launch
             }
@@ -81,12 +107,16 @@ class OnboardingViewModel @Inject constructor(
                     userPreferences.saveUserName(name)
                     userPreferences.setOnboarded(true)
                     _user.value = user
-                    _uiState.value = OnboardingUiState(isSuccess = true)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isSuccess = true,
+                    )
                     analyticsManager.logProfileCompleted(userId)
                 },
                 onFailure = { error ->
-                    _uiState.value = OnboardingUiState(
-                        error = error.toAppError()
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.toAppError(),
                     )
                 }
             )
@@ -95,9 +125,5 @@ class OnboardingViewModel @Inject constructor(
 
     fun clearSuccess() {
         _uiState.value = _uiState.value.copy(isSuccess = false)
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
     }
 }

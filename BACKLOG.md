@@ -122,6 +122,15 @@ These block progress and only you can do them.
       deletion URL at the new deletion section
 - [ ] 🔴 **Back up `D:\Play Console\Pamoja\upload-keystore.jks`.** Still a single
       copy on one drive
+- [ ] 🔴 **Start the Play merchant / payments profile today.** Added 2026-08-11.
+      Nothing about monetization can be tested until this chain finishes, and
+      every link in it is someone else's queue: payments profile → bank account
+      verification → tax identity (PAN verified against the Income Tax database)
+      → *only then* can subscription products be created → only then can a
+      licence tester make a test purchase. §3.3 targets the code for early
+      September, but the code was never the long pole. A single verification
+      bounce in September costs the Shipaton submission. Start it now and it
+      matures in the background
 - [ ] 🟠 **Firebase test phone numbers**, for the judges. Authentication →
       Sign-in method → Phone → Test phone numbers. A fixed number and code, no
       SMS sent, no cost. Do the same with a throwaway email account
@@ -137,10 +146,37 @@ These block progress and only you can do them.
 
 ## 3. WHAT I DO NEXT, in this order
 
-### 3.1 Finish the state matrix, design brief §3
-Remaining screens from `CHECKLIST.md` §11.5: **create group, profile setup,
-settings, invite**. Mechanical now that the components exist. Create group is
-thinnest, it already has inline validation.
+### 3.1 Finish the state matrix, design brief §3 — done for three of four
+
+**Create group, profile setup and invite are covered** as of 2026-08-11.
+`CHECKLIST.md` §11.5 for those three is satisfied. What the round actually
+found, beyond the missing states:
+
+- **Both forms could submit invalid input.** The submit buttons asked
+  `name.isNotBlank()`, which is true for `"   "`, so a whitespace-only name
+  passed the gate and reached Firestore trimmed to `""`. Profile setup had the
+  same hole on age, height and weight: the on-blur check flagged an age of 999
+  but the button never consulted it. Each rule is now defined once and asked
+  by both the field and the button
+- **Both forms hung forever offline.** Firestore only completes a write Task on
+  server acknowledgement, so `set().await()` never returns without a network and
+  the button spun with nothing behind it. Both now block with an explanation
+  instead of faking progress
+- **Failures were snackbars.** They announced themselves for four seconds and
+  left, so a form that had silently done nothing looked filled in and saved.
+  Now inline and persistent, next to the button they block
+- **Invite rendered a guess as fact.** The member cap defaulted to 10 while the
+  group was still loading, so it stated the wrong number and then corrected
+  itself. Now a skeleton until the fetch answers. The group name was being
+  fetched and never displayed at all, so the screen never said which group you
+  were inviting people to
+- **Invite treats a failed load as partial.** The link is derived from the group
+  ID, never fetched, so copy and share keep working while only the details retry
+
+**Settings state coverage was deliberately not done here.** §3.2 §4B rewrites
+that screen: profile header, edit-profile, theme selector, notification
+settings. Covering the current one first means building it twice. Do it as part
+of §4B.
 
 ### 3.2 The redesign proper
 `design/DESIGN_BRIEF.md` rounds still to run, in the order the brief gives:

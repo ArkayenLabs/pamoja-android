@@ -48,7 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.toSnackbarMessage
+import com.pamoja.app.ui.components.NoticeTone
+import com.pamoja.app.ui.components.OfflineBanner
+import com.pamoja.app.ui.components.PamojaNotice
+import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
@@ -70,12 +73,6 @@ fun InviteScreen(
     val scope             = rememberCoroutineScope()
 
     LaunchedEffect(groupId) { viewModel.loadGroup(groupId) }
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
-            viewModel.clearError()
-        }
-    }
 
     // Always the verified https App Link, derived from the group ID rather than
     // read from Firestore. Existing documents still hold the old pamoja:// string,
@@ -87,8 +84,7 @@ fun InviteScreen(
     // scopes, neither of which is a composable scope.
     val linkCopiedMessage = stringResource(R.string.invite_link_copied)
     val shareChooserTitle = stringResource(R.string.invite_share_chooser)
-    val groupName  = uiState.group?.name ?: ""
-    val maxCap     = uiState.group?.maxMemberCap ?: 10
+    val group = uiState.group
 
     Box(
         modifier = Modifier
@@ -98,7 +94,14 @@ fun InviteScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
+                .statusBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+        OfflineBanner(isOffline = uiState.isOffline)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(horizontal = Spacing.x6),
             verticalArrangement   = Arrangement.SpaceBetween,
             horizontalAlignment   = Alignment.CenterHorizontally
@@ -149,12 +152,59 @@ fun InviteScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.x2))
 
-                Text(
-                    text      = stringResource(R.string.invite_subtitle, maxCap),
-                    style     = MaterialTheme.typography.bodyMedium,
-                    color     = colors.textSecondary,
-                    textAlign = TextAlign.Center
-                )
+                // Which group, and how many spots. Both come from the fetch, so
+                // until it answers they are placeholders rather than a guess:
+                // the cap used to default to 10 and read as fact before the real
+                // number arrived and quietly changed it.
+                when {
+                    !uiState.hasLoadedOnce -> {
+                        SkeletonBlock(
+                            modifier = Modifier.fillMaxWidth(0.5f),
+                            height   = 14.dp,
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.x2))
+                        SkeletonBlock(
+                            modifier = Modifier.fillMaxWidth(0.75f),
+                            height   = 14.dp,
+                        )
+                    }
+
+                    group != null -> {
+                        Text(
+                            text      = stringResource(R.string.invite_group_label),
+                            style     = MaterialTheme.typography.bodySmall,
+                            color     = colors.textTertiary,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text      = group.name,
+                            style     = MaterialTheme.typography.titleMedium,
+                            color     = colors.textPrimary,
+                            textAlign = TextAlign.Center,
+                            maxLines  = 2,
+                            overflow  = TextOverflow.Ellipsis,
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.x2))
+                        Text(
+                            text      = stringResource(R.string.invite_subtitle, group.maxMemberCap),
+                            style     = MaterialTheme.typography.bodyMedium,
+                            color     = colors.textSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    // The details failed, the link did not. Partial failure, so
+                    // the screen keeps doing the one job it was opened for.
+                    else -> PamojaNotice(
+                        icon  = PamojaIcons.AlertCircle,
+                        title = stringResource(R.string.invite_details_failed_title),
+                        body  = stringResource(
+                            if (uiState.isOffline) R.string.invite_offline_body
+                            else R.string.invite_details_failed_body
+                        ),
+                        tone  = if (uiState.isOffline) NoticeTone.Warning else NoticeTone.Danger,
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(Spacing.x7))
 
@@ -272,6 +322,20 @@ fun InviteScreen(
                     )
                 }
 
+                // Retry only for the details, and only when they are what failed.
+                if (uiState.hasLoadedOnce && group == null) {
+                    TextButton(
+                        onClick = { viewModel.retry() },
+                        enabled = !uiState.isLoading,
+                    ) {
+                        Text(
+                            text  = stringResource(R.string.common_try_again),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.accentPrimary
+                        )
+                    }
+                }
+
                 // Go to group, ghost text button with trailing arrow icon
                 TextButton(onClick = onGoToGroup) {
                     Text(
@@ -288,6 +352,7 @@ fun InviteScreen(
                     )
                 }
             }
+        }
         }
 
         SnackbarHost(

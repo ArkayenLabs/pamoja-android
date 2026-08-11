@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -60,6 +61,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaTextField
@@ -426,6 +428,16 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
+                // ─── Section: Preferences ───────────────────────────────────
+                SectionLabel(stringResource(R.string.settings_section_preferences), color = colors.textTertiary)
+
+                ThemeSelector(
+                    selected = uiState.theme,
+                    onSelect = viewModel::setTheme,
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.x6))
+
                 // ─── Section: App Settings & Info ───────────────────────────
                 SectionLabel(stringResource(R.string.settings_section_information), color = colors.textTertiary)
 
@@ -640,4 +652,88 @@ private fun profileSummary(age: Int?, height: Float?, weight: Float?): String {
     } else {
         parts.joinToString(stringResource(R.string.profile_detail_separator))
     }
+}
+
+/**
+ * System / Light / Dark, as a segmented control.
+ *
+ * A segmented control rather than a dialog because there are exactly three
+ * options and the result is visible instantly behind the control: choosing Dark
+ * and watching the sheet recolour underneath is the confirmation, so a dialog
+ * would only get in the way of the feedback.
+ */
+@Composable
+private fun ThemeSelector(
+    selected: ThemePreference,
+    onSelect: (ThemePreference) -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.md)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.x6)
+            .clip(shape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, shape)
+            .padding(Spacing.x4),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_theme_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.textPrimary,
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.x3))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(PamojaRadii.sm))
+                .background(colors.surfaceSunken)
+                .padding(Spacing.x1),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.x1),
+        ) {
+            ThemePreference.entries.forEach { option ->
+                val isSelected = option == selected
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(PamojaRadii.sm))
+                        .background(if (isSelected) colors.accentPrimary else Color.Transparent)
+                        .clickable { onSelect(option) }
+                        // 44dp plus the row padding clears the 48dp target.
+                        .padding(vertical = Spacing.x3),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(option.labelRes()),
+                        style = MaterialTheme.typography.labelLarge,
+                        // Selection is carried by weight as well as colour, so
+                        // it survives being read without colour perception.
+                        color = if (isSelected) colors.textOnBrand else colors.textSecondary,
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.x3))
+
+        Text(
+            text = stringResource(
+                if (selected == ThemePreference.System) R.string.settings_theme_system_sub
+                else R.string.settings_theme_fixed_sub
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textTertiary,
+        )
+    }
+}
+
+@StringRes
+private fun ThemePreference.labelRes(): Int = when (this) {
+    ThemePreference.System -> R.string.settings_theme_system
+    ThemePreference.Light -> R.string.settings_theme_light
+    ThemePreference.Dark -> R.string.settings_theme_dark
 }

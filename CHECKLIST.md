@@ -628,7 +628,7 @@ Everything today is a periodic nudge. The notifications that actually drive rete
 ### 11C.2 Settings, what is missing
 
 **Preferences**
-- [ ] 🔴 **Theme selector (System / Light / Dark)**, you now have a full light+dark system but **no way for a user to choose**; it only follows the system. Many users want to force one
+- [x] ✅ **Theme selector (System / Light / Dark)**, segmented control in a new Preferences section. Stored in DataStore and collected in `MainActivity`, so the whole app recolours from the write with no restart. System stays live rather than being resolved once, so the phone's evening switch still moves the app. The key survives `clearAll()`, since how the phone looks is not account state
 - [ ] 🔴 **Notification settings** (see §11B.8)
 - [ ] 🟡 Units (metric/imperial), matters once distance is added
 - [ ] 🟡 Week start day (currently hardcoded Monday)

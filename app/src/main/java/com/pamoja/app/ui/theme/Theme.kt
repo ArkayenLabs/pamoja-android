@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.pamoja.app.domain.model.ThemePreference
 
 // Both M3 schemes are derived from the Pamoja Design System semantic tokens
 // (see PamojaColors). No dynamic color, the brand hue is intentional and must
@@ -81,11 +82,21 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun PamojaTheme(
-    // All screens are migrated onto LocalPamojaColors, so the app now follows the
+    // All screens are migrated onto LocalPamojaColors, so the app can follow the
     // system light/dark setting. Dark remains the brand's native mode.
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    //
+    // System is not resolved once and stored: isSystemInDarkTheme() is read on
+    // every recomposition, so the phone's automatic evening switch still moves
+    // the app with it.
+    themePreference: ThemePreference = ThemePreference.System,
     content: @Composable () -> Unit,
 ) {
+    val darkTheme = when (themePreference) {
+        ThemePreference.System -> isSystemInDarkTheme()
+        ThemePreference.Light -> false
+        ThemePreference.Dark -> true
+    }
+
     val pamojaColors = if (darkTheme) PamojaDarkColors else PamojaLightColors
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val view = LocalView.current

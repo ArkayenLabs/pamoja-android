@@ -17,6 +17,7 @@ import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.firebase.auth.FirebaseAuth
 import com.pamoja.app.data.local.preferences.UserPreferences
+import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.PamojaNavGraph
 import com.pamoja.app.ui.Screen
 import com.pamoja.app.ui.theme.PamojaTheme
@@ -84,7 +85,13 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            PamojaTheme {
+            // Defaults to System for the first frame, before DataStore answers.
+            // A forced-light user sees at most one dark frame at cold start,
+            // which is the cheap end of the trade against blocking the launch.
+            val themePreference by userPreferences.themePreference
+                .collectAsState(initial = ThemePreference.System)
+
+            PamojaTheme(themePreference = themePreference) {
                 val navController = rememberNavController()
 
                 // Null until the onboarding flag has been read. The NavHost is

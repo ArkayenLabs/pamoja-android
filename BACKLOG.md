@@ -207,9 +207,15 @@ Done:
   document with `set()`. Renaming yourself erased your age, height, weight and
   deviceToken. The dialog is gone; the editor copies onto the loaded document
 
+Also done:
+- **Theme selector, System / Light / Dark.** Segmented control in a new
+  Preferences section, stored in DataStore, collected in `MainActivity` so the
+  app recolours immediately with no restart. System is re-read rather than
+  resolved once, so the phone's evening switch still moves the app. The key is
+  the one thing `clearAll()` preserves on sign out, because it describes the
+  phone rather than the account
+
 Still to do in §4B, roughly in value order:
-- **Theme selector, System / Light / Dark.** 🔴 The app has a full light and
-  dark system and still no way for a user to choose
 - **Health Connect status, last synced, and Sync now.** The predictable #1
   support issue, since after onboarding there is no way to see or fix it
 - **Notification settings screen**, per-channel toggles and quiet hours

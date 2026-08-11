@@ -8,6 +8,7 @@ import com.pamoja.app.data.remote.auth.GoogleCredentialClient
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
+import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
 import com.pamoja.app.domain.usecase.GetAuthMethodsUseCase
@@ -58,6 +59,7 @@ data class SettingsUiState(
     val age: Int? = null,
     val height: Float? = null,
     val weight: Float? = null,
+    val theme: ThemePreference = ThemePreference.System,
     val isSignedOut: Boolean = false,
     /** Non-null when deletion is waiting on the user re-confirming who they are. */
     val reauthRequired: ReauthMethod? = null,
@@ -88,6 +90,20 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadUserDetails()
+        viewModelScope.launch {
+            userPreferences.themePreference.collect { theme ->
+                _uiState.value = _uiState.value.copy(theme = theme)
+            }
+        }
+    }
+
+    /**
+     * Persists the choice only. The theme itself is driven from MainActivity,
+     * which collects the same flow, so the app recolours from the write rather
+     * than from anything this screen does.
+     */
+    fun setTheme(preference: ThemePreference) {
+        viewModelScope.launch { userPreferences.saveThemePreference(preference) }
     }
 
     /** Re-reads the profile, for coming back from the editor with it changed. */

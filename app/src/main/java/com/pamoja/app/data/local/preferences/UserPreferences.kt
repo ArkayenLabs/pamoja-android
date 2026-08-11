@@ -9,8 +9,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.pamoja.app.domain.model.ThemePreference
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -53,6 +55,10 @@ class UserPreferences @Inject constructor(
         // the invite survives the whole signup flow and is honoured the moment
         // they reach Home, instead of being silently lost.
         val KEY_PENDING_INVITE_CODE      = stringPreferencesKey("pending_invite_code")
+
+        // A property of this phone, not of the account, which is why it is the
+        // one key that survives clearAll(). See the note there.
+        val KEY_THEME                    = stringPreferencesKey("theme_preference")
     }
 
     val userId: Flow<String?>  = context.dataStore.data.map { it[KEY_USER_ID] }
@@ -74,6 +80,13 @@ class UserPreferences @Inject constructor(
     }
     val consecutiveIgnoredNotifications: Flow<Int> = context.dataStore.data.map {
         it[KEY_CONSECUTIVE_IGNORED] ?: 0
+    }
+    val themePreference: Flow<ThemePreference> = context.dataStore.data.map {
+        ThemePreference.fromName(it[KEY_THEME])
+    }
+
+    suspend fun saveThemePreference(preference: ThemePreference) {
+        context.dataStore.edit { it[KEY_THEME] = preference.name }
     }
 
     suspend fun saveLastKnownGroupTotal(total: Long) {
@@ -148,7 +161,19 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit { it[KEY_LAST_NOTIFICATION_TIME] = timestamp }
     }
 
+    /**
+     * Wipes everything account-scoped, on sign out and on account deletion.
+     *
+     * The theme is deliberately carried across. It describes how this phone
+     * should look, not who is signed in, and having the app snap back to the
+     * system theme the moment someone signs out reads as a bug rather than a
+     * reset.
+     */
     suspend fun clearAll() {
-        context.dataStore.edit { it.clear() }
+        val theme = context.dataStore.data.map { it[KEY_THEME] }.first()
+        context.dataStore.edit { prefs ->
+            prefs.clear()
+            theme?.let { prefs[KEY_THEME] = it }
+        }
     }
 }

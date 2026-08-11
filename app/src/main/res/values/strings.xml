@@ -380,6 +380,15 @@
     <string name="profile_details_empty">Add your details</string>
     <string name="settings_open_profile">Edit your profile</string>
 
+    <!-- ── Preferences ────────────────────────────────────────────────── -->
+    <string name="settings_section_preferences">PREFERENCES</string>
+    <string name="settings_theme_label">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system_sub">Follows your phone, including its evening switch</string>
+    <string name="settings_theme_fixed_sub">Stays this way whatever your phone does</string>
+
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so
          "1 members" is the first thing a new admin reads. Android picks the

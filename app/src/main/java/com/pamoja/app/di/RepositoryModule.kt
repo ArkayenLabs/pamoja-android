@@ -4,9 +4,11 @@ import com.pamoja.app.data.remote.firebase.FirebaseAuthRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseGroupRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseStepRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseUserRepositoryImpl
+import com.pamoja.app.data.repository.FreeOnlySubscriptionRepository
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.GroupRepository
 import com.pamoja.app.domain.repository.StepRepository
+import com.pamoja.app.domain.repository.SubscriptionRepository
 import com.pamoja.app.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -41,4 +43,14 @@ abstract class RepositoryModule {
     abstract fun bindStepRepository(
         impl: FirebaseStepRepositoryImpl
     ): StepRepository
+
+    /**
+     * Free for everyone until RevenueCat is wired, which waits on the Play
+     * merchant chain. Swapping the implementation here is the whole change.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindSubscriptionRepository(
+        impl: FreeOnlySubscriptionRepository
+    ): SubscriptionRepository
 }

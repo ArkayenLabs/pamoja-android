@@ -203,6 +203,16 @@ fun PamojaNavGraph(
             )
         }
 
+        // Reachable by route only. Nothing navigates here yet, by design: see
+        // Screen.Paywall.
+        composable(Screen.Paywall.route) {
+            com.pamoja.app.ui.paywall.PaywallScreen(
+                onDismiss = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Screen.Account.route) {
             com.pamoja.app.ui.account.AccountScreen(
                 onBack = {

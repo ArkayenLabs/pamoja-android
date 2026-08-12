@@ -106,10 +106,17 @@ Pamoja is free to use. Tracking your steps and being part of a group are free, a
 - Cancel any time in your Google Play account settings, or through **Manage subscription** in Pamoja's settings.
 - Cancelling stops the next renewal. It does not end the period you have already paid for, and it is not a refund. Premium stays active until that period ends.
 
+**What is free, and what Premium adds**
+
+- **Step tracking, syncing and your group leaderboard are free, and stay free.** So is **joining** groups: you can join as many as you are invited to, on any plan, forever. We will never stop you accepting an invitation.
+- On the free plan you can **create one group, with up to 8 members**.
+- Premium raises this to **unlimited groups with up to 20 members each**, and adds full step history, weekly recaps, charts and trends, achievements, and data export. The current list is always shown in the app.
+
 **What happens when Premium ends**
 
-- **Nothing you created is deleted.** Your groups, your step history, and your membership of other people's groups all remain exactly as they were.
-- You keep access to what you already have. What you lose is the ability to go past the free limits, such as creating a further group beyond the free allowance.
+- **Nothing is deleted, and nobody is removed.** Every group you created stays, with all of its members, even if it holds more than the free plan allows. Your step history, and your membership of other people's groups, are untouched.
+- You keep viewing everything you already have. What stops is going *further*: creating an additional group, or adding a member beyond the free limits.
+- Joining groups stays unlimited.
 - Resubscribing restores full access immediately.
 
 **Changes**

@@ -506,6 +506,34 @@
     <string name="licenses_empty_title">Licences are not in this build</string>
     <string name="licenses_empty_body">They are generated for release builds. Install a release build to read them.</string>
 
+    <!-- ── Paywall ────────────────────────────────────────────────────── -->
+    <string name="paywall_close">Close</string>
+    <string name="paywall_title">Pamoja Premium</string>
+    <string name="paywall_subtitle">Bigger groups, and everything your walking adds up to.</string>
+    <string name="paywall_benefit_members_sub">Free groups hold %1$d</string>
+    <string name="paywall_benefit_groups">Start as many groups as you like</string>
+    <string name="paywall_benefit_groups_sub">Free lets you start %1$d</string>
+    <string name="paywall_benefit_history">Your full history</string>
+    <string name="paywall_benefit_history_sub">Every week you have walked, plus a weekly recap</string>
+    <string name="paywall_benefit_stats">Charts, trends and records</string>
+    <string name="paywall_benefit_stats_sub">See how this week compares, and beat your best</string>
+    <!-- Reassurance, and literally true: paywalling tracking would break the
+         groups free members are already in. -->
+    <string name="paywall_free_forever">Step tracking, your leaderboard, and joining any group you are invited to stay free forever.</string>
+    <string name="paywall_plan_annual">Yearly</string>
+    <string name="paywall_plan_monthly">Monthly</string>
+    <string name="paywall_period_year">year</string>
+    <string name="paywall_period_month">month</string>
+    <string name="paywall_disclosure">%1$s per %2$s. Renews automatically until you cancel.</string>
+    <string name="paywall_start_trial">Start free trial</string>
+    <string name="paywall_subscribe">Subscribe</string>
+    <string name="paywall_cancel_anytime">Cancel any time in Google Play.</string>
+    <string name="paywall_restore">Restore purchases</string>
+    <string name="paywall_restoring">Checking…</string>
+    <string name="paywall_failed_title">That did not go through</string>
+    <string name="paywall_unavailable_title">Premium is not on sale yet</string>
+    <string name="paywall_unavailable_body">Nothing has been charged. Everything free keeps working exactly as it does now.</string>
+
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so
          "1 members" is the first thing a new admin reads. Android picks the
@@ -516,6 +544,17 @@
     </plurals>
     <!-- Never one in practice, but a count followed by a noun is exactly the
          shape that produced "1 members" on the group dashboard. -->
+    <!-- The cap is 20 today so "one" never renders, but the cap is a constant
+         that can move, and this is the shape that produced "1 members". -->
+    <plurals name="paywall_benefit_members">
+        <item quantity="one">Up to %1$d person in a group</item>
+        <item quantity="other">Up to %1$d people in a group</item>
+    </plurals>
+    <!-- Trial length comes from the store, so it is genuinely variable. -->
+    <plurals name="paywall_disclosure_trial">
+        <item quantity="one">Free for %1$d day, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</item>
+        <item quantity="other">Free for %1$d days, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</item>
+    </plurals>
     <plurals name="licenses_subtitle">
         <item quantity="one">Pamoja is built on %1$d open source component. Thank you to whoever wrote it.</item>
         <item quantity="other">Pamoja is built on %1$d open source components. Thank you to everyone who wrote them.</item>

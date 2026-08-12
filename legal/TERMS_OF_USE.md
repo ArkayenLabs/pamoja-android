@@ -1,7 +1,7 @@
 # Terms of Use. Pamoja
 
-**Last updated: 11 August 2026**
-**Effective date: 11 August 2026**
+**Last updated: 12 August 2026**
+**Effective date: 12 August 2026**
 
 > ⚠️ **Not legal advice, and not yet reviewed by a lawyer.** All placeholders are
 > filled, but §4 (health disclaimer), §13 (liability) and §16 (governing law) are
@@ -86,15 +86,40 @@ In summary, and without limiting that policy:
 
 ## 9. Subscriptions and payments
 
-Pamoja may offer optional paid subscriptions unlocking additional features.
+Pamoja is free to use. Tracking your steps and being part of a group are free, and will stay free. We also offer an optional paid subscription, **Pamoja Premium**, which unlocks additional features.
 
-- Prices are shown in the app before purchase, in your local currency where available.
-- Payments are processed by **Google Play**. Your purchase is also subject to Google Play's terms.
-- **Subscriptions renew automatically** until cancelled. Cancel any time in your Google Play account settings; cancellation takes effect at the end of the current billing period.
-- **Free trials**, where offered, convert to a paid subscription unless cancelled before the trial ends.
-- **Refunds are handled by Google Play** under their refund policy. We may consider discretionary refunds but are not obliged to provide them.
-- We may change subscription pricing. Existing subscribers will be notified before any change affects them.
-- Free features may change over time. We will not remove a feature you have already paid for during your paid period.
+**Plans and price**
+
+- Premium is offered as a **monthly** plan and an **annual** plan. The annual plan works out cheaper per month.
+- The price is shown in the app and on the Google Play listing **before you buy**, in your local currency where Google Play supports it. Prices vary by country.
+- Payment is taken by **Google Play**, not by us. Your purchase is also subject to Google Play's own terms.
+
+**Free trial**
+
+- The annual plan may be offered with a **7-day free trial**. Where a trial is offered, its length is stated in the app before you start it.
+- A trial **turns into a paid annual subscription automatically when it ends**, unless you cancel first, and you are charged the annual price at that point.
+- Cancelling during a trial keeps Premium until the trial's final day and you are not charged.
+
+**Renewal and cancellation**
+
+- Subscriptions **renew automatically** at the end of every billing period until you cancel.
+- Cancel any time in your Google Play account settings, or through **Manage subscription** in Pamoja's settings.
+- Cancelling stops the next renewal. It does not end the period you have already paid for, and it is not a refund. Premium stays active until that period ends.
+
+**What happens when Premium ends**
+
+- **Nothing you created is deleted.** Your groups, your step history, and your membership of other people's groups all remain exactly as they were.
+- You keep access to what you already have. What you lose is the ability to go past the free limits, such as creating a further group beyond the free allowance.
+- Resubscribing restores full access immediately.
+
+**Changes**
+
+- We may change subscription pricing. Existing subscribers are told before any change affects them, and a price rise never applies to a period already paid for.
+- What is included in free and in Premium may change over time. We will not take a feature away from you during a period you have already paid for.
+
+**Refunds**
+
+- **Refunds are handled by Google Play** under their refund policy, since they took the payment. We may consider a discretionary refund but are not obliged to give one.
 
 ## 10. Intellectual property
 

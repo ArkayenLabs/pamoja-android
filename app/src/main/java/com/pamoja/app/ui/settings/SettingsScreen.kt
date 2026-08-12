@@ -58,6 +58,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -467,6 +468,30 @@ fun SettingsScreen(
                         // having to be opened.
                         subtitle = authMethodsSummary(uiState.authMethods),
                         onClick = onAccount,
+                    )
+                    SettingsRow(
+                        icon = PamojaIcons.Star,
+                        title = stringResource(R.string.settings_subscription_title),
+                        subtitle = stringResource(R.string.settings_subscription_sub),
+                        onClick = {
+                            // Play owns the subscription, so cancelling has to
+                            // happen there. Required by policy, and it has to be
+                            // easy to find rather than buried: burying it is the
+                            // dark pattern that gets apps removed.
+                            //
+                            // The general subscription centre until there are
+                            // products to name. Once they exist this should carry
+                            // ?sku=<productId>&package=<packageName> so it lands
+                            // on Pamoja's own subscription rather than a list.
+                            runCatching {
+                                context.startActivity(
+                                    Intent(
+                                        Intent.ACTION_VIEW,
+                                        "https://play.google.com/store/account/subscriptions".toUri(),
+                                    )
+                                )
+                            }
+                        },
                     )
                 }
 

@@ -444,6 +444,10 @@
     <string name="settings_account_one">%1$s only. Add a second way in.</string>
     <string name="settings_account_many">%1$s connected</string>
     <string name="account_method_separator">, </string>
+    <string name="settings_subscription_title">Manage subscription</string>
+    <!-- Says where it goes rather than assuming one is held, since it is also
+         correct for someone who has never subscribed. -->
+    <string name="settings_subscription_sub">Opens your subscriptions in Google Play</string>
 
     <string name="account_title">Account</string>
     <string name="account_subtitle">Any of these signs you into the same account. Adding one never starts a new one, and never touches your groups or step history.</string>

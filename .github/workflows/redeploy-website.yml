@@ -1,0 +1,57 @@
+# Redeploys arkayenlabs.com when a published legal document changes.
+#
+# The website renders web/terms-pamoja.html and web/privacy-pamoja.html
+# directly: its build fetches them from this repo, so the pages are always the
+# current text rather than a hand-maintained copy. The catch is that it only
+# refetches when it builds. Without this, editing the terms here leaves the
+# published version stale until someone happens to redeploy the site, which is
+# the drift this setup was meant to remove.
+#
+# Setup, both one-time:
+#   1. Vercel > website project > Settings > Git > Deploy Hooks. Create one
+#      named "pamoja-legal" on the main branch and copy the URL.
+#   2. This repo > Settings > Secrets and variables > Actions > New repository
+#      secret, named VERCEL_DEPLOY_HOOK, pasted from step 1.
+#
+# The URL is a secret because anyone holding it can trigger deploys.
+
+name: Redeploy website on legal change
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "web/terms-pamoja.html"
+      - "web/privacy-pamoja.html"
+  # Lets you force a redeploy from the Actions tab without editing a file.
+  workflow_dispatch:
+
+# A burst of commits should produce one deploy, not one per commit.
+concurrency:
+  group: redeploy-website
+  cancel-in-progress: false
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::VERCEL_DEPLOY_HOOK is not set. See the setup notes at the top of this file."
+            exit 1
+          fi
+
+          status=$(curl -sS -o response.json -w '%{http_code}' -X POST "$HOOK")
+          echo "Vercel responded $status"
+          cat response.json || true
+
+          # Vercel returns 201 with the new deployment's id when it accepts.
+          if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+            echo "::error::Deploy hook failed with HTTP $status"
+            exit 1
+          fi
+
+          echo "Website redeploy triggered; the legal pages will pick up this change."

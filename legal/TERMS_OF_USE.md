@@ -194,13 +194,16 @@ Web: [https://www.arkayenlabs.com](https://www.arkayenlabs.com)
 
 Published version lives at `web/terms-pamoja.html`. **Edit this file first, then
 mirror the change there**, so the reviewed draft and the live page never drift.
+That mirror is now the only manual step left: the website renders
+`web/terms-pamoja.html` directly and redeploys itself whenever it changes, so
+whatever is in that file is what the world reads. See `web/DEPLOY.md`.
 
 - [x] Dates, entity, address, support email, liability cap and jurisdiction filled
 - [x] Terms row added to the app's Settings screen
-- [ ] Deploy `web/terms-pamoja.html` to `https://www.arkayenlabs.com/terms/pamoja`,
-      currently a soft 404 that returns HTTP 200 with a "page not found" body
-- [ ] Confirm `support@arkayenlabs.com` actually receives mail. The site currently
-      publishes `hello@arkayenlabs.com`, and Play requires a monitored address
+- [x] Live at `https://www.arkayenlabs.com/terms/pamoja`, no longer a soft 404
+- [x] `support@arkayenlabs.com` is the only address published on the site now.
+      Still worth confirming the mailbox is monitored: Play requires it, and it
+      is the only route users have left
 - [ ] Confirm the minimum age of 18 matches the Play Console target-audience
       declaration
 - [ ] **Have a lawyer review it.** The health disclaimer (§4), the liability cap

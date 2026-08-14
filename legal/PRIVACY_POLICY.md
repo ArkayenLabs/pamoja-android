@@ -255,9 +255,13 @@ Corrections made on 11 August 2026, against the version dated 22 June 2026:
 - [x] Age threshold raised from 13 to 18, matching the Terms and DPDP
 - [x] Contact updated to the sole proprietorship and support@arkayenlabs.com
 
+- [x] Live at `https://www.arkayenlabs.com/privacy/pamoja`. Deploying is no
+      longer a step: the website renders `web/privacy-pamoja.html` itself,
+      fetched at build time, and redeploys whenever that file changes. Mirroring
+      this document into it remains the one manual hop. See `web/DEPLOY.md`
+
 Still to do:
 
-- [ ] Mirror into `web/privacy-pamoja.html` and deploy
 - [ ] Point the Play Data Safety **account deletion URL** at the deletion section
 - [ ] Re-check the Data Safety form against this document, especially the newly
       declared crash logs, diagnostics, email address and phone number

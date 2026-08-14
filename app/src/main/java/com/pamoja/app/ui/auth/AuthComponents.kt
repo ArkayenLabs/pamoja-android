@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -30,16 +31,76 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.pamoja.app.R
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
 
 const val OTP_LENGTH = 6
+
+/** The published legal pages. Both are live and linked from Settings too. */
+private const val TERMS_URL = "https://www.arkayenlabs.com/terms/pamoja"
+private const val PRIVACY_URL = "https://www.arkayenlabs.com/privacy/pamoja"
+
+/**
+ * "By continuing you agree to our Terms of Use and Privacy Policy", with both
+ * actually openable.
+ *
+ * It previously rendered as plain grey text. Naming two documents and giving no
+ * way to read them is not consent in any meaningful sense, and Play reviewers
+ * do click these.
+ *
+ * The link ranges are found by searching the formatted sentence for the two
+ * labels rather than being hardcoded offsets, so a translation may reorder or
+ * rephrase around them and the links still land in the right place.
+ */
+@Composable
+fun AuthLegalLine(modifier: Modifier = Modifier) {
+    val colors = LocalPamojaColors.current
+
+    val terms = stringResource(R.string.auth_legal_terms)
+    val privacy = stringResource(R.string.auth_legal_privacy)
+    val sentence = stringResource(R.string.auth_legal_line, terms, privacy)
+
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(
+            color = colors.accentPrimary,
+            textDecoration = TextDecoration.Underline,
+        ),
+    )
+
+    // Resolved outside, remembered on the resolved values, so switching
+    // language rebuilds it rather than freezing the old sentence.
+    val annotated = remember(sentence, terms, privacy, colors.accentPrimary) {
+        buildAnnotatedString {
+            append(sentence)
+            listOf(terms to TERMS_URL, privacy to PRIVACY_URL).forEach { (label, url) ->
+                val start = sentence.indexOf(label)
+                if (start >= 0) {
+                    addLink(LinkAnnotation.Url(url, linkStyles), start, start + label.length)
+                }
+            }
+        }
+    }
+
+    Text(
+        text = annotated,
+        style = MaterialTheme.typography.bodySmall,
+        color = colors.textTertiary,
+        modifier = modifier,
+    )
+}
 
 /**
  * Six boxes driven by one hidden field.

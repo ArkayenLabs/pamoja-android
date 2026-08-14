@@ -179,12 +179,7 @@ fun AuthLandingScreen(
 
             Spacer(modifier = Modifier.height(Spacing.x6))
 
-            Text(
-                text = stringResource(R.string.auth_legal_line),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textTertiary,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            AuthLegalLine(modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(Spacing.x8))
         }

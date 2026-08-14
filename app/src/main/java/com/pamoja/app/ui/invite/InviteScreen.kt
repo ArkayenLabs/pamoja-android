@@ -2,6 +2,8 @@ package com.pamoja.app.ui.invite
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,6 +66,7 @@ import kotlinx.coroutines.launch
 fun InviteScreen(
     groupId: String,
     onGoToGroup: () -> Unit,
+    onBack: () -> Unit,
     viewModel: InviteViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -100,18 +103,38 @@ fun InviteScreen(
         ) {
         OfflineBanner(isOffline = uiState.isOffline)
 
+        // A way out that is not "go to group". Arriving here straight after
+        // creating one, the only exits were the group itself or the system
+        // back gesture, which is not an affordance anyone can see.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                Icon(
+                    painter = painterResource(PamojaIcons.ArrowLeft),
+                    contentDescription = stringResource(R.string.common_back),
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+
+        // Scrolls. It used to be a fixed SpaceBetween column, so on a shorter
+        // phone the QR pushed the share and go-to-group controls off the bottom
+        // of the screen with no way to reach them.
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.x6),
-            verticalArrangement   = Arrangement.SpaceBetween,
+                .padding(horizontal = Spacing.x6)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment   = Alignment.CenterHorizontally
         ) {
 
             // ── Top section ───────────────────────────────────────────────
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                Spacer(modifier = Modifier.height(Spacing.x12))
+                Spacer(modifier = Modifier.height(Spacing.x6))
 
                 // Success icon, gradient circle
                 Box(contentAlignment = Alignment.Center) {
@@ -212,7 +235,10 @@ fun InviteScreen(
                 // ── QR, for handing the invite to someone standing there ──
                 // Faster than reading a URL aloud, which is what this flow
                 // used to require for anyone not on a messaging app.
-                PamojaQrCode(content = inviteLink)
+                // 160 rather than the default 200. It only has to be scannable
+                // from across a table, and at 200 it crowded out everything
+                // below it on a normal phone.
+                PamojaQrCode(content = inviteLink, size = 160.dp)
 
                 Spacer(modifier = Modifier.height(Spacing.x3))
 
@@ -271,40 +297,17 @@ fun InviteScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Spacing.x3)
             ) {
-                // Copy link, primary.
-                // No app-specific share button here on purpose. Hardcoding
-                // WhatsApp dead-ended whenever it was not installed, and it
-                // presumes which messenger the user's group uses. The system
-                // sheet below already surfaces WhatsApp first for anyone who
-                // has it.
-                Button(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(inviteLink))
-                        scope.launch { snackbarHostState.showSnackbar(linkCopiedMessage) }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape  = RoundedCornerShape(PamojaRadii.md),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimary,
-                        contentColor   = colors.textOnBrand
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Copy),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = colors.textOnBrand
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
-                    Text(
-                        text  = stringResource(R.string.invite_copy),
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-
-                // Share via the system sheet, tonal secondary
+                // Share is the primary action, and the only one here.
+                //
+                // There used to be a full-width "Copy link" button directly
+                // below a link card that already had a copy icon on it: two
+                // controls, same result, one screen. Copying stays where the
+                // link is, which is where anyone looks for it.
+                //
+                // No app-specific share button on purpose. Hardcoding WhatsApp
+                // dead-ends whenever it is not installed and presumes which
+                // messenger the group uses. The system sheet surfaces WhatsApp
+                // first anyway for anyone who has it.
                 Button(
                     onClick = {
                         val intent = Intent(Intent.ACTION_SEND).apply {
@@ -322,19 +325,19 @@ fun InviteScreen(
                         .height(54.dp),
                     shape  = RoundedCornerShape(PamojaRadii.md),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimarySubtle,
-                        contentColor   = colors.accentPrimary
+                        containerColor = colors.accentPrimary,
+                        contentColor   = colors.textOnBrand
                     )
                 ) {
                     Icon(
                         painter = painterResource(PamojaIcons.Share),
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = colors.accentPrimary
+                        tint = colors.textOnBrand
                     )
                     Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
-                        text  = stringResource(R.string.invite_more_options),
+                        text  = stringResource(R.string.invite_share),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }

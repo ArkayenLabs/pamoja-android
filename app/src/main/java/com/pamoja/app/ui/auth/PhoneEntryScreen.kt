@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -142,11 +144,17 @@ fun PhoneEntryScreen(
             ) {
                 // ISO code and dial code, never a flag. Emoji are banned product
                 // wide, and this reads correctly to a screen reader.
+                // wrapContentWidth, and fillMaxHeight rather than fillMaxSize.
+                // A Row measures its non-weighted children against the full
+                // width first, so fillMaxSize let this chip take the whole row
+                // and left nothing for the number field beside it.
                 Surface(
                     onClick = { showCountryPicker = true },
                     shape = RoundedCornerShape(PamojaRadii.sm),
                     color = colors.surfaceInput,
-                    modifier = Modifier.height(56.dp),
+                    modifier = Modifier
+                        .height(56.dp)
+                        .wrapContentWidth(),
                 ) {
                     Row(
                         modifier = Modifier
@@ -155,8 +163,8 @@ fun PhoneEntryScreen(
                                 color = colors.borderDefault,
                                 shape = RoundedCornerShape(PamojaRadii.sm),
                             )
-                            .padding(horizontal = Spacing.x4)
-                            .fillMaxSize(),
+                            .fillMaxHeight()
+                            .padding(horizontal = Spacing.x4),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(

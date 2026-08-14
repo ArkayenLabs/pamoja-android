@@ -85,6 +85,7 @@ private val BronzeMedal = Color(0xFFCD7F32)
 fun GroupScreen(
     groupId: String,
     onBack: (() -> Unit)? = null,
+    onShareInvite: () -> Unit,
     viewModel: GroupViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -192,19 +193,14 @@ fun GroupScreen(
                                     snackbarHostState.showSnackbar(inviteInactive)
                                 }
                             } else {
-                                // Bare verified https link, nothing wrapped around it.
-                                val sendIntent = android.content.Intent(
-                                    android.content.Intent.ACTION_SEND
-                                ).apply {
-                                    type = "text/plain"
-                                    putExtra(
-                                        android.content.Intent.EXTRA_TEXT,
-                                        InviteLink.build(groupId)
-                                    )
-                                }
-                                context.startActivity(
-                                    android.content.Intent.createChooser(sendIntent, shareChooserTitle)
-                                )
+                                // Opens the invite screen rather than firing the
+                                // system sheet straight away. Sharing a group in
+                                // person means showing a QR code, and that only
+                                // existed on the screen you saw once at creation
+                                // and could never get back to. The invite screen
+                                // already offers the QR, the link, copy, and the
+                                // same system sheet.
+                                onShareInvite()
                             }
                         }
                     )

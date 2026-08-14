@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
@@ -220,6 +222,9 @@ fun EmailAuthScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
+                // A TextButton is 48dp tall with its own padding, so without
+                // this its label sat visibly lower than the sentence beside it.
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(if (isSignUp) R.string.email_have_account else R.string.email_new_here),
@@ -231,6 +236,10 @@ fun EmailAuthScreen(
                         isSignUp = !isSignUp
                         viewModel.clearError()
                     },
+                    // Trimmed horizontally so the pair reads as one sentence
+                    // rather than a label and a detached control. The vertical
+                    // padding stays, keeping the 48dp touch target.
+                    contentPadding = PaddingValues(horizontal = Spacing.x2, vertical = 0.dp),
                 ) {
                     Text(
                         text = stringResource(if (isSignUp) R.string.common_sign_in else R.string.email_create_one),
@@ -239,6 +248,12 @@ fun EmailAuthScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(Spacing.x6))
+
+            // Named on the screen where the account is actually created, not
+            // only on the landing screen someone may never have read.
+            AuthLegalLine(modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(Spacing.x10))
         }

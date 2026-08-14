@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -771,12 +773,20 @@ private fun AddPhoneDialog(
             ) {
                 // ISO code and dial code, never a flag: emoji are banned product
                 // wide and this reads correctly to a screen reader.
+                // wrapContentWidth, and fillMaxHeight rather than fillMaxSize.
+                // A Row is measured before its weighted siblings and is handed
+                // the full width, so fillMaxSize here made this chip swallow the
+                // row and squeezed the number field to nothing: its label
+                // wrapped one letter per line and every tap landed on the
+                // country picker, leaving no way to type a number at all.
                 Surface(
                     onClick = { pickingCountry = true },
                     enabled = !isBusy,
                     shape = RoundedCornerShape(PamojaRadii.sm),
                     color = colors.surfaceInput,
-                    modifier = Modifier.height(56.dp),
+                    modifier = Modifier
+                        .height(56.dp)
+                        .wrapContentWidth(),
                 ) {
                     Row(
                         modifier = Modifier
@@ -785,14 +795,15 @@ private fun AddPhoneDialog(
                                 color = colors.borderDefault,
                                 shape = RoundedCornerShape(PamojaRadii.sm),
                             )
-                            .padding(horizontal = Spacing.x3)
-                            .fillMaxSize(),
+                            .fillMaxHeight()
+                            .padding(horizontal = Spacing.x3),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = country.dialCode,
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.textPrimary,
+                            maxLines = 1,
                         )
                     }
                 }

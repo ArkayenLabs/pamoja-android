@@ -261,7 +261,8 @@ fun PamojaNavGraph(
                     navController.navigate(Screen.Group.createRoute(groupId)) {
                         popUpTo(Screen.Home.route) { inclusive = false }
                     }
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -272,7 +273,10 @@ fun PamojaNavGraph(
             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
             GroupScreen(
                 groupId = groupId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onShareInvite = {
+                    navController.navigate(Screen.Invite.createRoute(groupId))
+                }
             )
         }
 

@@ -112,7 +112,11 @@
     <string name="auth_opening_google">Opening Google…</string>
     <string name="auth_continue_phone">Continue with phone</string>
     <string name="auth_continue_email">Continue with email</string>
-    <string name="auth_legal_line">By continuing you agree to our Terms and Privacy Policy.</string>
+    <!-- The two link labels are substituted in, so translators can move them
+         within the sentence and the links follow. -->
+    <string name="auth_legal_line">By continuing you agree to our %1$s and %2$s.</string>
+    <string name="auth_legal_terms">Terms of Use</string>
+    <string name="auth_legal_privacy">Privacy Policy</string>
 
     <!-- ── Phone entry ────────────────────────────────────────────────── -->
     <string name="phone_title">What is your number?</string>
@@ -273,9 +277,8 @@
     <string name="invite_subtitle">Invite your people. This link stays active until all %1$d spots are filled.</string>
     <string name="invite_link_copied">Link copied</string>
     <string name="invite_copy_desc">Copy link</string>
-    <string name="invite_copy">Copy link</string>
     <string name="invite_share_chooser">Share invite link</string>
-    <string name="invite_more_options">More share options</string>
+    <string name="invite_share">Share invite</string>
     <string name="invite_go_to_group">Go to my group</string>
     <string name="invite_qr_hint">Standing next to them? Let them scan this.</string>
     <string name="invite_group_label">Invite people to</string>

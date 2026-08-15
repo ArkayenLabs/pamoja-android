@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,6 +38,22 @@ data class HomeUiState(
      * an empty list and produce an empty state that flashes before content.
      */
     val hasLoadedOnce: Boolean = false,
+    /**
+     * Whether to explain notifications before the system dialog is spent.
+     *
+     * Held off until the user actually has a group, since every example the
+     * primer gives is about a group and asking someone with none is asking
+     * them to imagine why they would care.
+     */
+    val showNotificationPrimer: Boolean = false,
+    /**
+     * Drives the pull-to-refresh spinner only.
+     *
+     * Separate from [isLoading], which swaps in a skeleton. A pull already has
+     * content on screen and replacing it with a skeleton would throw away what
+     * the user is looking at to show them less.
+     */
+    val isRefreshing: Boolean = false,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty()
@@ -122,8 +140,26 @@ class HomeViewModel @Inject constructor(
                         hasLoadedOnce = true,
                         // A successful emission clears whatever failed before it.
                         error = null,
+                        // Only once there is a group to notify about, and only
+                        // if we have never explained it before.
+                        showNotificationPrimer = groups.isNotEmpty() &&
+                            !userPreferences.notificationPrimerShown.first(),
                     )
                 }
+        }
+    }
+
+    /**
+     * Marks the primer answered, whichever way it was answered.
+     *
+     * "Not now" is recorded exactly like "turn on", because the point is to ask
+     * once. Re-prompting someone who declined is how an app earns a permanent
+     * denial, and on Android 13+ that cannot be undone from inside the app.
+     */
+    fun onNotificationPrimerAnswered() {
+        viewModelScope.launch {
+            userPreferences.setNotificationPrimerShown()
+            _uiState.value = _uiState.value.copy(showNotificationPrimer = false)
         }
     }
 
@@ -132,7 +168,32 @@ class HomeViewModel @Inject constructor(
         loadHome()
     }
 
+    /**
+     * Pull to refresh.
+     *
+     * Groups already arrive over a Firestore snapshot listener, so this rarely
+     * produces different data. It is still worth having: it is the gesture
+     * people reach for when something looks stale, and it is the way back from
+     * a failed load without hunting for a Retry button. The spinner is held
+     * briefly even when the answer returns instantly, because a refresh that
+     * flickers and vanishes reads as one that did not run.
+     */
+    fun refresh() {
+        if (_uiState.value.isRefreshing) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true, error = null)
+            loadHome()
+            delay(REFRESH_SPINNER_MIN_MS)
+            _uiState.value = _uiState.value.copy(isRefreshing = false)
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    private companion object {
+        /** Long enough that the gesture is acknowledged, short enough not to stall. */
+        const val REFRESH_SPINNER_MIN_MS = 450L
     }
 }

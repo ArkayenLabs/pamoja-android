@@ -420,6 +420,16 @@
     <string name="notif_subtitle">Choose what is worth interrupting you for.</string>
     <string name="settings_notifications_title">Notifications</string>
     <string name="settings_notifications_sub">What we send, and when we stay quiet</string>
+    <!-- Shown before the system dialog. Framed around what arrives, because
+         nobody wants notifications, they want to know the group hit its goal. -->
+    <string name="notif_primer_title">Know when it matters</string>
+    <string name="notif_primer_body">Pamoja only speaks up when your group does something worth hearing about.</string>
+    <string name="notif_primer_goal">Your group hits its weekly goal</string>
+    <string name="notif_primer_joined">Someone joins your group</string>
+    <string name="notif_primer_overtaken">A teammate passes you on the leaderboard</string>
+    <string name="notif_primer_control">You choose which of these arrive, and set quiet hours, in Settings. You can change it any time.</string>
+    <string name="notif_primer_allow">Turn on</string>
+
     <string name="notif_blocked_title">Notifications are turned off</string>
     <string name="notif_blocked_body">Android is blocking everything from Pamoja, so nothing below can reach you until you allow them.</string>
     <string name="notif_blocked_action">Open system settings</string>

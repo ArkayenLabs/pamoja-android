@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -64,6 +65,7 @@ import com.pamoja.app.domain.error.AppError
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupListSkeleton
+import com.pamoja.app.ui.components.NotificationPrimerDialog
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.toSnackbarMessage
@@ -95,6 +97,10 @@ private fun gradientForGroup(name: String): List<Color> {
     return avatarGradients[index]
 }
 
+// PullToRefreshBox is still marked experimental in Material 3. It is the
+// official pull-to-refresh and the alternative is hand-rolling the gesture,
+// which would be worse and would still have to be replaced later.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onGroupClick: (String) -> Unit,
@@ -148,16 +154,26 @@ fun HomeScreen(
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { /* no-op */ }
+    ) { /* The OS owns the answer; nothing here needs to react to it. */ }
 
-    LaunchedEffect(Unit) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            val permission = android.Manifest.permission.POST_NOTIFICATIONS
-            val hasPermission = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-            if (!hasPermission) {
-                notificationPermissionLauncher.launch(permission)
-            }
-        }
+    // The system dialog is no longer fired on arrival. It used to go up on the
+    // first composition of Home, before the user had a group, any steps, or a
+    // reason to say yes, and on Android 13+ that single denial is permanent.
+    // Now the primer asks first and only "Turn on" spends the real prompt.
+    if (uiState.showNotificationPrimer &&
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.POST_NOTIFICATIONS,
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        NotificationPrimerDialog(
+            onAllow = {
+                viewModel.onNotificationPrimerAnswered()
+                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            },
+            onDismiss = { viewModel.onNotificationPrimerAnswered() },
+        )
     }
 
     // ── Join-via-link dialog ──────────────────────────────────────────────────
@@ -300,6 +316,14 @@ fun HomeScreen(
                     modifier = Modifier.align(Alignment.Center),
                 )
             } else {
+                // Wraps the list rather than the whole Box, so the gesture only
+                // exists where there is content to refresh and never fights the
+                // full-screen error state above.
+                PullToRefreshBox(
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = { viewModel.refresh() },
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -371,6 +395,7 @@ fun HomeScreen(
                     }
 
                     item { Spacer(modifier = Modifier.height(120.dp)) }
+                }
                 }
 
                 // ── Floating bottom action bar ────────────────────────────

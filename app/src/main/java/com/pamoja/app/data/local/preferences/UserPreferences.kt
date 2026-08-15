@@ -39,6 +39,11 @@ class UserPreferences @Inject constructor(
         // notification exactly once, on the crossing, rather than every sync.
         val KEY_LAST_KNOWN_GROUP_TOTAL   = longPreferencesKey("last_known_group_total")
 
+        // Whether the notification primer has been shown. Not whether the
+        // permission was granted, which the OS already knows: this only stops
+        // us asking a second time after someone said "not now".
+        val KEY_NOTIFICATION_PRIMER_SHOWN = booleanPreferencesKey("notification_primer_shown")
+
         // Consecutive notifications sent without the user opening one.
         // Drives engagement backoff: if we are noise to someone, continuing to
         // send guarantees a mute or an uninstall.
@@ -111,6 +116,22 @@ class UserPreferences @Inject constructor(
 
     suspend fun saveLastSyncTime(timestamp: Long) {
         context.dataStore.edit { it[KEY_LAST_SYNC_TIME] = timestamp }
+    }
+
+    /**
+     * Whether we have already explained why notifications are worth allowing.
+     *
+     * Tracked separately from the OS permission because the two mean different
+     * things. Android 13+ gives one real chance at the system dialog: a denial
+     * makes every later request return denied without showing anything. So the
+     * primer is asked first, and a "not now" leaves that one chance unspent.
+     */
+    val notificationPrimerShown: Flow<Boolean> = context.dataStore.data.map {
+        it[KEY_NOTIFICATION_PRIMER_SHOWN] ?: false
+    }
+
+    suspend fun setNotificationPrimerShown() {
+        context.dataStore.edit { it[KEY_NOTIFICATION_PRIMER_SHOWN] = true }
     }
 
     /** Names of the notification categories the user has switched off. */

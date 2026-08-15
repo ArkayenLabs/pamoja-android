@@ -6,78 +6,110 @@ import androidx.compose.ui.graphics.Color
 
 // ============================================================================
 // PAMOJA. COLOR TOKENS
-// Ported 1:1 from the Pamoja Design System (tokens/colors.css).
+//
+// Ported from design/pamoja-ui, the `.ph` custom properties shared by all nine
+// screen decks (Auth, Onboarding, Home, Dashboard, Features, Invite and Join,
+// States, Components, index). Verified byte-identical across them.
+//
+// Note for anyone comparing against the bundle: "Pamoja Brand.dc.html" carries a
+// DIFFERENT identity, indigo #6C63E8 on cool grays with Sora/Manrope, and the app
+// was previously built against that one file. Prefer these values, because
+// "Pamoja.dc.html" is the system's own documentation deck and its sections 01 and
+// 02 specify this palette by name with contrast ratios worked out
+// ("primary ember #C34A21 4.8:1"). Indigo appears in no overview and no contrast
+// table. File timestamps cannot settle it, the bundle was exported in one batch.
+//
 // Palette ramps below are static; semantic tokens resolve per-theme through the
-// PamojaColors system further down (dark = native, full light theme supported).
-// Legacy flat `val`s are preserved at the bottom so un-migrated screens compile
-// unchanged, migrate screen-by-screen from those onto LocalPamojaColors.
+// PamojaColors system further down.
 // ============================================================================
 
-// ── Brand ramp (indigo / violet, primary) ──────────────────────────────────
-val Brand50  = Color(0xFFF1F0FE)
-val Brand100 = Color(0xFFE3E1FD)
-val Brand200 = Color(0xFFC7C4FB)
-val Brand300 = Color(0xFFA6A1F8)
-val Brand400 = Color(0xFF8B85F5)
-val Brand500 = Color(0xFF7B7FF2) // primary
-val Brand600 = Color(0xFF6C63E8)
-val Brand700 = Color(0xFF5A4FD1)
-val Brand800 = Color(0xFF4839A8)
-val Brand900 = Color(0xFF362C7C)
-val Brand950 = Color(0xFF211C52)
+// ── Brand ramp (terracotta, primary) ────────────────────────────────────────
+// Ramp names are unchanged on purpose. They are consumed by Theme.kt's M3
+// ColorScheme and by screens not yet rebuilt, so revaluing in place moves the
+// whole app onto the new identity without a rename touching every file.
+val Brand50  = Color(0xFFFEF4EF)
+val Brand100 = Color(0xFFFAE6DB) // --pris, light primary tint
+val Brand200 = Color(0xFFF6CDB8)
+val Brand300 = Color(0xFFFBAA85)
+val Brand400 = Color(0xFFFF8A5B) // --prib dark, primary hover
+val Brand500 = Color(0xFFFF7A47) // --pri dark, primary
+val Brand600 = Color(0xFFC34A21) // --pri light, primary
+val Brand700 = Color(0xFFA83D18)
+val Brand800 = Color(0xFF8A3113)
+val Brand900 = Color(0xFF6B250E)
+val Brand950 = Color(0xFF2A1207) // --prii dark, text on primary
 
-// ── Ink (deep navy from the logo mark) ──────────────────────────────────────
-val Ink50  = Color(0xFFEEEEF5)
-val Ink100 = Color(0xFFD3D3E4)
-val Ink200 = Color(0xFFA6A6C6)
-val Ink300 = Color(0xFF7A7AA8)
-val Ink400 = Color(0xFF4B4B85)
-val Ink500 = Color(0xFF2E2C63)
-val Ink600 = Color(0xFF22214A)
-val Ink700 = Color(0xFF1B1B3A) // logo navy
-val Ink800 = Color(0xFF13132A)
-val Ink900 = Color(0xFF0B0B1C)
-val Ink950 = Color(0xFF060610)
+// ── Ink (warm brown-black, replaces the cool navy) ──────────────────────────
+val Ink50  = Color(0xFFF4EBE2) // --ink dark
+val Ink100 = Color(0xFFE2D6CA)
+val Ink200 = Color(0xFFBCAEA3) // --ink2 dark
+val Ink300 = Color(0xFF9C8F84) // --ink3 dark
+val Ink400 = Color(0xFF877B70) // --ink3 light
+val Ink500 = Color(0xFF6B5F55) // --ink2 light
+val Ink600 = Color(0xFF4A3F37)
+val Ink700 = Color(0xFF342B25) // --s3 dark
+val Ink800 = Color(0xFF2A231E) // --s2 dark
+val Ink900 = Color(0xFF1E1815) // --s1 dark
+val Ink950 = Color(0xFF141110) // --bg dark
 
-// ── Amber (streaks, medals, warmth) ─────────────────────────────────────────
-val Amber100 = Color(0xFFFDECC8)
-val Amber300 = Color(0xFFF9CB6B)
-val Amber500 = Color(0xFFF5A623) // medal / streak accent
-val Amber600 = Color(0xFFDB8B12)
-val Amber700 = Color(0xFFA9690C)
+// ── Amber (streaks, warmth) ─────────────────────────────────────────────────
+val Amber100 = Color(0xFFFAEEDA) // --ambs light
+val Amber300 = Color(0xFFF5B463) // --amb dark
+val Amber500 = Color(0xFFE9A13E) // --ambg light
+val Amber600 = Color(0xFFA9701A) // --amb light
+val Amber700 = Color(0xFF7C5212)
 
-// ── Teal / emerald (progress, growth, success) ──────────────────────────────
-val Teal100 = Color(0xFFC9F3E1)
-val Teal300 = Color(0xFF6FDFB0)
-val Teal500 = Color(0xFF22C58B) // progress ring / join-link accent
-val Teal600 = Color(0xFF17A472)
-val Teal700 = Color(0xFF0F7D58)
+// ── Jade (progress, growth, success). Ramp keeps the Teal* names ────────────
+val Teal100 = Color(0xFFDDF2EB) // --jads light
+val Teal300 = Color(0xFF42D6A4) // --jad dark
+val Teal500 = Color(0xFF17A67C) // --jadg light
+val Teal600 = Color(0xFF0E8563) // --jad light
+val Teal700 = Color(0xFF0B5C45) // --celbi
 
-// ── Orange (secondary logo hue, group avatars) ──────────────────────────────
-val Orange100 = Color(0xFFFCE3C6)
-val Orange300 = Color(0xFFF5AE68)
-val Orange500 = Color(0xFFEB8A2F)
-val Orange600 = Color(0xFFC96E1C)
+// ── Orange (the lighter brand tone, group avatars) ──────────────────────────
+val Orange100 = Color(0xFFFBE3D3)
+val Orange300 = Color(0xFFF0A878)
+val Orange500 = Color(0xFFDE5F35) // --prib light
+val Orange600 = Color(0xFFB8461D)
 
 // ── Red (errors) ────────────────────────────────────────────────────────────
-val Red100 = Color(0xFFFBDADA)
-val Red300 = Color(0xFFF08585)
-val Red500 = Color(0xFFE5484D)
-val Red600 = Color(0xFFC4383D)
+val Red100 = Color(0xFFFBE3E0) // --dngs light
+val Red300 = Color(0xFFFF8E7E) // --dng dark
+val Red500 = Color(0xFFD13228)
+val Red600 = Color(0xFFB4271F) // --dng light
 
-// ── Neutrals (cool, slightly violet-tinted grays) ───────────────────────────
+/**
+ * Group avatar gradients, picked deterministically from the group's name.
+ *
+ * Decorative and deliberately theme-independent: a group keeps its colour in
+ * both themes, which is what lets someone recognise it at a glance in a list.
+ * White text always sits on top, so every pair is dark enough to carry it.
+ *
+ * Here rather than in a screen because two screens draw group avatars and the
+ * same group must not be ember on one and olive on the other.
+ */
+val GroupAvatarGradients: List<List<Color>> = listOf(
+    listOf(Color(0xFFC34A21), Color(0xFFA83D18)), // ember, the brand
+    listOf(Color(0xFF2E7D6E), Color(0xFF1F5F52)), // deep teal
+    listOf(Color(0xFFA9701A), Color(0xFF8A5A08)), // ochre
+    listOf(Color(0xFFB4544A), Color(0xFF94413A)), // clay
+    listOf(Color(0xFF6B7A3A), Color(0xFF55632C)), // olive
+    listOf(Color(0xFF8A5A7A), Color(0xFF6B4460)), // mulberry
+)
+
+// ── Neutrals (warm cream, replaces the violet-tinted grays) ─────────────────
 val Gray0   = Color(0xFFFFFFFF)
-val Gray50  = Color(0xFFF7F7FB)
-val Gray100 = Color(0xFFEEEDF6)
-val Gray200 = Color(0xFFDFDDEC)
-val Gray300 = Color(0xFFC4C1D6)
-val Gray400 = Color(0xFF9C98B4)
-val Gray500 = Color(0xFF757092)
-val Gray600 = Color(0xFF575371)
-val Gray700 = Color(0xFF403C58)
-val Gray800 = Color(0xFF2A2740)
-val Gray900 = Color(0xFF16141F)
-val Gray950 = Color(0xFF0A0A11)
+val Gray50  = Color(0xFFFAF5EF) // --bg light
+val Gray100 = Color(0xFFF2EBE1) // --s2 light
+val Gray200 = Color(0xFFE5DACC)
+val Gray300 = Color(0xFFC9BCAE)
+val Gray400 = Color(0xFFA99C8F)
+val Gray500 = Color(0xFF877B70)
+val Gray600 = Color(0xFF6B5F55)
+val Gray700 = Color(0xFF4A3F37)
+val Gray800 = Color(0xFF2A231E)
+val Gray900 = Color(0xFF1E1815)
+val Gray950 = Color(0xFF141110)
 
 // ============================================================================
 // SEMANTIC COLOR SYSTEM
@@ -134,98 +166,112 @@ data class PamojaColors(
     // Progress ring
     val progressTrack: Color,
     val progressFill: Color,
+    // Leaderboard medals. Tokens because the design system defines all three
+    // per theme; GroupScreen previously carried a raw bronze hex and borrowed a
+    // neutral ramp value for silver, so neither followed the theme.
+    val medalGold: Color,
+    val medalSilver: Color,
+    val medalBronze: Color,
 )
 
 // ── Dark theme (the app's native mode) ──────────────────────────────────────
 val PamojaDarkColors = PamojaColors(
     isDark = true,
-    surfaceApp        = Color(0xFF0B0B11),
-    surfaceCanvas     = Color(0xFF0E0E16),
-    surface1          = Color(0xFF14141F),
-    surface2          = Color(0xFF191A28),
-    surface3          = Color(0xFF212236),
-    surfaceSunken     = Color(0xFF08080D),
-    surfaceInput      = Color(0xFF14141F),
-    surfaceInputFocus = Color(0xFF181933),
-    overlay           = Color(0xB80A0A10),
-    glass             = Color(0x0BFFFFFF),
-    glassStrong       = Color(0x14FFFFFF),
-    borderSubtle      = Color(0x0FFFFFFF),
-    borderDefault     = Color(0x1AFFFFFF),
-    borderStrong      = Color(0x29FFFFFF),
-    textPrimary       = Color(0xFFF5F4FA),
-    textSecondary     = Color(0xFFA9A6C0),
-    textTertiary      = Color(0xFF746F91),
-    textDisabled      = Color(0xFF4B4763),
-    textOnBrand       = Color(0xFFFFFFFF),
-    textInverse       = Color(0xFF16141F),
-    accentPrimary       = Brand500,
-    accentPrimaryHover  = Brand400,
-    accentPrimaryPress  = Brand600,
-    accentPrimarySubtle = Color(0x297B7FF2),
-    accentPrimaryBorder = Color(0x667B7FF2),
-    accentTeal        = Teal500,
-    accentTealSubtle  = Color(0x2922C58B),
-    accentAmber       = Amber500,
-    accentAmberSubtle = Color(0x29F5A623),
-    accentOrange       = Orange500,
-    accentOrangeSubtle = Color(0x29EB8A2F),
-    statusSuccess       = Teal500,
-    statusSuccessSubtle = Color(0x2422C58B),
-    statusWarning       = Amber500,
-    statusWarningSubtle = Color(0x24F5A623),
-    statusDanger        = Red500,
-    statusDangerSubtle  = Color(0x24E5484D),
-    statusInfo          = Brand400,
-    statusInfoSubtle    = Color(0x248B85F5),
-    progressTrack     = Color(0x2422C58B),
-    progressFill      = Teal500,
+    surfaceApp        = Color(0xFF141110), // --bg
+    surfaceCanvas     = Color(0xFF1E1815), // --s1
+    surface1          = Color(0xFF1E1815), // --s1
+    surface2          = Color(0xFF2A231E), // --s2
+    surface3          = Color(0xFF342B25), // --s3
+    surfaceSunken     = Color(0xFF0E0B0A),
+    surfaceInput      = Color(0xFF2A231E), // --s2, .fld background
+    surfaceInputFocus = Color(0xFF342B25), // --s3
+    overlay           = Color(0xA8080605), // --scrim
+    // The dark card sheen the design system paints over every card:
+    // linear-gradient(rgba(255,242,232,.04) -> transparent).
+    glass             = Color(0x0AFFF2E8),
+    glassStrong       = Color(0x14FFF2E8),
+    borderSubtle      = Color(0x1AFFEEE2), // --line
+    borderDefault     = Color(0x2EFFEEE2), // --line2
+    borderStrong      = Color(0x47FFEEE2),
+    textPrimary       = Color(0xFFF4EBE2), // --ink
+    textSecondary     = Color(0xFFBCAEA3), // --ink2
+    textTertiary      = Color(0xFF9C8F84), // --ink3
+    textDisabled      = Color(0xFF6B6058),
+    textOnBrand       = Color(0xFF2A1207), // --prii
+    textInverse       = Color(0xFF231C17),
+    accentPrimary       = Brand500,        // --pri
+    accentPrimaryHover  = Brand400,        // --prib
+    accentPrimaryPress  = Color(0xFFE8663A),
+    accentPrimarySubtle = Color(0xFF3A2015), // --pris
+    accentPrimaryBorder = Color(0x66FF7A47),
+    accentTeal        = Teal300,           // --jad
+    accentTealSubtle  = Color(0xFF123329), // --jads
+    accentAmber       = Amber300,          // --amb
+    accentAmberSubtle = Color(0xFF3A2C15), // --ambs
+    accentOrange       = Amber300,         // --ambg
+    accentOrangeSubtle = Color(0xFF3A2C15),
+    statusSuccess       = Teal300,
+    statusSuccessSubtle = Color(0xFF123329),
+    statusWarning       = Amber300,
+    statusWarningSubtle = Color(0xFF3A2C15),
+    statusDanger        = Red300,          // --dng
+    statusDangerSubtle  = Color(0xFF3E1C18), // --dngs
+    statusInfo          = Brand500,
+    statusInfoSubtle    = Color(0xFF3A2015),
+    progressTrack     = Color(0xFF123329),
+    progressFill      = Teal300,
+    medalGold         = Color(0xFFE8B93F), // --gold
+    medalSilver       = Color(0xFFC3C6D2), // --silv
+    medalBronze       = Color(0xFFD08C5C), // --brnz
 )
 
 // ── Light theme ─────────────────────────────────────────────────────────────
 val PamojaLightColors = PamojaColors(
     isDark = false,
-    surfaceApp        = Color(0xFFF8F7FC),
-    surfaceCanvas     = Color(0xFFFFFFFF),
-    surface1          = Color(0xFFFFFFFF),
-    surface2          = Color(0xFFFFFFFF),
-    surface3          = Color(0xFFFFFFFF),
-    surfaceSunken     = Color(0xFFEFEDF6),
-    surfaceInput      = Color(0xFFF1EFF8),
-    surfaceInputFocus = Color(0xFFFFFFFF),
-    overlay           = Color(0x6616141F),
+    surfaceApp        = Color(0xFFFAF5EF), // --bg
+    surfaceCanvas     = Color(0xFFFFFFFF), // --s1
+    surface1          = Color(0xFFFFFFFF), // --s1
+    surface2          = Color(0xFFF2EBE1), // --s2
+    surface3          = Color(0xFFFFFFFF), // --s3
+    surfaceSunken     = Color(0xFFF2EBE1), // --s2
+    surfaceInput      = Color(0xFFF2EBE1), // --s2, .fld background
+    surfaceInputFocus = Color(0xFFFFFFFF), // --s1
+    overlay           = Color(0x73231C17), // --scrim
     glass             = Color(0x8CFFFFFF),
     glassStrong       = Color(0xBFFFFFFF),
-    borderSubtle      = Color(0x0F16141F),
-    borderDefault     = Color(0x1A16141F),
-    borderStrong      = Color(0x2E16141F),
-    textPrimary       = Color(0xFF16141F),
-    textSecondary     = Color(0xFF575371),
-    textTertiary      = Color(0xFF8B87A3),
-    textDisabled      = Color(0xFFC4C1D6),
-    textOnBrand       = Color(0xFFFFFFFF),
-    textInverse       = Color(0xFFF5F4FA),
-    accentPrimary       = Brand600,
-    accentPrimaryHover  = Brand700,
-    accentPrimaryPress  = Brand800,
-    accentPrimarySubtle = Color(0x1A6C63E8),
-    accentPrimaryBorder = Color(0x4D6C63E8),
-    accentTeal        = Teal600,
-    accentTealSubtle  = Color(0x1A17A472),
-    accentAmber       = Amber600,
-    accentAmberSubtle = Color(0x1FDB8B12),
-    accentOrange       = Orange600,
-    accentOrangeSubtle = Color(0x1AC96E1C),
+    borderSubtle      = Color(0x17231C17), // --line
+    borderDefault     = Color(0x29231C17), // --line2
+    borderStrong      = Color(0x47231C17),
+    textPrimary       = Color(0xFF231C17), // --ink
+    textSecondary     = Color(0xFF6B5F55), // --ink2
+    textTertiary      = Color(0xFF877B70), // --ink3
+    textDisabled      = Color(0xFFB0A599),
+    textOnBrand       = Color(0xFFFFFFFF), // --prii
+    textInverse       = Color(0xFFFAF5EF),
+    accentPrimary       = Brand600,          // --pri
+    accentPrimaryHover  = Orange500,         // --prib
+    accentPrimaryPress  = Brand700,
+    accentPrimarySubtle = Color(0xFFFAE6DB), // --pris
+    accentPrimaryBorder = Color(0x4DC34A21),
+    accentTeal        = Teal600,             // --jad
+    accentTealSubtle  = Color(0xFFDDF2EB),   // --jads
+    accentAmber       = Amber600,            // --amb
+    accentAmberSubtle = Color(0xFFFAEEDA),   // --ambs
+    accentOrange       = Amber500,           // --ambg
+    accentOrangeSubtle = Color(0xFFFAEEDA),
     statusSuccess       = Teal600,
-    statusSuccessSubtle = Color(0x1A17A472),
+    statusSuccessSubtle = Color(0xFFDDF2EB),
     statusWarning       = Amber600,
-    statusWarningSubtle = Color(0x1FDB8B12),
-    statusDanger        = Red600,
-    statusDangerSubtle  = Color(0x1AC4383D),
+    statusWarningSubtle = Color(0xFFFAEEDA),
+    statusDanger        = Red600,            // --dng
+    statusDangerSubtle  = Color(0xFFFBE3E0), // --dngs
     statusInfo          = Brand600,
-    statusInfoSubtle    = Color(0x1A6C63E8),
-    progressTrack     = Color(0x1F17A472),
+    statusInfoSubtle    = Color(0xFFFAE6DB),
+    progressTrack     = Color(0xFFDDF2EB),
     progressFill      = Teal600,
+    medalGold         = Color(0xFFB98A17), // --gold
+    medalSilver       = Color(0xFF75737C), // --silv
+    medalBronze       = Color(0xFF9C5F35), // --brnz
 )
 
 /** Provides the active [PamojaColors]. Defaults to dark (the native mode). */

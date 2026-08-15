@@ -146,6 +146,26 @@ service cloud.firestore {
           && request.resource.data.memberCount == resource.data.memberCount - 1
           && request.resource.data.memberCount >= 0
           && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
+        )
+        ||
+        // --- Case E: a MEMBER publishes the cached weekly step total, so the
+        //     home screen can show progress per group without reading every
+        //     member's step entries for every group it lists.
+        //
+        //     Membership is checked explicitly rather than relying on isSignedIn().
+        //     Any signed-in user can `get` a group by ID (the invite flow needs
+        //     that), so without this a stranger who had seen an invite link could
+        //     write an arbitrary total onto a group they do not belong to. It is
+        //     display-only data, but it is the number the whole product is about.
+        //
+        //     Only the two cache keys may move, and the total may not be negative.
+        (
+          isSignedIn()
+          && onlyChanged(['weeklySteps', 'weekStart'])
+          && request.resource.data.weeklySteps is int
+          && request.resource.data.weeklySteps >= 0
+          && request.resource.data.weekStart is string
+          && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
         );
 
       allow delete: if isGroupAdmin(groupId);

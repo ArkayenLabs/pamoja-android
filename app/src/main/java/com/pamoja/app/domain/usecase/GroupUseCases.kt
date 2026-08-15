@@ -5,6 +5,7 @@ import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
@@ -126,6 +127,27 @@ class GetGroupMembersUseCase @Inject constructor(
 ) {
     operator fun invoke(groupId: String): Flow<List<User>> {
         return groupRepository.getGroupMembers(groupId)
+    }
+}
+
+/**
+ * Recomputes and publishes one group's cached weekly total.
+ *
+ * Deliberately a full recomputation rather than an increment. Several members
+ * may publish at once and an increment would double-count under a race, whereas
+ * a recomputation is idempotent: the worst a concurrent write can do is land a
+ * figure that is a few minutes old.
+ */
+class PublishGroupWeeklyTotalUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    suspend operator fun invoke(groupId: String, weeklySteps: Long): Result<Unit> {
+        if (groupId.isBlank()) return Result.success(Unit)
+        return groupRepository.publishWeeklyTotal(
+            groupId = groupId,
+            weeklySteps = weeklySteps.coerceAtLeast(0L),
+            weekStart = WeekWindow.startOf(),
+        )
     }
 }
 

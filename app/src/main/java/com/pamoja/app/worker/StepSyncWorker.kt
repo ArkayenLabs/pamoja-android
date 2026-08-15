@@ -13,6 +13,8 @@ import com.pamoja.app.domain.repository.StepRepository
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.GetGroupMembersUseCase
 import com.pamoja.app.domain.usecase.GetGroupStepsForWeekUseCase
+import com.pamoja.app.domain.usecase.GetUserGroupsUseCase
+import com.pamoja.app.domain.usecase.PublishGroupWeeklyTotalUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.SmartNotificationEngine
@@ -52,6 +54,8 @@ class StepSyncWorker @AssistedInject constructor(
     private val getGroupUseCase: GetGroupUseCase,
     private val getGroupMembersUseCase: GetGroupMembersUseCase,
     private val getGroupStepsForWeekUseCase: GetGroupStepsForWeekUseCase,
+    private val getUserGroupsUseCase: GetUserGroupsUseCase,
+    private val publishGroupWeeklyTotalUseCase: PublishGroupWeeklyTotalUseCase,
     private val smartNotificationHelper: SmartNotificationHelper,
     private val userPreferences: UserPreferences
 ) : CoroutineWorker(context, workerParams) {
@@ -100,6 +104,9 @@ class StepSyncWorker @AssistedInject constructor(
             // run that read Health Connect and then failed to save.
             userPreferences.saveLastSyncTime(System.currentTimeMillis())
 
+            // ── Refresh each group's cached weekly total ─────────────────
+            publishWeeklyTotals(user.userId)
+
             // ── Smart Notifications Trigger ──────────────────────────────
             checkAndTriggerNotification(user.userId, todaySteps)
 
@@ -109,6 +116,38 @@ class StepSyncWorker @AssistedInject constructor(
             Log.e(TAG, "Sync failed | duration=${durationMs}ms | attempt=$runAttemptCount", e)
             analyticsManager.logStepsSyncFailed(user.userId, e.message ?: "unknown", durationMs)
             Result.retry()
+        }
+    }
+
+    /**
+     * Recomputes the combined weekly total for every group this user belongs to
+     * and writes it onto the group document.
+     *
+     * This exists so the home screen can draw progress for a list of groups from
+     * the groups it already loads. Deriving it there instead meant two live
+     * Firestore listeners per group, on the screen opened most often, duplicating
+     * the flatMapLatest chain that GroupViewModel had to have a nested-collect
+     * bug fixed out of it. Here the same reads happen once per sync, in the
+     * background, with no listeners left open.
+     *
+     * Failures are logged and swallowed on purpose. This is a display cache;
+     * losing it costs a progress bar until the next sync, while retrying the
+     * whole worker would re-read Health Connect and rewrite the step entry to
+     * fix nothing.
+     */
+    private suspend fun publishWeeklyTotals(userId: String) {
+        try {
+            val groups = getUserGroupsUseCase(userId).firstOrNull().orEmpty()
+            for (group in groups) {
+                val members = getGroupMembersUseCase(group.groupId).firstOrNull().orEmpty()
+                if (members.isEmpty()) continue
+                val entries = getGroupStepsForWeekUseCase(members.map { it.userId })
+                    .firstOrNull().orEmpty()
+                publishGroupWeeklyTotalUseCase(group.groupId, entries.sumOf { it.stepCount })
+                    .onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Weekly totals refresh failed", e)
         }
     }
 

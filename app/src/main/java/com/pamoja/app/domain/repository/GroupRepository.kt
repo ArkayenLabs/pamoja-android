@@ -17,4 +17,18 @@ interface GroupRepository {
     suspend fun updateMemberCap(groupId: String, cap: Int): Result<Unit>
     suspend fun updateWeeklyTarget(groupId: String, target: Int): Result<Unit>
     suspend fun deactivateInviteLink(groupId: String): Result<Unit>
+
+    /**
+     * Publishes the cached weekly total for a group the caller is a member of.
+     *
+     * Writes the two cache fields only, never the whole document. Every member's
+     * device recomputes and republishes the same figure, so writes race but do
+     * not conflict: each one carries a full recomputation rather than a delta,
+     * which makes a lost write merely stale instead of wrong.
+     */
+    suspend fun publishWeeklyTotal(
+        groupId: String,
+        weeklySteps: Long,
+        weekStart: String,
+    ): Result<Unit>
 }

@@ -321,4 +321,28 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             Result.failure(e.toFirebaseAppError())
         }
     }
+
+    override suspend fun publishWeeklyTotal(
+        groupId: String,
+        weeklySteps: Long,
+        weekStart: String,
+    ): Result<Unit> {
+        return try {
+            // A field-level update, not set(). The rule that permits this only
+            // allows these two keys to change, and writing the whole document
+            // would both fail that rule and risk the set()-clobber that erased
+            // profile fields once already.
+            groupsCollection.document(groupId)
+                .update(
+                    mapOf(
+                        "weeklySteps" to weeklySteps,
+                        "weekStart" to weekStart,
+                    )
+                )
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
 }

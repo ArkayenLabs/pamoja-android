@@ -69,10 +69,13 @@ class FirebaseAvatarRepositoryImpl @Inject constructor(
         val uri = imageUri.toUri()
 
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, bounds)
-        } ?: return null
+        val boundsStream = context.contentResolver.openInputStream(uri) ?: return null
+        boundsStream.use { BitmapFactory.decodeStream(it, null, bounds) }
 
+        // decodeStream returns null *by contract* when inJustDecodeBounds is set,
+        // so its result says nothing about success and must not be null-checked.
+        // Doing that rejected every photo ever picked. The dimensions it wrote
+        // are the only real signal, which is the check below.
         val longestEdge = max(bounds.outWidth, bounds.outHeight)
         if (longestEdge <= 0) return null
 

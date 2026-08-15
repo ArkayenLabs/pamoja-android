@@ -1,8 +1,5 @@
 package com.pamoja.app.ui.settings
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.DrawableRes
@@ -101,10 +98,6 @@ fun SettingsScreen(
     val activity = LocalActivity.current
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-
-    // Used inside click handlers and coroutine scopes.
-    val userIdClipLabel = stringResource(R.string.settings_user_id_clip)
-    val userIdCopiedMessage = stringResource(R.string.settings_user_id_copied)
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
@@ -395,9 +388,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .clip(RoundedCornerShape(PamojaRadii.xl))
                         .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                         .padding(Spacing.x4),
                     verticalArrangement = Arrangement.spacedBy(Spacing.x4)
                 ) {
@@ -454,45 +447,6 @@ fun SettingsScreen(
                         )
                     }
 
-                    // User ID Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.settings_user_id),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.textTertiary
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = uiState.userId,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.textSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText(userIdClipLabel, uiState.userId)
-                                clipboard.setPrimaryClip(clip)
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(userIdCopiedMessage)
-                                }
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(PamojaIcons.Copy),
-                                contentDescription = stringResource(R.string.settings_copy_user_id),
-                                tint = colors.textSecondary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
@@ -504,9 +458,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .clip(RoundedCornerShape(PamojaRadii.xl))
                         .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.Shield,
@@ -566,9 +520,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .clip(RoundedCornerShape(PamojaRadii.xl))
                         .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.Bell,
@@ -620,9 +574,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .clip(RoundedCornerShape(PamojaRadii.xl))
                         .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.Mail,
@@ -677,9 +631,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .clip(RoundedCornerShape(PamojaRadii.xl))
                         .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.ShieldCheck,
@@ -730,9 +684,9 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .clip(RoundedCornerShape(PamojaRadii.xl))
                         .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                 ) {
                     SettingsRow(
                         icon = PamojaIcons.LogOut,
@@ -760,9 +714,9 @@ fun SettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = Spacing.x6)
-                            .clip(RoundedCornerShape(PamojaRadii.md))
+                            .clip(RoundedCornerShape(PamojaRadii.xl))
                             .background(colors.surface1)
-                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                     ) {
                         SettingsRow(
                             icon = PamojaIcons.Notification,
@@ -852,9 +806,11 @@ private fun SettingsRow(
             )
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // The design gives list-row titles real weight; at body weight the
+            // title and its subtitle read as one grey block.
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary
             )
             Text(

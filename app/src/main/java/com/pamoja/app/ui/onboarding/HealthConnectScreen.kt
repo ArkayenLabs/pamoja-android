@@ -52,6 +52,7 @@ import com.pamoja.app.ui.components.OnboardingProgressBar
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -240,10 +241,14 @@ fun HealthConnectScreen(
             }
 
             // ── Bottom CTAs ──────────────────────────────────────────────
+            // Top padding for the same reason as the invite screen: this column
+            // is a sibling of the content above rather than the last item in it,
+            // so without it the primary button renders flush against the access
+            // card and the two read as one welded block.
             Column(
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(bottom = Spacing.x4),
+                    .padding(top = Spacing.x6, bottom = Spacing.x4),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Spacing.x1)
             ) {
@@ -257,7 +262,7 @@ fun HealthConnectScreen(
                                 onSkip()
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(PamojaRadii.md),
+                            shape    = PillShape,
                             colors   = ButtonDefaults.buttonColors(
                                 containerColor = colors.accentPrimary,
                                 contentColor   = colors.textOnBrand
@@ -284,7 +289,7 @@ fun HealthConnectScreen(
                                 context.startActivity(intent)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(PamojaRadii.md),
+                            shape    = PillShape,
                             colors   = ButtonDefaults.buttonColors(
                                 containerColor = colors.accentPrimary,
                                 contentColor   = colors.textOnBrand
@@ -318,7 +323,7 @@ fun HealthConnectScreen(
                         Button(
                             onClick  = onConnected,
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(PamojaRadii.md),
+                            shape    = PillShape,
                             colors   = ButtonDefaults.buttonColors(
                                 containerColor = colors.statusSuccess,
                                 contentColor   = colors.textOnBrand
@@ -345,7 +350,7 @@ fun HealthConnectScreen(
                                 permissionLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = RoundedCornerShape(PamojaRadii.md),
+                            shape    = PillShape,
                             colors   = ButtonDefaults.buttonColors(
                                 containerColor = colors.accentPrimary,
                                 contentColor   = colors.textOnBrand

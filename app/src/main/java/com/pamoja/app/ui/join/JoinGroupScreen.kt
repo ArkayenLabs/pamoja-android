@@ -34,14 +34,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.ui.components.GroupAvatar
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.SkeletonBlock
+import com.pamoja.app.ui.theme.Layout
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -142,31 +146,25 @@ private fun InvitePreviewContent(
     ) {
         Spacer(modifier = Modifier.height(Spacing.x10))
 
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(PamojaRadii.lg))
-                .background(
-                    Brush.linearGradient(
-                        listOf(colors.accentPrimary, colors.accentPrimaryPress)
-                    )
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(PamojaIcons.Users),
-                contentDescription = null,
-                tint = colors.textOnBrand,
-                modifier = Modifier.size(32.dp),
-            )
-        }
+        // The group's own initials and colour, not a generic people icon. It is
+        // the same avatar the home list draws, so a group someone has already
+        // seen is recognisable here before they have read its name.
+        GroupAvatar(
+            name = group.name,
+            size = 84.dp,
+            cornerRadius = PamojaRadii.xxl,
+            textStyle = MaterialTheme.typography.displaySmall,
+        )
 
         Spacer(modifier = Modifier.height(Spacing.x5))
 
         Text(
-            text = stringResource(if (state.isAlreadyMember) R.string.join_already_in else R.string.join_invited_to),
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.textSecondary,
+            text = stringResource(
+                if (state.isAlreadyMember) R.string.join_already_in
+                else R.string.join_invited_to
+            ).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.textTertiary,
             textAlign = TextAlign.Center,
         )
 
@@ -304,24 +302,27 @@ private fun InviteStat(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(PamojaRadii.md),
+        shape = RoundedCornerShape(PamojaRadii.xl),
         color = colors.surface1,
+        border = BorderStroke(Layout.strokeHairline, colors.borderSubtle),
     ) {
         Column(
-            modifier = Modifier.padding(Spacing.x4),
+            modifier = Modifier.padding(vertical = Spacing.x4, horizontal = Spacing.x3),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = colors.textPrimary,
+                maxLines = 1,
             )
-            Spacer(modifier = Modifier.height(Spacing.x1))
+            Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary,
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
+                color = colors.textTertiary,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
             )
         }
     }

@@ -39,6 +39,7 @@ import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
 @Composable
@@ -77,7 +78,8 @@ fun ForgotPasswordScreen(
         ) {
             Spacer(modifier = Modifier.height(Spacing.x2))
 
-            AuthBackButton(
+            AuthTopBar(
+                label = stringResource(R.string.auth_step_reset),
                 onBack = {
                     viewModel.clearResetConfirmation()
                     onBack()
@@ -133,7 +135,7 @@ fun ForgotPasswordScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(PamojaRadii.md),
+                    shape = PillShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.accentPrimary,
                         contentColor = colors.textOnBrand,
@@ -185,7 +187,7 @@ fun ForgotPasswordScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(PamojaRadii.md),
+                    shape = PillShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.accentPrimary,
                         contentColor = colors.textOnBrand,

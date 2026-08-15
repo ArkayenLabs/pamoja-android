@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.ActivityItem
@@ -176,7 +177,7 @@ private fun ActivityRow(
     onClick: (() -> Unit)?,
 ) {
     val colors = LocalPamojaColors.current
-    val shape = RoundedCornerShape(PamojaRadii.md)
+    val shape = RoundedCornerShape(PamojaRadii.lg)
     val accent = item.category.accentColor()
 
     Row(
@@ -196,18 +197,21 @@ private fun ActivityRow(
             .padding(Spacing.x4),
         verticalAlignment = Alignment.Top,
     ) {
+        // The design's icon chip: 40dp, softly rounded, filled with the
+        // category's own tint. Bigger and rounder than a small square, which is
+        // what stops a list of these reading as a settings menu.
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(PamojaRadii.xs))
-                .background(accent.copy(alpha = 0.12f)),
+                .size(40.dp)
+                .clip(RoundedCornerShape(PamojaRadii.md))
+                .background(accent.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(item.category.icon()),
                 contentDescription = null,
                 tint = accent,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(20.dp),
             )
         }
 
@@ -216,7 +220,7 @@ private fun ActivityRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = colors.textPrimary,
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -226,9 +230,11 @@ private fun ActivityRow(
                 color = colors.textSecondary,
             )
             Spacer(modifier = Modifier.height(Spacing.x2))
+            // Mono caps, per the design. A timestamp is metadata, and setting it
+            // as small caps stops it competing with the sentence above it.
             Text(
-                text = relativeTime(item.shownAt),
-                style = MaterialTheme.typography.labelSmall,
+                text = relativeTime(item.shownAt).uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 color = colors.textTertiary,
             )
         }

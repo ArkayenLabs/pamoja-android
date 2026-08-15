@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -264,6 +265,21 @@ fun NotificationSettingsScreen(
     }
 }
 
+/**
+ * Icon per category.
+ *
+ * Deliberately mirrors the one in ActivityScreen rather than sharing it: these
+ * are two different enums that happen to have identical constants, one in
+ * `domain.model` for logged items and one in `util` for the engine. Unifying
+ * them is a real cleanup but not this change's business.
+ */
+private fun NotificationCategory.icon(): Int = when (this) {
+    NotificationCategory.ACHIEVEMENT -> PamojaIcons.Trophy
+    NotificationCategory.GROUP_ACTIVITY -> PamojaIcons.Users
+    NotificationCategory.REMINDER -> PamojaIcons.Footprints
+    NotificationCategory.RECAP -> PamojaIcons.Clock
+}
+
 @Composable
 private fun SectionLabel(text: String) {
     val colors = LocalPamojaColors.current
@@ -287,14 +303,37 @@ private fun CategoryToggle(
 ) {
     val colors = LocalPamojaColors.current
 
+    // The category's tint follows whether it is on. A muted category showing a
+    // full-colour chip reads as active at a glance, which is the opposite of
+    // what the switch beside it says.
+    val accent = if (enabled) colors.accentPrimary else colors.textTertiary
+    val chipBackground = if (enabled) colors.accentPrimarySubtle else colors.surface2
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(PamojaRadii.md))
+                .background(chipBackground),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(category.icon()),
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(Spacing.x3))
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(title),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary,
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -313,10 +352,11 @@ private fun CategoryToggle(
             checked = enabled,
             onCheckedChange = { onToggle(category, it) },
             colors = SwitchDefaults.colors(
-                checkedThumbColor = colors.textOnBrand,
+                checkedThumbColor = Color.White,
                 checkedTrackColor = colors.accentPrimary,
-                uncheckedThumbColor = colors.textSecondary,
-                uncheckedTrackColor = colors.surfaceSunken,
+                checkedBorderColor = colors.accentPrimary,
+                uncheckedThumbColor = colors.textTertiary,
+                uncheckedTrackColor = colors.surface2,
                 uncheckedBorderColor = colors.borderDefault,
             ),
         )

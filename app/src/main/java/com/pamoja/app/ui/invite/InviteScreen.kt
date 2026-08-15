@@ -59,6 +59,7 @@ import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
@@ -290,10 +291,14 @@ fun InviteScreen(
             }
 
             // ── Bottom CTAs ───────────────────────────────────────────────
+            // Top padding, not a Spacer: this column is a sibling of the scroll
+            // region rather than the last item in it, so nothing else separates
+            // it from the link card and the two rendered flush against each
+            // other on a short screen.
             Column(
                 modifier = Modifier
                     .navigationBarsPadding()
-                    .padding(bottom = Spacing.x4),
+                    .padding(top = Spacing.x6, bottom = Spacing.x4),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Spacing.x3)
             ) {
@@ -323,7 +328,7 @@ fun InviteScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape  = RoundedCornerShape(PamojaRadii.md),
+                    shape  = PillShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.accentPrimary,
                         contentColor   = colors.textOnBrand

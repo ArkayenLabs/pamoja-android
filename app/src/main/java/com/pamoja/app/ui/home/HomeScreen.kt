@@ -66,10 +66,19 @@ import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupListSkeleton
 import com.pamoja.app.ui.components.NotificationPrimerDialog
+import com.pamoja.app.ui.components.GroupAvatar
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.toSnackbarMessage
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import com.pamoja.app.domain.model.WeekWindow
+import com.pamoja.app.ui.theme.Layout
 import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
 import com.pamoja.app.util.QrScanner
@@ -78,24 +87,6 @@ import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.delay
 import java.util.Calendar
-
-// ─── Colour palette for group card avatar gradients ──────────────────────────
-// Each group gets a deterministic gradient based on its name's first char, so the
-// same group always shows the same colour. Decorative (white text on top), kept
-// theme-independent on purpose for lively variety in both light and dark.
-private val avatarGradients = listOf(
-    listOf(Color(0xFF6366F1), Color(0xFF4F46E5)), // indigo
-    listOf(Color(0xFF22C58B), Color(0xFF17A472)), // emerald
-    listOf(Color(0xFFF5A623), Color(0xFFDB8B12)), // amber
-    listOf(Color(0xFFF87171), Color(0xFFEF4444)), // rose
-    listOf(Color(0xFF60A5FA), Color(0xFF2563EB)), // blue
-    listOf(Color(0xFFC084FC), Color(0xFF9333EA)), // purple
-)
-
-private fun gradientForGroup(name: String): List<Color> {
-    val index = (name.firstOrNull()?.code ?: 0) % avatarGradients.size
-    return avatarGradients[index]
-}
 
 // PullToRefreshBox is still marked experimental in Material 3. It is the
 // official pull-to-refresh and the alternative is hand-rolling the gesture,
@@ -368,15 +359,30 @@ fun HomeScreen(
                     // Section label
                     if (uiState.groups.isNotEmpty()) {
                         item {
-                            Text(
-                                text  = stringResource(R.string.home_your_groups),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.textTertiary,
-                                modifier = Modifier.padding(
-                                    start = Spacing.x6, end = Spacing.x6,
-                                    top = Spacing.x5, bottom = Spacing.x2
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        start = Spacing.x6, end = Spacing.x6,
+                                        top = Spacing.x5, bottom = Spacing.x2
+                                    ),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text  = stringResource(R.string.home_your_groups),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colors.textTertiary,
                                 )
-                            )
+                                // The count sits with the label, per the design.
+                                // It answers "is this all of them" without
+                                // making the reader count rows.
+                                Text(
+                                    text  = "${uiState.groups.size}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colors.textTertiary,
+                                )
+                            }
                         }
                     }
 
@@ -460,10 +466,20 @@ private fun HomeHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // headlineMedium, not headlineLarge, and clamped.
+            //
+            // The design draws this at its h1 size next to a single control, in
+            // a frame where "Good morning, Ravi" just fits. This header carries
+            // two controls, so on a 360dp phone the greeting gets about 224dp,
+            // and at 30sp even a short first name wrapped. Two lines is the
+            // fallback rather than the normal case now, and the name is capped
+            // so an unusually long one cannot push it past that.
             Text(
                 text  = "$greeting, $name",
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = colors.textPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
             // Activity, with a dot when something arrived since the last look.
@@ -497,7 +513,7 @@ private fun HomeHeader(
             }
             IconButton(
                 onClick = onSettingsClick,
-                modifier = Modifier.size(48.dp) // Touch target
+                modifier = Modifier.size(44.dp) // Touch target
             ) {
                 Icon(
                     painter = painterResource(PamojaIcons.Settings),
@@ -507,11 +523,13 @@ private fun HomeHeader(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(Spacing.x1))
+        Spacer(modifier = Modifier.height(Spacing.x2))
+        // The design puts the tagline in the brand colour at semibold, which is
+        // what stops it reading as a second, greyer heading.
         Text(
             text  = subtitles[subtitleIndex],
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.textSecondary
+            style = MaterialTheme.typography.titleSmall,
+            color = colors.accentPrimary
         )
     }
 }
@@ -564,8 +582,7 @@ private fun JoinLinkCard(onClick: () -> Unit) {
 @Composable
 fun GroupCard(group: Group, onClick: () -> Unit) {
     val colors = LocalPamojaColors.current
-    val gradientColors = gradientForGroup(group.name)
-    val cardShape = RoundedCornerShape(PamojaRadii.lg)
+    val cardShape = RoundedCornerShape(PamojaRadii.xl)
 
     Row(
         modifier = Modifier
@@ -579,37 +596,76 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
-        // Avatar, gradient box with first two letters
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(PamojaRadii.sm))
-                .background(
-                    brush = Brush.linearGradient(colors = gradientColors)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text  = group.name.take(2).uppercase(),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontSize = 16.sp,
-                    color = Color.White
-                )
-            )
-        }
+        // The design's 54dp squircle. Larger and softer than a small rounded
+        // square, which is what makes a list of groups scan as people rather
+        // than as rows in a table.
+        GroupAvatar(name = group.name, size = Layout.groupAvatar)
 
         // Group info
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.x1)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 text     = group.name,
-                style    = MaterialTheme.typography.bodyLarge.copy(color = colors.textPrimary),
+                style    = MaterialTheme.typography.titleMedium,
+                color    = colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            // Mono caps, per the design. It is a label for the number beside it
+            // rather than a sentence, and setting it as one keeps it from
+            // competing with the group's name directly above.
             Text(
-                text  = "%,d steps / week goal".format(group.weeklyTarget),
-                style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary)
+                text  = stringResource(
+                    R.string.home_group_goal, "%,d".format(group.weeklyTarget)
+                ).uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
+                color = colors.textTertiary
             )
+
+            // Only drawn once this week's cache has actually landed. A total
+            // from last week under this week's goal would be worse than showing
+            // nothing, so a stale or missing marker renders no bar at all rather
+            // than a confident zero.
+            if (WeekWindow.isCurrent(group.weekStart) && group.weeklyTarget > 0) {
+                val fraction = (group.weeklySteps.toFloat() / group.weeklyTarget)
+                    .coerceIn(0f, 1f)
+
+                Spacer(modifier = Modifier.height(3.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(7.dp)
+                        .clip(PillShape)
+                        .background(colors.surface2)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction)
+                            .fillMaxHeight()
+                            .clip(PillShape)
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(colors.accentAmber, colors.accentPrimary)
+                                )
+                            )
+                    )
+                }
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(
+                            SpanStyle(
+                                color = colors.textSecondary,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        ) {
+                            append("%,d".format(group.weeklySteps))
+                        }
+                        append(" · ${(fraction * 100).toInt()}%")
+                    },
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = colors.textTertiary,
+                )
+            }
         }
 
         // Chevron

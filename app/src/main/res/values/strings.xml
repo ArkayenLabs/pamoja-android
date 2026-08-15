@@ -96,7 +96,6 @@
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
     <string name="welcome_get_started">Get started</string>
-    <string name="welcome_logo_desc">Pamoja logo</string>
     <string name="welcome_tagline">Walk further, together.</string>
     <string name="welcome_feature_steps">Step tracking</string>
     <string name="welcome_feature_goals">Group goals</string>
@@ -106,8 +105,6 @@
     <!-- ── Auth landing ───────────────────────────────────────────────── -->
     <string name="auth_landing_title">Keep your groups safe</string>
     <string name="auth_landing_subtitle">Sign in so your groups and step history follow you to a new phone.</string>
-    <string name="auth_reassurance_title">We only store what signs you in</string>
-    <string name="auth_reassurance_body">No contacts, no social graph, nothing posted anywhere.</string>
     <string name="auth_failed_title">That did not work</string>
     <string name="auth_continue_google">Continue with Google</string>
     <string name="auth_opening_google">Opening Google…</string>
@@ -124,7 +121,6 @@
     <string name="phone_subtitle">We will text you a code to confirm it is you.</string>
     <string name="phone_label">Phone number</string>
     <string name="phone_placeholder">Your number</string>
-    <string name="phone_helper">Standard message rates may apply. Your number is never shown to your group.</string>
     <string name="phone_too_short">That number looks too short for %1$s. Check the digits after the dial code.</string>
     <string name="phone_send_code">Send code</string>
     <string name="phone_select_country">Select country</string>
@@ -187,7 +183,6 @@
     <!-- ── Profile setup ──────────────────────────────────────────────── -->
     <string name="profile_title">Set up your profile</string>
     <string name="profile_subtitle">Your group sees your name. Everything else is optional.</string>
-    <string name="profile_add_photo">Add photo</string>
     <string name="profile_name_label">Name</string>
     <string name="profile_name_placeholder">What should we call you?</string>
     <string name="profile_name_required">Your group needs something to call you</string>
@@ -199,7 +194,6 @@
     <string name="profile_height_label_in">and in</string>
     <string name="profile_weight_label_lb">Weight lb</string>
     <string name="profile_optional_placeholder">-</string>
-    <string name="profile_optional_note">Age, height and weight are optional and private.</string>
     <string name="profile_number_invalid">Enter your %1$s as a number</string>
     <string name="profile_number_range">That %1$s does not look right</string>
     <string name="profile_field_age">age</string>
@@ -244,7 +238,6 @@
     <string name="create_group_name_required">Give the group a name</string>
     <string name="create_group_name_too_long">That is a little long, keep it under 50</string>
     <string name="create_group_weekly_goal">Weekly step goal</string>
-    <string name="create_group_steps_format">%1$s steps</string>
     <string name="create_group_max_members">Max members</string>
     <string name="create_group_members_edit">Members can edit goal</string>
     <string name="create_group_members_edit_sub">Allow others to change the step target</string>
@@ -360,10 +353,6 @@
     <string name="settings_section_profile">PROFILE</string>
     <string name="settings_section_information">INFORMATION</string>
     <string name="settings_name_fallback">Guest User</string>
-    <string name="settings_user_id">User ID</string>
-    <string name="settings_user_id_clip">Pamoja User ID</string>
-    <string name="settings_user_id_copied">User ID copied to clipboard</string>
-    <string name="settings_copy_user_id">Copy User ID</string>
     <string name="settings_rate_title">Rate Us</string>
     <string name="settings_rate_subtitle">Support us by sharing your feedback</string>
     <string name="settings_reauth_send_code">Send code</string>
@@ -613,6 +602,46 @@
     <plurals name="licenses_subtitle">
         <item quantity="one">Pamoja is built on %1$d open source component. Thank you to whoever wrote it.</item>
         <item quantity="other">Pamoja is built on %1$d open source components. Thank you to everyone who wrote them.</item>
+    </plurals>
+    <!-- Translates a weekly group total into what it asks of one person on one
+         day, which is the only form of the number anyone can act on. The cap
+         starts at 2 so "one" never renders today, but the noun follows a count. -->
+    <plurals name="create_group_goal_hint">
+        <item quantity="one">About %1$s steps a day each with %2$d person.</item>
+        <item quantity="other">About %1$s steps a day each with %2$d people.</item>
+    </plurals>
+    <!-- Auth top-bar step markers, rendered uppercase. They name the flow, not
+         the screen, so someone deep in a sign-up knows what they are doing. -->
+    <string name="auth_step_sign_in">Sign in</string>
+    <string name="auth_step_sign_up">Sign up</string>
+    <string name="auth_step_verify">Verify</string>
+    <string name="auth_step_reset">Reset password</string>
+    <!-- Group card goal label, rendered uppercase. Was a hardcoded
+         "%,d steps / week goal" format string in HomeScreen. -->
+    <string name="home_group_goal">%1$s steps / week goal</string>
+    <!-- Leaderboard range toggle. -->
+    <string name="group_range_today">Today</string>
+    <string name="group_range_week">Week</string>
+    <!-- The figure not being ranked by, kept visible under the name. Was a
+         hardcoded "%,d this week" format string in GroupScreen. -->
+    <string name="group_steps_this_week">%1$s this week</string>
+    <string name="group_steps_today">%1$s today</string>
+    <!-- Pace badge. Falling short is never phrased as failure: this product's
+         copy rule is that it does not shame, and a walking group missing its
+         own target is the most ordinary thing in the world. -->
+    <!-- The per-person daily ask. The design's version uses an em dash; this
+         does not, because no user-facing string in this app does. -->
+    <string name="group_insight_complete">Goal met. Everything from here is a bonus.</string>
+    <string name="group_insight_on_track">%1$s steps a day each from here, and you are ahead of pace.</string>
+    <string name="group_insight_behind">%1$s steps a day each from here and you are there.</string>
+    <string name="group_pace_complete">Goal met</string>
+    <string name="group_pace_on_track">On track</string>
+    <string name="group_pace_keep_going">Keep going</string>
+    <!-- Was a hardcoded "$daysLeft days left" in GroupScreen, which rendered
+         "1 days left" on the last day of every week. -->
+    <plurals name="group_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
     </plurals>
     <!-- The bare noun, for a stat tile that shows the number separately. -->
     <plurals name="member_label">

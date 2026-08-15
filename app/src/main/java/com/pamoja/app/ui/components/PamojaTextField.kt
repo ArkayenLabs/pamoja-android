@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.pamoja.app.ui.theme.Layout
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -74,9 +77,12 @@ fun PamojaTextField(
     }
 
     Column(modifier = modifier) {
+        // The design system's `.lbl`: mono, tracked out, uppercase, and small.
+        // Set this way it reads as a tag on the field rather than as a sentence
+        // competing with the heading above it.
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             color = colors.textSecondary,
         )
 
@@ -97,6 +103,7 @@ fun PamojaTextField(
             },
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = Layout.fieldHeight)
                 .onFocusChanged { focusState ->
                     if (focusState.isFocused) {
                         wasFocused = true
@@ -105,7 +112,7 @@ fun PamojaTextField(
                     }
                 },
             enabled = enabled,
-            shape = RoundedCornerShape(PamojaRadii.sm),
+            shape = RoundedCornerShape(PamojaRadii.lg),
             singleLine = true,
             isError = shownError != null,
             keyboardOptions = KeyboardOptions(
@@ -135,14 +142,21 @@ fun PamojaTextField(
                     }
                 }
             } else null,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.textPrimary),
+            // Border weight is not settable here: focusedBorderThickness lives on
+            // OutlinedTextFieldDefaults.Container, not on this composable. M3
+            // already draws 2dp on focus against 1dp at rest, which is the
+            // design's ratio, so this is left to the default rather than
+            // rebuilding the field on a decoration box to hard-code it.
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = if (shownError != null) colors.statusDanger else colors.accentPrimary,
                 unfocusedBorderColor = borderColor,
                 errorBorderColor = colors.statusDanger,
-                focusedContainerColor = colors.surfaceInput,
+                focusedContainerColor = colors.surfaceInputFocus,
                 unfocusedContainerColor = colors.surfaceInput,
-                errorContainerColor = colors.surfaceInput,
+                // Tinted, not neutral. The design fills an invalid field so the
+                // problem is visible without reading the message under it.
+                errorContainerColor = colors.statusDangerSubtle,
                 cursorColor = colors.accentPrimary,
             ),
         )

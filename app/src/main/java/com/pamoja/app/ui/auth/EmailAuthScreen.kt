@@ -45,6 +45,7 @@ import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
 @Composable
@@ -91,7 +92,12 @@ fun EmailAuthScreen(
         ) {
             Spacer(modifier = Modifier.height(Spacing.x2))
 
-            AuthBackButton(onBack = onBack)
+            AuthTopBar(
+                onBack = onBack,
+                label = stringResource(
+                    if (isSignUp) R.string.auth_step_sign_up else R.string.auth_step_sign_in
+                ),
+            )
 
             Spacer(modifier = Modifier.height(Spacing.x6))
 
@@ -195,7 +201,7 @@ fun EmailAuthScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(PamojaRadii.md),
+                shape = PillShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.accentPrimary,
                     contentColor = colors.textOnBrand,

@@ -73,6 +73,8 @@ import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.components.rememberSingleClick
+import androidx.compose.ui.text.style.TextOverflow
+import com.pamoja.app.ui.theme.Layout
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -215,9 +217,10 @@ fun AccountScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = Spacing.x6)
-                            .clip(RoundedCornerShape(PamojaRadii.md))
+                            .clip(RoundedCornerShape(PamojaRadii.xl))
                             .background(colors.surface1)
-                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
+                            .padding(vertical = Spacing.x1)
                     ) {
                         MethodRow(
                             icon = PamojaIcons.Google,
@@ -229,6 +232,7 @@ fun AccountScreen(
                             enabled = uiState.canLink,
                             onAdd = { activity?.let(viewModel::addGoogle) },
                         )
+                        MethodDivider()
                         MethodRow(
                             icon = PamojaIcons.Smartphone,
                             title = stringResource(R.string.account_method_phone),
@@ -238,6 +242,7 @@ fun AccountScreen(
                             enabled = uiState.canLink,
                             onAdd = { viewModel.openDialog(AccountFlow.AddPhone) },
                         )
+                        MethodDivider()
                         MethodRow(
                             icon = PamojaIcons.Mail,
                             title = stringResource(R.string.account_method_email),
@@ -366,6 +371,24 @@ private fun SectionLabel(text: String) {
  * account permanently and the guard rails that would make it safe are more
  * work than the feature is worth today.
  */
+/**
+ * Hairline between method rows, inset past the icon chip.
+ *
+ * Full-width would cut the chips off from their own text; starting it where the
+ * text starts is what makes each row read as one object.
+ */
+@Composable
+private fun MethodDivider() {
+    val colors = LocalPamojaColors.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 72.dp)
+            .height(Layout.strokeHairline)
+            .background(colors.borderSubtle)
+    )
+}
+
 @Composable
 private fun MethodRow(
     @DrawableRes icon: Int,
@@ -384,14 +407,20 @@ private fun MethodRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !isConnected && enabled && !isBusy, onClick = onAdd)
-            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
+            .padding(horizontal = Spacing.x4, vertical = Spacing.x3)
+            .heightIn(min = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // The design's 44dp chip. A connected method carries the jade tint; an
+        // unconnected one stays neutral, so the list reads as "what I have"
+        // before any word on it has been read.
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(PamojaRadii.xs))
-                .background(accent.copy(alpha = 0.12f)),
+                .size(44.dp)
+                .clip(RoundedCornerShape(PamojaRadii.md))
+                .background(
+                    if (isConnected) colors.statusSuccessSubtle else colors.surface2
+                ),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -399,8 +428,12 @@ private fun MethodRow(
                 contentDescription = null,
                 // Google's mark is multi-colour and its brand rules forbid
                 // recolouring it, so it alone goes untinted.
-                tint = if (isGoogleMark) Color.Unspecified else accent,
-                modifier = Modifier.size(18.dp),
+                tint = when {
+                    isGoogleMark -> Color.Unspecified
+                    isConnected -> colors.statusSuccess
+                    else -> colors.textSecondary
+                },
+                modifier = Modifier.size(21.dp),
             )
         }
 
@@ -409,7 +442,7 @@ private fun MethodRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary,
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -420,6 +453,8 @@ private fun MethodRow(
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
@@ -435,10 +470,10 @@ private fun MethodRow(
             // A tick as well as the word, so the state is not carried by colour
             // alone.
             isConnected -> Icon(
-                painter = painterResource(PamojaIcons.Check),
+                painter = painterResource(PamojaIcons.ShieldCheck),
                 contentDescription = stringResource(R.string.account_connected),
                 tint = colors.statusSuccess,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(20.dp),
             )
 
             else -> Text(

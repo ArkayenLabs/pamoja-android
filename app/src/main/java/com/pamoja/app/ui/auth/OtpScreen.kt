@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -53,6 +54,7 @@ import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
 @Composable
@@ -96,7 +98,7 @@ fun OtpScreen(
         ) {
             Spacer(modifier = Modifier.height(Spacing.x2))
 
-            AuthBackButton(onBack = onBack)
+            AuthTopBar(onBack = onBack, label = stringResource(R.string.auth_step_verify))
 
             Spacer(modifier = Modifier.height(Spacing.x6))
 
@@ -217,7 +219,35 @@ fun OtpScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.x8))
+            Spacer(modifier = Modifier.height(Spacing.x5))
+
+            // Autofill is the fastest path through this screen and the least
+            // discoverable: the suggestion appears above the keyboard and is
+            // easy to read as an advert. Saying it once here costs a line and
+            // saves six taps.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(PamojaRadii.lg))
+                    .background(colors.surface2)
+                    .padding(horizontal = Spacing.x4, vertical = Spacing.x3),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Icon(
+                    painter = painterResource(PamojaIcons.Smartphone),
+                    contentDescription = null,
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = stringResource(R.string.otp_autofill_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.x6))
 
             Button(
                 onClick = { viewModel.verifyCode(code) },
@@ -225,7 +255,7 @@ fun OtpScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(PamojaRadii.md),
+                shape = PillShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.accentPrimary,
                     contentColor = colors.textOnBrand,

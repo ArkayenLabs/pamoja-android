@@ -3,6 +3,7 @@ package com.pamoja.app.ui.auth
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.pamoja.app.R
+import com.pamoja.app.ui.theme.Layout
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -175,17 +179,61 @@ fun OtpBoxes(
     )
 }
 
-/** Back control shared by every auth screen. */
+/**
+ * Back control shared by every auth screen.
+ *
+ * The design system's `.ic`: a filled 44dp chip, not a bare arrow floating on
+ * the background. It reads as a control at a glance and gives the touch target
+ * a visible edge.
+ */
 @Composable
 fun AuthBackButton(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = LocalPamojaColors.current
-    IconButton(onClick = onBack, modifier = modifier.size(48.dp)) {
+    val shape = RoundedCornerShape(PamojaRadii.md)
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(shape)
+            .background(colors.surface2)
+            .clickable(onClick = onBack),
+        contentAlignment = Alignment.Center,
+    ) {
         Icon(
             painter = painterResource(PamojaIcons.ArrowLeft),
             contentDescription = "Back",
-            tint = colors.textSecondary,
+            tint = colors.textPrimary,
             modifier = Modifier.size(20.dp),
         )
+    }
+}
+
+/**
+ * The design system's `.tbar`: the back chip with the step's name beside it.
+ *
+ * The label is what tells someone three screens into a sign-up which flow they
+ * are in, which a bare arrow never does. Mono caps rather than a title, because
+ * it is a marker for the screen and not its heading.
+ */
+@Composable
+fun AuthTopBar(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+) {
+    val colors = LocalPamojaColors.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+    ) {
+        AuthBackButton(onBack = onBack)
+        if (label != null) {
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+            )
+        }
     }
 }
 
@@ -221,8 +269,8 @@ fun AuthMethodButton(
         enabled = enabled && !isLoading,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(PamojaRadii.md),
+            .height(58.dp),
+        shape = PillShape,
         color = container,
     ) {
         Box(
@@ -231,16 +279,16 @@ fun AuthMethodButton(
                 .then(
                     if (filled) Modifier
                     else Modifier.border(
-                        width = 1.dp,
+                        width = Layout.strokeThick,
                         color = colors.borderDefault,
-                        shape = RoundedCornerShape(PamojaRadii.md),
+                        shape = PillShape,
                     )
                 )
                 .background(
                     if (filled) Color.Transparent else colors.surfaceCanvas,
-                    RoundedCornerShape(PamojaRadii.md),
+                    PillShape,
                 )
-                .padding(horizontal = Spacing.x4),
+                .padding(horizontal = Spacing.x5),
             contentAlignment = Alignment.CenterStart,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

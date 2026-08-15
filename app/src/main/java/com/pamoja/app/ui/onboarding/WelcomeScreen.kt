@@ -26,8 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,9 +34,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.OnboardingProgressBar
+import com.pamoja.app.ui.components.PamojaRingMark
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
 @Composable
@@ -52,20 +52,14 @@ fun WelcomeScreen(
         viewModel.onScreenViewed()
     }
 
-    // Subtle brand tint at top fading into the app background, theme-aware.
-    val topTint = if (colors.isDark) Color(0xFF1C1A3A) else Color(0xFFECEAFB)
-    val backgroundGradient = Brush.verticalGradient(
-        colorStops = arrayOf(
-            0.0f to topTint,
-            0.45f to colors.surfaceApp,
-            1.0f to colors.surfaceApp
-        )
-    )
-
+    // Flat, like every screen in the design system. This carried a hand-written
+    // indigo tint from the previous identity, so the first screen of the app
+    // was still washed violet after everything behind it went terracotta. It
+    // was also the last raw hex outside the theme file.
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundGradient)
+            .background(colors.surfaceApp)
     ) {
         Column(
             modifier = Modifier
@@ -86,25 +80,10 @@ fun WelcomeScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.x12))
 
-                // App icon, indigo gradient rounded square
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(RoundedCornerShape(PamojaRadii.lg))
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(colors.accentPrimary, colors.accentPrimaryPress)
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter            = painterResource(PamojaIcons.Footprints),
-                        contentDescription = stringResource(R.string.welcome_logo_desc),
-                        tint               = colors.textOnBrand,
-                        modifier           = Modifier.size(34.dp)
-                    )
-                }
+                // The Pamoja mark itself, the same two rings the sign-in screen
+                // shows. A gradient tile with a glyph in it was a placeholder
+                // for a logo rather than the logo.
+                PamojaRingMark(size = 72.dp)
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
@@ -161,7 +140,7 @@ fun WelcomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape  = RoundedCornerShape(PamojaRadii.md),
+                    shape  = PillShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.accentPrimary,
                         contentColor   = colors.textOnBrand

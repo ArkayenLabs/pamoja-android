@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -195,49 +196,72 @@ fun EditProfileScreen(
 
                     Spacer(modifier = Modifier.height(Spacing.x7))
 
+                    // The design's avatar: large, with the camera as a filled
+                    // disc overlapping its lower right rather than a text link
+                    // underneath. The ring around that disc is the page colour,
+                    // which is what separates it from the photo behind it.
+                    //
+                    // Still the photo picker, not the camera permission.
+                    // Android's picker runs outside the app and returns one
+                    // image, so there is no READ_MEDIA_IMAGES to request, no
+                    // rationale screen, and no permanently-denied state.
+                    val canPickPhoto = !uiState.isUploadingPhoto && !uiState.isOffline
                     Box(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
-                        contentAlignment = Alignment.Center,
                     ) {
-                        ProfileAvatar(
-                            name = uiState.name,
-                            photoUrl = uiState.photoUrl,
-                        )
-                        if (uiState.isUploadingPhoto) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(28.dp),
-                                color = colors.textOnBrand,
-                                strokeWidth = 2.dp,
+                        Box(contentAlignment = Alignment.Center) {
+                            ProfileAvatar(
+                                name = uiState.name,
+                                photoUrl = uiState.photoUrl,
+                                size = 104.dp,
+                            )
+                            if (uiState.isUploadingPhoto) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(28.dp),
+                                    color = colors.textOnBrand,
+                                    strokeWidth = 2.dp,
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 6.dp, y = 6.dp)
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(colors.surfaceApp)
+                                .padding(3.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (canPickPhoto) colors.accentPrimary else colors.surface2
+                                )
+                                .clickable(enabled = canPickPhoto) {
+                                    photoPicker.launch(
+                                        PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                                        )
+                                    )
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(PamojaIcons.Camera),
+                                // The spinner over the avatar is the only visual
+                                // sign of an upload, and it says nothing to a
+                                // screen reader. The label carries that state.
+                                contentDescription = stringResource(
+                                    when {
+                                        uiState.isUploadingPhoto -> R.string.profile_edit_photo_uploading
+                                        uiState.photoUrl.isNullOrBlank() -> R.string.profile_edit_photo_add
+                                        else -> R.string.profile_edit_photo_change
+                                    }
+                                ),
+                                tint = if (canPickPhoto) colors.textOnBrand else colors.textTertiary,
+                                modifier = Modifier.size(21.dp),
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-
-                    // The photo picker, not the camera permission. Android's
-                    // picker runs outside the app and returns one image, so
-                    // there is no READ_MEDIA_IMAGES permission to request, no
-                    // rationale screen, and no permanently-denied state.
-                    Text(
-                        text = stringResource(
-                            if (uiState.isUploadingPhoto) R.string.profile_edit_photo_uploading
-                            else if (uiState.photoUrl.isNullOrBlank()) R.string.profile_edit_photo_add
-                            else R.string.profile_edit_photo_change
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (uiState.isUploadingPhoto) colors.textTertiary else colors.accentPrimary,
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .clip(RoundedCornerShape(PamojaRadii.sm))
-                            .clickable(enabled = !uiState.isUploadingPhoto && !uiState.isOffline) {
-                                photoPicker.launch(
-                                    PickVisualMediaRequest(
-                                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                                    )
-                                )
-                            }
-                            .padding(horizontal = Spacing.x3, vertical = Spacing.x2),
-                    )
 
                     Spacer(modifier = Modifier.height(Spacing.x7))
 
@@ -307,14 +331,6 @@ fun EditProfileScreen(
                             validate = weightErrorFor,
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(Spacing.x2))
-
-                    Text(
-                        text = stringResource(R.string.profile_optional_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textTertiary,
-                    )
 
                     Spacer(modifier = Modifier.height(Spacing.x6))
 
@@ -393,11 +409,12 @@ fun EditProfileScreen(
 }
 
 /**
- * Initials in a circle.
+ * A photo in a circle, with initials underneath it.
  *
- * Stands in until photos exist. There is no Firebase Storage bucket in this
- * project, so an upload would mean a new dependency, its own security rules and
- * a new cost surface, which is more than a placeholder is worth.
+ * The initials are not a fallback that swaps in on failure, they are always
+ * drawn and the photo is laid over them. That way they show while the image
+ * loads and remain if it never arrives, instead of the account appearing as a
+ * blank circle on a slow connection.
  */
 @Composable
 fun ProfileAvatar(

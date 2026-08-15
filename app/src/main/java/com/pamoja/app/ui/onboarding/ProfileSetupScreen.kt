@@ -15,14 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,10 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -52,6 +47,7 @@ import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
 @Composable
@@ -157,28 +153,11 @@ fun ProfileSetupScreen(
 
             Spacer(modifier = Modifier.height(Spacing.x8))
 
-            // ── Avatar placeholder ───────────────────────────────────────
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(colors.surfaceSunken),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Camera),
-                        contentDescription = stringResource(R.string.profile_add_photo),
-                        tint = colors.textTertiary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x7))
+            // No photo control here on purpose. createProfile builds the User
+            // and writes it with set(), so a photo uploaded on this screen would
+            // be erased the moment Continue lands, leaving a billed orphan in
+            // Storage. Photos are set in Edit Profile, which loads the document
+            // before copying onto it.
 
             // ── Name field (required) ────────────────────────────────────
             PamojaTextField(
@@ -231,14 +210,6 @@ fun ProfileSetupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(Spacing.x2))
-
-            Text(
-                text  = stringResource(R.string.profile_optional_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textTertiary
-            )
-
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             // Inline and persistent. A snackbar carried this before, so a failed
@@ -275,7 +246,7 @@ fun ProfileSetupScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape  = RoundedCornerShape(PamojaRadii.md),
+                shape  = PillShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor         = colors.accentPrimary,
                     contentColor           = colors.textOnBrand,

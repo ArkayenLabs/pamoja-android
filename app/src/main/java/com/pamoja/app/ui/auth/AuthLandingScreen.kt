@@ -10,31 +10,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
+import com.pamoja.app.ui.components.PamojaRingMark
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
 
 /**
@@ -55,19 +47,10 @@ fun AuthLandingScreen(
     // context is wrapped rather than being the Activity itself.
     val activity = LocalActivity.current
 
-    val topTint = if (colors.isDark) colors.surfaceSunken else colors.accentPrimarySubtle
-    val background = Brush.verticalGradient(
-        colorStops = arrayOf(
-            0.0f to topTint,
-            0.45f to colors.surfaceApp,
-            1.0f to colors.surfaceApp,
-        )
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(background)
+            .background(colors.surfaceApp)
     ) {
         Column(
             modifier = Modifier
@@ -83,26 +66,9 @@ fun AuthLandingScreen(
 
             Spacer(modifier = Modifier.height(Spacing.x8))
 
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(PamojaRadii.lg))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(colors.accentPrimary, colors.accentPrimaryPress)
-                        )
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(PamojaIcons.Footprints),
-                    contentDescription = null,
-                    tint = colors.textOnBrand,
-                    modifier = Modifier.size(30.dp),
-                )
-            }
+            PamojaRingMark()
 
-            Spacer(modifier = Modifier.height(Spacing.x6))
+            Spacer(modifier = Modifier.height(Spacing.x5))
 
             Text(
                 text = stringResource(R.string.auth_landing_title),
@@ -119,14 +85,6 @@ fun AuthLandingScreen(
             )
 
             Spacer(modifier = Modifier.height(Spacing.x6))
-
-            // Reassurance sits above the buttons, not buried under them, because
-            // it is the answer to the question the buttons provoke.
-            PamojaNotice(
-                icon = PamojaIcons.Shield,
-                title = stringResource(R.string.auth_reassurance_title),
-                body = stringResource(R.string.auth_reassurance_body),
-            )
 
             // A failure keeps every method available. A Google outage should not
             // strand someone who could happily use email.

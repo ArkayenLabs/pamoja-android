@@ -4,6 +4,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import com.pamoja.app.ui.theme.DisplayFontFamily
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,8 +38,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +60,6 @@ import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.domain.model.User
-import com.pamoja.app.ui.theme.Gray300
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -70,6 +77,7 @@ import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 import com.pamoja.app.util.InviteLink
 import kotlinx.coroutines.launch
@@ -78,9 +86,24 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
-// Medal accent for ranks 2 & 3 (rank 1 uses the theme amber). Neutral in both themes.
-private val SilverMedal = Gray300
-private val BronzeMedal = Color(0xFFCD7F32)
+/**
+ * Which range the leaderboard ranks by.
+ *
+ * Only two. The design shows a third, "All", but every step figure on this
+ * screen comes from the Monday-to-Sunday query, so an all-time column would
+ * either need its own aggregate or would quietly show week totals under a
+ * lifetime label. A tab that lies is worse than a tab that is missing.
+ */
+enum class LeaderboardRange { Today, Week }
+
+/** Days in the shared week. The window is Monday to Sunday for every member. */
+private const val DaysInWeek = 7
+
+// Ring geometry, from the design's 246px ring with a 19px stroke inside a 392px
+// frame. Kept as constants because the two indicators and the layout that sizes
+// them have to agree exactly or the track and the fill drift apart.
+private val RingSize = 220.dp
+private val RingStroke = 18.dp
 
 // PullToRefreshBox is still marked experimental in Material 3. It is the
 // official API and the alternative is hand-rolling the gesture, which would be
@@ -101,6 +124,20 @@ fun GroupScreen(
         .collectAsState(initial = false)
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
+
+    // Which column the leaderboard ranks by. Screen state rather than UiState:
+    // it changes nothing in the domain and touches no repository, it only picks
+    // which of two numbers already in hand is the one being compared.
+    var leaderboardRange by rememberSaveable { mutableStateOf(LeaderboardRange.Today) }
+
+    // Re-ranked for the chosen range, not just re-labelled: the medal has to
+    // mean the column it sits next to. Computed here rather than inside the
+    // LazyColumn because a LazyListScope is not a composable scope.
+    val rankedMembers = remember(uiState.memberStepData, leaderboardRange) {
+        uiState.memberStepData.sortedByDescending {
+            if (leaderboardRange == LeaderboardRange.Today) it.todaySteps else it.weeklySteps
+        }
+    }
 
     // Snackbar text is shown from coroutine scopes and permission callbacks,
     // none of which are composable scopes.
@@ -237,6 +274,20 @@ fun GroupScreen(
                     )
                 }
 
+                // ── What that means per person, per day ────────────────────
+                item {
+                    GroupInsightCard(
+                        combinedSteps = uiState.combinedWeeklySteps,
+                        weeklyTarget  = uiState.group?.weeklyTarget?.toLong() ?: 70_000L,
+                        daysLeft      = daysLeft,
+                        memberCount   = uiState.memberStepData.size,
+                        modifier      = Modifier.padding(
+                            horizontal = Spacing.x6,
+                            vertical   = Spacing.x3,
+                        ),
+                    )
+                }
+
                 // Partial failure: the group and its members are here, the step
                 // totals are not. Says so rather than showing a row of zeroes
                 // that reads as "nobody has walked".
@@ -252,29 +303,41 @@ fun GroupScreen(
                     }
                 }
 
-                // ── Leaderboard section label ─────────────────────────────
+                // ── Leaderboard section label and range toggle ────────────
                 item {
-                    Text(
-                        text     = stringResource(R.string.group_leaderboard),
-                        style    = MaterialTheme.typography.labelSmall,
-                        color    = colors.textTertiary,
-                        modifier = Modifier.padding(
-                            start = Spacing.x6, end = Spacing.x6,
-                            top = Spacing.x5, bottom = Spacing.x3
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = Spacing.x6, end = Spacing.x6,
+                                top = Spacing.x5, bottom = Spacing.x3
+                            ),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text  = stringResource(R.string.group_leaderboard),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.textTertiary,
                         )
-                    )
+                        LeaderboardRangeToggle(
+                            selected = leaderboardRange,
+                            onSelect = { leaderboardRange = it },
+                        )
+                    }
                 }
 
                 // ── Ranked rows ───────────────────────────────────────────
-                itemsIndexed(uiState.memberStepData) { index, memberData ->
+                itemsIndexed(rankedMembers) { index, memberData ->
                     LeaderboardRow(
                         rank          = index + 1,
                         user          = memberData.user,
                         todaySteps    = memberData.todaySteps,
                         weeklySteps   = memberData.weeklySteps,
+                        range         = leaderboardRange,
                         isCurrentUser = memberData.user.userId == uiState.currentUserId
                     )
-                    if (index < uiState.memberStepData.lastIndex) {
+                    if (index < rankedMembers.lastIndex) {
                         Spacer(modifier = Modifier.height(Spacing.x2))
                     }
                 }
@@ -426,32 +489,38 @@ fun GroupProgressCard(
             .padding(Spacing.x6),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Progress ring
+        // Progress ring. Heavier and larger than before, per the design: this is
+        // the one number the product exists to show, so it carries the screen.
         Box(
             contentAlignment = Alignment.Center,
-            modifier         = Modifier.size(180.dp)
+            modifier         = Modifier.size(RingSize)
         ) {
-            // Track (stage-tinted dim ring, visible in both themes)
+            // Track is a flat surface tone rather than a tint of the fill, so it
+            // stays legible when the fill is nearly empty.
             CircularProgressIndicator(
                 progress    = { 1f },
-                modifier    = Modifier.size(180.dp),
-                color       = ringColor.copy(alpha = 0.16f),
-                strokeWidth = 14.dp,
-                strokeCap   = StrokeCap.Round
+                modifier    = Modifier.size(RingSize),
+                color       = colors.surface2,
+                strokeWidth = RingStroke,
+                strokeCap   = StrokeCap.Round,
+                gapSize     = 0.dp,
             )
-            // Filled progress ring
             CircularProgressIndicator(
                 progress    = { progress },
-                modifier    = Modifier.size(180.dp),
+                modifier    = Modifier.size(RingSize),
                 color       = ringColor,
-                strokeWidth = 14.dp,
-                strokeCap   = StrokeCap.Round
+                strokeWidth = RingStroke,
+                strokeCap   = StrokeCap.Round,
+                trackColor  = Color.Transparent,
+                gapSize     = 0.dp,
             )
             // Center content
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                PaceBadge(progress = progress, daysLeft = daysLeft)
+                Spacer(modifier = Modifier.height(Spacing.x2))
                 Text(
                     text  = "%,d".format(combinedSteps),
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 36.sp),
+                    style = MaterialTheme.typography.displayLarge,
                     color = colors.textPrimary
                 )
                 Text(
@@ -459,11 +528,17 @@ fun GroupProgressCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textTertiary
                 )
-                Spacer(modifier = Modifier.height(Spacing.x1))
+                Spacer(modifier = Modifier.height(Spacing.x2))
+                // A pill, not loose text. It is a distinct fact from the number
+                // above it and the design separates the two that way.
                 Text(
-                    text  = "$daysLeft days left",
+                    text  = pluralStringResource(R.plurals.group_days_left, daysLeft, daysLeft),
                     style = MaterialTheme.typography.labelSmall,
-                    color = ringColor
+                    color = colors.textSecondary,
+                    modifier = Modifier
+                        .clip(PillShape)
+                        .background(colors.surface2)
+                        .padding(horizontal = Spacing.x3, vertical = Spacing.x1),
                 )
             }
         }
@@ -478,6 +553,9 @@ fun GroupProgressCard(
             StatPill(
                 label    = stringResource(R.string.group_stat_completed),
                 value    = "${(progress * 100).toInt()}%",
+                // The only tile the design colours. It is the one that answers
+                // "how are we doing"; the other two are supporting detail.
+                valueColor = colors.accentPrimary,
                 modifier = Modifier.weight(1f)
             )
             StatPill(
@@ -496,31 +574,239 @@ fun GroupProgressCard(
     }
 }
 
+/**
+ * Whether the group is keeping up with its own week.
+ *
+ * The benchmark is whole days already gone, not a fraction of today: with two
+ * days left you are measured against the five that finished, which is the
+ * generous reading. Measuring against part of the current day would put a group
+ * "behind" at nine in the morning, every morning.
+ *
+ * There is no failing state on purpose. The brief's rule for this product's copy
+ * is that it never shames, so falling short reads as an invitation rather than a
+ * verdict, and it is amber rather than red.
+ */
+private enum class Pace { Complete, OnTrack, Behind }
+
+/**
+ * Shared by the badge and the insight card below it. Computed once because two
+ * elements sitting inches apart, both describing pace, must never disagree.
+ */
+private fun paceOf(progress: Float, daysLeft: Int): Pace {
+    val daysElapsed = (DaysInWeek - daysLeft).coerceIn(0, DaysInWeek)
+    val expected = daysElapsed.toFloat() / DaysInWeek
+    return when {
+        progress >= 1f -> Pace.Complete
+        progress >= expected -> Pace.OnTrack
+        else -> Pace.Behind
+    }
+}
+
+@Composable
+private fun PaceBadge(progress: Float, daysLeft: Int) {
+    val colors = LocalPamojaColors.current
+
+    val (labelRes, tint, tone) = when (paceOf(progress, daysLeft)) {
+        Pace.Complete -> Triple(
+            R.string.group_pace_complete, colors.statusSuccess, colors.statusSuccessSubtle
+        )
+        Pace.OnTrack -> Triple(
+            R.string.group_pace_on_track, colors.accentPrimary, colors.accentPrimarySubtle
+        )
+        Pace.Behind -> Triple(
+            R.string.group_pace_keep_going, colors.accentAmber, colors.accentAmberSubtle
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .clip(PillShape)
+            .background(tone)
+            .padding(horizontal = Spacing.x3, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Icon(
+            painter = painterResource(PamojaIcons.Flame),
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(15.dp),
+        )
+        Text(
+            text = stringResource(labelRes).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = tint,
+        )
+    }
+}
+
+/**
+ * The one line that turns the ring into an instruction.
+ *
+ * A weekly group total is not actionable; what a person can act on is how far
+ * they personally have to walk tomorrow. That is the remainder split by the days
+ * still left and the people still walking.
+ *
+ * Rendered as one sentence with the number emphasised rather than as a stat and
+ * a caption, because it is meant to read as a sentence. The number is located in
+ * the resolved string rather than concatenated, so translations stay free to put
+ * it wherever their grammar wants it.
+ */
+@Composable
+private fun GroupInsightCard(
+    combinedSteps: Long,
+    weeklyTarget: Long,
+    daysLeft: Int,
+    memberCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalPamojaColors.current
+
+    // Nobody to divide by yet. The members are still loading, and "Infinity
+    // steps a day each" is not a thing to show anyone.
+    if (memberCount < 1) return
+
+    val progress = if (weeklyTarget > 0) {
+        (combinedSteps.toFloat() / weeklyTarget.toFloat()).coerceIn(0f, 1f)
+    } else 0f
+    val pace = paceOf(progress, daysLeft)
+    val remaining = (weeklyTarget - combinedSteps).coerceAtLeast(0L)
+
+    // Rounded up: rounding down would print a daily figure that does not
+    // actually reach the target by Sunday.
+    val perPersonPerDay = if (remaining == 0L) 0L else {
+        val divisor = daysLeft.coerceAtLeast(1).toLong() * memberCount
+        (remaining + divisor - 1) / divisor
+    }
+
+    val tint = if (pace == Pace.Behind) colors.accentAmber else colors.accentTeal
+    val tone = if (pace == Pace.Behind) colors.accentAmberSubtle else colors.accentTealSubtle
+
+    val number = "%,d".format(perPersonPerDay)
+    val sentence = when (pace) {
+        Pace.Complete -> stringResource(R.string.group_insight_complete)
+        Pace.OnTrack  -> stringResource(R.string.group_insight_on_track, number)
+        Pace.Behind   -> stringResource(R.string.group_insight_behind, number)
+    }
+
+    val styled = remember(sentence, number, pace, colors) {
+        buildAnnotatedString {
+            append(sentence)
+            val start = sentence.indexOf(number)
+            if (pace != Pace.Complete && start >= 0) {
+                addStyle(
+                    SpanStyle(
+                        fontFamily = DisplayFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                    ),
+                    start,
+                    start + number.length,
+                )
+            }
+        }
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(PamojaRadii.lg))
+            .background(tone)
+            .padding(horizontal = Spacing.x4, vertical = Spacing.x3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+    ) {
+        Icon(
+            painter = painterResource(PamojaIcons.TrendingUp),
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = styled,
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textSecondary,
+        )
+    }
+}
+
+/**
+ * Today / Week, as the design's pill inside a pill: a sunken track with the
+ * active option raised onto a surface chip. The unselected options stay full
+ * contrast rather than being greyed, since both are equally valid views.
+ */
+@Composable
+private fun LeaderboardRangeToggle(
+    selected: LeaderboardRange,
+    onSelect: (LeaderboardRange) -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+    Row(
+        modifier = Modifier
+            .clip(PillShape)
+            .background(colors.surface2)
+            .padding(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        LeaderboardRange.entries.forEach { range ->
+            val isSelected = range == selected
+            val labelRes = when (range) {
+                LeaderboardRange.Today -> R.string.group_range_today
+                LeaderboardRange.Week  -> R.string.group_range_week
+            }
+            Box(
+                modifier = Modifier
+                    .clip(PillShape)
+                    .then(
+                        if (isSelected) Modifier.background(colors.surface1)
+                        else Modifier
+                    )
+                    .selectable(
+                        selected = isSelected,
+                        role = Role.Tab,
+                        onClick = { onSelect(range) },
+                    )
+                    .padding(horizontal = Spacing.x3, vertical = 6.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(labelRes),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSelected) colors.textPrimary else colors.textTertiary,
+                )
+            }
+        }
+    }
+}
+
 // ─── Stat pill ────────────────────────────────────────────────────────────────
 @Composable
 fun StatPill(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueColor: Color? = null,
 ) {
     val colors = LocalPamojaColors.current
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(PamojaRadii.sm))
-            .background(colors.surfaceSunken)
+            .clip(RoundedCornerShape(PamojaRadii.lg))
+            .background(colors.surface2)
             .padding(vertical = Spacing.x3, horizontal = Spacing.x2),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         Text(
             text  = value,
-            style = MaterialTheme.typography.labelMedium,
-            color = colors.textPrimary
+            style = MaterialTheme.typography.headlineSmall,
+            color = valueColor ?: colors.textPrimary,
+            maxLines = 1,
         )
         Text(
-            text  = label,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-            color = colors.textTertiary
+            text  = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
+            color = colors.textTertiary,
+            maxLines = 1,
         )
     }
 }
@@ -533,6 +819,7 @@ fun LeaderboardRow(
     user: User,
     todaySteps: Long,
     weeklySteps: Long,
+    range: LeaderboardRange,
     isCurrentUser: Boolean
 ) {
     val colors = LocalPamojaColors.current
@@ -550,10 +837,12 @@ fun LeaderboardRow(
         else          -> colors.borderSubtle
     }
 
+    // All three follow the theme now. Bronze was a raw hex and silver borrowed a
+    // neutral from the ramp, so neither moved between light and dark.
     val medalColor = when (rank) {
-        1 -> colors.accentAmber
-        2 -> SilverMedal
-        3 -> BronzeMedal
+        1 -> colors.medalGold
+        2 -> colors.medalSilver
+        3 -> colors.medalBronze
         else -> colors.textTertiary
     }
 
@@ -649,15 +938,24 @@ fun LeaderboardRow(
                 }
             }
             Text(
-                text  = "%,d this week".format(weeklySteps),
+                // The range not currently being ranked by, so both numbers stay
+                // visible and switching the toggle never hides information.
+                text  = if (range == LeaderboardRange.Today) {
+                    stringResource(R.string.group_steps_this_week, "%,d".format(weeklySteps))
+                } else {
+                    stringResource(R.string.group_steps_today, "%,d".format(todaySteps))
+                },
                 style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary)
             )
         }
 
-        // Today's steps (right side)
+        // The ranked figure (right side). This is the column the order and the
+        // medals are based on, so it follows the toggle.
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text  = "%,d".format(todaySteps),
+                text  = "%,d".format(
+                    if (range == LeaderboardRange.Today) todaySteps else weeklySteps
+                ),
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize   = if (isFirst) 15.sp else 13.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -665,7 +963,10 @@ fun LeaderboardRow(
                 )
             )
             Text(
-                text  = stringResource(R.string.group_today),
+                text  = stringResource(
+                    if (range == LeaderboardRange.Today) R.string.group_today
+                    else R.string.group_range_week
+                ).uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                 color = colors.textTertiary
             )

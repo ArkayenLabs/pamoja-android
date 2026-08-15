@@ -4,9 +4,15 @@ import androidx.annotation.DrawableRes
 import com.pamoja.app.R
 
 /**
- * Pamoja's custom icon set. Lucide (MIT) line icons imported as vector drawables
- * in res/drawable/ic_*. Use with `Icon(painterResource(PamojaIcons.Xxx), ...)`;
- * they tint to the current content color like any Material icon.
+ * Pamoja's icon set. Material Symbols Rounded (Apache 2.0) imported as vector
+ * drawables in res/drawable/ic_*, per the design system. Use with
+ * `Icon(painterResource(PamojaIcons.Xxx), ...)`; they tint to the current
+ * content color like any Material icon.
+ *
+ * These are filled glyphs on a 960x960 viewport wrapped in a translateY group,
+ * because Material Symbols ships an SVG viewBox of "0 -960 960 960" and Android
+ * vectors cannot express a negative origin. The property names below are kept
+ * from the previous Lucide set so call sites did not all have to change.
  *
  * Rule: never use emoji as an icon, label, or list marker anywhere in the app.
  * Add a new glyph here (and a matching res/drawable) rather than reaching for one.
@@ -45,6 +51,8 @@ object PamojaIcons {
     @DrawableRes val Refresh = R.drawable.ic_refresh
     @DrawableRes val Search = R.drawable.ic_search
     @DrawableRes val Close = R.drawable.ic_x
+    @DrawableRes val Flame = R.drawable.ic_flame
+    @DrawableRes val TrendingUp = R.drawable.ic_trending_up
     @DrawableRes val Notification = R.drawable.ic_notification
 
     /**

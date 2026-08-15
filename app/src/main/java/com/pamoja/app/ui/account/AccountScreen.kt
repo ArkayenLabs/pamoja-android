@@ -65,12 +65,14 @@ import com.pamoja.app.ui.auth.Country
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.auth.authErrorBody
+import com.pamoja.app.ui.components.DisabledReason
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.SkeletonBlock
+import com.pamoja.app.ui.components.rememberSingleClick
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -263,10 +265,8 @@ fun AccountScreen(
 
                     if (uiState.isOffline) {
                         Spacer(modifier = Modifier.height(Spacing.x3))
-                        Text(
+                        DisabledReason(
                             text = stringResource(R.string.account_offline_note),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.textTertiary,
                             modifier = Modifier.padding(horizontal = Spacing.x6),
                         )
                     }
@@ -536,7 +536,10 @@ private fun AccountDialog(
         },
         confirmButton = {
             Button(
-                onClick = onConfirm,
+                // Guarded because this same button sends the SMS in the
+                // add-phone flow, and two taps inside the recomposition gap
+                // would be two paid messages.
+                onClick = rememberSingleClick(onClick = onConfirm),
                 enabled = confirmEnabled && !isBusy,
                 shape = RoundedCornerShape(PamojaRadii.sm),
                 colors = ButtonDefaults.buttonColors(

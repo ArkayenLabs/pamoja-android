@@ -52,6 +52,7 @@ import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.PamojaTextField
+import com.pamoja.app.ui.components.rememberSingleClick
 import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -330,7 +331,9 @@ fun CreateGroupScreen(
             }
 
             Button(
-                onClick = {
+                // Two taps inside the recomposition gap would create two
+                // groups, and there is no way to delete the one nobody wanted.
+                onClick = rememberSingleClick {
                     viewModel.createGroup(
                         name                = groupName.trim(),
                         weeklyTarget        = selectedTarget,

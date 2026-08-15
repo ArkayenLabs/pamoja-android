@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,6 +82,10 @@ import java.time.temporal.TemporalAdjusters
 private val SilverMedal = Gray300
 private val BronzeMedal = Color(0xFFCD7F32)
 
+// PullToRefreshBox is still marked experimental in Material 3. It is the
+// official API and the alternative is hand-rolling the gesture, which would be
+// worse and would still have to be replaced later.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
     groupId: String,
@@ -179,6 +184,13 @@ fun GroupScreen(
                 modifier = Modifier.align(Alignment.Center),
             )
         } else {
+            // Wraps the list only, so the gesture exists where there is content
+            // to refresh and never competes with the full-screen error above.
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize(),
+            ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
 
                 // ── Top bar ───────────────────────────────────────────────
@@ -308,6 +320,7 @@ fun GroupScreen(
                             .height(Spacing.x8)
                     )
                 }
+            }
             }
         }
 

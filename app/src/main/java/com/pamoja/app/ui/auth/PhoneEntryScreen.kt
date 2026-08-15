@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.ui.components.rememberSingleClick
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -245,7 +246,9 @@ fun PhoneEntryScreen(
             Spacer(modifier = Modifier.height(Spacing.x8))
 
             Button(
-                onClick = {
+                // Every send is a paid SMS and a step toward Firebase's rate
+                // limit, so a double tap must not become two of them.
+                onClick = rememberSingleClick {
                     if (!isComplete) {
                         // Resolved here rather than inside the lambda, since a
                         // click handler is not a composable scope.

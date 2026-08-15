@@ -23,6 +23,7 @@ import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
 import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,6 +51,12 @@ data class GroupUiState(
     val combinedWeeklySteps: Long = 0L,
     val isAdmin: Boolean = false,
     val isOffline: Boolean = false,
+    /**
+     * Drives the pull-to-refresh spinner only, never the skeleton. A pull has
+     * content on screen already, and swapping it for a skeleton would throw
+     * away what the user is looking at to show them less.
+     */
+    val isRefreshing: Boolean = false,
 
     /**
      * Stopped the screen loading at all. Renders as the whole screen, because
@@ -185,6 +192,29 @@ class GroupViewModel @Inject constructor(
     }
 
     /**
+     * Pull to refresh.
+     *
+     * Members and steps arrive over Firestore snapshot listeners, so this
+     * seldom changes anything. It stays because it is the gesture people use
+     * when a leaderboard looks stale, and because it recovers a partial
+     * failure, steps that did not load beside members that did, without
+     * throwing away the half that worked.
+     */
+    fun refresh() {
+        val groupId = currentGroupId ?: return
+        if (_uiState.value.isRefreshing) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            loadGroup(groupId)
+            // Held briefly even when the answer is instant: a spinner that
+            // flickers and vanishes reads as one that never ran.
+            delay(REFRESH_SPINNER_MIN_MS)
+            _uiState.value = _uiState.value.copy(isRefreshing = false)
+        }
+    }
+
+    /**
      * Re-checks Health Connect against the platform rather than trusting the
      * cached flag.
      *
@@ -299,6 +329,11 @@ class GroupViewModel @Inject constructor(
 
     fun clearActionError() {
         _uiState.value = _uiState.value.copy(actionError = null)
+    }
+
+    private companion object {
+        /** Long enough that the gesture is acknowledged, short enough not to stall. */
+        const val REFRESH_SPINNER_MIN_MS = 450L
     }
 }
 

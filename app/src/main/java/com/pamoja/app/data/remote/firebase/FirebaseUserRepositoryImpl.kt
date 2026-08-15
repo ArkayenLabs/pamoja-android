@@ -1,9 +1,13 @@
 package com.pamoja.app.data.remote.firebase
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.pamoja.app.data.remote.model.GroupDto
+import com.pamoja.app.data.remote.model.MembershipDto
+import com.pamoja.app.data.remote.model.StepEntryDto
 import com.pamoja.app.data.remote.model.UserDto
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.UserDataExport
 import com.pamoja.app.domain.repository.UserRepository
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -102,6 +106,60 @@ class FirebaseUserRepositoryImpl @Inject constructor(
      * the user still able to sign in and retry, rather than stranded with a
      * working account and no profile.
      */
+    /**
+     * Reads, never writes. The mirror of [deleteAllUserData], visiting the same
+     * three places so the two cannot drift apart.
+     *
+     * Groups are fetched one at a time rather than with a whereIn, because
+     * whereIn caps at thirty values and a member of thirty-one groups would get
+     * a silently truncated export, which is worse than a slower one.
+     */
+    override suspend fun exportUserData(userId: String): Result<UserDataExport> {
+        return try {
+            val user = usersCollection.document(userId).get().await()
+                .toObject(UserDto::class.java)?.toDomain()
+                ?: return Result.failure(AppError.NotFound("No profile for this account"))
+
+            val memberships = membershipsCollection
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                .documents
+                .mapNotNull { it.toObject(MembershipDto::class.java)?.toDomain() }
+
+            val groups = memberships.mapNotNull { membership ->
+                runCatching {
+                    firestore.collection("groups")
+                        .document(membership.groupId)
+                        .get()
+                        .await()
+                        .toObject(GroupDto::class.java)
+                        ?.toDomain()
+                }.getOrNull()
+            }
+
+            val steps = firestore.collection("steps")
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                .documents
+                .mapNotNull { it.toObject(StepEntryDto::class.java)?.toDomain() }
+                .sortedBy { it.date }
+
+            Result.success(
+                UserDataExport(
+                    user = user,
+                    memberships = memberships,
+                    groups = groups,
+                    steps = steps,
+                    exportedAt = System.currentTimeMillis(),
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
     override suspend fun deleteAllUserData(userId: String): Result<Unit> {
         return try {
             val memberships = membershipsCollection

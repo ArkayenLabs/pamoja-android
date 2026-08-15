@@ -194,6 +194,9 @@
     <string name="profile_age_label">Age</string>
     <string name="profile_height_label">Height cm</string>
     <string name="profile_weight_label">Weight kg</string>
+    <string name="profile_height_label_ft">Height ft</string>
+    <string name="profile_height_label_in">and in</string>
+    <string name="profile_weight_label_lb">Weight lb</string>
     <string name="profile_optional_placeholder">-</string>
     <string name="profile_optional_note">Age, height and weight are optional and private.</string>
     <string name="profile_number_invalid">Enter your %1$s as a number</string>
@@ -384,6 +387,9 @@
     <string name="profile_detail_age">%1$d yrs</string>
     <string name="profile_detail_height">%1$d cm</string>
     <string name="profile_detail_weight">%1$d kg</string>
+    <!-- Feet and inches together, since nobody states a height in inches alone. -->
+    <string name="profile_detail_height_imperial">%1$d\'%2$d\"</string>
+    <string name="profile_detail_weight_imperial">%1$d lb</string>
     <string name="profile_detail_separator"> · </string>
     <string name="profile_details_empty">Add your details</string>
     <string name="settings_open_profile">Edit your profile</string>
@@ -394,6 +400,25 @@
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
+    <string name="settings_units_label">Units</string>
+    <string name="settings_units_metric">Metric</string>
+    <string name="settings_units_imperial">Imperial</string>
+    <string name="settings_units_sub">How your height and weight are shown. Steps are counted the same either way.</string>
+
+    <!-- ── Support and your data ──────────────────────────────────────── -->
+    <string name="settings_section_support">SUPPORT AND YOUR DATA</string>
+    <string name="settings_support_title">Contact support</string>
+    <string name="settings_support_subtitle">Ask a question, or report a problem</string>
+    <string name="settings_support_subject">Pamoja support request</string>
+    <!-- Device details are prefilled because the first reply to any support
+         mail is otherwise a request for exactly these. -->
+    <string name="settings_support_body">\n\n\n---\nPlease keep the details below, they help us find the problem.\nDevice: %1$s %2$s\nAndroid: %3$s\nPamoja: %4$s\nAccount: %5$s</string>
+    <string name="settings_export_title">Export my data</string>
+    <string name="settings_export_subtitle">Save everything Pamoja holds about you as a file</string>
+    <string name="settings_export_working">Gathering your data…</string>
+    <string name="settings_export_saved">Your data was saved</string>
+    <string name="settings_export_failed">Could not write that file</string>
+
     <string name="settings_theme_system_sub">Follows your phone, including its evening switch</string>
     <string name="settings_theme_fixed_sub">Stays this way whatever your phone does</string>
 

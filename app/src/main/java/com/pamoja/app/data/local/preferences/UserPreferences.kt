@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.domain.model.UnitSystem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -66,6 +67,10 @@ class UserPreferences @Inject constructor(
         // one key that survives clearAll(). See the note there.
         val KEY_THEME                    = stringPreferencesKey("theme_preference")
 
+        // Metric or imperial. Survives clearAll() for the same reason as the
+        // theme: it describes the person holding the phone, not the account.
+        val KEY_UNIT_SYSTEM              = stringPreferencesKey("unit_system")
+
         // When steps last actually reached Firestore. Written only on a
         // successful sync, so "last synced" never claims a run that failed.
         val KEY_LAST_SYNC_TIME           = longPreferencesKey("last_sync_time")
@@ -107,6 +112,22 @@ class UserPreferences @Inject constructor(
 
     suspend fun saveThemePreference(preference: ThemePreference) {
         context.dataStore.edit { it[KEY_THEME] = preference.name }
+    }
+
+    /**
+     * Metric or imperial, for display only.
+     *
+     * Defaults to metric rather than to the device locale. A locale-derived
+     * default would silently change what a stored number appears to say when
+     * someone travels or switches language, and metric is right for the primary
+     * market anyway.
+     */
+    val unitSystem: Flow<UnitSystem> = context.dataStore.data.map {
+        UnitSystem.fromName(it[KEY_UNIT_SYSTEM])
+    }
+
+    suspend fun saveUnitSystem(system: UnitSystem) {
+        context.dataStore.edit { it[KEY_UNIT_SYSTEM] = system.name }
     }
 
     /** 0 when steps have never successfully synced on this install. */
@@ -244,9 +265,11 @@ class UserPreferences @Inject constructor(
      */
     suspend fun clearAll() {
         val theme = context.dataStore.data.map { it[KEY_THEME] }.first()
+        val units = context.dataStore.data.map { it[KEY_UNIT_SYSTEM] }.first()
         context.dataStore.edit { prefs ->
             prefs.clear()
             theme?.let { prefs[KEY_THEME] = it }
+            units?.let { prefs[KEY_UNIT_SYSTEM] = it }
         }
     }
 }

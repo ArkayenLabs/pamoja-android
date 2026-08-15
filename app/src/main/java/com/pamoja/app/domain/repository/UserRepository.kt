@@ -1,6 +1,7 @@
 package com.pamoja.app.domain.repository
 
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.UserDataExport
 
 interface UserRepository {
     suspend fun createUser(user: User): Result<Unit>
@@ -17,4 +18,13 @@ interface UserRepository {
      * which would leave the data orphaned forever with no way to reach it.
      */
     suspend fun deleteAllUserData(userId: String): Result<Unit>
+
+    /**
+     * Gathers everything held about this user, for export.
+     *
+     * Reads the same three places [deleteAllUserData] destroys. Keep the two in
+     * step: a collection added to one and forgotten in the other means the app
+     * either fails to erase data or fails to disclose it.
+     */
+    suspend fun exportUserData(userId: String): Result<UserDataExport>
 }

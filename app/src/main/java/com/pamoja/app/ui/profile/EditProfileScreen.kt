@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
+import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
@@ -94,13 +95,27 @@ fun EditProfileScreen(
             else -> null
         }
     }
+    val isImperial = uiState.unitSystem == UnitSystem.Imperial
+
+    // The same human bounds expressed in whichever units are on screen, so the
+    // rule does not tighten or loosen just because the display changed.
     val ageErrorFor: (String) -> String? = { it.validOptionalNumber(13..120, ageNaN, ageRange) }
-    val heightErrorFor: (String) -> String? = { it.validOptionalNumber(50..250, heightNaN, heightRange) }
-    val weightErrorFor: (String) -> String? = { it.validOptionalNumber(20..300, weightNaN, weightRange) }
+    val heightErrorFor: (String) -> String? = { input ->
+        val range = if (isImperial) 1..8 else 50..250
+        input.validOptionalNumber(range, heightNaN, heightRange)
+    }
+    val heightInchesErrorFor: (String) -> String? = { input ->
+        input.validOptionalNumber(0..11, heightNaN, heightRange)
+    }
+    val weightErrorFor: (String) -> String? = { input ->
+        val range = if (isImperial) 44..660 else 20..300
+        input.validOptionalNumber(range, weightNaN, weightRange)
+    }
 
     val firstError = nameErrorFor(uiState.name)
         ?: ageErrorFor(uiState.age)
         ?: heightErrorFor(uiState.height)
+        ?: (if (isImperial) heightInchesErrorFor(uiState.heightInches) else null)
         ?: weightErrorFor(uiState.weight)
 
     // A save that changed something deserves saying so, and the screen stays put
@@ -216,17 +231,37 @@ fun EditProfileScreen(
                         PamojaTextField(
                             value = uiState.height,
                             onValueChange = viewModel::onHeightChange,
-                            label = stringResource(R.string.profile_height_label),
+                            label = stringResource(
+                                if (isImperial) R.string.profile_height_label_ft
+                                else R.string.profile_height_label
+                            ),
                             placeholder = stringResource(R.string.profile_optional_placeholder),
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f),
                             enabled = !uiState.isSaving,
                             validate = heightErrorFor,
                         )
+                        // Imperial height is two numbers. Nobody states a height
+                        // in inches alone, so a single field would be unusable.
+                        if (isImperial) {
+                            PamojaTextField(
+                                value = uiState.heightInches,
+                                onValueChange = viewModel::onHeightInchesChange,
+                                label = stringResource(R.string.profile_height_label_in),
+                                placeholder = stringResource(R.string.profile_optional_placeholder),
+                                keyboardType = KeyboardType.Number,
+                                modifier = Modifier.weight(1f),
+                                enabled = !uiState.isSaving,
+                                validate = heightInchesErrorFor,
+                            )
+                        }
                         PamojaTextField(
                             value = uiState.weight,
                             onValueChange = viewModel::onWeightChange,
-                            label = stringResource(R.string.profile_weight_label),
+                            label = stringResource(
+                                if (isImperial) R.string.profile_weight_label_lb
+                                else R.string.profile_weight_label
+                            ),
                             placeholder = stringResource(R.string.profile_optional_placeholder),
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f),

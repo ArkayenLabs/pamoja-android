@@ -59,6 +59,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -67,6 +69,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.domain.model.UnitConverter
+import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
@@ -129,6 +133,44 @@ fun SettingsScreen(
     // Reload on return, so a name changed in the editor is reflected here rather
     // than showing the value this screen loaded before navigating away.
     LaunchedEffect(Unit) { viewModel.refresh() }
+
+    // ── Export ───────────────────────────────────────────────────────────────
+    //
+    // The system document picker rather than a file written into app storage.
+    // No storage permission, no FileProvider, and the file lands somewhere the
+    // user chose and can find again instead of a directory they cannot see.
+    val exportSavedMessage = stringResource(R.string.settings_export_saved)
+    val exportFailedMessage = stringResource(R.string.settings_export_failed)
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        val json = uiState.exportJson
+        viewModel.clearExport()
+        // A null uri means the picker was dismissed, which is a choice and not
+        // a failure worth announcing.
+        if (uri == null || json == null) return@rememberLauncherForActivityResult
+
+        val wrote = runCatching {
+            context.contentResolver.openOutputStream(uri)?.use { stream ->
+                stream.write(json.toByteArray())
+            } ?: error("Could not open the chosen file for writing")
+        }.isSuccess
+
+        scope.launch {
+            snackbarHostState.showSnackbar(
+                if (wrote) exportSavedMessage else exportFailedMessage
+            )
+        }
+    }
+
+    // Opens the picker only once the data is actually in hand, so the user is
+    // never asked where to save something that then fails to arrive.
+    LaunchedEffect(uiState.exportJson) {
+        if (uiState.exportJson != null) {
+            createDocumentLauncher.launch(EXPORT_FILE_NAME)
+        }
+    }
 
     // Health Connect permission can be revoked in system settings while the app
     // is alive, so the status is re-read whenever this screen resumes rather
@@ -392,7 +434,12 @@ fun SettingsScreen(
                                 // Shows the details the app already holds. They
                                 // were collected at onboarding and then never
                                 // displayed anywhere, which is hard to justify.
-                                text = profileSummary(uiState.age, uiState.height, uiState.weight),
+                                text = profileSummary(
+                                    uiState.age,
+                                    uiState.height,
+                                    uiState.weight,
+                                    uiState.unitSystem,
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.textSecondary,
                             )
@@ -507,6 +554,13 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.x3))
 
+                UnitSelector(
+                    selected = uiState.unitSystem,
+                    onSelect = viewModel::setUnitSystem,
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.x3))
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -555,6 +609,63 @@ fun SettingsScreen(
                         }
                     },
                 )
+
+                Spacer(modifier = Modifier.height(Spacing.x6))
+
+                // ─── Section: Support & your data ────────────────────────────
+                SectionLabel(stringResource(R.string.settings_section_support), color = colors.textTertiary)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.x6)
+                        .clip(RoundedCornerShape(PamojaRadii.md))
+                        .background(colors.surface1)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
+                ) {
+                    SettingsRow(
+                        icon = PamojaIcons.Mail,
+                        title = stringResource(R.string.settings_support_title),
+                        subtitle = stringResource(R.string.settings_support_subtitle),
+                        onClick = {
+                            // Device, Android version and app version are
+                            // prefilled because the first reply to any support
+                            // mail is otherwise a request for exactly those,
+                            // which costs a day for no reason.
+                            val body = context.getString(
+                                R.string.settings_support_body,
+                                android.os.Build.MANUFACTURER,
+                                android.os.Build.MODEL,
+                                android.os.Build.VERSION.RELEASE,
+                                "1.0.0",
+                                uiState.userId.ifBlank { "-" },
+                            )
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = "mailto:".toUri()
+                                putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
+                                putExtra(
+                                    Intent.EXTRA_SUBJECT,
+                                    context.getString(R.string.settings_support_subject),
+                                )
+                                putExtra(Intent.EXTRA_TEXT, body)
+                            }
+                            // ACTION_SENDTO with a mailto URI resolves only to
+                            // mail apps, so no unrelated share targets appear.
+                            // A phone with no mail app configured does nothing
+                            // rather than crashing.
+                            runCatching { context.startActivity(intent) }
+                        },
+                    )
+                    SettingsRow(
+                        icon = PamojaIcons.Share,
+                        title = stringResource(R.string.settings_export_title),
+                        subtitle = stringResource(
+                            if (uiState.isExporting) R.string.settings_export_working
+                            else R.string.settings_export_subtitle
+                        ),
+                        onClick = { if (!uiState.isExporting) viewModel.exportData() },
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 
@@ -767,11 +878,36 @@ private fun SettingsRow(
  * under a tappable row gives no reason to tap it.
  */
 @Composable
-private fun profileSummary(age: Int?, height: Float?, weight: Float?): String {
+private fun profileSummary(
+    age: Int?,
+    height: Float?,
+    weight: Float?,
+    units: UnitSystem,
+): String {
     val parts = buildList {
         age?.let { add(stringResource(R.string.profile_detail_age, it)) }
-        height?.let { add(stringResource(R.string.profile_detail_height, it.toInt())) }
-        weight?.let { add(stringResource(R.string.profile_detail_weight, it.toInt())) }
+        height?.let { cm ->
+            add(
+                when (units) {
+                    UnitSystem.Metric -> stringResource(R.string.profile_detail_height, cm.toInt())
+                    UnitSystem.Imperial -> {
+                        val (feet, inches) = UnitConverter.cmToFeetInches(cm)
+                        stringResource(R.string.profile_detail_height_imperial, feet, inches)
+                    }
+                }
+            )
+        }
+        weight?.let { kg ->
+            add(
+                when (units) {
+                    UnitSystem.Metric -> stringResource(R.string.profile_detail_weight, kg.toInt())
+                    UnitSystem.Imperial -> stringResource(
+                        R.string.profile_detail_weight_imperial,
+                        UnitConverter.kgToPounds(kg),
+                    )
+                }
+            )
+        }
     }
     return if (parts.isEmpty()) {
         stringResource(R.string.profile_details_empty)
@@ -802,6 +938,88 @@ private fun authMethodsSummary(methods: AuthMethods): String {
             names.joinToString(stringResource(R.string.account_method_separator)),
         )
     }
+}
+
+/** Support address, also published on the site and required by Play. */
+private const val SUPPORT_EMAIL = "support@arkayenlabs.com"
+
+/** Suggested name in the save dialog. The user can change it. */
+private const val EXPORT_FILE_NAME = "pamoja-my-data.json"
+
+/**
+ * Metric or imperial, as a segmented control matching the theme selector.
+ *
+ * Display only. Height and weight are stored in centimetres and kilograms
+ * whatever this says, because a stored number whose meaning depends on a
+ * setting held elsewhere is a number that changes when the setting does.
+ */
+@Composable
+private fun UnitSelector(
+    selected: UnitSystem,
+    onSelect: (UnitSystem) -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.md)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.x6)
+            .clip(shape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, shape)
+            .padding(Spacing.x4),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_units_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.textPrimary,
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.x3))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(PamojaRadii.sm))
+                .background(colors.surfaceSunken)
+                .padding(Spacing.x1),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.x1),
+        ) {
+            UnitSystem.entries.forEach { option ->
+                val isSelected = option == selected
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(PamojaRadii.sm))
+                        .background(if (isSelected) colors.accentPrimary else Color.Transparent)
+                        .clickable { onSelect(option) }
+                        .padding(vertical = Spacing.x3),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(option.labelRes()),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isSelected) colors.textOnBrand else colors.textSecondary,
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.x3))
+
+        Text(
+            text = stringResource(R.string.settings_units_sub),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textTertiary,
+        )
+    }
+}
+
+@StringRes
+private fun UnitSystem.labelRes(): Int = when (this) {
+    UnitSystem.Metric -> R.string.settings_units_metric
+    UnitSystem.Imperial -> R.string.settings_units_imperial
 }
 
 /**

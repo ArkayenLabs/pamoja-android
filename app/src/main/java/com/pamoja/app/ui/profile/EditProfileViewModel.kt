@@ -6,6 +6,8 @@ import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
+import com.pamoja.app.domain.model.UnitConverter
+import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
@@ -29,8 +31,20 @@ data class EditProfileUiState(
 
     val name: String = "",
     val age: String = "",
+    /** Centimetres in metric, whole feet in imperial. */
     val height: String = "",
+    /** Inches, imperial only. Ignored in metric. */
+    val heightInches: String = "",
+    /** Kilograms in metric, pounds in imperial. */
     val weight: String = "",
+    /**
+     * Which units the fields above are being edited in.
+     *
+     * The fields hold display units, never storage units. Conversion happens on
+     * load and on save, so a value written in pounds is still kilograms in
+     * Firestore and does not change meaning when the setting does.
+     */
+    val unitSystem: UnitSystem = UnitSystem.Metric,
 ) {
     /**
      * Saving is a Firestore write, and a write Task only completes on server
@@ -71,7 +85,43 @@ class EditProfileViewModel @Inject constructor(
 
     init {
         observeConnectivity()
+        observeUnits()
         load()
+    }
+
+    /**
+     * Re-renders the fields when the unit setting changes.
+     *
+     * The canonical values are kept in [loaded], so a switch converts from
+     * those rather than from whatever is currently typed. Converting the text
+     * would round-trip it, and 180 cm to feet and back is 180.34 cm.
+     */
+    private fun observeUnits() {
+        viewModelScope.launch {
+            userPreferences.unitSystem.collect { system ->
+                _uiState.value = _uiState.value.copy(unitSystem = system)
+                loaded?.let { showMeasurements(it.height, it.weight, system) }
+            }
+        }
+    }
+
+    private fun showMeasurements(heightCm: Float?, weightKg: Float?, system: UnitSystem) {
+        when (system) {
+            UnitSystem.Metric -> _uiState.value = _uiState.value.copy(
+                height = heightCm?.toInt()?.toString().orEmpty(),
+                heightInches = "",
+                weight = weightKg?.toInt()?.toString().orEmpty(),
+            )
+
+            UnitSystem.Imperial -> {
+                val feetInches = heightCm?.let { UnitConverter.cmToFeetInches(it) }
+                _uiState.value = _uiState.value.copy(
+                    height = feetInches?.first?.toString().orEmpty(),
+                    heightInches = feetInches?.second?.toString().orEmpty(),
+                    weight = weightKg?.let { UnitConverter.kgToPounds(it).toString() }.orEmpty(),
+                )
+            }
+        }
     }
 
     private fun observeConnectivity() {
@@ -107,9 +157,8 @@ class EditProfileViewModel @Inject constructor(
                         // Rendered blank rather than "null", and blank on the way
                         // back out means the user cleared it deliberately.
                         age = user.age?.toString().orEmpty(),
-                        height = user.height?.toInt()?.toString().orEmpty(),
-                        weight = user.weight?.toInt()?.toString().orEmpty(),
                     )
+                    showMeasurements(user.height, user.weight, _uiState.value.unitSystem)
                 },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
@@ -133,6 +182,10 @@ class EditProfileViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(height = value)
     }
 
+    fun onHeightInchesChange(value: String) {
+        _uiState.value = _uiState.value.copy(heightInches = value)
+    }
+
     fun onWeightChange(value: String) {
         _uiState.value = _uiState.value.copy(weight = value)
     }
@@ -144,13 +197,30 @@ class EditProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = state.copy(isSaving = true, saveError = null)
 
+            // Converted back to storage units here. Firestore always holds
+            // centimetres and kilograms whatever the fields were showing.
+            val heightCm: Float? = when (state.unitSystem) {
+                UnitSystem.Metric -> state.height.toFloatOrNull()
+                UnitSystem.Imperial -> {
+                    val feet = state.height.toIntOrNull()
+                    // Inches alone is not a height, but feet alone is: someone
+                    // who types 5 and leaves inches blank means 5 feet 0.
+                    feet?.let { UnitConverter.feetInchesToCm(it, state.heightInches.toIntOrNull() ?: 0) }
+                }
+            }
+
+            val weightKg: Float? = when (state.unitSystem) {
+                UnitSystem.Metric -> state.weight.toFloatOrNull()
+                UnitSystem.Imperial -> state.weight.toIntOrNull()?.let { UnitConverter.poundsToKg(it) }
+            }
+
             // copy, so photoUrl and deviceToken survive a write that does not
             // mention them.
             val updated = base.copy(
                 name = state.name.trim(),
                 age = state.age.toIntOrNull(),
-                height = state.height.toFloatOrNull(),
-                weight = state.weight.toFloatOrNull(),
+                height = heightCm,
+                weight = weightKg,
             )
 
             updateUserUseCase(updated).fold(

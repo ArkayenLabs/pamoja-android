@@ -9,11 +9,14 @@ import com.pamoja.app.data.remote.auth.GoogleCredentialClient
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
+import com.pamoja.app.data.export.UserDataExportFormatter
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
 import com.pamoja.app.domain.usecase.GetAuthMethodsUseCase
+import com.pamoja.app.domain.usecase.ExportUserDataUseCase
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
 import com.pamoja.app.domain.usecase.ReauthenticateWithEmailUseCase
@@ -83,6 +86,17 @@ data class SettingsUiState(
     /** Which sign-in methods are attached, summarised on the Account row. */
     val authMethods: AuthMethods = AuthMethods(),
     val theme: ThemePreference = ThemePreference.System,
+    val unitSystem: UnitSystem = UnitSystem.Metric,
+    /** True while the export is being gathered from Firestore. */
+    val isExporting: Boolean = false,
+    /**
+     * The finished export, waiting for the user to choose where to save it.
+     *
+     * Held here rather than written straight to a file: the destination is
+     * picked by the system document picker, which cannot be opened from a
+     * ViewModel, so the screen collects this and does the write.
+     */
+    val exportJson: String? = null,
     val healthStatus: HealthStatus = HealthStatus.Connected,
     /** Epoch millis of the last successful sync, 0 when it has never happened. */
     val lastSyncTime: Long = 0L,
@@ -112,6 +126,8 @@ class SettingsViewModel @Inject constructor(
     private val googleCredentialClient: GoogleCredentialClient,
     private val healthConnectReader: HealthConnectReader,
     private val workManagerScheduler: WorkManagerScheduler,
+    private val exportUserDataUseCase: ExportUserDataUseCase,
+    private val exportFormatter: UserDataExportFormatter,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -124,6 +140,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferences.themePreference.collect { theme ->
                 _uiState.value = _uiState.value.copy(theme = theme)
+            }
+        }
+        viewModelScope.launch {
+            userPreferences.unitSystem.collect { system ->
+                _uiState.value = _uiState.value.copy(unitSystem = system)
             }
         }
         viewModelScope.launch {
@@ -167,6 +188,53 @@ class SettingsViewModel @Inject constructor(
      */
     fun setTheme(preference: ThemePreference) {
         viewModelScope.launch { userPreferences.saveThemePreference(preference) }
+    }
+
+    fun setUnitSystem(system: UnitSystem) {
+        viewModelScope.launch { userPreferences.saveUnitSystem(system) }
+    }
+
+    /**
+     * Gathers the export, then hands it to the screen to save.
+     *
+     * Deliberately does not write a file itself. The user picks the
+     * destination through the system document picker, which means no storage
+     * permission, no FileProvider, and the file lands somewhere they chose and
+     * can find again rather than in an app directory they cannot see.
+     */
+    fun exportData() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isExporting = true, error = null)
+
+            val userId = getCurrentUserUseCase()?.userId
+            if (userId == null) {
+                _uiState.value = _uiState.value.copy(
+                    isExporting = false,
+                    error = AppError.SessionExpired(),
+                )
+                return@launch
+            }
+
+            exportUserDataUseCase(userId).fold(
+                onSuccess = { export ->
+                    _uiState.value = _uiState.value.copy(
+                        isExporting = false,
+                        exportJson = exportFormatter.toJson(export),
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isExporting = false,
+                        error = e.toAppError(),
+                    )
+                }
+            )
+        }
+    }
+
+    /** Called once the file has been written, or the picker was dismissed. */
+    fun clearExport() {
+        _uiState.value = _uiState.value.copy(exportJson = null)
     }
 
     /** Re-reads the profile, for coming back from the editor with it changed. */

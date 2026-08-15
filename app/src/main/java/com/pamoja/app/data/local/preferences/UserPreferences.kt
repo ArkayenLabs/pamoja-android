@@ -19,7 +19,13 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "pamoja_prefs")
+/**
+ * Internal rather than private so [com.pamoja.app.data.local.activity.ActivityLogStore]
+ * can share it. Creating a second `preferencesDataStore` with the same file
+ * name throws at runtime, so there must be exactly one declaration per file and
+ * every store in the module has to reach for this one.
+ */
+internal val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "pamoja_prefs")
 
 @Singleton
 class UserPreferences @Inject constructor(

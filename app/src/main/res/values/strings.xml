@@ -572,6 +572,20 @@
     <string name="paywall_unavailable_title">Premium is not on sale yet</string>
     <string name="paywall_unavailable_body">Nothing has been charged. Everything free keeps working exactly as it does now.</string>
 
+    <!-- ── Activity centre ────────────────────────────────────────────── -->
+    <string name="activity_title">Activity</string>
+    <string name="activity_open_desc">Activity, what you may have missed</string>
+    <string name="activity_clear">Clear</string>
+    <string name="activity_clear_title">Clear your activity?</string>
+    <string name="activity_clear_body">This removes the list on this phone. Your groups, steps and history are not affected.</string>
+    <string name="activity_clear_confirm">Clear</string>
+    <string name="activity_empty_title">Nothing yet</string>
+    <string name="activity_empty_body">When your group hits its goal, or someone joins, it will show up here so you can catch up later.</string>
+    <string name="activity_time_now">Just now</string>
+    <string name="activity_time_minutes">%1$d min ago</string>
+    <string name="activity_time_hours">%1$d h ago</string>
+    <string name="activity_time_days">%1$d d ago</string>
+
     <!-- ── Plurals ────────────────────────────────────────────────────── -->
     <!-- A one-member group is the normal state right after creating one, so
          "1 members" is the first thing a new admin reads. Android picks the

@@ -43,6 +43,9 @@ sealed class Screen(val route: String) {
     /** Open source licences, generated at build time. Legally required. */
     object Licenses : Screen("licenses")
 
+    /** Past notifications, after the system tray has forgotten them. */
+    object Activity : Screen("activity")
+
     /**
      * Upgrade to Premium. Built, but deliberately without an entry point until
      * a billing provider exists, since a paywall that cannot sell is worse

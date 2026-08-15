@@ -166,6 +166,18 @@ fun PamojaNavGraph(
                 },
                 onOpenInvite = { code ->
                     navController.navigate(Screen.JoinPreview.createRoute(code))
+                },
+                onActivityClick = {
+                    navController.navigate(Screen.Activity.route)
+                }
+            )
+        }
+
+        composable(Screen.Activity.route) {
+            com.pamoja.app.ui.activity.ActivityScreen(
+                onBack = { navController.popBackStack() },
+                onOpenGroup = { groupId ->
+                    navController.navigate(Screen.Group.createRoute(groupId))
                 }
             )
         }

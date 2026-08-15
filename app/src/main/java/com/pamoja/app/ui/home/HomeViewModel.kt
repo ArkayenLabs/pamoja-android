@@ -3,6 +3,7 @@ package com.pamoja.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.connectivity.ConnectivityObserver
+import com.pamoja.app.data.local.activity.ActivityLogStore
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
@@ -54,6 +55,8 @@ data class HomeUiState(
      * the user is looking at to show them less.
      */
     val isRefreshing: Boolean = false,
+    /** Drives the dot on the activity bell. Zero hides it. */
+    val unreadActivityCount: Int = 0,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty()
@@ -75,6 +78,7 @@ class HomeViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     private val analyticsManager: AnalyticsManager,
     private val connectivityObserver: ConnectivityObserver,
+    private val activityLog: ActivityLogStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -84,7 +88,16 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeConnectivity()
+        observeUnreadActivity()
         loadHome()
+    }
+
+    private fun observeUnreadActivity() {
+        viewModelScope.launch {
+            activityLog.unreadCount.collect { count ->
+                _uiState.value = _uiState.value.copy(unreadActivityCount = count)
+            }
+        }
     }
 
     private fun observeConnectivity() {

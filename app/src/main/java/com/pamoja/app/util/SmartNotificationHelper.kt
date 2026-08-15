@@ -11,7 +11,13 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.pamoja.app.MainActivity
 import com.pamoja.app.R
+import com.pamoja.app.data.local.activity.ActivityLogStore
+import com.pamoja.app.domain.model.NotificationCategory as DomainNotificationCategory
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,10 +32,21 @@ import javax.inject.Singleton
  */
 @Singleton
 class SmartNotificationHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val activityLog: ActivityLogStore,
 ) {
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    /**
+     * For the log write, which is suspending while [show] is not.
+     *
+     * Its own scope rather than a caller's: this is fire and forget, and it
+     * must not be cancelled just because whatever triggered the notification
+     * finished first. `show` is called from workers whose scope ends the
+     * moment they return.
+     */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
         createChannels()
@@ -113,9 +130,38 @@ class SmartNotificationHelper @Inject constructor(
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
 
-        runCatching {
+        val posted = runCatching {
             notificationManager.notify(notification.notificationId, builder.build())
+        }.isSuccess
+
+        // Recorded only if it actually went out, and recorded here rather than
+        // at the call site so the activity log cannot drift from what the user
+        // was really shown. The early return above already covers the case
+        // where notifications are switched off at the OS level.
+        if (posted) {
+            scope.launch {
+                activityLog.record(
+                    category = notification.category.toDomain(),
+                    title = notification.title,
+                    body = notification.body,
+                    groupId = notification.groupId,
+                )
+            }
         }
+    }
+
+    /**
+     * The engine's category as the domain's.
+     *
+     * Two enums with the same members, kept apart deliberately: the engine's
+     * carries an Android channel id, and the activity log has no business
+     * knowing about channels.
+     */
+    private fun NotificationCategory.toDomain(): DomainNotificationCategory = when (this) {
+        NotificationCategory.ACHIEVEMENT -> DomainNotificationCategory.ACHIEVEMENT
+        NotificationCategory.GROUP_ACTIVITY -> DomainNotificationCategory.GROUP_ACTIVITY
+        NotificationCategory.REMINDER -> DomainNotificationCategory.REMINDER
+        NotificationCategory.RECAP -> DomainNotificationCategory.RECAP
     }
 
     private fun toCompatPriority(category: NotificationCategory): Int = when (category) {

@@ -106,6 +106,7 @@ fun HomeScreen(
     onGroupClick: (String) -> Unit,
     onCreateGroup: () -> Unit,
     onSettingsClick: () -> Unit,
+    onActivityClick: () -> Unit,
     onSessionExpired: () -> Unit,
     onOpenInvite: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -334,7 +335,9 @@ fun HomeScreen(
                                 .takeIf { it.isNotBlank() }
                                 ?.split(" ")
                                 ?.firstOrNull() ?: stringResource(R.string.home_greeting_fallback),
-                            onSettingsClick = onSettingsClick
+                            onSettingsClick = onSettingsClick,
+                            onActivityClick = onActivityClick,
+                            unreadCount = uiState.unreadActivityCount,
                         )
                     }
 
@@ -413,7 +416,9 @@ fun HomeScreen(
 @Composable
 private fun HomeHeader(
     name: String,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onActivityClick: () -> Unit,
+    unreadCount: Int,
 ) {
     val colors = LocalPamojaColors.current
     // Time-aware greeting. The hour is remembered, not the resolved string:
@@ -461,6 +466,35 @@ private fun HomeHeader(
                 color = colors.textPrimary,
                 modifier = Modifier.weight(1f)
             )
+            // Activity, with a dot when something arrived since the last look.
+            // A dot rather than a count: the question people have is "did I
+            // miss anything", and a number invites reading it as a to-do list.
+            IconButton(
+                onClick = onActivityClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.TopEnd) {
+                    Icon(
+                        painter = painterResource(PamojaIcons.Bell),
+                        contentDescription = stringResource(R.string.activity_open_desc),
+                        tint = colors.accentPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    if (unreadCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .size(9.dp)
+                                .clip(CircleShape)
+                                // Ringed in the page colour so the dot stays
+                                // legible where it overlaps the bell.
+                                .background(colors.surfaceApp)
+                                .padding(1.dp)
+                                .clip(CircleShape)
+                                .background(colors.statusDanger)
+                        )
+                    }
+                }
+            }
             IconButton(
                 onClick = onSettingsClick,
                 modifier = Modifier.size(48.dp) // Touch target

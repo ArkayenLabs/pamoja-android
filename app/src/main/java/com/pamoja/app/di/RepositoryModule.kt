@@ -1,11 +1,13 @@
 package com.pamoja.app.di
 
 import com.pamoja.app.data.remote.firebase.FirebaseAuthRepositoryImpl
+import com.pamoja.app.data.remote.firebase.FirebaseAvatarRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseGroupRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseStepRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseUserRepositoryImpl
 import com.pamoja.app.data.repository.FreeOnlySubscriptionRepository
 import com.pamoja.app.domain.repository.AuthRepository
+import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.GroupRepository
 import com.pamoja.app.domain.repository.StepRepository
 import com.pamoja.app.domain.repository.SubscriptionRepository
@@ -37,6 +39,12 @@ abstract class RepositoryModule {
     abstract fun bindGroupRepository(
         impl: FirebaseGroupRepositoryImpl
     ): GroupRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAvatarRepository(
+        impl: FirebaseAvatarRepositoryImpl
+    ): AvatarRepository
 
     @Binds
     @Singleton

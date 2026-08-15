@@ -64,3 +64,7 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.conscrypt.**
 -dontwarn org.openjsse.**
+# Firebase Storage and Coil, both reached reflectively in places.
+-keep class com.google.firebase.storage.** { *; }
+-dontwarn com.google.firebase.storage.**
+-dontwarn coil.**

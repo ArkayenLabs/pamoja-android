@@ -4,6 +4,7 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.UserDataExport
+import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.UserRepository
 import javax.inject.Inject
 
@@ -58,5 +59,26 @@ class ExportUserDataUseCase @Inject constructor(
     suspend operator fun invoke(userId: String): Result<UserDataExport> {
         if (userId.isBlank()) return Result.failure(AppError.SessionExpired())
         return userRepository.exportUserData(userId)
+    }
+}
+
+/**
+ * Uploads a new profile photo and records its URL on the user document.
+ *
+ * Two writes in a fixed order. The upload happens first so that a failure
+ * leaves the profile pointing at the old photo rather than at nothing, which
+ * would look like the picture was deleted rather than that the change failed.
+ */
+class UpdateAvatarUseCase @Inject constructor(
+    private val avatarRepository: AvatarRepository,
+    private val userRepository: UserRepository,
+) {
+    suspend operator fun invoke(user: User, imageUri: String): Result<String> {
+        if (user.userId.isBlank()) return Result.failure(AppError.SessionExpired())
+
+        val url = avatarRepository.uploadAvatar(user.userId, imageUri)
+            .getOrElse { return Result.failure(it) }
+
+        return userRepository.updateUser(user.copy(photoUrl = url)).map { url }
     }
 }

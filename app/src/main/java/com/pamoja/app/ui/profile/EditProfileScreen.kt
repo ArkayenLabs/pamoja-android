@@ -1,6 +1,10 @@
 package com.pamoja.app.ui.profile
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +40,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -87,6 +93,10 @@ fun EditProfileScreen(
     val weightNaN = stringResource(R.string.profile_number_invalid, weightField)
     val weightRange = stringResource(R.string.profile_number_range, weightField)
     val savedMessage = stringResource(R.string.profile_edit_saved)
+
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let { viewModel.onPhotoPicked(it.toString()) } }
 
     val nameErrorFor: (String) -> String? = { input ->
         when {
@@ -185,20 +195,48 @@ fun EditProfileScreen(
 
                     Spacer(modifier = Modifier.height(Spacing.x7))
 
-                    ProfileAvatar(
-                        name = uiState.name,
+                    Box(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
-                    )
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ProfileAvatar(
+                            name = uiState.name,
+                            photoUrl = uiState.photoUrl,
+                        )
+                        if (uiState.isUploadingPhoto) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(28.dp),
+                                color = colors.textOnBrand,
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(Spacing.x3))
 
-                    // Says what it is rather than offering a camera button that
-                    // does nothing, which is what onboarding still does.
+                    // The photo picker, not the camera permission. Android's
+                    // picker runs outside the app and returns one image, so
+                    // there is no READ_MEDIA_IMAGES permission to request, no
+                    // rationale screen, and no permanently-denied state.
                     Text(
-                        text = stringResource(R.string.profile_edit_photo_soon),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textTertiary,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        text = stringResource(
+                            if (uiState.isUploadingPhoto) R.string.profile_edit_photo_uploading
+                            else if (uiState.photoUrl.isNullOrBlank()) R.string.profile_edit_photo_add
+                            else R.string.profile_edit_photo_change
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (uiState.isUploadingPhoto) colors.textTertiary else colors.accentPrimary,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .clip(RoundedCornerShape(PamojaRadii.sm))
+                            .clickable(enabled = !uiState.isUploadingPhoto && !uiState.isOffline) {
+                                photoPicker.launch(
+                                    PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
+                                )
+                            }
+                            .padding(horizontal = Spacing.x3, vertical = Spacing.x2),
                     )
 
                     Spacer(modifier = Modifier.height(Spacing.x7))
@@ -366,6 +404,7 @@ fun ProfileAvatar(
     name: String,
     modifier: Modifier = Modifier,
     size: androidx.compose.ui.unit.Dp = 80.dp,
+    photoUrl: String? = null,
 ) {
     val colors = LocalPamojaColors.current
 
@@ -376,11 +415,25 @@ fun ProfileAvatar(
             .background(colors.accentPrimary),
         contentAlignment = Alignment.Center,
     ) {
+        // Initials are drawn first and stay underneath, so they show while the
+        // photo loads and remain if it never does. An avatar that renders as a
+        // blank circle on a slow connection looks like the account is broken.
         Text(
             text = name.trim().take(2).uppercase(),
             style = MaterialTheme.typography.headlineSmall,
             color = colors.textOnBrand,
         )
+
+        if (!photoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(size)
+                    .clip(CircleShape),
+            )
+        }
     }
 }
 

@@ -4,6 +4,7 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthRepository
+import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.UserRepository
 import javax.inject.Inject
 
@@ -135,6 +136,7 @@ class IsUserLoggedInUseCase @Inject constructor(
 class DeleteAccountUseCase @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
+    private val avatarRepository: AvatarRepository,
 ) {
     /**
      * [justReauthenticated] skips the staleness pre-check on the retry that
@@ -160,6 +162,13 @@ class DeleteAccountUseCase @Inject constructor(
 
         // Data first. The security rules key on request.auth, so once the Auth
         // record is gone these documents can never be reached again by anyone.
+        // The photo lives in Storage, not Firestore, so deleting the documents
+        // would leave it behind: a face, still hosted, after the account that
+        // owned it is gone. Deliberately before the Firestore wipe and
+        // deliberately not checked, since it succeeds trivially when the user
+        // never set one and must never block the erasure of everything else.
+        avatarRepository.deleteAvatar(userId)
+
         val dataResult = userRepository.deleteAllUserData(userId)
         if (dataResult.isFailure) {
             return dataResult

@@ -83,6 +83,7 @@ data class SettingsUiState(
     val age: Int? = null,
     val height: Float? = null,
     val weight: Float? = null,
+    val photoUrl: String? = null,
     /** Which sign-in methods are attached, summarised on the Account row. */
     val authMethods: AuthMethods = AuthMethods(),
     val theme: ThemePreference = ThemePreference.System,
@@ -284,7 +285,8 @@ class SettingsViewModel @Inject constructor(
                             userName = user.name,
                             age = user.age,
                             height = user.height,
-                            weight = user.weight
+                            weight = user.weight,
+                            photoUrl = user.photoUrl
                         )
                     },
                     onFailure = {

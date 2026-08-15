@@ -416,6 +416,7 @@ fun SettingsScreen(
                             name = uiState.userName.takeIf { it.isNotBlank() }
                                 ?: stringResource(R.string.settings_name_fallback),
                             size = 48.dp,
+                            photoUrl = uiState.photoUrl,
                         )
 
                         Spacer(modifier = Modifier.width(Spacing.x4))

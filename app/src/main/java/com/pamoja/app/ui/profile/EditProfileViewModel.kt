@@ -11,6 +11,7 @@ import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
+import com.pamoja.app.domain.usecase.UpdateAvatarUseCase
 import com.pamoja.app.domain.usecase.UpdateUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,9 @@ data class EditProfileUiState(
      * Firestore and does not change meaning when the setting does.
      */
     val unitSystem: UnitSystem = UnitSystem.Metric,
+    /** Current photo URL, null when the user has never set one. */
+    val photoUrl: String? = null,
+    val isUploadingPhoto: Boolean = false,
 ) {
     /**
      * Saving is a Firestore write, and a write Task only completes on server
@@ -66,6 +70,7 @@ class EditProfileViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val getUserUseCase: GetUserUseCase,
     private val updateUserUseCase: UpdateUserUseCase,
+    private val updateAvatarUseCase: UpdateAvatarUseCase,
     private val userPreferences: UserPreferences,
     private val connectivityObserver: ConnectivityObserver,
 ) : ViewModel() {
@@ -157,6 +162,7 @@ class EditProfileViewModel @Inject constructor(
                         // Rendered blank rather than "null", and blank on the way
                         // back out means the user cleared it deliberately.
                         age = user.age?.toString().orEmpty(),
+                        photoUrl = user.photoUrl,
                     )
                     showMeasurements(user.height, user.weight, _uiState.value.unitSystem)
                 },
@@ -232,6 +238,37 @@ class EditProfileViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         isSaving = false,
+                        saveError = e.toAppError(),
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Uploads a newly picked photo straight away, without waiting for Save.
+     *
+     * Picking a picture reads as a completed action, so making it depend on a
+     * button further down the form is how someone leaves believing they changed
+     * their photo when they did not. It is its own write, separate from the
+     * rest of the form.
+     */
+    fun onPhotoPicked(imageUri: String) {
+        val base = loaded ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUploadingPhoto = true, saveError = null)
+
+            updateAvatarUseCase(base, imageUri).fold(
+                onSuccess = { url ->
+                    loaded = base.copy(photoUrl = url)
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingPhoto = false,
+                        photoUrl = url,
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingPhoto = false,
                         saveError = e.toAppError(),
                     )
                 }

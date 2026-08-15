@@ -148,4 +148,5 @@ fun ValidationField.messageRes(): Int = when (this) {
     ValidationField.InviteCodeMalformed -> R.string.validation_invite_malformed
     ValidationField.DisplayNameMissing -> R.string.validation_display_name_missing
     ValidationField.NotAllowedToEditTarget -> R.string.validation_not_allowed_target
+    ValidationField.AvatarUnreadable -> R.string.validation_avatar_unreadable
 }

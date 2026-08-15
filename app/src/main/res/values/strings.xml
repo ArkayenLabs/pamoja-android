@@ -62,6 +62,7 @@
     <string name="validation_invite_missing">Enter an invite link or code</string>
     <string name="validation_invite_malformed">That invite link does not look right</string>
     <string name="validation_display_name_missing">Enter a name</string>
+    <string name="validation_avatar_unreadable">That image could not be read. Try a different photo.</string>
     <string name="validation_not_allowed_target">Only the admin can change this group\'s target</string>
 
     <!-- ── Auth-specific error wording ────────────────────────────────── -->
@@ -382,7 +383,9 @@
     <string name="profile_edit_failed_title">Could not save your changes</string>
     <string name="profile_edit_offline_title">You are offline</string>
     <string name="profile_edit_offline_body">Saving needs a connection. Your changes stay here until you are back.</string>
-    <string name="profile_edit_photo_soon">Photos are coming soon. Your initials stand in for now.</string>
+    <string name="profile_edit_photo_add">Add a photo</string>
+    <string name="profile_edit_photo_change">Change photo</string>
+    <string name="profile_edit_photo_uploading">Uploading…</string>
     <!-- Compact summary under the name in Settings, e.g. "22 yrs · 170 cm · 65 kg" -->
     <string name="profile_detail_age">%1$d yrs</string>
     <string name="profile_detail_height">%1$d cm</string>

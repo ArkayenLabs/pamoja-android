@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.firebase.appcheck.debug)
+    implementation(libs.firebase.storage)
 
     // Health Connect
     implementation(libs.health.connect)
@@ -120,6 +121,9 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
+
+    // Avatars
+    implementation(libs.coil.compose)
 
     // QR, for joining a group in person
     implementation(libs.zxing.core)

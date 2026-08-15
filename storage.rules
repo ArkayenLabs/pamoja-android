@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Avatars, and nothing else.
+//
+// Deliberately narrow. The bucket has exactly one purpose today, so anything
+// outside avatars/ is denied rather than left to a future rule nobody writes.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // One object per user, at a path derived from their UID, so a user can
+    // only ever write their own. No wildcard filename: a user who could
+    // choose the name could fill the bucket with objects nobody can find to
+    // delete, and deletion on account closure depends on a known path.
+    match /avatars/{userId}/profile.jpg {
+
+      // Readable by any signed-in user, because group members see each
+      // other's avatars on the leaderboard. Not public: an unauthenticated
+      // URL would make every avatar in the app scrapable.
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   // Capped so a compromised client cannot run up a storage
+                   // bill. The app compresses to well under this.
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType == 'image/jpeg';
+
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /{allOther=**} {
+      allow read, write: if false;
+    }
+  }
+}

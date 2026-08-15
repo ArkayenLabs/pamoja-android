@@ -27,4 +27,7 @@ enum class ValidationField {
     InviteCodeMalformed,
     DisplayNameMissing,
     NotAllowedToEditTarget,
+
+    /** The chosen image could not be decoded, so it is not a photo we can use. */
+    AvatarUnreadable,
 }

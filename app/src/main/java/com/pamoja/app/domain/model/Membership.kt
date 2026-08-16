@@ -20,5 +20,16 @@ data class Membership(
     val displayName: String = "",
     val role: String = "member",
     val canEditTarget: Boolean = false,
+    /**
+     * Denormalised copy of the member's photo, for the same reason
+     * [displayName] is: users/{userId} is owner-only, so a leaderboard cannot
+     * read other people's profiles to find their avatar.
+     *
+     * Blank whenever the member has not opted in. That is what makes
+     * [com.pamoja.app.domain.model.User.showPhotoInGroups] a real privacy
+     * control rather than a client-side courtesy: opting out removes the URL
+     * from the only document other members can see.
+     */
+    val photoUrl: String = "",
     val joinedAt: Long = 0L
 )

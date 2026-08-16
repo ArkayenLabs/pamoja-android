@@ -7,7 +7,9 @@ data class UserDto(
     val age: Int? = null,
     val height: Float? = null,
     val weight: Float? = null,
-    val deviceToken: String? = null
+    val deviceToken: String? = null,
+    /** See User.showPhotoInGroups. Defaults false, which is the private choice. */
+    val showPhotoInGroups: Boolean = false,
 ) {
     fun toDomain() = com.pamoja.app.domain.model.User(
         userId = userId,
@@ -16,7 +18,8 @@ data class UserDto(
         age = age,
         height = height,
         weight = weight,
-        deviceToken = deviceToken
+        deviceToken = deviceToken,
+        showPhotoInGroups = showPhotoInGroups,
     )
 
     companion object {
@@ -27,7 +30,8 @@ data class UserDto(
             age = user.age,
             height = user.height,
             weight = user.weight,
-            deviceToken = user.deviceToken
+            deviceToken = user.deviceToken,
+            showPhotoInGroups = user.showPhotoInGroups,
         )
     }
 }

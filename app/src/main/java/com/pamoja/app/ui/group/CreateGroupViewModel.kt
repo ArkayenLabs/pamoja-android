@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.pamoja.app.domain.usecase.CreateGroupUseCase
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
+import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.DayOfWeek
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +39,7 @@ class CreateGroupViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val analyticsManager: AnalyticsManager,
     private val connectivityObserver: ConnectivityObserver,
+    private val workManagerScheduler: WorkManagerScheduler,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -59,7 +62,8 @@ class CreateGroupViewModel @Inject constructor(
         name: String,
         weeklyTarget: Int,
         maxMemberCap: Int,
-        canMembersEditTarget: Boolean
+        canMembersEditTarget: Boolean,
+        weekStartDay: DayOfWeek,
     ) {
         viewModelScope.launch {
             // copy, not a fresh state: rebuilding it dropped isOffline back to
@@ -80,7 +84,8 @@ class CreateGroupViewModel @Inject constructor(
                 adminId = user.userId,
                 weeklyTarget = weeklyTarget,
                 maxMemberCap = maxMemberCap,
-                canMembersEditTarget = canMembersEditTarget
+                canMembersEditTarget = canMembersEditTarget,
+                weekStartDay = weekStartDay,
             )
 
             result.fold(
@@ -90,6 +95,12 @@ class CreateGroupViewModel @Inject constructor(
                         createdGroupId = group.groupId,
                     )
                     analyticsManager.logGroupCreated(group.groupId, name)
+
+                    // A group is created with no cached weekly total, and Home
+                    // draws no progress at all until one exists. Without this
+                    // the group a user just made is the one that looks broken,
+                    // until an unrelated sync happens to fill it in.
+                    workManagerScheduler.syncSoon()
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(

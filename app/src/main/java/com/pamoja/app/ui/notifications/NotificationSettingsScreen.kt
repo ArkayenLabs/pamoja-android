@@ -85,10 +85,20 @@ fun NotificationSettingsScreen(
                 viewModel.onSystemPermissionChanged(
                     NotificationManagerCompat.from(context).areNotificationsEnabled()
                 )
+                // The categories live in system settings now, so returning to
+                // this screen is the moment they may have changed.
+                viewModel.refreshCategories()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Hoisted so all four rows share one lambda rather than allocating four.
+    val openChannelSettings: (NotificationCategory) -> Unit = { category ->
+        // A device without the per-channel settings screen would otherwise
+        // crash. Rare, but this is a settings row, not worth taking the app down.
+        runCatching { context.startActivity(viewModel.settingsIntentFor(category)) }
     }
 
     Box(
@@ -166,6 +176,17 @@ fun NotificationSettingsScreen(
 
             SectionLabel(stringResource(R.string.notif_section_types))
 
+            Text(
+                text = stringResource(R.string.notif_types_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textTertiary,
+                modifier = Modifier.padding(
+                    start = Spacing.x6,
+                    end = Spacing.x6,
+                    bottom = Spacing.x3,
+                ),
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -183,28 +204,28 @@ fun NotificationSettingsScreen(
                     title = R.string.notif_achievement_title,
                     subtitle = R.string.notif_achievement_sub,
                     enabled = uiState.isEnabled(NotificationCategory.ACHIEVEMENT),
-                    onToggle = viewModel::setCategoryEnabled,
+                    onOpenSettings = openChannelSettings,
                 )
                 CategoryToggle(
                     category = NotificationCategory.GROUP_ACTIVITY,
                     title = R.string.notif_group_title,
                     subtitle = R.string.notif_group_sub,
                     enabled = uiState.isEnabled(NotificationCategory.GROUP_ACTIVITY),
-                    onToggle = viewModel::setCategoryEnabled,
+                    onOpenSettings = openChannelSettings,
                 )
                 CategoryToggle(
                     category = NotificationCategory.RECAP,
                     title = R.string.notif_recap_title,
                     subtitle = R.string.notif_recap_sub,
                     enabled = uiState.isEnabled(NotificationCategory.RECAP),
-                    onToggle = viewModel::setCategoryEnabled,
+                    onOpenSettings = openChannelSettings,
                 )
                 CategoryToggle(
                     category = NotificationCategory.REMINDER,
                     title = R.string.notif_reminder_title,
                     subtitle = R.string.notif_reminder_sub,
                     enabled = uiState.isEnabled(NotificationCategory.REMINDER),
-                    onToggle = viewModel::setCategoryEnabled,
+                    onOpenSettings = openChannelSettings,
                 )
             }
 
@@ -293,13 +314,22 @@ private fun SectionLabel(text: String) {
     )
 }
 
+/**
+ * One category, showing the real state of its Android notification channel.
+ *
+ * The switch is deliberately not interactive on its own. Android will not let
+ * an app change a channel's importance once the channel exists, so a switch
+ * that appeared to flip it would either lie or silently do nothing. Instead the
+ * whole row is tappable and opens that channel's own system screen, which is
+ * the only place the setting really lives. Coming back re-reads it.
+ */
 @Composable
 private fun CategoryToggle(
     category: NotificationCategory,
     @StringRes title: Int,
     @StringRes subtitle: Int,
     enabled: Boolean,
-    onToggle: (NotificationCategory, Boolean) -> Unit,
+    onOpenSettings: (NotificationCategory) -> Unit,
 ) {
     val colors = LocalPamojaColors.current
 
@@ -310,7 +340,9 @@ private fun CategoryToggle(
     val chipBackground = if (enabled) colors.accentPrimarySubtle else colors.surface2
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onOpenSettings(category) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -350,7 +382,9 @@ private fun CategoryToggle(
 
         Switch(
             checked = enabled,
-            onCheckedChange = { onToggle(category, it) },
+            // The row owns the tap. A switch that handled it too would give two
+            // targets for one action, and this one cannot be set directly.
+            onCheckedChange = null,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = colors.accentPrimary,

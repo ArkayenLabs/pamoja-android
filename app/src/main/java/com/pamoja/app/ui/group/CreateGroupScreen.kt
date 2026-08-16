@@ -67,6 +67,8 @@ import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.domain.model.WeekWindow
+import java.time.DayOfWeek
 
 @Composable
 fun CreateGroupScreen(
@@ -79,6 +81,10 @@ fun CreateGroupScreen(
 
     var groupName          by remember { mutableStateOf("") }
     var weeklyTargetIndex  by remember { mutableFloatStateOf(2f) }
+    // Seeded from the device locale, which is right for most people and is what
+    // every comparable app defaults to. Monday across most of Europe and Asia,
+    // Sunday in the US, Canada and Japan.
+    var weekStartDay       by remember { mutableStateOf(WeekWindow.localeDefault()) }
     var maxMembers         by remember { mutableFloatStateOf(10f) }
     var canMembersEdit     by remember { mutableStateOf(true) }
 
@@ -324,6 +330,74 @@ fun CreateGroupScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(Spacing.x3))
+
+                    // ── Week start day ─────────────────────────────────────
+                    //
+                    // Set once, here, and applied to every member. It cannot be
+                    // a personal preference: the group total is a sum over one
+                    // window, so two members on different boundaries would see
+                    // different numbers for the same group.
+                    SettingCard(verticalPadding = Spacing.x4) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text  = stringResource(R.string.create_group_week_start),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = colors.textPrimary
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.x1))
+                            Text(
+                                text  = stringResource(R.string.create_group_week_start_sub),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary
+                            )
+
+                            Spacer(modifier = Modifier.height(Spacing.x3))
+
+                            // Only the two days a real calendar starts on.
+                            // Offering all seven would be configurability nobody
+                            // asked for, and six of them would be surprising.
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.x2)
+                            ) {
+                                listOf(DayOfWeek.MONDAY, DayOfWeek.SUNDAY).forEach { day ->
+                                    val selected = weekStartDay == day
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(PillShape)
+                                            .background(
+                                                if (selected) colors.accentPrimarySubtle
+                                                else colors.surface2
+                                            )
+                                            .border(
+                                                width = 1.dp,
+                                                color = if (selected) colors.accentPrimary
+                                                        else colors.borderSubtle,
+                                                shape = PillShape
+                                            )
+                                            .clickable { weekStartDay = day }
+                                            .padding(vertical = Spacing.x3),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = stringResource(
+                                                if (day == DayOfWeek.MONDAY)
+                                                    R.string.create_group_week_start_monday
+                                                else
+                                                    R.string.create_group_week_start_sunday
+                                            ),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = if (selected) colors.accentPrimary
+                                                    else colors.textSecondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(Spacing.x5))
 
                     // Both of these sit above the button they block, and both
@@ -391,7 +465,8 @@ fun CreateGroupScreen(
                                 name                 = groupName.trim(),
                                 weeklyTarget         = selectedTarget,
                                 maxMemberCap         = memberCount,
-                                canMembersEditTarget = canMembersEdit
+                                canMembersEditTarget = canMembersEdit,
+                                weekStartDay         = weekStartDay
                             )
                         },
                         enabled  = nameError == null && uiState.canSubmit,

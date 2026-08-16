@@ -19,6 +19,33 @@ interface GroupRepository {
     suspend fun deactivateInviteLink(groupId: String): Result<Unit>
 
     /**
+     * Writes the admin-editable settings, and only those.
+     *
+     * Deliberately not [updateGroup], which does a whole-document `set` from a
+     * Group the caller is holding. That Group carries `weeklySteps` and
+     * `weekStart`, a cache other members are writing concurrently, so saving
+     * settings from a screen opened two minutes ago would roll the group's
+     * progress back to whatever it was when the screen loaded.
+     */
+    suspend fun updateGroupSettings(
+        groupId: String,
+        name: String,
+        weeklyTarget: Int,
+        maxMemberCap: Int,
+        canMembersEditTarget: Boolean,
+        weekStartDay: String,
+    ): Result<Unit>
+
+    /**
+     * Removes another member, as the admin.
+     *
+     * Transactional for the same reason leaving is: the membership document and
+     * the group's `memberCount` have to move together or the count drifts and
+     * the cap stops meaning anything.
+     */
+    suspend fun removeMember(groupId: String, userId: String): Result<Unit>
+
+    /**
      * Publishes the cached weekly total for a group the caller is a member of.
      *
      * Writes the two cache fields only, never the whole document. Every member's

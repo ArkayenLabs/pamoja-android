@@ -23,6 +23,7 @@ import com.pamoja.app.ui.Screen
 import com.pamoja.app.ui.theme.PamojaTheme
 import com.pamoja.app.util.InviteLink
 import com.pamoja.app.util.SmartNotificationHelper
+import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var userPreferences: UserPreferences
     @Inject lateinit var firebaseAuth: FirebaseAuth
+    @Inject lateinit var workManagerScheduler: WorkManagerScheduler
 
     /** Set by onCreate and onNewIntent, consumed once by the composition. */
     private val launchTarget = MutableStateFlow<LaunchTarget?>(null)
@@ -160,6 +162,34 @@ class MainActivity : ComponentActivity() {
                         startDestination = destination
                     )
                 }
+            }
+        }
+    }
+
+    /**
+     * Steps are refreshed here rather than anywhere in the UI tree.
+     *
+     * Both calls used to live in GroupViewModel.loadGroup(), which meant the
+     * background schedule only ever started if someone opened a group detail
+     * screen, and nothing refreshed on returning to the app at all. A user who
+     * signed in and stayed on Home was never synced once, so their groups sat
+     * at no progress until something unrelated happened to trigger a worker.
+     *
+     * onResume rather than onCreate because it also covers coming back from
+     * the background, which is the moment figures are actually looked at.
+     * Scheduling is idempotent under KEEP, so repeating it is free and repairs
+     * a schedule that was cancelled or reached a terminal state.
+     */
+    override fun onResume() {
+        super.onResume()
+        if (firebaseAuth.currentUser == null) return
+
+        workManagerScheduler.scheduleStepSync()
+
+        lifecycleScope.launch {
+            val since = System.currentTimeMillis() - userPreferences.lastSyncTime.first()
+            if (since >= WorkManagerScheduler.OPPORTUNISTIC_SYNC_MIN_GAP_MS) {
+                workManagerScheduler.syncSoon()
             }
         }
     }

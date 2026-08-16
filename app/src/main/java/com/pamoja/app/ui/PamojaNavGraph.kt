@@ -29,6 +29,13 @@ import com.pamoja.app.ui.onboarding.HealthConnectScreen
 import com.pamoja.app.ui.onboarding.ProfileSetupScreen
 import com.pamoja.app.ui.onboarding.WelcomeScreen
 
+/**
+ * Set by the profile editor on the entry beneath it when a save succeeds, so
+ * Settings can acknowledge a save that happened on a screen which has since
+ * been popped.
+ */
+private const val KEY_PROFILE_SAVED = "profile_saved"
+
 @Composable
 fun PamojaNavGraph(
     navController: NavHostController,
@@ -132,17 +139,25 @@ fun PamojaNavGraph(
         }
 
         composable(Screen.HealthConnect.route) {
-            HealthConnectScreen(
-                onConnected = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Welcome.route) { inclusive = true }
-                    }
-                },
-                onSkip = {
+            // Reachable from two directions now, and they must leave
+            // differently. Onboarding arrives with Welcome still on the stack
+            // and has to clear it. Someone who came from the Home prompt
+            // already has Home beneath them, and navigating instead of popping
+            // would stack a second copy of it.
+            //
+            // popBackStack returns false when Home is not on the stack, which
+            // is exactly the onboarding case, so it doubles as the test.
+            val leaveHealthConnect: () -> Unit = {
+                if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 }
+            }
+
+            HealthConnectScreen(
+                onConnected = leaveHealthConnect,
+                onSkip = leaveHealthConnect,
             )
         }
 
@@ -167,6 +182,9 @@ fun PamojaNavGraph(
                 onOpenInvite = { code ->
                     navController.navigate(Screen.JoinPreview.createRoute(code))
                 },
+                onConnectHealth = {
+                    navController.navigate(Screen.HealthConnect.route)
+                },
                 onActivityClick = {
                     navController.navigate(Screen.Activity.route)
                 }
@@ -182,8 +200,15 @@ fun PamojaNavGraph(
             )
         }
 
-        composable(Screen.Settings.route) {
+        composable(Screen.Settings.route) { entry ->
+            val savedHandle = entry.savedStateHandle
+            val profileWasSaved by savedHandle
+                .getStateFlow(KEY_PROFILE_SAVED, false)
+                .collectAsState()
+
             com.pamoja.app.ui.settings.SettingsScreen(
+                profileWasSaved = profileWasSaved,
+                onProfileSavedShown = { savedHandle[KEY_PROFILE_SAVED] = false },
                 onBack = {
                     navController.popBackStack()
                 },
@@ -237,7 +262,15 @@ fun PamojaNavGraph(
             com.pamoja.app.ui.profile.EditProfileScreen(
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                // Flagged on the entry we are returning to, not on this one,
+                // which is about to be destroyed.
+                onSaved = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(KEY_PROFILE_SAVED, true)
+                    navController.popBackStack()
+                },
             )
         }
 
@@ -288,7 +321,32 @@ fun PamojaNavGraph(
                 onBack = { navController.popBackStack() },
                 onShareInvite = {
                     navController.navigate(Screen.Invite.createRoute(groupId))
-                }
+                },
+                onEditGroup = {
+                    navController.navigate(Screen.EditGroup.createRoute(groupId))
+                },
+            )
+        }
+
+        composable(
+            route = Screen.EditGroup.route,
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
+            com.pamoja.app.ui.group.EditGroupScreen(
+                onBack = { navController.popBackStack() },
+                // Replaces the group entry rather than popping back to it.
+                //
+                // GroupViewModel reads the group document once, in loadGroup,
+                // and survives a plain popBackStack, so returning that way
+                // would land on a screen still showing the old name and the
+                // old goal, which reads as the save having failed. Popping the
+                // entry and pushing a fresh one forces the reload.
+                onSaved = {
+                    navController.navigate(Screen.Group.createRoute(groupId)) {
+                        popUpTo(Screen.Group.route) { inclusive = true }
+                    }
+                },
             )
         }
 

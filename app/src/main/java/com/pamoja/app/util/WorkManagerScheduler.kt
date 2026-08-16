@@ -21,6 +21,16 @@ class WorkManagerScheduler @Inject constructor(
     private val workManager: WorkManager
 ) {
 
+    /**
+     * The background schedule. Safe to call on every resume: KEEP means an
+     * already-running schedule is left alone, while one that reached a terminal
+     * state is re-enqueued, so this is self-healing.
+     *
+     * 15 minutes is WorkManager's hard floor for periodic work, not a chosen
+     * number. Anything smaller is silently clamped up to it. This is the
+     * background floor rather than the felt latency: [syncSoon] is what makes
+     * opening the app show current figures.
+     */
     fun scheduleStepSync() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -28,7 +38,7 @@ class WorkManagerScheduler @Inject constructor(
             .build()
 
         val syncRequest = PeriodicWorkRequestBuilder<StepSyncWorker>(
-            repeatInterval         = 30,
+            repeatInterval         = 15,
             repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
             .setConstraints(constraints)
@@ -45,7 +55,33 @@ class WorkManagerScheduler @Inject constructor(
             syncRequest
         )
 
-        Log.d(TAG, "Step sync scheduled (KEEP policy, 30min interval)")
+        Log.d(TAG, "Step sync scheduled (KEEP policy, 15min interval)")
+    }
+
+    /**
+     * An opportunistic sync, for moments where the figures are about to be
+     * looked at: returning to the app, and creating or joining a group.
+     *
+     * KEEP, not REPLACE, because these moments cluster. Opening the app right
+     * after creating a group should not cancel and restart the sync that the
+     * creation just kicked off.
+     *
+     * Distinct from [syncNow] so the two can never cancel each other, and
+     * unconstrained for the same reason [syncNow] is: the user is present.
+     *
+     * This is the fix for groups showing no progress until something else
+     * happened to trigger a sync. Callers should still rate-limit against
+     * [com.pamoja.app.data.local.preferences.UserPreferences.lastSyncTime];
+     * KEEP only dedupes syncs that overlap, not ones a minute apart.
+     */
+    fun syncSoon() {
+        val request = OneTimeWorkRequestBuilder<StepSyncWorker>().build()
+        workManager.enqueueUniqueWork(
+            OPPORTUNISTIC_SYNC_WORK_NAME,
+            ExistingWorkPolicy.KEEP,
+            request,
+        )
+        Log.d(TAG, "Opportunistic step sync enqueued")
     }
 
     fun cancelStepSync() {
@@ -84,5 +120,18 @@ class WorkManagerScheduler @Inject constructor(
 
         /** Separate from the periodic name so one never cancels the other. */
         const val MANUAL_SYNC_WORK_NAME = "StepSyncWorkerManual"
+
+        /** Separate again, so resume syncs cannot cancel the Sync now button. */
+        const val OPPORTUNISTIC_SYNC_WORK_NAME = "StepSyncWorkerOpportunistic"
+
+        /**
+         * Shortest gap between two opportunistic syncs.
+         *
+         * Without this, flicking between apps would fire a Health Connect read
+         * and a Firestore write every time. Two minutes is short enough that
+         * returning to check your steps shows fresh figures, long enough that
+         * app switching is not a billing event.
+         */
+        const val OPPORTUNISTIC_SYNC_MIN_GAP_MS = 2 * 60 * 1000L
     }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.data.local.activity.ActivityLogStore
+import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
@@ -57,6 +58,19 @@ data class HomeUiState(
     val isRefreshing: Boolean = false,
     /** Drives the dot on the activity bell. Zero hides it. */
     val unreadActivityCount: Int = 0,
+    /**
+     * Health Connect is installed but not permitted, so no steps are arriving.
+     *
+     * Checked here rather than only during onboarding. The permission screen is
+     * reachable from ProfileSetup alone, so anyone who declined it, reinstalled
+     * the app, or revoked it in system settings had a permanently stepless app
+     * and nothing on any screen saying why.
+     *
+     * False when Health Connect is unavailable entirely. That is not something
+     * the user can act on from here, and a prompt that leads nowhere is worse
+     * than silence.
+     */
+    val needsHealthConnect: Boolean = false,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty()
@@ -79,6 +93,7 @@ class HomeViewModel @Inject constructor(
     private val analyticsManager: AnalyticsManager,
     private val connectivityObserver: ConnectivityObserver,
     private val activityLog: ActivityLogStore,
+    private val healthConnectReader: HealthConnectReader,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -86,10 +101,38 @@ class HomeViewModel @Inject constructor(
 
     private var homeScreenReachedLogged = false
 
+    /**
+     * Session-scoped, deliberately not persisted.
+     *
+     * Dismissing means "not now", not "never". Steps genuinely are not syncing,
+     * so the prompt should come back next launch; persisting the dismissal
+     * would let someone silence it once and never learn why their step count
+     * stayed at zero.
+     */
+    private var healthPromptDismissed = false
+
     init {
         observeConnectivity()
         observeUnreadActivity()
         loadHome()
+    }
+
+    /**
+     * Re-read on every resume, since permission can be granted or revoked in
+     * system settings while the app is alive.
+     */
+    fun refreshHealthConnectStatus() {
+        viewModelScope.launch {
+            val needed = !healthPromptDismissed &&
+                healthConnectReader.isAvailable() &&
+                !healthConnectReader.hasPermission()
+            _uiState.value = _uiState.value.copy(needsHealthConnect = needed)
+        }
+    }
+
+    fun dismissHealthConnectPrompt() {
+        healthPromptDismissed = true
+        _uiState.value = _uiState.value.copy(needsHealthConnect = false)
     }
 
     private fun observeUnreadActivity() {

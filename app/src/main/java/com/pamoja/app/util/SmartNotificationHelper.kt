@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -109,6 +110,44 @@ class SmartNotificationHelper @Inject constructor(
             enableVibration(vibrate)
             // Health-adjacent content should not be readable from a locked screen.
             lockscreenVisibility = NotificationCompat.VISIBILITY_PRIVATE
+        }
+
+    /**
+     * Whether the system will actually deliver this category.
+     *
+     * The Android channel is the single source of truth for this, and the app
+     * used to keep a second one in DataStore. Two switches for one thing, and
+     * the OS exposes its own in system settings, so they could disagree: a
+     * category muted in Settings but live in Android, or the reverse, with
+     * neither screen admitting the other existed.
+     *
+     * A null channel means it has not been created yet, which is not the same
+     * as blocked, so it reads as enabled.
+     */
+    fun isCategoryEnabled(category: NotificationCategory): Boolean {
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
+        val channel = notificationManager.getNotificationChannel(category.channelId)
+            ?: return true
+        return channel.importance != NotificationManager.IMPORTANCE_NONE
+    }
+
+    /** The categories the system is currently refusing, for the engine. */
+    fun mutedCategories(): Set<NotificationCategory> =
+        NotificationCategory.entries.filterNot { isCategoryEnabled(it) }.toSet()
+
+    /**
+     * Where to send someone who wants to change a category.
+     *
+     * Android does not let an app raise or lower a channel's importance once
+     * the channel exists; that is the user's to set and cannot be written
+     * programmatically. So the in-app control reflects the real state and hands
+     * over to the system screen for the actual change, which is the only way
+     * the two can be guaranteed never to diverge.
+     */
+    fun channelSettingsIntent(category: NotificationCategory): Intent =
+        Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            putExtra(Settings.EXTRA_CHANNEL_ID, category.channelId)
         }
 
     /** Posts a notification. No-ops if the user has revoked the permission. */

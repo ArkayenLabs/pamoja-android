@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -298,11 +299,35 @@ fun AuthMethodButton(
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp),
                     )
+                } else if (isGoogleMark) {
+                    // The G sits on its own white disc rather than straight on
+                    // the button.
+                    //
+                    // Google's brand rules require the coloured mark to sit on
+                    // white or a light neutral, and this is also the visual fix:
+                    // full-colour blue, green, yellow and red on saturated
+                    // terracotta muddies every one of them, and in dark mode the
+                    // blue leg all but disappears. The disc restores the contrast
+                    // the mark was drawn for and is the treatment Google's own
+                    // guidance prescribes for coloured buttons.
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(Color.White, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                 } else {
                     Icon(
                         painter = painterResource(icon),
                         contentDescription = null,
-                        tint = if (isGoogleMark) Color.Unspecified else content,
+                        tint = content,
                         modifier = Modifier.size(20.dp),
                     )
                 }

@@ -8,18 +8,26 @@ import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.Flow
+import java.time.DayOfWeek
 import java.util.UUID
 import javax.inject.Inject
 
 class CreateGroupUseCase @Inject constructor(
     private val groupRepository: GroupRepository
 ) {
+    /**
+     * [weekStartDay] defaults to the creating device's locale, which is the
+     * right guess and the one every comparable app makes. It is stamped onto
+     * the group rather than resolved per member, so everyone in the group shares
+     * one week regardless of where they are.
+     */
     suspend operator fun invoke(
         name: String,
         adminId: String,
         weeklyTarget: Int,
         maxMemberCap: Int,
-        canMembersEditTarget: Boolean
+        canMembersEditTarget: Boolean,
+        weekStartDay: DayOfWeek = WeekWindow.localeDefault(),
     ): Result<Group> {
         if (name.isBlank()) return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
         if (adminId.isBlank()) return Result.failure(AppError.SessionExpired())
@@ -39,7 +47,8 @@ class CreateGroupUseCase @Inject constructor(
             canMembersEditTarget = canMembersEditTarget,
             inviteLink = inviteLink,
             inviteLinkActive = true,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            weekStartDay = weekStartDay.name,
         )
         return groupRepository.createGroup(group)
     }
@@ -141,13 +150,119 @@ class GetGroupMembersUseCase @Inject constructor(
 class PublishGroupWeeklyTotalUseCase @Inject constructor(
     private val groupRepository: GroupRepository,
 ) {
-    suspend operator fun invoke(groupId: String, weeklySteps: Long): Result<Unit> {
+    suspend operator fun invoke(
+        groupId: String,
+        weeklySteps: Long,
+        startDay: DayOfWeek,
+    ): Result<Unit> {
         if (groupId.isBlank()) return Result.success(Unit)
         return groupRepository.publishWeeklyTotal(
             groupId = groupId,
             weeklySteps = weeklySteps.coerceAtLeast(0L),
-            weekStart = WeekWindow.startOf(),
+            // Stamped with the group's own week, so isCurrent compares like
+            // with like. Stamping the device's would mark the cache stale for
+            // every member whose locale differs from the group's setting.
+            weekStart = WeekWindow.startOf(startDay),
         )
+    }
+}
+
+/**
+ * Edits an existing group, as the admin.
+ *
+ * Until this existed nothing about a group could be changed after creation: not
+ * the name, not the goal, not the size, not who was in it. A typo in a group
+ * name was permanent, and a goal chosen before anyone had walked a step could
+ * never be corrected.
+ *
+ * Validation mirrors [CreateGroupUseCase] so a value creation would have
+ * rejected cannot arrive here instead, plus the one rule that only applies to
+ * editing: the cap cannot fall below the people already in the group.
+ */
+class UpdateGroupSettingsUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    suspend operator fun invoke(
+        group: Group,
+        editorId: String,
+        name: String,
+        weeklyTarget: Int,
+        maxMemberCap: Int,
+        canMembersEditTarget: Boolean,
+        weekStartDay: DayOfWeek,
+    ): Result<Unit> {
+        // Checked here as well as in the security rules. The rules are what
+        // actually protect the data; this is what produces a sensible message
+        // instead of a permission denial the user cannot act on.
+        if (group.adminId != editorId) {
+            return Result.failure(AppError.PermissionDenied())
+        }
+
+        val trimmed = name.trim()
+        if (trimmed.isBlank()) {
+            return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
+        }
+        if (trimmed.length > MAX_GROUP_NAME_LENGTH) {
+            return Result.failure(AppError.Validation(ValidationField.GroupNameTooLong))
+        }
+        if (weeklyTarget <= 0 || weeklyTarget > MAX_WEEKLY_TARGET) {
+            return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
+        }
+        if (maxMemberCap < MIN_MEMBER_CAP || maxMemberCap > MAX_MEMBER_CAP) {
+            return Result.failure(AppError.Validation(ValidationField.MemberCapTooSmall))
+        }
+        // Lowering the cap below the current headcount would leave the group
+        // over its own limit. Nobody is silently removed to make it fit.
+        if (maxMemberCap < group.memberCount) {
+            return Result.failure(
+                AppError.Validation(ValidationField.MemberCapBelowMemberCount)
+            )
+        }
+
+        return groupRepository.updateGroupSettings(
+            groupId = group.groupId,
+            name = trimmed,
+            weeklyTarget = weeklyTarget,
+            maxMemberCap = maxMemberCap,
+            canMembersEditTarget = canMembersEditTarget,
+            weekStartDay = weekStartDay.name,
+        )
+    }
+
+    companion object {
+        const val MIN_MEMBER_CAP = 2
+        const val MAX_MEMBER_CAP = 20
+        const val MAX_WEEKLY_TARGET = 1_000_000
+        const val MAX_GROUP_NAME_LENGTH = 100
+    }
+}
+
+/**
+ * Removes a member, as the admin.
+ *
+ * The admin cannot remove themselves through this path. Leaving is a different
+ * action with a different consequence, since the group would need a new admin,
+ * and quietly treating "remove me" as "hand over and leave" from a member list
+ * would be a surprising amount to infer from one tap.
+ */
+class RemoveGroupMemberUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    suspend operator fun invoke(
+        group: Group,
+        editorId: String,
+        memberId: String,
+    ): Result<Unit> {
+        if (group.adminId != editorId) {
+            return Result.failure(AppError.PermissionDenied())
+        }
+        if (memberId == group.adminId) {
+            return Result.failure(AppError.PermissionDenied())
+        }
+        if (memberId.isBlank()) {
+            return Result.failure(AppError.Validation(ValidationField.DisplayNameMissing))
+        }
+        return groupRepository.removeMember(group.groupId, memberId)
     }
 }
 

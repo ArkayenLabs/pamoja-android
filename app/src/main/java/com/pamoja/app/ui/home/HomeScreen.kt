@@ -67,9 +67,15 @@ import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupListSkeleton
 import com.pamoja.app.ui.components.NotificationPrimerDialog
 import com.pamoja.app.ui.components.GroupAvatar
+import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
+import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.toSnackbarMessage
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -100,6 +106,7 @@ fun HomeScreen(
     onActivityClick: () -> Unit,
     onSessionExpired: () -> Unit,
     onOpenInvite: (String) -> Unit,
+    onConnectHealth: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
@@ -115,6 +122,18 @@ fun HomeScreen(
     // Hoisted: shown from the scanner callback, which is not a composable scope.
     val qrNotPamojaMessage = stringResource(R.string.home_join_qr_not_pamoja)
     val qrFailedMessage    = stringResource(R.string.home_join_qr_failed)
+
+    // Re-read on resume, not just at construction. Health Connect permission
+    // can be granted or revoked in system settings while this screen is alive,
+    // and returning from granting it should clear the prompt immediately.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshHealthConnectStatus()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(uiState.error) {
         val error = uiState.error ?: return@LaunchedEffect
@@ -341,6 +360,27 @@ fun HomeScreen(
                                 stringResource(R.string.offline_home_stale)
                             } else null,
                         )
+                    }
+
+                    // Without the permission nothing on this screen can ever be
+                    // anything but zero, so it is said here rather than left to
+                    // be discovered in Settings.
+                    if (uiState.needsHealthConnect) {
+                        item {
+                            PamojaNotice(
+                                icon = PamojaIcons.Footprints,
+                                title = stringResource(R.string.home_health_needed_title),
+                                body = stringResource(R.string.home_health_needed_body),
+                                tone = NoticeTone.Warning,
+                                actionLabel = stringResource(R.string.home_health_needed_action),
+                                onAction = onConnectHealth,
+                                onDismiss = viewModel::dismissHealthConnectPrompt,
+                                modifier = Modifier.padding(
+                                    horizontal = Spacing.x6,
+                                    vertical = Spacing.x2,
+                                ),
+                            )
+                        }
                     }
 
                     // Skeleton matches the real card's shape, so nothing jumps
@@ -625,7 +665,7 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
             // from last week under this week's goal would be worse than showing
             // nothing, so a stale or missing marker renders no bar at all rather
             // than a confident zero.
-            if (WeekWindow.isCurrent(group.weekStart) && group.weeklyTarget > 0) {
+            if (WeekWindow.isCurrent(group.weekStart, group.startDay) && group.weeklyTarget > 0) {
                 val fraction = (group.weeklySteps.toFloat() / group.weeklyTarget)
                     .coerceIn(0f, 1f)
 

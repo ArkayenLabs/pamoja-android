@@ -5,6 +5,7 @@ import com.pamoja.app.domain.model.StepEntry
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.StepRepository
 import kotlinx.coroutines.flow.Flow
+import java.time.DayOfWeek
 import javax.inject.Inject
 
 class SyncTodayStepsUseCase @Inject constructor(
@@ -19,8 +20,20 @@ class SyncTodayStepsUseCase @Inject constructor(
 class GetGroupStepsForWeekUseCase @Inject constructor(
     private val stepRepository: StepRepository
 ) {
-    suspend operator fun invoke(memberIds: List<String>): Flow<List<StepEntry>> =
-        stepRepository.getGroupStepsForWeek(memberIds, WeekWindow.startOf(), WeekWindow.endOf())
+    /**
+     * [startDay] comes from the group, not from this device. Two members of one
+     * group must aggregate over the same seven days or the shared total means
+     * nothing.
+     */
+    suspend operator fun invoke(
+        memberIds: List<String>,
+        startDay: DayOfWeek,
+    ): Flow<List<StepEntry>> =
+        stepRepository.getGroupStepsForWeek(
+            memberIds,
+            WeekWindow.startOf(startDay),
+            WeekWindow.endOf(startDay),
+        )
 }
 
 class GetStepsForUserUseCase @Inject constructor(

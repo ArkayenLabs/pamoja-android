@@ -26,6 +26,25 @@ data class Group(
      * one way this cache can lie.
      */
     val weeklySteps: Long = 0L,
-    /** ISO date of the Monday [weeklySteps] belongs to. Blank means never synced. */
-    val weekStart: String = ""
-)
+    /** ISO date of the week start [weeklySteps] belongs to. Blank means never synced. */
+    val weekStart: String = "",
+    /**
+     * Which day this group's week begins on, as a [java.time.DayOfWeek] name.
+     *
+     * A group-level setting rather than a per-user one. The whole product is a
+     * shared weekly total, so two members on different week boundaries would
+     * see different figures for the same group and the leaderboard would
+     * contradict itself.
+     *
+     * Blank on documents written before this existed, which
+     * [WeekWindow.parseStartDay] resolves to the device locale's first day.
+     * Those groups were all created under a hardcoded Monday, so a member in a
+     * Sunday locale will see such a group shift by a day once. Accepted: it is
+     * a display window, not stored data, and the alternative is pinning every
+     * existing group to Monday forever.
+     */
+    val weekStartDay: String = ""
+) {
+    /** Resolved, with the locale fallback applied. Use this, never the raw field. */
+    val startDay: java.time.DayOfWeek get() = WeekWindow.parseStartDay(weekStartDay)
+}

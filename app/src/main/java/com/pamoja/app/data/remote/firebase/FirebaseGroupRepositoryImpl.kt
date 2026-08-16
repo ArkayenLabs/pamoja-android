@@ -38,6 +38,19 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             .toObject(UserDto::class.java)?.name.orEmpty()
     }.getOrDefault("")
 
+    /**
+     * The photo to stamp onto a new membership, honouring the owner's choice.
+     *
+     * Blank unless they have opted in, so joining a group never leaks a photo
+     * the user has not agreed to show. Blank on any failure too, since the
+     * private outcome is the safe one to fall back to.
+     */
+    private suspend fun sharedPhotoOf(userId: String): String = runCatching {
+        val user = usersCollection.document(userId).get().await()
+            .toObject(UserDto::class.java) ?: return ""
+        if (user.showPhotoInGroups) user.photoUrl.orEmpty() else ""
+    }.getOrDefault("")
+
     override suspend fun createGroup(group: Group): Result<Group> {
         return try {
             val dto = GroupDto.fromDomain(group)
@@ -49,6 +62,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 userId = group.adminId,
                 groupId = group.groupId,
                 displayName = displayNameOf(group.adminId),
+                photoUrl = sharedPhotoOf(group.adminId),
                 role = "admin",
                 canEditTarget = true,
                 joinedAt = System.currentTimeMillis()
@@ -146,9 +160,11 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             val membershipDocRef = membershipsCollection.document("${userId}_${groupId}")
 
             // Read outside the transaction. Firestore transactions cannot read
-            // other documents lazily, and the name is not part of the atomic
-            // invariant we are protecting, which is only the member cap.
+            // other documents lazily, and neither the name nor the photo is
+            // part of the atomic invariant we are protecting, which is only the
+            // member cap.
             val joinerName = displayNameOf(userId)
+            val joinerPhoto = sharedPhotoOf(userId)
 
             firestore.runTransaction { transaction ->
                 val groupSnapshot = transaction.get(groupDocRef)
@@ -171,6 +187,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                     userId = userId,
                     groupId = groupId,
                     displayName = joinerName,
+                    photoUrl = joinerPhoto,
                     role = "member",
                     canEditTarget = false,
                     joinedAt = System.currentTimeMillis()
@@ -231,6 +248,10 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                         User(
                             userId = m.userId,
                             name = m.displayName,
+                            // Blank whenever that member opted out, because the
+                            // fan-out never wrote it. Mapped to null so the
+                            // avatar falls back to initials.
+                            photoUrl = m.photoUrl.takeIf { it.isNotBlank() },
                         )
                     }
                 }
@@ -305,6 +326,74 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             groupsCollection.document(groupId)
                 .update("weeklyTarget", target)
                 .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
+    override suspend fun updateGroupSettings(
+        groupId: String,
+        name: String,
+        weeklyTarget: Int,
+        maxMemberCap: Int,
+        canMembersEditTarget: Boolean,
+        weekStartDay: String,
+    ): Result<Unit> {
+        return try {
+            // A field map, not a DTO set. The security rule permits exactly
+            // these keys to move for an admin, and writing the whole document
+            // would also carry the caller's stale copy of the weekly step
+            // cache back over whatever other members have since published.
+            groupsCollection.document(groupId)
+                .update(
+                    mapOf(
+                        "name" to name,
+                        "weeklyTarget" to weeklyTarget,
+                        "maxMemberCap" to maxMemberCap,
+                        "canMembersEditTarget" to canMembersEditTarget,
+                        "weekStartDay" to weekStartDay,
+                    )
+                )
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
+    override suspend fun removeMember(groupId: String, userId: String): Result<Unit> {
+        return try {
+            val groupRef = groupsCollection.document(groupId)
+            val membershipRef = firestore.collection("memberships")
+                .document("${userId}_$groupId")
+
+            firestore.runTransaction { transaction ->
+                val groupSnapshot = transaction.get(groupRef)
+                val membershipSnapshot = transaction.get(membershipRef)
+
+                // Already gone. Treated as success rather than an error: two
+                // taps on Remove, or the member leaving on their own device
+                // first, should not surface a failure for an outcome the admin
+                // wanted anyway.
+                if (!membershipSnapshot.exists()) return@runTransaction
+
+                val currentCount = groupSnapshot.getLong("memberCount") ?: 0L
+                if (groupSnapshot.exists() && currentCount > 0) {
+                    val cap = groupSnapshot.getLong("maxMemberCap") ?: Long.MAX_VALUE
+                    val newCount = currentCount - 1
+
+                    transaction.update(groupRef, "memberCount", newCount)
+
+                    // The freed slot revives the link, matching what leaving does.
+                    if (newCount < cap) {
+                        transaction.update(groupRef, "inviteLinkActive", true)
+                    }
+                }
+
+                transaction.delete(membershipRef)
+            }.await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e.toFirebaseAppError())

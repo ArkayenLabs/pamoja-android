@@ -11,6 +11,7 @@ import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.JoinGroupUseCase
 import com.pamoja.app.domain.usecase.ResolveInviteUseCase
+import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,7 @@ class JoinGroupViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val analyticsManager: AnalyticsManager,
     private val userPreferences: UserPreferences,
+    private val workManagerScheduler: WorkManagerScheduler,
     connectivityObserver: ConnectivityObserver,
 ) : ViewModel() {
 
@@ -134,6 +136,12 @@ class JoinGroupViewModel @Inject constructor(
                         isJoining = false,
                         joinedGroupId = group.groupId,
                     )
+
+                    // Joining changes the group's membership, so its cached
+                    // weekly total is now short by this member's steps. Republish
+                    // rather than leave Home understating the group until the
+                    // next scheduled run.
+                    workManagerScheduler.syncSoon()
                 },
                 onFailure = { error ->
                     val appError = error.toAppError()

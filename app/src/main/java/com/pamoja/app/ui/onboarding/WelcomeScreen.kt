@@ -19,6 +19,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -180,7 +182,7 @@ private fun FeaturePill(
         modifier = modifier
             .clip(RoundedCornerShape(PamojaRadii.md))
             .background(colors.accentPrimarySubtle)
-            .padding(vertical = Spacing.x4, horizontal = Spacing.x2),
+            .padding(vertical = Spacing.x4, horizontal = Spacing.x1),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.x2)
     ) {
@@ -190,13 +192,29 @@ private fun FeaturePill(
             tint               = colors.accentPrimary,
             modifier           = Modifier.size(20.dp)
         )
-        Text(
-            text  = label,
+        // Shrinks rather than wraps.
+        //
+        // The three pills are equal thirds of the row, and "Leaderboard" is
+        // more than twice the length of "Steps". It fit at the default font
+        // scale and broke as soon as the system font was scaled up, dropping
+        // the final letter onto a second line on its own.
+        //
+        // Auto-sizing rather than a smaller fixed size, so most devices still
+        // get 10sp and only the ones that need it step down. Clamping the sp
+        // instead would have fixed the layout by ignoring an accessibility
+        // setting, which is not a fix.
+        BasicText(
+            text = label,
             style = MaterialTheme.typography.labelSmall.copy(
                 color     = colors.accentPrimary,
                 textAlign = TextAlign.Center,
-                fontSize  = 10.sp
-            )
+            ),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 8.sp,
+                maxFontSize = 10.sp,
+                stepSize = 0.5.sp,
+            ),
         )
     }
 }

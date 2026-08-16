@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.StepEntry
+import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.StepRepository
 import com.pamoja.app.domain.usecase.GetGroupUseCase
@@ -18,7 +19,6 @@ import com.pamoja.app.domain.usecase.PublishGroupWeeklyTotalUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.SmartNotificationEngine
-import com.pamoja.app.util.NotificationCategory
 import com.pamoja.app.util.NotificationContext
 import com.pamoja.app.util.minuteOfDayToTime
 import dagger.assisted.Assisted
@@ -141,10 +141,17 @@ class StepSyncWorker @AssistedInject constructor(
             for (group in groups) {
                 val members = getGroupMembersUseCase(group.groupId).firstOrNull().orEmpty()
                 if (members.isEmpty()) continue
-                val entries = getGroupStepsForWeekUseCase(members.map { it.userId })
-                    .firstOrNull().orEmpty()
-                publishGroupWeeklyTotalUseCase(group.groupId, entries.sumOf { it.stepCount })
-                    .onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
+                // Each group's own week, not this device's. A user can belong to
+                // groups with different start days at the same time.
+                val entries = getGroupStepsForWeekUseCase(
+                    members.map { it.userId },
+                    group.startDay,
+                ).firstOrNull().orEmpty()
+                publishGroupWeeklyTotalUseCase(
+                    group.groupId,
+                    entries.sumOf { it.stepCount },
+                    group.startDay,
+                ).onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Weekly totals refresh failed", e)
@@ -172,7 +179,8 @@ class StepSyncWorker @AssistedInject constructor(
             if (members.isEmpty()) return
 
             val memberIds = members.map { it.userId }
-            val weeklyEntries = getGroupStepsForWeekUseCase(memberIds).firstOrNull() ?: return
+            val weeklyEntries =
+                getGroupStepsForWeekUseCase(memberIds, group.startDay).firstOrNull() ?: return
 
             // Calculate statistics
             val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
@@ -206,9 +214,12 @@ class StepSyncWorker @AssistedInject constructor(
             val groupAgeMs = currentTime - group.createdAt
             val userStepsThisWeek = membersData.firstOrNull { it.userId == userId }?.steps ?: 0L
 
-            // Days remaining in the Mon–Sun week, inclusive of today.
+            // Days remaining in the group's week, inclusive of today. Was
+            // `8 - today.dayOfWeek.value`, which silently assumed Monday and
+            // would have told a Sunday-start group it had one day left on its
+            // first day.
             val today = LocalDate.now()
-            val daysLeftInWeek = 8 - today.dayOfWeek.value
+            val daysLeftInWeek = WeekWindow.daysLeftIn(group.startDay, today)
 
             // Was the goal crossed by this sync? Compared against the total we
             // recorded last time so we fire exactly once, on the crossing.
@@ -265,14 +276,13 @@ class StepSyncWorker @AssistedInject constructor(
                 // Day of year rotates the wording so repeated notification types
                 // don't read identically every time.
                 rotationSeed = today.dayOfYear,
-                // What the user chose in Settings. An unrecognised stored name
-                // is ignored rather than crashing, so a category renamed in a
-                // later release cannot brick notifications for existing users.
-                mutedCategories = (userPreferences.mutedNotificationCategories.firstOrNull() ?: emptySet())
-                    .mapNotNull { name ->
-                        NotificationCategory.entries.firstOrNull { it.name == name }
-                    }
-                    .toSet(),
+                // Read from the Android notification channels, which are what
+                // the user actually sets, in our Settings screen or in the
+                // system's. Previously a DataStore copy, which could disagree
+                // with the OS in either direction: a category muted in Android
+                // that the engine still selected and posted into a void, or one
+                // muted here that Android would happily have delivered.
+                mutedCategories = smartNotificationHelper.mutedCategories(),
                 quietStart = minuteOfDayToTime(
                     userPreferences.quietHoursStartMinute.firstOrNull() ?: (22 * 60)
                 ),

@@ -23,10 +23,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +40,7 @@ import com.pamoja.app.R
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
 /**
@@ -253,7 +259,7 @@ fun PamojaConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     isDestructive: Boolean = true,
-    cancelLabel: String = "Cancel",
+    cancelLabel: String = stringResource(R.string.common_cancel),
 ) {
     val colors = LocalPamojaColors.current
 
@@ -278,9 +284,124 @@ fun PamojaConfirmDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                shape = RoundedCornerShape(PamojaRadii.sm),
+                // Pill, like every other button in the app. This used to be
+                // Radii.sm, the chip radius, which is why dialogs read as
+                // belonging to a different app than the screen behind them.
+                shape = PillShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isDestructive) colors.statusDanger else colors.accentPrimary,
+                ),
+            ) {
+                Text(
+                    text = confirmLabel,
+                    color = colors.textOnBrand,
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = cancelLabel, color = colors.textSecondary)
+            }
+        },
+    )
+}
+
+/**
+ * Confirmation for the irreversible end of the scale: deleting an account.
+ *
+ * Separate from [PamojaConfirmDialog] because a single tap is the wrong shape
+ * of gesture for something with no undo. Two things are different here:
+ *
+ *  - Consequences are itemised rather than summarised. "Your data will be
+ *    removed" does not tell anyone what they are about to lose; a list of the
+ *    actual things does.
+ *  - The confirm button stays disabled until the user types the confirmation
+ *    word. The point is not security, it is that it cannot be done absent
+ *    mindedly, which is exactly how account deletions get regretted.
+ *
+ * Matching is trimmed and case-insensitive. Someone who typed "delete " with a
+ * trailing space, or whose keyboard auto-capitalised, has demonstrated intent
+ * just as clearly as someone who typed it exactly.
+ */
+@Composable
+fun PamojaDestructiveConfirmDialog(
+    title: String,
+    body: String,
+    consequences: List<String>,
+    confirmationWord: String,
+    confirmationHint: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    cancelLabel: String = stringResource(R.string.common_cancel),
+) {
+    val colors = LocalPamojaColors.current
+    var typed by rememberSaveable { mutableStateOf("") }
+    val unlocked = typed.trim().equals(confirmationWord, ignoreCase = true)
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface3,
+        shape = RoundedCornerShape(PamojaRadii.xl),
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.statusDanger,
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textSecondary,
+                )
+
+                Spacer(Modifier.height(Spacing.x4))
+
+                consequences.forEach { line ->
+                    Row(
+                        modifier = Modifier.padding(bottom = Spacing.x1),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        // A dot, not a glyph. The icon set has nothing that
+                        // reads as a list marker, and emoji are not an option.
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 7.dp, end = Spacing.x2)
+                                .size(4.dp)
+                                .clip(RoundedCornerShape(percent = 50))
+                                .background(colors.statusDanger),
+                        )
+                        Text(
+                            text = line,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.textSecondary,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(Spacing.x4))
+
+                PamojaTextField(
+                    value = typed,
+                    onValueChange = { typed = it },
+                    label = confirmationHint,
+                    placeholder = confirmationWord,
+                    imeAction = ImeAction.Done,
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = unlocked,
+                shape = PillShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.statusDanger,
+                    disabledContainerColor = colors.statusDanger.copy(alpha = 0.35f),
                 ),
             ) {
                 Text(

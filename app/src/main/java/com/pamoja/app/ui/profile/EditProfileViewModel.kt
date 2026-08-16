@@ -30,6 +30,16 @@ data class EditProfileUiState(
     val isOffline: Boolean = false,
     val isSaved: Boolean = false,
 
+    /**
+     * Whether this person's photo is shown to other members of their groups.
+     *
+     * Defaults false, matching the stored default. A user whose profile has not
+     * loaded yet must never be shown as sharing.
+     */
+    val showPhotoInGroups: Boolean = false,
+    /** The privacy switch writes immediately, so it has its own busy flag. */
+    val isUpdatingPhotoPrivacy: Boolean = false,
+
     val name: String = "",
     val age: String = "",
     /** Centimetres in metric, whole feet in imperial. */
@@ -163,6 +173,7 @@ class EditProfileViewModel @Inject constructor(
                         // back out means the user cleared it deliberately.
                         age = user.age?.toString().orEmpty(),
                         photoUrl = user.photoUrl,
+                        showPhotoInGroups = user.showPhotoInGroups,
                     )
                     showMeasurements(user.height, user.weight, _uiState.value.unitSystem)
                 },
@@ -178,6 +189,45 @@ class EditProfileViewModel @Inject constructor(
 
     fun onNameChange(value: String) {
         _uiState.value = _uiState.value.copy(name = value)
+    }
+
+    /**
+     * Applies immediately, unlike every other field on this screen.
+     *
+     * Deliberate. This is a privacy control, and the failure mode of deferring
+     * it to Save is that someone switches their photo off, leaves without
+     * pressing Save, and it stays visible to their groups. Nobody expects that
+     * from a switch.
+     *
+     * The switch moves first so it feels instant, and moves back if the write
+     * fails, because a control showing "off" while the photo is still shared
+     * would be worse than one that visibly refused.
+     */
+    fun onShowPhotoInGroupsChange(enabled: Boolean) {
+        val base = loaded ?: return
+        val previous = _uiState.value.showPhotoInGroups
+        _uiState.value = _uiState.value.copy(
+            showPhotoInGroups = enabled,
+            isUpdatingPhotoPrivacy = true,
+            saveError = null,
+        )
+
+        viewModelScope.launch {
+            val updated = base.copy(showPhotoInGroups = enabled)
+            updateUserUseCase(updated).fold(
+                onSuccess = {
+                    loaded = updated
+                    _uiState.value = _uiState.value.copy(isUpdatingPhotoPrivacy = false)
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        showPhotoInGroups = previous,
+                        isUpdatingPhotoPrivacy = false,
+                        saveError = e.toAppError(),
+                    )
+                }
+            )
+        }
     }
 
     fun onAgeChange(value: String) {

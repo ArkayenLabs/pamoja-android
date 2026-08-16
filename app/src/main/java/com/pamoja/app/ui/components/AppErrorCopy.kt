@@ -144,6 +144,8 @@ fun ValidationField.messageRes(): Int = when (this) {
     ValidationField.GroupNameMissing -> R.string.validation_group_name_missing
     ValidationField.WeeklyTargetInvalid -> R.string.validation_weekly_target
     ValidationField.MemberCapTooSmall -> R.string.validation_member_cap
+    ValidationField.MemberCapBelowMemberCount -> R.string.validation_member_cap_below_count
+    ValidationField.GroupNameTooLong -> R.string.validation_group_name_too_long
     ValidationField.InviteCodeMissing -> R.string.validation_invite_missing
     ValidationField.InviteCodeMalformed -> R.string.validation_invite_malformed
     ValidationField.DisplayNameMissing -> R.string.validation_display_name_missing

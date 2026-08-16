@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,14 +33,20 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -74,6 +81,9 @@ import com.pamoja.app.ui.theme.Spacing
 @Composable
 fun EditProfileScreen(
     onBack: () -> Unit,
+    /** Leaves the editor after a successful save. Separate from [onBack] so the
+     *  destination can acknowledge the save; a plain back does not. */
+    onSaved: () -> Unit,
     viewModel: EditProfileViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
@@ -95,9 +105,14 @@ fun EditProfileScreen(
     val weightRange = stringResource(R.string.profile_number_range, weightField)
     val savedMessage = stringResource(R.string.profile_edit_saved)
 
+    // Picking no longer uploads directly. The picked image goes to the cropper
+    // first, so the person choosing the photo decides which part of it becomes
+    // the circular avatar rather than the centre-crop deciding for them.
+    var pendingCropUri by rememberSaveable { mutableStateOf<String?>(null) }
+
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let { viewModel.onPhotoPicked(it.toString()) } }
+    ) { uri -> uri?.let { pendingCropUri = it.toString() } }
 
     val nameErrorFor: (String) -> String? = { input ->
         when {
@@ -129,13 +144,37 @@ fun EditProfileScreen(
         ?: (if (isImperial) heightInchesErrorFor(uiState.heightInches) else null)
         ?: weightErrorFor(uiState.weight)
 
-    // A save that changed something deserves saying so, and the screen stays put
-    // rather than navigating away, because editing is often several passes.
+    // Saving returns to where you came from.
+    //
+    // This used to stay put and show a snackbar, on the reasoning that editing
+    // is often several passes. Device testing said otherwise: with the form
+    // still on screen and unchanged, Save reads as having done nothing, and the
+    // only way to confirm it worked was to press back and look. A snackbar
+    // cannot carry that job on its own, because the thing the user is watching
+    // for is the screen behaving like a screen that finished.
+    //
+    // The snackbar moves with it, shown on the destination, so the
+    // acknowledgement survives the transition.
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
             viewModel.clearSaved()
-            snackbarHostState.showSnackbar(savedMessage)
+            onSaved()
         }
+    }
+
+    // Takes over the whole screen while framing, and returns here on either
+    // outcome. Not a nav destination: the cropper is a step inside picking a
+    // photo, and routing it would mean encoding a content:// URI into a route.
+    pendingCropUri?.let { uri ->
+        PhotoCropScreen(
+            sourceUri = uri,
+            onCancel = { pendingCropUri = null },
+            onCropped = { croppedUri ->
+                pendingCropUri = null
+                viewModel.onPhotoPicked(croppedUri)
+            },
+        )
+        return
     }
 
     Box(
@@ -263,7 +302,64 @@ fun EditProfileScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(Spacing.x7))
+                    Spacer(modifier = Modifier.height(Spacing.x6))
+
+                    // Sits directly under the photo, because it is a fact about
+                    // that photo rather than a general setting, and burying it
+                    // in Settings would mean most people never find it.
+                    //
+                    // Only offered once there is a photo. Asking someone with no
+                    // avatar whether to share it is a question about nothing.
+                    if (!uiState.photoUrl.isNullOrBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(PamojaRadii.lg))
+                                .background(colors.surface1)
+                                .border(
+                                    1.dp,
+                                    colors.borderSubtle,
+                                    RoundedCornerShape(PamojaRadii.lg),
+                                )
+                                .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.profile_show_photo_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = colors.textPrimary,
+                                )
+                                Spacer(modifier = Modifier.height(Spacing.x1))
+                                Text(
+                                    text = stringResource(R.string.profile_show_photo_sub),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.textSecondary,
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(Spacing.x3))
+                            Switch(
+                                checked = uiState.showPhotoInGroups,
+                                onCheckedChange = viewModel::onShowPhotoInGroupsChange,
+                                // Offline it would appear to work and then
+                                // silently revert, which for a privacy control
+                                // is the wrong kind of surprise.
+                                enabled = !uiState.isUpdatingPhotoPrivacy && !uiState.isOffline,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = colors.accentPrimary,
+                                    checkedBorderColor = colors.accentPrimary,
+                                    uncheckedThumbColor = colors.textTertiary,
+                                    uncheckedTrackColor = colors.surface2,
+                                    uncheckedBorderColor = colors.borderDefault,
+                                ),
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(Spacing.x5))
+                    } else {
+                        Spacer(modifier = Modifier.height(Spacing.x1))
+                    }
 
                     PamojaTextField(
                         value = uiState.name,

@@ -30,4 +30,16 @@ enum class ValidationField {
 
     /** The chosen image could not be decoded, so it is not a photo we can use. */
     AvatarUnreadable,
+
+    /**
+     * The new member cap is below the number of people already in the group.
+     *
+     * Distinct from [MemberCapTooSmall], which is about the floor of two. This
+     * one is only reachable when editing an existing group, and the fix is
+     * different: remove people first, or pick a higher number.
+     */
+    MemberCapBelowMemberCount,
+
+    /** A group name past the length the security rules will accept. */
+    GroupNameTooLong,
 }

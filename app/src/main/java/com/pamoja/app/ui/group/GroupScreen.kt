@@ -32,7 +32,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -105,6 +109,15 @@ private const val DaysInWeek = 7
 private val RingSize = 220.dp
 private val RingStroke = 18.dp
 
+/**
+ * The widest a stacked column may be inside the ring without touching it.
+ *
+ * The square inscribed in a circle has a side of d / sqrt(2), roughly 0.707d.
+ * Derived from the ring rather than written as a number so it stays correct if
+ * the ring is ever resized.
+ */
+private val RingInnerSafeWidth = (RingSize - RingStroke * 2) * 0.70f
+
 // PullToRefreshBox is still marked experimental in Material 3. It is the
 // official API and the alternative is hand-rolling the gesture, which would be
 // worse and would still have to be replaced later.
@@ -114,6 +127,7 @@ fun GroupScreen(
     groupId: String,
     onBack: (() -> Unit)? = null,
     onShareInvite: () -> Unit,
+    onEditGroup: () -> Unit,
     viewModel: GroupViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -235,6 +249,8 @@ fun GroupScreen(
                     GroupTopBar(
                         groupName   = uiState.group?.name ?: "",
                         memberCount = uiState.memberStepData.size,
+                        isAdmin     = uiState.isAdmin,
+                        onEditGroup = onEditGroup,
                         onBack      = onBack,
                         onShare     = {
                             if (uiState.group?.inviteLinkActive == false) {
@@ -400,6 +416,8 @@ fun GroupTopBar(
     groupName: String,
     memberCount: Int,
     onShare: () -> Unit,
+    isAdmin: Boolean,
+    onEditGroup: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
     val colors = LocalPamojaColors.current
@@ -452,6 +470,19 @@ fun GroupTopBar(
                 tint               = colors.accentPrimary,
                 modifier           = Modifier.size(20.dp)
             )
+        }
+
+        // Settings, admin only. Hidden rather than disabled for everyone else,
+        // since a control that is always refused is worse than no control.
+        if (isAdmin) {
+            IconButton(onClick = onEditGroup) {
+                Icon(
+                    painter            = painterResource(PamojaIcons.Settings),
+                    contentDescription = stringResource(R.string.group_edit_action),
+                    tint               = colors.textSecondary,
+                    modifier           = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
@@ -514,8 +545,17 @@ fun GroupProgressCard(
                 trackColor  = Color.Transparent,
                 gapSize     = 0.dp,
             )
-            // Center content
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Center content, held inside the ring's safe square.
+            //
+            // A circle only gives a stacked column the width of the square
+            // inscribed in it, not the full inner diameter. Unconstrained, the
+            // pace badge grew past that as soon as the system font was scaled
+            // up and crowded the ring itself, which is what made it look
+            // oversized and off centre.
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(RingInnerSafeWidth),
+            ) {
                 PaceBadge(progress = progress, daysLeft = daysLeft)
                 Spacer(modifier = Modifier.height(Spacing.x2))
                 Text(
@@ -618,24 +658,36 @@ private fun PaceBadge(progress: Float, daysLeft: Int) {
         )
     }
 
+    // Trimmed to earn its place inside the ring. The badge is a caption on the
+    // number below it, not a control, so it should read as the smallest thing
+    // in the circle rather than competing with the step count.
     Row(
         modifier = Modifier
             .clip(PillShape)
             .background(tone)
-            .padding(horizontal = Spacing.x3, vertical = 5.dp),
+            .padding(horizontal = Spacing.x2, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
             painter = painterResource(PamojaIcons.Flame),
             contentDescription = null,
             tint = tint,
-            modifier = Modifier.size(15.dp),
+            modifier = Modifier.size(13.dp),
         )
-        Text(
+        // One line, always. Uppercase is roughly a fifth wider than sentence
+        // case, so this is the part that overflows first at a large font scale,
+        // and a wrapped pace badge inside a circle looks broken rather than
+        // merely tight.
+        BasicText(
             text = stringResource(labelRes).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = tint,
+            style = MaterialTheme.typography.labelSmall.copy(color = tint),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 8.sp,
+                maxFontSize = MaterialTheme.typography.labelSmall.fontSize,
+                stepSize = 0.5.sp,
+            ),
         )
     }
 }
@@ -883,10 +935,17 @@ fun LeaderboardRow(
             }
         }
 
-        // Avatar circle with initials
+        // Avatar: the member's photo when they have chosen to share it, and
+        // their initials otherwise.
+        //
+        // A blank photoUrl here is not a missing image, it is someone who left
+        // the sharing preference off, which is the default. Initials are the
+        // designed state rather than a fallback, so they must not look like a
+        // failed load.
+        val avatarSize = if (isFirst) 44.dp else 36.dp
         Box(
             modifier = Modifier
-                .size(if (isFirst) 44.dp else 36.dp)
+                .size(avatarSize)
                 .clip(CircleShape)
                 .background(
                     brush = if (isCurrentUser)
@@ -896,14 +955,26 @@ fun LeaderboardRow(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text  = user.name.take(2).uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = if (isFirst) 14.sp else 11.sp,
-                    fontWeight = FontWeight.SemiBold
-                ),
-                color = if (isCurrentUser) colors.textOnBrand else colors.accentPrimary
-            )
+            val photo = user.photoUrl
+            if (!photo.isNullOrBlank()) {
+                AsyncImage(
+                    model = photo,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(avatarSize)
+                        .clip(CircleShape),
+                )
+            } else {
+                Text(
+                    text  = user.name.take(2).uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = if (isFirst) 14.sp else 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = if (isCurrentUser) colors.textOnBrand else colors.accentPrimary
+                )
+            }
         }
 
         // Name + weekly steps

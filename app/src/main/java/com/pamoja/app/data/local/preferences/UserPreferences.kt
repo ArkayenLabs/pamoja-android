@@ -81,11 +81,6 @@ class UserPreferences @Inject constructor(
         // successful sync, so "last synced" never claims a run that failed.
         val KEY_LAST_SYNC_TIME           = longPreferencesKey("last_sync_time")
 
-        // Categories the user has switched OFF, not the ones left on. Storing
-        // the exclusions means a category added in a later release is on by
-        // default rather than silently missing for existing users.
-        val KEY_MUTED_CATEGORIES         = stringSetPreferencesKey("muted_notification_categories")
-
         // Minutes from midnight, so a time survives locale and timezone changes
         // that a formatted string would not.
         val KEY_QUIET_START_MINUTE       = intPreferencesKey("quiet_hours_start_minute")
@@ -161,18 +156,10 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit { it[KEY_NOTIFICATION_PRIMER_SHOWN] = true }
     }
 
-    /** Names of the notification categories the user has switched off. */
-    val mutedNotificationCategories: Flow<Set<String>> = context.dataStore.data.map {
-        it[KEY_MUTED_CATEGORIES] ?: emptySet()
-    }
-
-    suspend fun setCategoryMuted(categoryName: String, muted: Boolean) {
-        context.dataStore.edit { prefs ->
-            val current = prefs[KEY_MUTED_CATEGORIES] ?: emptySet()
-            prefs[KEY_MUTED_CATEGORIES] =
-                if (muted) current + categoryName else current - categoryName
-        }
-    }
+    // Muted notification categories used to be stored here. They are read from
+    // the Android notification channels instead, via SmartNotificationHelper,
+    // because the OS exposes those same four channels in system settings and
+    // two independent switches for one thing could disagree with each other.
 
     /** Defaults to the 22:00 to 08:00 window the engine used to hardcode. */
     val quietHoursStartMinute: Flow<Int> = context.dataStore.data.map {

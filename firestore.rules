@@ -109,13 +109,32 @@ service cloud.firestore {
         )
         ||
         // --- Case B: the admin edits group settings. adminId can never change.
+        //
+        //     onlyChanged() added 2026-08-16, when the group editor made this
+        //     path something an admin uses rather than something almost nothing
+        //     called. Without it the clause permitted an admin to write ANY
+        //     field except adminId, including memberCount and the weeklySteps
+        //     cache, so a compromised or buggy client could set memberCount to
+        //     0 and reopen a full group, or write an arbitrary step total.
+        //     Handover is Case F, which is why adminId is not in this list.
         (
           isGroupAdmin(groupId)
-          && request.resource.data.adminId == resource.data.adminId
+          && onlyChanged([
+               'name',
+               'weeklyTarget',
+               'maxMemberCap',
+               'canMembersEditTarget',
+               'weekStartDay',
+               'inviteLinkActive'
+             ])
           && request.resource.data.maxMemberCap >= 2
           && request.resource.data.maxMemberCap <= 20
+          && request.resource.data.maxMemberCap >= resource.data.memberCount
           && request.resource.data.weeklyTarget > 0
           && request.resource.data.weeklyTarget <= 1000000
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 100
         )
         ||
         // --- Case C: a member edits the weekly target, but only where the
@@ -166,6 +185,29 @@ service cloud.firestore {
           && request.resource.data.weeklySteps >= 0
           && request.resource.data.weekStart is string
           && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
+        )
+        ||
+        // --- Case F: the ADMIN LEAVES and hands the group over.
+        //
+        //     Case B pins adminId to its current value, deliberately, so that
+        //     nobody can promote themselves. That also made admin handover
+        //     impossible, and account deletion therefore left the group with an
+        //     adminId pointing at a Firebase Auth user that no longer existed.
+        //     Nobody could then change the target, manage the invite link, or
+        //     remove a member, for the lifetime of the group.
+        //
+        //     Narrow on purpose. Only the sitting admin can trigger it, the new
+        //     admin must already hold a membership in this group, and the count
+        //     comes down by exactly one because the outgoing admin is leaving in
+        //     the same transaction. A group whose last member is the admin is
+        //     deleted instead, which the delete rule below already permits.
+        (
+          isGroupAdmin(groupId)
+          && onlyChanged(['adminId', 'memberCount', 'inviteLinkActive'])
+          && request.resource.data.adminId != resource.data.adminId
+          && request.resource.data.memberCount == resource.data.memberCount - 1
+          && request.resource.data.memberCount >= 1
+          && exists(/databases/$(database)/documents/memberships/$(request.resource.data.adminId + '_' + groupId))
         );
 
       allow delete: if isGroupAdmin(groupId);
@@ -187,16 +229,26 @@ service cloud.firestore {
                     && membershipId == request.auth.uid + '_' + request.resource.data.groupId
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.get('displayName', '') is string
-                    && request.resource.data.get('displayName', '').size() <= 100;
+                    && request.resource.data.get('displayName', '').size() <= 100
+                    && request.resource.data.get('photoUrl', '') is string
+                    && request.resource.data.get('photoUrl', '').size() <= 500;
 
       // A member may not silently promote themselves to admin. They may update
-      // their own displayName, which is what the rename fan-out does.
+      // their own displayName and photoUrl, which is what the profile fan-out
+      // does.
+      //
+      // photoUrl is the denormalised copy that makes leaderboard avatars
+      // possible without reading users/{userId}, which stays owner-only. It is
+      // only ever written by its owner, so nobody can attach an image to
+      // somebody else's row. Length-capped because it is a URL, not a payload.
       allow update: if isSignedIn()
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.role == resource.data.role
                     && request.resource.data.get('displayName', '') is string
-                    && request.resource.data.get('displayName', '').size() <= 100;
+                    && request.resource.data.get('displayName', '').size() <= 100
+                    && request.resource.data.get('photoUrl', '') is string
+                    && request.resource.data.get('photoUrl', '').size() <= 500;
 
       // Remove yourself, or the group admin may remove anyone.
       allow delete: if isSignedIn()

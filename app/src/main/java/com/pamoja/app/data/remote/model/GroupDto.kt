@@ -15,7 +15,8 @@ data class GroupDto(
     // backward compatible: groups written before these existed simply decode as
     // 0 and "", and a blank weekStart already reads as "no current total".
     val weeklySteps: Long = 0L,
-    val weekStart: String = ""
+    val weekStart: String = "",
+    val weekStartDay: String = ""
 ) {
     fun toDomain() = com.pamoja.app.domain.model.Group(
         groupId = groupId,
@@ -29,7 +30,8 @@ data class GroupDto(
         inviteLinkActive = inviteLinkActive,
         createdAt = createdAt,
         weeklySteps = weeklySteps,
-        weekStart = weekStart
+        weekStart = weekStart,
+        weekStartDay = weekStartDay
     )
 
     companion object {
@@ -45,7 +47,8 @@ data class GroupDto(
             inviteLinkActive = group.inviteLinkActive,
             createdAt = group.createdAt,
             weeklySteps = group.weeklySteps,
-            weekStart = group.weekStart
+            weekStart = group.weekStart,
+            weekStartDay = group.weekStartDay
         )
     }
 }

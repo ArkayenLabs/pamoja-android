@@ -71,6 +71,8 @@ import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
+import com.pamoja.app.ui.components.PamojaConfirmDialog
+import com.pamoja.app.ui.components.PamojaDestructiveConfirmDialog
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.profile.ProfileAvatar
@@ -88,6 +90,15 @@ fun SettingsScreen(
     onNotificationSettings: () -> Unit,
     onAccount: () -> Unit,
     onLicenses: () -> Unit,
+    /**
+     * Set when the profile editor closed after saving.
+     *
+     * The editor leaves on save rather than staying put, so the confirmation
+     * has to land here. Consumed once by the caller, so it does not fire again
+     * on every recomposition or when returning from a different screen.
+     */
+    profileWasSaved: Boolean = false,
+    onProfileSavedShown: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
@@ -98,6 +109,7 @@ fun SettingsScreen(
     val activity = LocalActivity.current
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showLogoutConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
@@ -121,6 +133,16 @@ fun SettingsScreen(
             ?: context.getString(res)
         snackbarHostState.showSnackbar(message)
         viewModel.clearMessages()
+    }
+
+    // The third channel: the profile editor closed after saving. Acknowledged
+    // here because that screen no longer exists by the time there is anything
+    // to say.
+    LaunchedEffect(profileWasSaved) {
+        if (profileWasSaved) {
+            onProfileSavedShown()
+            snackbarHostState.showSnackbar(context.getString(R.string.profile_edit_saved))
+        }
     }
 
     // Reload on return, so a name changed in the editor is reflected here rather
@@ -184,42 +206,43 @@ fun SettingsScreen(
     // updateUser, which writes the whole document, so renaming yourself silently
     // erased your age, height and weight.
 
+    if (showLogoutConfirmDialog) {
+        PamojaConfirmDialog(
+            title = stringResource(R.string.settings_logout_confirm_title),
+            body = stringResource(R.string.settings_logout_confirm_body),
+            confirmLabel = stringResource(R.string.settings_logout_confirm_action),
+            // Signing out loses nothing, so it is not painted as danger. The
+            // dialog exists to catch the misplaced tap, not to warn.
+            isDestructive = false,
+            onConfirm = {
+                showLogoutConfirmDialog = false
+                viewModel.signOut()
+            },
+            onDismiss = { showLogoutConfirmDialog = false },
+        )
+    }
+
     if (showDeleteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            containerColor = colors.surface3,
-            shape = RoundedCornerShape(PamojaRadii.xl),
-            title = {
-                Text(
-                    text = stringResource(R.string.settings_delete_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.statusDanger
-                )
+        // Exactly what deleteAllUserData actually removes, no more. It deletes
+        // memberships and step entries and decrements member counts; it does
+        // not delete groups this user administers, so nothing here claims it
+        // does.
+        PamojaDestructiveConfirmDialog(
+            title = stringResource(R.string.settings_delete_title),
+            body = stringResource(R.string.settings_delete_warning),
+            consequences = listOf(
+                stringResource(R.string.settings_delete_loses_profile),
+                stringResource(R.string.settings_delete_loses_history),
+                stringResource(R.string.settings_delete_loses_groups),
+            ),
+            confirmationWord = stringResource(R.string.settings_delete_type_word),
+            confirmationHint = stringResource(R.string.settings_delete_type_hint),
+            confirmLabel = stringResource(R.string.settings_delete_confirm),
+            onConfirm = {
+                showDeleteConfirmDialog = false
+                viewModel.deleteAccount()
             },
-            text = {
-                Text(
-                    text = stringResource(R.string.settings_delete_warning),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteAccount()
-                        showDeleteConfirmDialog = false
-                    },
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.statusDanger)
-                ) {
-                    Text(stringResource(R.string.settings_delete_confirm), color = colors.textOnBrand, style = MaterialTheme.typography.labelLarge)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
-                }
-            }
+            onDismiss = { showDeleteConfirmDialog = false },
         )
     }
 
@@ -693,7 +716,7 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_logout_title),
                         subtitle = stringResource(R.string.settings_logout_subtitle),
                         iconColor = colors.textSecondary,
-                        onClick = { viewModel.signOut() }
+                        onClick = { showLogoutConfirmDialog = true }
                     )
                     SettingsRow(
                         icon = PamojaIcons.Trash,

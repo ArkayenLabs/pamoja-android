@@ -1,9 +1,11 @@
 package com.pamoja.app.ui.notifications
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.util.NotificationCategory
+import com.pamoja.app.util.SmartNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +37,7 @@ data class NotificationSettingsUiState(
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
+    private val notificationHelper: SmartNotificationHelper,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NotificationSettingsUiState())
@@ -43,23 +46,31 @@ class NotificationSettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             combine(
-                userPreferences.mutedNotificationCategories,
                 userPreferences.quietHoursStartMinute,
                 userPreferences.quietHoursEndMinute,
-            ) { muted, start, end ->
-                Triple(muted, start, end)
-            }.collect { (muted, start, end) ->
+            ) { start, end ->
+                start to end
+            }.collect { (start, end) ->
                 _uiState.value = _uiState.value.copy(
-                    // Unknown stored names are dropped rather than crashing, so
-                    // renaming a category in a later release cannot break this.
-                    mutedCategories = muted.mapNotNull { name ->
-                        NotificationCategory.entries.firstOrNull { it.name == name }
-                    }.toSet(),
                     quietStartMinute = start,
                     quietEndMinute = end,
                 )
             }
         }
+        refreshCategories()
+    }
+
+    /**
+     * Re-read the real channel states.
+     *
+     * Called on every resume, because the only way to change a category is in
+     * system settings, so the app is always returning from the place the change
+     * was made.
+     */
+    fun refreshCategories() {
+        _uiState.value = _uiState.value.copy(
+            mutedCategories = notificationHelper.mutedCategories(),
+        )
     }
 
     /** Re-read on resume, since the user can revoke it in system settings. */
@@ -67,11 +78,15 @@ class NotificationSettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(systemPermissionGranted = granted)
     }
 
-    fun setCategoryEnabled(category: NotificationCategory, enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferences.setCategoryMuted(category.name, muted = !enabled)
-        }
-    }
+    /**
+     * Where to send the user to change this category.
+     *
+     * Android owns channel importance once the channel exists and will not let
+     * an app write it, so there is nothing to toggle here. The switch reports
+     * the truth and this opens the one place it can be changed.
+     */
+    fun settingsIntentFor(category: NotificationCategory): Intent =
+        notificationHelper.channelSettingsIntent(category)
 
     fun setQuietHours(startMinute: Int, endMinute: Int) {
         viewModelScope.launch {

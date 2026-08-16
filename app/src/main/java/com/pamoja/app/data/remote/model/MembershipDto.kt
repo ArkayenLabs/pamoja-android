@@ -7,6 +7,8 @@ data class MembershipDto(
     val displayName: String = "",
     val role: String = "member",
     val canEditTarget: Boolean = false,
+    /** Denormalised copy of the member's photo. Blank when they opted out. */
+    val photoUrl: String = "",
     val joinedAt: Long = 0L
 ) {
     fun toDomain() = com.pamoja.app.domain.model.Membership(
@@ -15,6 +17,7 @@ data class MembershipDto(
         displayName = displayName,
         role = role,
         canEditTarget = canEditTarget,
+        photoUrl = photoUrl,
         joinedAt = joinedAt
     )
 
@@ -25,6 +28,7 @@ data class MembershipDto(
             displayName = membership.displayName,
             role = membership.role,
             canEditTarget = membership.canEditTarget,
+            photoUrl = membership.photoUrl,
             joinedAt = membership.joinedAt
         )
     }

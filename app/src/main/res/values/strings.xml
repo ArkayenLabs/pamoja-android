@@ -15,6 +15,46 @@
 
     <!-- ── Common ─────────────────────────────────────────────────────── -->
     <string name="common_cancel">Cancel</string>
+    <string name="common_dismiss">Dismiss</string>
+
+    <!-- Photo cropping, between picking an image and uploading it. -->
+    <string name="crop_title">Position your photo</string>
+    <string name="crop_hint">Drag to move, pinch to zoom.</string>
+    <string name="crop_confirm">Use photo</string>
+    <string name="crop_failed">That image could not be opened. Try another one.</string>
+
+    <!-- ── Editing an existing group, admin only ───────────────────────── -->
+    <string name="edit_group_title">Group settings</string>
+    <string name="edit_group_name_label">Group name</string>
+    <string name="edit_group_name_placeholder">Family, work, running club</string>
+    <string name="edit_group_goal">Weekly goal</string>
+    <string name="edit_group_goal_sub">The combined steps everyone is working towards each week.</string>
+    <string name="edit_group_goal_value">%1$s steps</string>
+    <string name="edit_group_cap">Group size</string>
+    <string name="edit_group_cap_sub">How many people can be in this group at once.</string>
+    <!-- A count followed by a noun, so a plural. Reuses member_count rather
+         than adding a second way to say the same thing. -->
+    <!-- Explains why the slider will not go lower, rather than letting it feel broken. -->
+    <string name="edit_group_cap_floor">Cannot go below %1$d, the number of people already here. Remove someone first.</string>
+    <string name="edit_group_week_start_sub">Changing this reshapes the current week for everyone in the group.</string>
+    <string name="edit_group_members_edit_sub">Let members change the weekly goal, not just you.</string>
+    <string name="edit_group_members">Members</string>
+    <string name="edit_group_members_sub">Removing someone takes them out of this group. Their step history is not deleted.</string>
+    <string name="edit_group_member_admin">Admin</string>
+    <string name="edit_group_remove_title">Remove member?</string>
+    <string name="edit_group_remove_body">%1$s will be taken out of this group and their steps will stop counting towards its goal. They can be invited back.</string>
+    <string name="edit_group_remove_confirm">Remove</string>
+    <string name="edit_group_save">Save changes</string>
+    <string name="edit_group_not_admin">Only the group admin can change these settings.</string>
+    <string name="group_edit_action">Edit group</string>
+
+    <!-- Photo privacy. Default off, and the copy names the real consequence
+         rather than saying something vague about visibility. -->
+    <string name="profile_show_photo_title">Show my photo in groups</string>
+    <string name="profile_show_photo_sub">Off by default. When off, your photo is never sent to anyone else in your groups, and they see your initials instead.</string>
+
+    <string name="validation_member_cap_below_count">That is fewer people than the group already has. Remove someone first, or pick a higher number.</string>
+    <string name="validation_group_name_too_long">That group name is too long. Keep it under 100 characters.</string>
     <string name="common_continue">Continue</string>
     <string name="common_back">Back</string>
     <string name="common_not_now">Not now</string>
@@ -213,6 +253,12 @@
     <string name="home_join_scan">Or scan their QR code</string>
     <string name="home_join_qr_not_pamoja">That QR code is not a Pamoja invite</string>
     <string name="home_join_qr_failed">Could not read that code. Try again, or paste the link.</string>
+
+    <!-- Shown when Health Connect is installed but not permitted, so no steps
+         can arrive at all. Says what is wrong before it says what to do. -->
+    <string name="home_health_needed_title">Your steps are not being counted</string>
+    <string name="home_health_needed_body">Pamoja reads your step count from Health Connect, and does not have permission yet. Until it does, your groups will show no progress.</string>
+    <string name="home_health_needed_action">Connect</string>
     <string name="home_join_cta">Join a group via invite link</string>
     <string name="home_settings_desc">Settings</string>
     <string name="home_open_group_desc">Open group</string>
@@ -240,6 +286,12 @@
     <string name="create_group_weekly_goal">Weekly step goal</string>
     <string name="create_group_max_members">Max members</string>
     <string name="create_group_members_edit">Members can edit goal</string>
+    <!-- A group setting, not a personal one, and the copy says so. The whole
+         product is a shared weekly total, so members cannot each pick. -->
+    <string name="create_group_week_start">Week starts on</string>
+    <string name="create_group_week_start_sub">Applies to everyone in this group, so the weekly total means the same thing for all of you.</string>
+    <string name="create_group_week_start_monday">Monday</string>
+    <string name="create_group_week_start_sunday">Sunday</string>
     <string name="create_group_members_edit_sub">Allow others to change the step target</string>
     <string name="create_group_creating">Creating…</string>
     <string name="create_group_submit">Create group</string>
@@ -339,7 +391,15 @@
     <string name="settings_delete_title">Delete Account</string>
     <string name="settings_delete_subtitle">Permanently wipe your profile and statistics</string>
     <string name="settings_delete_confirm">Delete Permanently</string>
-    <string name="settings_delete_warning">This action is permanent and cannot be undone. All your step groups and progress history will be removed.</string>
+    <string name="settings_delete_warning">This cannot be undone, and we cannot recover any of it for you afterwards.</string>
+    <string name="settings_delete_loses_profile">Your profile, name and photo</string>
+    <string name="settings_delete_loses_history">Every step you have recorded, all time</string>
+    <string name="settings_delete_loses_groups">Your place in every group you have joined</string>
+    <string name="settings_delete_type_hint">Type DELETE to confirm</string>
+    <string name="settings_delete_type_word">DELETE</string>
+    <string name="settings_logout_confirm_title">Log out?</string>
+    <string name="settings_logout_confirm_body">Your groups and step history stay safe. You will need to sign in again on this device to get back to them.</string>
+    <string name="settings_logout_confirm_action">Log Out</string>
     <string name="settings_reauth_title">Confirm it is you</string>
     <string name="settings_reauth_body">For your safety we ask you to sign in again before deleting an account. Nothing has been deleted yet.</string>
     <string name="settings_reauth_phone_body">For your safety we text a code to the number on this account before deleting it. Nothing has been deleted yet.</string>
@@ -453,6 +513,9 @@
     <string name="notif_all_muted_title">Everything is switched off</string>
     <string name="notif_all_muted_body">You will not hear from Pamoja at all, including when your group hits its goal.</string>
     <string name="notif_section_types">WHAT TO SEND</string>
+    <!-- Says where the control really is. Android owns channel importance and
+         will not let an app write it, so these rows report and hand over. -->
+    <string name="notif_types_hint">These are your Android notification settings. Tap one to change it.</string>
     <string name="notif_achievement_title">Goals and achievements</string>
     <string name="notif_achievement_sub">Your group hit its weekly goal, streaks, milestones</string>
     <string name="notif_group_title">Group activity</string>
@@ -480,7 +543,10 @@
     <string name="settings_subscription_sub">Opens your subscriptions in Google Play</string>
 
     <string name="account_title">Account</string>
-    <string name="account_subtitle">Any of these signs you into the same account. Adding one never starts a new one, and never touches your groups or step history.</string>
+    <!-- Deliberately does not mention groups or step history. The one-method
+         warning below has to talk about losing them, and having this line
+         promise they are safe a few lines above that reads as a contradiction. -->
+    <string name="account_subtitle">All of these sign you into the same account. Adding one never creates a second account.</string>
     <string name="account_section_methods">SIGN-IN METHODS</string>
     <string name="account_section_password">PASSWORD</string>
     <string name="account_method_google">Google</string>
@@ -497,7 +563,7 @@
     <string name="account_none_title">No way back into this account</string>
     <string name="account_none_body">Nothing is connected yet, so if this app is removed there is no way to prove the account is yours. Add a method below.</string>
     <string name="account_single_title">One way in</string>
-    <string name="account_single_body">If you lose access to it, you lose your groups and your step history with it. A second method takes a minute and there is no way to add one later from a phone you no longer have.</string>
+    <string name="account_single_body">Lose access to it and you lose this account, with your groups and step history. Adding a second method takes a minute now, and cannot be done afterwards.</string>
 
     <string name="account_add_email_title">Add email sign-in</string>
     <string name="account_add_email_body">A password is a way back in that does not depend on your phone or your Google account.</string>

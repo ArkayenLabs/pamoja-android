@@ -20,7 +20,6 @@ import com.pamoja.app.domain.usecase.GetMembershipUseCase
 import com.pamoja.app.domain.usecase.GetStepsForUserUseCase
 import com.pamoja.app.domain.usecase.SyncTodayStepsUseCase
 import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
-import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -105,7 +104,6 @@ class GroupViewModel @Inject constructor(
     private val updateWeeklyTargetUseCase: UpdateWeeklyTargetUseCase,
     val userPreferences: UserPreferences,
     val healthConnectReader: HealthConnectReader,
-    private val workManagerScheduler: WorkManagerScheduler,
     private val analyticsManager: AnalyticsManager,
     private val syncTodayStepsUseCase: SyncTodayStepsUseCase,
     private val connectivityObserver: ConnectivityObserver,
@@ -179,7 +177,6 @@ class GroupViewModel @Inject constructor(
                 isAdmin = group.adminId == currentUser.userId,
             )
 
-            workManagerScheduler.scheduleStepSync()
             userPreferences.saveActiveGroupId(groupId)
             analyticsManager.logGroupScreenViewed(groupId)
 
@@ -246,7 +243,7 @@ class GroupViewModel @Inject constructor(
                     if (members.isEmpty()) {
                         flowOf(members to Result.success(emptyList<StepEntry>()))
                     } else {
-                        getGroupStepsForWeekUseCase(members.map { it.userId })
+                        getGroupStepsForWeekUseCase(members.map { it.userId }, group.startDay)
                             .map { entries -> members to Result.success(entries) }
                             // Caught INSIDE the inner flow, so a steps failure
                             // does not tear down the outer members flow with it.

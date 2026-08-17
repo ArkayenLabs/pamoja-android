@@ -151,6 +151,12 @@
     <string name="offline_banner_title">You are offline</string>
     <string name="offline_home_stale">Showing your groups as they were when you were last online</string>
     <string name="offline_group_stale">Showing the last totals that reached this phone</string>
+    <!-- Offline with a known sync time. Preferred over the vaguer lines above,
+         because "showing old data" without saying how old is not much of a
+         statement. %1$s is a wall-clock time in the device's own format. -->
+    <string name="offline_showing_from">Showing data from %1$s</string>
+    <string name="group_last_synced">LAST SYNCED %1$s</string>
+    <string name="group_leaderboard_as_of">AS OF %1$s</string>
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
     <string name="welcome_get_started">Get started</string>

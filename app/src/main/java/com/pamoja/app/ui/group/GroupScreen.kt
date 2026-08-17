@@ -49,6 +49,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Outline
@@ -82,6 +83,7 @@ import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.GroupDashboardSkeleton
 import com.pamoja.app.ui.components.OfflineBanner
+import com.pamoja.app.ui.components.formatSyncTime
 import com.pamoja.app.ui.components.PamojaEmptyState
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.toSnackbarMessage
@@ -120,6 +122,9 @@ private const val DaysInWeek = 7
  * the list scrolling away before you have found yourself in it.
  */
 private const val CompactLeaderboardFrom = 12
+
+/** How far the ring dims when its numbers may be out of date. From the deck. */
+private const val StaleRingAlpha = 0.70f
 
 // Ring geometry, from the design's 246px ring with a 19px stroke inside a 392px
 // frame. Kept as constants because the two indicators and the layout that sizes
@@ -177,6 +182,10 @@ fun GroupScreen(
     val inviteInactive = stringResource(R.string.group_invite_inactive)
     val healthUnavailable = stringResource(R.string.group_health_unavailable)
     val shareChooserTitle = stringResource(R.string.group_share_invite)
+
+    // Formatted once. Null until a sync has ever happened, which renders as no
+    // timestamp rather than as the epoch.
+    val syncedAt = formatSyncTime(context, uiState.lastSyncedAt)
 
     // Health Connect permissions, the same contract the onboarding screen uses.
     //
@@ -296,9 +305,15 @@ fun GroupScreen(
                 item {
                     OfflineBanner(
                         isOffline = uiState.isOffline,
-                        lastUpdatedLabel = if (uiState.hasContent) {
-                            stringResource(R.string.offline_group_stale)
-                        } else null,
+                        // A real time when there is one. "Showing old data"
+                        // without saying how old is barely a statement, and the
+                        // worker already records exactly this moment.
+                        lastUpdatedLabel = when {
+                            !uiState.hasContent -> null
+                            syncedAt != null ->
+                                stringResource(R.string.offline_showing_from, syncedAt)
+                            else -> stringResource(R.string.offline_group_stale)
+                        },
                     )
                 }
 
@@ -308,12 +323,18 @@ fun GroupScreen(
                         combinedSteps = uiState.combinedWeeklySteps,
                         weeklyTarget  = uiState.group?.weeklyTarget?.toLong() ?: 70_000L,
                         daysLeft      = daysLeft,
-                        memberCount   = uiState.memberStepData.size
+                        memberCount   = uiState.memberStepData.size,
+                        isStale       = uiState.isOffline,
+                        lastSyncedAt  = syncedAt,
                     )
                 }
 
                 // ── What that means per person, per day ────────────────────
-                item {
+                //
+                // Also withheld while offline. It reads the same pace as the
+                // badge and phrases it as advice, so a stale one tells people
+                // to walk further because their phone lost signal.
+                if (!uiState.isOffline) item {
                     GroupInsightCard(
                         combinedSteps = uiState.combinedWeeklySteps,
                         weeklyTarget  = uiState.group?.weeklyTarget?.toLong() ?: 70_000L,
@@ -354,7 +375,14 @@ fun GroupScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text  = stringResource(R.string.group_leaderboard),
+                            // Names the moment these standings were true, so a
+                            // leaderboard nobody has been able to update does
+                            // not read as live.
+                            text = if (uiState.isOffline && syncedAt != null) {
+                                stringResource(R.string.group_leaderboard_as_of, syncedAt)
+                            } else {
+                                stringResource(R.string.group_leaderboard)
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.textTertiary,
                         )
@@ -666,7 +694,18 @@ fun GroupProgressCard(
     combinedSteps: Long,
     weeklyTarget: Long,
     daysLeft: Int,
-    memberCount: Int
+    memberCount: Int,
+    /**
+     * These figures may be out of date, so the card stops asserting them.
+     *
+     * The ring dims and the pace badge is withheld rather than recalculated.
+     * Pace compares progress against how much of the week has passed, and time
+     * keeps passing while the steps do not arrive, so an offline pace reading
+     * drifts from "on track" to "behind" purely because the network is down.
+     * That is the app inventing bad news about someone who may be walking.
+     */
+    isStale: Boolean = false,
+    lastSyncedAt: String? = null,
 ) {
     val colors = LocalPamojaColors.current
     val progress = if (weeklyTarget > 0) {
@@ -711,7 +750,12 @@ fun GroupProgressCard(
             )
             CircularProgressIndicator(
                 progress    = { progress },
-                modifier    = Modifier.size(RingSize),
+                // Dimmed while stale. The ring is the loudest thing on the
+                // screen and the most confident, so it is the first thing that
+                // should stop looking certain.
+                modifier    = Modifier
+                    .size(RingSize)
+                    .alpha(if (isStale) StaleRingAlpha else 1f),
                 color       = ringColor,
                 strokeWidth = RingStroke,
                 strokeCap   = StrokeCap.Round,
@@ -729,7 +773,19 @@ fun GroupProgressCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.width(RingInnerSafeWidth),
             ) {
-                PaceBadge(progress = progress, daysLeft = daysLeft)
+                // Withheld while stale, and replaced by when these numbers were
+                // last true. Suppressed rather than guessed, per the states
+                // deck: a pace reading that decays on its own is worse than no
+                // pace reading.
+                if (isStale && lastSyncedAt != null) {
+                    Text(
+                        text = stringResource(R.string.group_last_synced, lastSyncedAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textTertiary,
+                    )
+                } else if (!isStale) {
+                    PaceBadge(progress = progress, daysLeft = daysLeft)
+                }
                 Spacer(modifier = Modifier.height(Spacing.x2))
                 // Never wraps. This is the one number the product exists to
                 // show, and clamping the column to the ring's safe square is

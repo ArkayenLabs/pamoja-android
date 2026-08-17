@@ -71,6 +71,8 @@ data class HomeUiState(
      * than silence.
      */
     val needsHealthConnect: Boolean = false,
+    /** When these totals last reached the phone. Zero means never. */
+    val lastSyncedAt: Long = 0L,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty()
@@ -147,6 +149,13 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             connectivityObserver.isOnline.collect { online ->
                 _uiState.value = _uiState.value.copy(isOffline = !online)
+            }
+        }
+        // Same source the group screen uses, so the two cannot claim different
+        // times for the same figures.
+        viewModelScope.launch {
+            userPreferences.lastSyncTime.collect { at ->
+                _uiState.value = _uiState.value.copy(lastSyncedAt = at)
             }
         }
     }

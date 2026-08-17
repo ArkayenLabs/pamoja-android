@@ -69,6 +69,7 @@ import com.pamoja.app.ui.components.NotificationPrimerDialog
 import com.pamoja.app.ui.components.GroupAvatar
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
+import com.pamoja.app.ui.components.formatSyncTime
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.toSnackbarMessage
@@ -122,6 +123,9 @@ fun HomeScreen(
     // Hoisted: shown from the scanner callback, which is not a composable scope.
     val qrNotPamojaMessage = stringResource(R.string.home_join_qr_not_pamoja)
     val qrFailedMessage    = stringResource(R.string.home_join_qr_failed)
+
+    // Null until a sync has ever happened, which renders as no timestamp.
+    val homeSyncedAt = formatSyncTime(context, uiState.lastSyncedAt)
 
     // Re-read on resume, not just at construction. Health Connect permission
     // can be granted or revoked in system settings while this screen is alive,
@@ -356,9 +360,12 @@ fun HomeScreen(
                     item {
                         OfflineBanner(
                             isOffline = uiState.isOffline,
-                            lastUpdatedLabel = if (uiState.hasContent) {
-                                stringResource(R.string.offline_home_stale)
-                            } else null,
+                            lastUpdatedLabel = when {
+                                !uiState.hasContent -> null
+                                homeSyncedAt != null ->
+                                    stringResource(R.string.offline_showing_from, homeSyncedAt)
+                                else -> stringResource(R.string.offline_home_stale)
+                            },
                         )
                     }
 

@@ -51,6 +51,14 @@ data class GroupUiState(
     val isAdmin: Boolean = false,
     val isOffline: Boolean = false,
     /**
+     * When steps last reached this phone, as epoch millis. Zero means never.
+     *
+     * Shown only while offline, and only where a number could be out of date.
+     * A figure with no timestamp reads as current, so an offline screen without
+     * one is quietly asserting something it cannot know.
+     */
+    val lastSyncedAt: Long = 0L,
+    /**
      * Drives the pull-to-refresh spinner only, never the skeleton. A pull has
      * content on screen already, and swapping it for a skeleton would throw
      * away what the user is looking at to show them less.
@@ -124,6 +132,14 @@ class GroupViewModel @Inject constructor(
         viewModelScope.launch {
             connectivityObserver.isOnline.collect { online ->
                 _uiState.value = _uiState.value.copy(isOffline = !online)
+            }
+        }
+        // Written by StepSyncWorker on every successful run, so it already
+        // means exactly what the offline states need: the last moment these
+        // figures were known to be true.
+        viewModelScope.launch {
+            userPreferences.lastSyncTime.collect { at ->
+                _uiState.value = _uiState.value.copy(lastSyncedAt = at)
             }
         }
     }

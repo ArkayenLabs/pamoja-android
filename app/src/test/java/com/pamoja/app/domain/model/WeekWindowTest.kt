@@ -144,9 +144,19 @@ class WeekWindowTest {
     fun `parseStartDay falls back rather than throwing on junk`() {
         // A group document written by a later release, or corrupted, must not
         // be able to crash step aggregation for everyone in that group.
-        assertEquals(WeekWindow.localeDefault(), WeekWindow.parseStartDay("FUNDAY"))
-        assertEquals(WeekWindow.localeDefault(), WeekWindow.parseStartDay(null))
-        assertEquals(WeekWindow.localeDefault(), WeekWindow.parseStartDay(""))
+        assertEquals(DayOfWeek.MONDAY, WeekWindow.parseStartDay("FUNDAY"))
+        assertEquals(DayOfWeek.MONDAY, WeekWindow.parseStartDay(null))
+        assertEquals(DayOfWeek.MONDAY, WeekWindow.parseStartDay(""))
+    }
+
+    @Test
+    fun `a group with no stored start day stays on Monday, not the locale`() {
+        // The regression this guards: resolving legacy groups to the reader's
+        // locale moved the week by a day for every group created before the
+        // field existed, changing which steps counted towards the current week.
+        // Groups with history keep Monday; only new groups follow the locale.
+        assertEquals(DayOfWeek.MONDAY, WeekWindow.parseStartDay(null))
+        assertEquals(WeekWindow.LEGACY_START_DAY, WeekWindow.parseStartDay(""))
     }
 
     // ── localeDefault ────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
+import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.Flow
 import java.time.DayOfWeek
@@ -263,6 +264,64 @@ class RemoveGroupMemberUseCase @Inject constructor(
             return Result.failure(AppError.Validation(ValidationField.DisplayNameMissing))
         }
         return groupRepository.removeMember(group.groupId, memberId)
+    }
+}
+
+/**
+ * Sets or clears a group's photo, as the admin.
+ *
+ * Two steps that must happen in this order: the image is uploaded to Storage,
+ * then the group document is pointed at it. Doing it the other way round would
+ * leave every member looking at a URL for an object that does not exist yet.
+ *
+ * The admin check here is for the message, not the protection. Storage keys the
+ * object on the uploader and firestore.rules case B gates `photoUrl` on being
+ * the admin, so a non-admin is refused either way; this just refuses them with
+ * something readable instead of a permission denial.
+ */
+class UpdateGroupPhotoUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+    private val avatarRepository: AvatarRepository,
+) {
+    suspend operator fun invoke(
+        group: Group,
+        editorId: String,
+        imageUri: String,
+    ): Result<String> {
+        if (group.adminId != editorId) {
+            return Result.failure(AppError.PermissionDenied())
+        }
+
+        val url = avatarRepository
+            .uploadGroupAvatar(group.groupId, editorId, imageUri)
+            .getOrElse { return Result.failure(it) }
+
+        return groupRepository.updateGroupPhoto(group.groupId, url).map { url }
+    }
+}
+
+/**
+ * Removes a group's photo.
+ *
+ * The document is cleared before the object is deleted. A group pointing at a
+ * deleted object shows a broken image to everyone; an orphaned object nobody
+ * points at costs a few kilobytes, so if only one of the two can succeed it
+ * should be the one that leaves the group looking right.
+ */
+class RemoveGroupPhotoUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+    private val avatarRepository: AvatarRepository,
+) {
+    suspend operator fun invoke(group: Group, editorId: String): Result<Unit> {
+        if (group.adminId != editorId) {
+            return Result.failure(AppError.PermissionDenied())
+        }
+
+        return groupRepository.updateGroupPhoto(group.groupId, "").also {
+            if (it.isSuccess) {
+                avatarRepository.deleteGroupAvatar(group.groupId, editorId)
+            }
+        }
     }
 }
 

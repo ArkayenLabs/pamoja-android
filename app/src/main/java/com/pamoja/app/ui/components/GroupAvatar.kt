@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -33,6 +35,14 @@ fun GroupAvatar(
     size: Dp = 54.dp,
     cornerRadius: Dp = PamojaRadii.lg,
     textStyle: TextStyle = MaterialTheme.typography.titleLarge,
+    /**
+     * The group's photo, when the admin has set one.
+     *
+     * Blank keeps the gradient tile with the group's initials, which is the
+     * designed state and not a fallback. Every group had one until photos
+     * existed, and a group without a photo should still look deliberate.
+     */
+    photoUrl: String? = null,
 ) {
     val gradient = GroupAvatarGradients[
         (name.firstOrNull()?.code ?: 0) % GroupAvatarGradients.size
@@ -44,6 +54,17 @@ fun GroupAvatar(
             .background(Brush.linearGradient(gradient)),
         contentAlignment = Alignment.Center,
     ) {
+        if (!photoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(size)
+                    .clip(RoundedCornerShape(cornerRadius)),
+            )
+            return@Box
+        }
         Text(
             text = name.take(2).uppercase(),
             style = textStyle,

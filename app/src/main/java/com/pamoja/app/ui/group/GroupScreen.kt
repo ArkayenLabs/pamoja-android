@@ -50,6 +50,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -64,6 +70,7 @@ import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.WeekWindow
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -86,6 +93,8 @@ import com.pamoja.app.ui.theme.Spacing
 import com.pamoja.app.util.InviteLink
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
@@ -100,8 +109,17 @@ import java.time.temporal.TemporalAdjusters
  */
 enum class LeaderboardRange { Today, Week }
 
-/** Days in the shared week. The window is Monday to Sunday for every member. */
+/** Days in the shared week. The window is set per group, see WeekWindow. */
 private const val DaysInWeek = 7
+
+/**
+ * Above this many members the leaderboard switches to compact rows.
+ *
+ * From the states deck: density absorbs group size, structure never changes.
+ * Twelve is where the full-size rows stop fitting a screen without the top of
+ * the list scrolling away before you have found yourself in it.
+ */
+private const val CompactLeaderboardFrom = 12
 
 // Ring geometry, from the design's 246px ring with a 19px stroke inside a 392px
 // frame. Kept as constants because the two indicators and the layout that sizes
@@ -250,6 +268,10 @@ fun GroupScreen(
                         groupName   = uiState.group?.name ?: "",
                         memberCount = uiState.memberStepData.size,
                         isAdmin     = uiState.isAdmin,
+                        isFull      = uiState.group?.let {
+                            it.maxMemberCap > 0 && it.memberCount >= it.maxMemberCap
+                        } ?: false,
+                        startDay    = uiState.group?.startDay ?: WeekWindow.LEGACY_START_DAY,
                         onEditGroup = onEditGroup,
                         onBack      = onBack,
                         onShare     = {
@@ -344,6 +366,10 @@ fun GroupScreen(
                 }
 
                 // ── Ranked rows ───────────────────────────────────────────
+                //
+                // Density changes with size, structure does not. Past
+                // CompactLeaderboardFrom the rows tighten so a full group is
+                // still scannable; two members and twenty are the same screen.
                 itemsIndexed(rankedMembers) { index, memberData ->
                     LeaderboardRow(
                         rank          = index + 1,
@@ -351,10 +377,40 @@ fun GroupScreen(
                         todaySteps    = memberData.todaySteps,
                         weeklySteps   = memberData.weeklySteps,
                         range         = leaderboardRange,
-                        isCurrentUser = memberData.user.userId == uiState.currentUserId
+                        isCurrentUser = memberData.user.userId == uiState.currentUserId,
+                        compact       = rankedMembers.size > CompactLeaderboardFrom,
                     )
                     if (index < rankedMembers.lastIndex) {
                         Spacer(modifier = Modifier.height(Spacing.x2))
+                    }
+                }
+
+                // A group of one is unfinished, not empty. The dashed row is
+                // the second slot waiting to be filled, so the leaderboard
+                // never reads as a ranking with nobody to rank against.
+                if (rankedMembers.size == 1) {
+                    item {
+                        Spacer(modifier = Modifier.height(Spacing.x2))
+                        SoloInviteRow(onClick = onShareInvite)
+                    }
+                }
+
+                // Two people are a partnership. Saying so, with the room that
+                // is left, beats a two-row ranking that declares a loser.
+                if (rankedMembers.size == 2) {
+                    val room = (uiState.group?.maxMemberCap ?: 0) - 2
+                    if (room > 0) {
+                        item {
+                            Spacer(modifier = Modifier.height(Spacing.x3))
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.group_pair_room, room, room
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textTertiary,
+                                modifier = Modifier.padding(horizontal = Spacing.x6),
+                            )
+                        }
                     }
                 }
 
@@ -410,13 +466,114 @@ fun GroupScreen(
     }
 }
 
+/**
+ * The empty second place in a group of one.
+ *
+ * Drawn as a dashed outline rather than a filled row, so it reads as a slot
+ * waiting to be filled rather than a member who scored nothing. This is the
+ * whole point of the state: a new group is unfinished, not broken, and the one
+ * useful action sits inside the gap it is describing.
+ */
+@Composable
+private fun SoloInviteRow(onClick: () -> Unit) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.md)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.x6)
+            .clip(shape)
+            .dashedBorder(colors.borderDefault, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = Spacing.x3, vertical = Spacing.x3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(colors.surface2),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.Add),
+                contentDescription = null,
+                tint = colors.textTertiary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.group_solo_invite_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.accentPrimary,
+            )
+            Text(
+                text = stringResource(R.string.group_solo_invite_sub),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textTertiary,
+            )
+        }
+
+        Icon(
+            painter = painterResource(PamojaIcons.ChevronRight),
+            contentDescription = null,
+            tint = colors.textTertiary,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+/**
+ * A dashed outline, which Compose has no modifier for.
+ *
+ * Drawn rather than approximated with a solid border, because the dash is what
+ * carries the meaning here: solid would read as a real row.
+ */
+private fun Modifier.dashedBorder(color: Color, shape: Shape): Modifier =
+    this.drawBehind {
+        val outline = shape.createOutline(size, layoutDirection, this)
+        val stroke = Stroke(
+            width = 1.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f),
+        )
+        when (outline) {
+            is Outline.Rounded -> drawPath(Path().apply { addRoundRect(outline.roundRect) }, color, style = stroke)
+            is Outline.Rectangle -> drawRect(color, style = stroke)
+            is Outline.Generic -> drawPath(outline.path, color, style = stroke)
+        }
+    }
+
 // ─── Top bar ─────────────────────────────────────────────────────────────────
+/**
+ * Names the group's week window for the header.
+ *
+ * Only the two conventions the picker offers get a paired abbreviation. Any
+ * other stored value, which can only come from a later release, is named by its
+ * first day rather than inventing five more abbreviation pairs that would each
+ * need translating.
+ */
+@Composable
+private fun weekWindowLabel(startDay: DayOfWeek): String = when (startDay) {
+    DayOfWeek.MONDAY -> stringResource(R.string.group_week_mon_sun)
+    DayOfWeek.SUNDAY -> stringResource(R.string.group_week_sun_sat)
+    else -> stringResource(
+        R.string.group_week_starts,
+        startDay.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+    )
+}
+
 @Composable
 fun GroupTopBar(
     groupName: String,
     memberCount: Int,
     onShare: () -> Unit,
     isAdmin: Boolean,
+    isFull: Boolean,
+    startDay: DayOfWeek,
     onEditGroup: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
@@ -454,7 +611,8 @@ fun GroupTopBar(
                 Text(
                     text  = stringResource(
                         R.string.group_header_subtitle,
-                        pluralStringResource(R.plurals.member_count, memberCount, memberCount)
+                        pluralStringResource(R.plurals.member_count, memberCount, memberCount),
+                        weekWindowLabel(startDay),
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.textTertiary
@@ -462,14 +620,29 @@ fun GroupTopBar(
             }
         }
 
-        // Share invite link, available to everyone (members can also invite friends)
-        IconButton(onClick = onShare) {
-            Icon(
-                painter            = painterResource(PamojaIcons.Share),
-                contentDescription = stringResource(R.string.group_share_desc),
-                tint               = colors.accentPrimary,
-                modifier           = Modifier.size(20.dp)
+        // Share invite link, available to everyone (members can also invite
+        // friends). A full group shows a chip instead: the control is not
+        // disabled and silent, it says why it is gone.
+        if (isFull) {
+            Text(
+                text = stringResource(R.string.group_full_chip),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.textTertiary,
+                modifier = Modifier
+                    .clip(PillShape)
+                    .background(colors.surface2)
+                    .padding(horizontal = Spacing.x3, vertical = Spacing.x1),
             )
+            Spacer(modifier = Modifier.width(Spacing.x2))
+        } else {
+            IconButton(onClick = onShare) {
+                Icon(
+                    painter            = painterResource(PamojaIcons.Share),
+                    contentDescription = stringResource(R.string.group_share_desc),
+                    tint               = colors.accentPrimary,
+                    modifier           = Modifier.size(20.dp)
+                )
+            }
         }
 
         // Settings, admin only. Hidden rather than disabled for everyone else,
@@ -558,10 +731,25 @@ fun GroupProgressCard(
             ) {
                 PaceBadge(progress = progress, daysLeft = daysLeft)
                 Spacer(modifier = Modifier.height(Spacing.x2))
-                Text(
-                    text  = "%,d".format(combinedSteps),
-                    style = MaterialTheme.typography.displayLarge,
-                    color = colors.textPrimary
+                // Never wraps. This is the one number the product exists to
+                // show, and clamping the column to the ring's safe square is
+                // what made it break: at a larger font scale "14,376" no longer
+                // fitted and split across two lines mid-number.
+                //
+                // Shrinking is the right trade against wrapping here. A step
+                // count is read as a single quantity, and the digits carry no
+                // meaning once they are cut in half.
+                BasicText(
+                    text = "%,d".format(combinedSteps),
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        color = colors.textPrimary,
+                    ),
+                    maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 24.sp,
+                        maxFontSize = MaterialTheme.typography.displayLarge.fontSize,
+                        stepSize = 1.sp,
+                    ),
                 )
                 Text(
                     text  = stringResource(R.string.group_of_target, "%,d".format(weeklyTarget)),
@@ -872,9 +1060,19 @@ fun LeaderboardRow(
     todaySteps: Long,
     weeklySteps: Long,
     range: LeaderboardRange,
-    isCurrentUser: Boolean
+    isCurrentUser: Boolean,
+    /**
+     * Tighter rows for a large group.
+     *
+     * First place keeps its raised card and the current user keeps their
+     * highlight either way, because those are the two rows anyone is actually
+     * looking for. Only the spacing and the avatar shrink.
+     */
+    compact: Boolean = false,
 ) {
     val colors = LocalPamojaColors.current
+    // Compact never applies to first place: it is the one row the design
+    // deliberately raises above the rest, at any group size.
     val isFirst = rank == 1
 
     // Base surface + optional tint overlay + border, all theme-aware.
@@ -908,8 +1106,17 @@ fun LeaderboardRow(
             .background(tintOverlay)
             .border(1.dp, borderColor, rowShape)
             .then(
-                if (isFirst) Modifier.padding(horizontal = Spacing.x4, vertical = Spacing.x4)
-                else Modifier.padding(horizontal = Spacing.x3, vertical = Spacing.x3)
+                when {
+                    isFirst -> Modifier.padding(
+                        horizontal = Spacing.x4, vertical = Spacing.x4
+                    )
+                    compact -> Modifier.padding(
+                        horizontal = Spacing.x3, vertical = Spacing.x2
+                    )
+                    else -> Modifier.padding(
+                        horizontal = Spacing.x3, vertical = Spacing.x3
+                    )
+                }
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
@@ -942,7 +1149,11 @@ fun LeaderboardRow(
         // the sharing preference off, which is the default. Initials are the
         // designed state rather than a fallback, so they must not look like a
         // failed load.
-        val avatarSize = if (isFirst) 44.dp else 36.dp
+        val avatarSize = when {
+            isFirst -> 44.dp
+            compact -> 30.dp
+            else -> 36.dp
+        }
         Box(
             modifier = Modifier
                 .size(avatarSize)

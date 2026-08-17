@@ -28,6 +28,32 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Group photos, keyed on the group AND the uploader.
+    //
+    // Storage rules cannot read Firestore, so there is no way to ask here
+    // whether the writer is the group's admin. The uploader's UID is in the
+    // path so that this rule can enforce the one thing it can see: you may only
+    // write an object named after yourself.
+    //
+    // Admin-only is enforced where it can be. Uploading an object does not make
+    // it the group's photo; that requires writing photoUrl on the group
+    // document, and firestore.rules case B allows only the admin to do it. A
+    // member could therefore upload a file nobody is ever pointed at.
+    match /group_avatars/{groupId}/{uploaderId} {
+
+      // Any signed-in user, because group photos appear on Home for every
+      // member. Not public, for the same reason avatars are not.
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+                   && request.auth.uid + '.jpg' == uploaderId
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType == 'image/jpeg';
+
+      allow delete: if request.auth != null
+                    && request.auth.uid + '.jpg' == uploaderId;
+    }
+
     match /{allOther=**} {
       allow read, write: if false;
     }

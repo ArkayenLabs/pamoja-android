@@ -13,6 +13,8 @@ import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetGroupMembersUseCase
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.RemoveGroupMemberUseCase
+import com.pamoja.app.domain.usecase.RemoveGroupPhotoUseCase
+import com.pamoja.app.domain.usecase.UpdateGroupPhotoUseCase
 import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,10 @@ data class EditGroupUiState(
     val members: List<User> = emptyList(),
     /** Set while a specific removal is in flight, to disable just that row. */
     val removingMemberId: String? = null,
+
+    /** The group's photo, blank when it has none. */
+    val photoUrl: String = "",
+    val isUploadingPhoto: Boolean = false,
 
     val error: AppError? = null,
     val isSaved: Boolean = false,
@@ -87,6 +93,8 @@ class EditGroupViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val updateGroupSettingsUseCase: UpdateGroupSettingsUseCase,
     private val removeGroupMemberUseCase: RemoveGroupMemberUseCase,
+    private val updateGroupPhotoUseCase: UpdateGroupPhotoUseCase,
+    private val removeGroupPhotoUseCase: RemoveGroupPhotoUseCase,
     private val connectivityObserver: ConnectivityObserver,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -136,6 +144,7 @@ class EditGroupViewModel @Inject constructor(
                         maxMemberCap = group.maxMemberCap,
                         canMembersEditTarget = group.canMembersEditTarget,
                         weekStartDay = group.startDay,
+                        photoUrl = group.photoUrl,
                         error = null,
                     )
                     observeMembers()
@@ -249,6 +258,63 @@ class EditGroupViewModel @Inject constructor(
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         removingMemberId = null,
+                        error = e.toAppError(),
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Applies immediately, like the profile photo and unlike the text fields.
+     *
+     * A picked image has to be uploaded to be shown at all, so there is nothing
+     * to defer to Save. Deferring would also mean an abandoned edit leaves an
+     * uploaded object nothing points at.
+     */
+    fun onPhotoPicked(imageUri: String) {
+        val state = _uiState.value
+        val group = state.group ?: return
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(isUploadingPhoto = true, error = null)
+
+            updateGroupPhotoUseCase(group, state.currentUserId, imageUri).fold(
+                onSuccess = { url ->
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingPhoto = false,
+                        photoUrl = url,
+                        group = group.copy(photoUrl = url),
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingPhoto = false,
+                        error = e.toAppError(),
+                    )
+                }
+            )
+        }
+    }
+
+    fun onPhotoRemoved() {
+        val state = _uiState.value
+        val group = state.group ?: return
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(isUploadingPhoto = true, error = null)
+
+            removeGroupPhotoUseCase(group, state.currentUserId).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingPhoto = false,
+                        photoUrl = "",
+                        group = group.copy(photoUrl = ""),
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingPhoto = false,
                         error = e.toAppError(),
                     )
                 }

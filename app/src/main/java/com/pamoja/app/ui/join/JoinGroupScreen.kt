@@ -154,6 +154,7 @@ private fun InvitePreviewContent(
             size = 84.dp,
             cornerRadius = PamojaRadii.xxl,
             textStyle = MaterialTheme.typography.displaySmall,
+            photoUrl = group.photoUrl,
         )
 
         Spacer(modifier = Modifier.height(Spacing.x5))

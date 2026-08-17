@@ -639,7 +639,11 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
         // The design's 54dp squircle. Larger and softer than a small rounded
         // square, which is what makes a list of groups scan as people rather
         // than as rows in a table.
-        GroupAvatar(name = group.name, size = Layout.groupAvatar)
+        GroupAvatar(
+            name = group.name,
+            size = Layout.groupAvatar,
+            photoUrl = group.photoUrl,
+        )
 
         // Group info
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {

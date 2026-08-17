@@ -400,6 +400,17 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> {
+        return try {
+            groupsCollection.document(groupId)
+                .update("photoUrl", photoUrl)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
     override suspend fun deactivateInviteLink(groupId: String): Result<Unit> {
         return try {
             groupsCollection.document(groupId)

@@ -44,6 +44,24 @@
     <string name="edit_group_remove_title">Remove member?</string>
     <string name="edit_group_remove_body">%1$s will be taken out of this group and their steps will stop counting towards its goal. They can be invited back.</string>
     <string name="edit_group_remove_confirm">Remove</string>
+    <!-- ── §6b group size states ───────────────────────────────────────
+         A group of one is the most common shape a new group has, and it is
+         the one that looked most broken: a leaderboard with a single row and
+         nobody to rank against. The deck treats it as unfinished, not empty. -->
+    <string name="group_solo_invite_title">Invite your first teammate</string>
+    <string name="group_solo_invite_sub">A group of one is just a step counter</string>
+    <!-- Two people are a partnership, not a ranking. %1$d is the room left. -->
+    <plurals name="group_pair_room">
+        <item quantity="one">You two carried the whole week. Room for %1$d more if you want company.</item>
+        <item quantity="other">You two carried the whole week. Room for %1$d more if you want company.</item>
+    </plurals>
+    <string name="group_full_chip">Full</string>
+
+    <string name="edit_group_photo">Group photo</string>
+    <string name="edit_group_photo_sub">Shown wherever this group is listed. Only you can change it.</string>
+    <string name="edit_group_photo_add">Add photo</string>
+    <string name="edit_group_photo_change">Change</string>
+    <string name="edit_group_photo_remove">Remove</string>
     <string name="edit_group_save">Save changes</string>
     <string name="edit_group_not_admin">Only the group admin can change these settings.</string>
     <string name="group_edit_action">Edit group</string>
@@ -336,7 +354,15 @@
     <string name="invite_offline_body">The link below still works offline. Share it now, or retry once you are back.</string>
 
     <!-- ── Group dashboard ────────────────────────────────────────────── -->
-    <string name="group_header_subtitle">%1$s · Mon–Sun</string>
+    <!-- %2$s is the group's own week window, not a fixed Mon-Sun. The label was
+         hardcoded and kept claiming Monday after the start day became a group
+         setting, so the header contradicted the group's own settings screen. -->
+    <string name="group_header_subtitle">%1$s · %2$s</string>
+    <string name="group_week_mon_sun">Mon–Sun</string>
+    <string name="group_week_sun_sat">Sun–Sat</string>
+    <!-- Any other start day, named by its first day rather than inventing an
+         abbreviation pair for all seven. -->
+    <string name="group_week_starts">Starts %1$s</string>
     <string name="group_leaderboard">LEADERBOARD</string>
     <string name="group_unavailable_title">This group is no longer available</string>
     <string name="group_unavailable_body">It may have been deleted, or you may no longer be a member.</string>

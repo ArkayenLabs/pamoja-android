@@ -37,13 +37,24 @@ data class Group(
      * contradict itself.
      *
      * Blank on documents written before this existed, which
-     * [WeekWindow.parseStartDay] resolves to the device locale's first day.
-     * Those groups were all created under a hardcoded Monday, so a member in a
-     * Sunday locale will see such a group shift by a day once. Accepted: it is
-     * a display window, not stored data, and the alternative is pinning every
-     * existing group to Monday forever.
+     * [WeekWindow.parseStartDay] resolves to **Monday**, the day all of those
+     * groups actually ran on.
+     *
+     * It briefly resolved to the device locale instead, which silently moved
+     * the week for every existing group read from a Sunday-first locale: the
+     * header still said Mon-Sun while the settings screen and the aggregation
+     * had moved to Sunday. The locale is the right default for a group being
+     * created, not for one that already has history.
      */
-    val weekStartDay: String = ""
+    val weekStartDay: String = "",
+    /**
+     * The group's photo, shown wherever the group is listed.
+     *
+     * Blank means no photo, and the gradient tile with the group's initials is
+     * the designed state rather than a fallback. Only the admin can set it:
+     * this field is in the admin-only allowlist in firestore.rules case B.
+     */
+    val photoUrl: String = ""
 ) {
     /** Resolved, with the locale fallback applied. Use this, never the raw field. */
     val startDay: java.time.DayOfWeek get() = WeekWindow.parseStartDay(weekStartDay)

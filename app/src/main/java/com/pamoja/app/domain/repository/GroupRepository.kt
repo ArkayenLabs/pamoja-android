@@ -45,6 +45,9 @@ interface GroupRepository {
      */
     suspend fun removeMember(groupId: String, userId: String): Result<Unit>
 
+    /** Points the group at an already-uploaded photo, or clears it when blank. */
+    suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit>
+
     /**
      * Publishes the cached weekly total for a group the caller is a member of.
      *

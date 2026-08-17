@@ -88,12 +88,26 @@ object WeekWindow {
     /**
      * Parses a stored day name back to a [DayOfWeek].
      *
-     * Falls back to the locale default rather than throwing. A group document
-     * written by a later release, or corrupted, must not be able to crash the
-     * step aggregation for everyone in it.
+     * **Falls back to Monday, not to the locale.** A blank value means the group
+     * was created before this field existed, and every one of those groups ran
+     * on a hardcoded Monday. Resolving them to the reader's locale instead
+     * silently moved the week for existing groups: in a Sunday-first locale
+     * every historical group shifted by a day, changing which steps counted
+     * towards the current week without anyone asking for it.
+     *
+     * The locale is the right default for a group being **created**, which is
+     * what [localeDefault] is for. It is the wrong answer for a group that
+     * already has history.
+     *
+     * Unparseable values land here too, rather than throwing. A document
+     * written by a later release, or corrupted, must not be able to crash step
+     * aggregation for everyone in the group.
      */
     fun parseStartDay(stored: String?): DayOfWeek =
         stored?.let { name ->
             DayOfWeek.entries.firstOrNull { it.name == name }
-        } ?: localeDefault()
+        } ?: LEGACY_START_DAY
+
+    /** What every group used before the start day was configurable. */
+    val LEGACY_START_DAY: DayOfWeek = DayOfWeek.MONDAY
 }

@@ -22,4 +22,23 @@ interface AvatarRepository {
      * account deletion cannot stall on a user who never set a photo.
      */
     suspend fun deleteAvatar(userId: String): Result<Unit>
+
+    /**
+     * Uploads a group's photo and returns its download URL.
+     *
+     * [uploaderId] is part of the storage path, not decoration. Storage rules
+     * cannot read Firestore, so they have no way to ask who a group's admin is;
+     * keying the object on the uploader is what lets them enforce anything at
+     * all. Making the object *become* the group's photo is a separate write to
+     * the group document, which the Firestore rules do gate on admin, so a
+     * member who uploaded their own object could never point the group at it.
+     */
+    suspend fun uploadGroupAvatar(
+        groupId: String,
+        uploaderId: String,
+        imageUri: String,
+    ): Result<String>
+
+    /** Removes a group photo this user uploaded. Succeeds when there was none. */
+    suspend fun deleteGroupAvatar(groupId: String, uploaderId: String): Result<Unit>
 }

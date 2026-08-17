@@ -125,8 +125,11 @@ service cloud.firestore {
                'maxMemberCap',
                'canMembersEditTarget',
                'weekStartDay',
-               'inviteLinkActive'
+               'inviteLinkActive',
+               'photoUrl'
              ])
+          && request.resource.data.get('photoUrl', '') is string
+          && request.resource.data.get('photoUrl', '').size() <= 500
           && request.resource.data.maxMemberCap >= 2
           && request.resource.data.maxMemberCap <= 20
           && request.resource.data.maxMemberCap >= resource.data.memberCount

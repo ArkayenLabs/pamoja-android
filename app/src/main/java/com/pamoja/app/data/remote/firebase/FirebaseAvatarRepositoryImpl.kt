@@ -56,8 +56,42 @@ class FirebaseAvatarRepositoryImpl @Inject constructor(
         Unit
     }
 
+    override suspend fun uploadGroupAvatar(
+        groupId: String,
+        uploaderId: String,
+        imageUri: String,
+    ): Result<String> = avatarCatching {
+        val bytes = withContext(Dispatchers.IO) { compress(imageUri) }
+            ?: throw AppError.Validation(
+                com.pamoja.app.domain.error.ValidationField.AvatarUnreadable
+            )
+
+        val ref = groupAvatarRef(groupId, uploaderId)
+        ref.putBytes(bytes).await()
+        ref.downloadUrl.await().toString()
+    }
+
+    override suspend fun deleteGroupAvatar(
+        groupId: String,
+        uploaderId: String,
+    ): Result<Unit> = avatarCatching {
+        runCatching { groupAvatarRef(groupId, uploaderId).delete().await() }
+        Unit
+    }
+
     private fun avatarRef(userId: String) =
         storage.reference.child("avatars/$userId/profile.jpg")
+
+    /**
+     * Keyed on the uploader as well as the group.
+     *
+     * Storage rules have no access to Firestore, so they cannot check that the
+     * writer is the group's admin. Putting the uploader's UID in the path gives
+     * them something they *can* enforce, and re-uploading replaces rather than
+     * accumulates because the same admin writes the same path each time.
+     */
+    private fun groupAvatarRef(groupId: String, uploaderId: String) =
+        storage.reference.child("group_avatars/$groupId/$uploaderId.jpg")
 
     /**
      * Decodes at a sample size chosen from the source dimensions, so a large

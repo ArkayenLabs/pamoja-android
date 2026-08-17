@@ -1,9 +1,15 @@
 package com.pamoja.app.ui.group
 
+import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -34,12 +40,14 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
 import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
+import com.pamoja.app.ui.components.GroupAvatar
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaConfirmDialog
 import com.pamoja.app.ui.components.PamojaErrorState
@@ -61,6 +70,7 @@ import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.components.rememberSingleClick
 import com.pamoja.app.ui.components.toSnackbarMessage
+import com.pamoja.app.ui.profile.PhotoCropScreen
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaElevation
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -93,8 +103,26 @@ fun EditGroupScreen(
 
     var pendingRemoval by remember { mutableStateOf<Pair<String, String>?>(null) }
 
+    // Same two-step flow as the profile photo: pick, then frame, then upload.
+    var pendingCropUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let { pendingCropUri = it.toString() } }
+
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) onSaved()
+    }
+
+    pendingCropUri?.let { uri ->
+        PhotoCropScreen(
+            sourceUri = uri,
+            onCancel = { pendingCropUri = null },
+            onCropped = { cropped ->
+                pendingCropUri = null
+                viewModel.onPhotoPicked(cropped)
+            },
+        )
+        return
     }
 
     // Failures that still leave a usable screen are a note over it, not a
@@ -148,6 +176,7 @@ fun EditGroupScreen(
                     viewModel = viewModel,
                     onBack = onBack,
                     onRequestRemove = { id, name -> pendingRemoval = id to name },
+                    photoPicker = photoPicker,
                 )
             }
         }
@@ -160,6 +189,7 @@ private fun EditGroupContent(
     viewModel: EditGroupViewModel,
     onBack: () -> Unit,
     onRequestRemove: (String, String) -> Unit,
+    photoPicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
 ) {
     val colors = LocalPamojaColors.current
     val scrollState = rememberScrollState()
@@ -205,6 +235,86 @@ private fun EditGroupContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.textSecondary,
                     )
+                }
+            }
+
+            // ── Photo ────────────────────────────────────────────────────
+            //
+            // The same cropper the profile photo uses. A group avatar is drawn
+            // as a squircle rather than a circle, but the crop is square either
+            // way, so there is nothing to specialise.
+            EditCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(contentAlignment = Alignment.Center) {
+                        GroupAvatar(
+                            name = uiState.name.ifBlank { uiState.group?.name.orEmpty() },
+                            size = 64.dp,
+                            photoUrl = uiState.photoUrl,
+                        )
+                        if (uiState.isUploadingPhoto) {
+                            CircularProgressIndicator(
+                                color = colors.accentPrimary,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(Spacing.x4))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        CardHeading(
+                            title = stringResource(R.string.edit_group_photo),
+                            subtitle = stringResource(R.string.edit_group_photo_sub),
+                        )
+                        Spacer(Modifier.height(Spacing.x3))
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x2)) {
+                            Button(
+                                onClick = {
+                                    photoPicker.launch(
+                                        PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                                        )
+                                    )
+                                },
+                                enabled = uiState.isAdmin &&
+                                    !uiState.isUploadingPhoto &&
+                                    !uiState.isOffline,
+                                shape = PillShape,
+                                contentPadding = PaddingValues(
+                                    horizontal = Spacing.x4,
+                                    vertical = Spacing.x2,
+                                ),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.accentPrimarySubtle,
+                                    contentColor = colors.accentPrimary,
+                                ),
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        if (uiState.photoUrl.isBlank())
+                                            R.string.edit_group_photo_add
+                                        else
+                                            R.string.edit_group_photo_change
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            }
+
+                            if (uiState.photoUrl.isNotBlank() && uiState.isAdmin) {
+                                TextButton(
+                                    onClick = viewModel::onPhotoRemoved,
+                                    enabled = !uiState.isUploadingPhoto && !uiState.isOffline,
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.edit_group_photo_remove),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = colors.statusDanger,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

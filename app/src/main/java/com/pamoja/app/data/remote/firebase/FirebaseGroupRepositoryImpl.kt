@@ -14,6 +14,7 @@ import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.GroupRepository
 import com.pamoja.app.util.InviteLink
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -251,12 +252,20 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         val mapped = e.toFirebaseAppError()
         if (mapped !is AppError.PermissionDenied) return mapped
 
-        val isFull = runCatching {
+        // Not runCatching. That catches Throwable, CancellationException
+        // included, so a join abandoned mid-check would be reported as an
+        // ordinary failure instead of unwinding, and the coroutine that was
+        // cancelled would carry on. Same reasoning as authCatching.
+        val isFull = try {
             groupsCollection.document(groupId).get().await()
                 .toObject(GroupDto::class.java)
                 ?.let { it.memberCount >= it.maxMemberCap }
                 ?: false
-        }.getOrDefault(false)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            false
+        }
 
         return if (isFull) AppError.Conflict("Group is full") else mapped
     }

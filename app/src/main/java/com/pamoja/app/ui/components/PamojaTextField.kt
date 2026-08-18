@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.pamoja.app.R
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -135,7 +137,10 @@ fun PamojaTextField(
                             painter = painterResource(
                                 if (revealed) PamojaIcons.EyeOff else PamojaIcons.Eye
                             ),
-                            contentDescription = if (revealed) "Hide password" else "Show password",
+                            contentDescription = stringResource(
+                                if (revealed) R.string.common_hide_password
+                                else R.string.common_show_password
+                            ),
                             tint = colors.textTertiary,
                             modifier = Modifier.size(20.dp),
                         )

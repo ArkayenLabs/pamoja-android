@@ -240,8 +240,57 @@ service cloud.firestore {
     // ------------------------------------------------------------ memberships
 
     match /memberships/{membershipId} {
-      // Read + query for signed-in users (group member lists, user's groups).
-      allow read: if isSignedIn();
+      // `read` used to cover both of these with a bare isSignedIn(), and `read`
+      // means get AND list. Groups were protected with `allow list: if false`
+      // and users with isSelf(), but this collection was left open, so any
+      // account that had just signed up could run an unfiltered query and read
+      // every user's display name, photo URL and group memberships. Proven on
+      // the emulator on 2026-08-18, not inferred. Left over from the
+      // `allow read, write: if true` this file's header says it replaced.
+
+      // Single document by ID. Deliberately still a bare isSignedIn(), and it
+      // must stay that way: joinGroup() reads the joiner's own membership
+      // before creating it, to make a repeated join idempotent, so this rule is
+      // evaluated against a document that does not exist yet. Any condition
+      // touching resource.data would raise an evaluation error there and break
+      // every join. The ID is "{uid}_{groupId}", so reading one already means
+      // knowing both, which is a far cry from enumerating the collection.
+      allow get: if isSignedIn();
+
+      // Queries. A list rule is NOT evaluated against fetched documents: it is
+      // checked against what the query itself constrains, so it may only refer
+      // to fields the query actually filters on. Referring to any other field
+      // fails the whole query with "Property X is undefined on object", which
+      // is what a first attempt at this rule did to getUserGroups.
+      //
+      // This collection is queried two ways, and each proves membership using
+      // only the field it filters on:
+      //
+      //   - by groupId: getGroupMembers, and the successor search during
+      //     account deletion. Permitted if the caller holds a membership in
+      //     that group
+      //   - by userId: getUserGroups, the profile fan-out, data export and
+      //     account deletion. Permitted only for the caller's own id, so every
+      //     document returned is their own membership
+      //
+      // Each side is guarded with `in` rather than dereferenced directly,
+      // because the field the OTHER query filters on is absent here and reading
+      // it would raise an error instead of yielding false. `in` yields false and
+      // lets the disjunction fall through to the side that applies.
+      //
+      // An unfiltered dump constrains neither field, so both sides are false and
+      // the query is refused. That is the hole this closes.
+      //
+      // The join preview is unaffected: it resolves a group with a get and never
+      // lists members before joining.
+      allow list: if isSignedIn()
+                  && (
+                       ('userId' in resource.data
+                         && resource.data.userId == request.auth.uid)
+                       ||
+                       ('groupId' in resource.data
+                         && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + resource.data.groupId)))
+                     );
 
       // Membership IDs are deterministic "{uid}_{groupId}". Pinning the write
       // to that pattern makes forging a membership for someone else impossible.

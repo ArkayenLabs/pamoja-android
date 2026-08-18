@@ -9,9 +9,13 @@ import org.junit.runner.RunWith
 import org.junit.Assert.*
 
 /**
- * Instrumented test, which will execute on an Android device.
+ * Smoke test that the instrumentation harness reaches the app under test.
  *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * It asserted `com.pamoja.app`, the **namespace**, against a package name that
+ * is the **applicationId**, `com.arkayenlabs.pamoja`. Those two differ on
+ * purpose, so this had failed since the scaffold commit and took
+ * `connectedAndroidTest` down with it: the suite was red before a single real
+ * test existed, which is exactly how a red suite stops meaning anything.
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
@@ -19,6 +23,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.pamoja.app", appContext.packageName)
+        assertEquals("com.arkayenlabs.pamoja", appContext.packageName)
     }
 }

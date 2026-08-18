@@ -44,3 +44,8 @@ graphify-out/
 
 # System crash/error dumps
 *.stackdump
+
+# Firebase emulator logs, written into the repo root by `firebase emulators:start`
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

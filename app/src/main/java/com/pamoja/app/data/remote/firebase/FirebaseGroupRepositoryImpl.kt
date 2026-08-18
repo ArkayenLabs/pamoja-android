@@ -2,6 +2,7 @@ package com.pamoja.app.data.remote.firebase
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pamoja.app.data.remote.model.GroupDto
 import com.pamoja.app.data.remote.model.MembershipDto
@@ -194,24 +195,70 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 )
                 transaction.set(membershipDocRef, membership)
 
-                val newCount = group.memberCount + 1
-                transaction.update(groupDocRef, "memberCount", newCount)
+                // Incremented by the server rather than set to a number worked
+                // out from the read above, which is what makes simultaneous
+                // joins work. Two people joining at the same moment both read
+                // the same count and so both computed the same new value: the
+                // first commit won, and rules case A then refused the second for
+                // not increasing a count it had read correctly a moment earlier.
+                // That failed even with the cap nowhere in sight, so two people
+                // scanning one QR code together could not both get in. An
+                // increment has no dependency on what was read.
+                transaction.update(groupDocRef, "memberCount", FieldValue.increment(1))
 
                 // Close the invite once the group is full.
+                //
+                // Best effort, and knowingly computed from the read, because the
+                // true count after the increment is not something this client
+                // can know. If a simultaneous join is what fills the group, the
+                // link stays marked active while the cap refuses further joins,
+                // and the next join attempt or removal puts it right. The cap is
+                // the real gate; this flag only lets the invite screen explain
+                // itself.
                 //
                 // Reopened by deleteAllUserData when an account leaves and frees
                 // a slot. If any other way of leaving a group is added later, it
                 // must do the same, or a group that fills once can never be
                 // joined again.
-                if (newCount >= group.maxMemberCap) {
+                if (group.memberCount + 1 >= group.maxMemberCap) {
                     transaction.update(groupDocRef, "inviteLinkActive", false)
                 }
             }.await()
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e.toFirebaseAppError())
+            Result.failure(joinFailure(e, groupId))
         }
+    }
+
+    /**
+     * Tells "the group filled up while you were joining" apart from a genuine
+     * permission problem.
+     *
+     * Rules are evaluated against the state at commit time, so whoever loses a
+     * race for the last slot has the cap enforced on them by rules case A rather
+     * than by the check inside the transaction, and the SDK reports that as
+     * PERMISSION_DENIED. The join screen keys its "group is full" dead end off
+     * [AppError.Conflict], so without this the loser of a race is offered a
+     * Retry that can never succeed, for a group that will never have room.
+     *
+     * Re-reads the group to decide, because the same denial is also what a real
+     * permissions fault looks like, and calling that one "full" would be a
+     * different lie. Anything that goes wrong while checking leaves the original
+     * error alone.
+     */
+    private suspend fun joinFailure(e: Exception, groupId: String): AppError {
+        val mapped = e.toFirebaseAppError()
+        if (mapped !is AppError.PermissionDenied) return mapped
+
+        val isFull = runCatching {
+            groupsCollection.document(groupId).get().await()
+                .toObject(GroupDto::class.java)
+                ?.let { it.memberCount >= it.maxMemberCap }
+                ?: false
+        }.getOrDefault(false)
+
+        return if (isFull) AppError.Conflict("Group is full") else mapped
     }
 
     // ── Fix 1: Replace runTransaction with parallel document reads ───────────────

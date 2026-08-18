@@ -96,16 +96,37 @@ service cloud.firestore {
                     && request.resource.data.name.size() <= 100;
 
       allow update: if
-        // --- Case A: a JOIN. A signed-in user increments memberCount.
-        //     The count may only ever INCREASE and may never exceed the cap.
-        //     (Deliberately not pinned to exactly +1: joinGroup() backfills
-        //     legacy groups whose memberCount was 0, jumping straight to the
-        //     real member count. The cap check is what actually matters.)
+        // --- Case A: a JOIN. A signed-in user adds exactly themselves.
+        //
+        //     Pinned to exactly +1 since 2026-08-18. It used to permit ANY
+        //     increase, justified in a comment here by joinGroup() backfilling
+        //     legacy groups whose memberCount was 0. It never did that: no
+        //     backfill has ever existed in the client, in any version. So the
+        //     loosening bought nothing and cost something, because any signed-in
+        //     user holding a groupId could walk the count straight up to the cap
+        //     and close a group they were not even a member of. Group ids come
+        //     from invite links, and `allow get` hands one to anybody signed in.
+        //
+        //     getAfter(), not exists(): the joiner's membership document is
+        //     created in this same commit, so before the commit it is absent and
+        //     exists() would refuse every genuine join. Reading the post-commit
+        //     state is what ties this increment to somebody actually joining
+        //     rather than a bare counter bump. Case D uses exists() because a
+        //     leaver's membership IS still there when their transaction starts.
+        //
+        //     memberCount is written with FieldValue.increment(), so the value
+        //     compared here is computed by the server against the current count,
+        //     never a number the client worked out from an earlier read. That is
+        //     what lets two people join at the same moment and both succeed:
+        //     with absolute writes they both computed the same value, the first
+        //     commit won, and the second was refused for "not increasing" a
+        //     count it had read correctly a moment earlier.
         (
           isSignedIn()
           && onlyChanged(['memberCount', 'inviteLinkActive'])
-          && request.resource.data.memberCount > resource.data.memberCount
+          && request.resource.data.memberCount == resource.data.memberCount + 1
           && request.resource.data.memberCount <= resource.data.maxMemberCap
+          && getAfter(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId)).data.userId == request.auth.uid
         )
         ||
         // --- Case B: the admin edits group settings. adminId can never change.

@@ -142,6 +142,77 @@ class GroupJoinEmulatorTest {
     }
 
     /**
+     * Somebody who is not joining cannot move the member count at all.
+     *
+     * Group ids come out of invite links and `allow get` hands one to anyone
+     * signed in, so "holds a groupId" is not a privilege. Rules case A used to
+     * permit any increase up to the cap, which let a stranger fill a group they
+     * had never joined and shut the invite behind them. It is now pinned to +1
+     * and tied, through getAfter(), to the caller's own membership existing
+     * after the commit.
+     *
+     * Driven through raw Firestore rather than the repository on purpose: the
+     * repository would never make these writes, and the rules are what has to
+     * refuse them.
+     */
+    @Test
+    fun aStrangerCannotMoveTheMemberCount() = runBlocking {
+        val admin = newUser()
+        val group = createGroup(admin, cap = 5)
+        val stranger = newUser()
+        val strangersView = stranger.firestore.collection("groups").document(group.groupId)
+
+        val jumpToCap = runCatching {
+            strangersView.update(mapOf("memberCount" to 5, "inviteLinkActive" to false)).await()
+        }
+        assertTrue(
+            "Filling a group you are not in must be refused, got $jumpToCap",
+            jumpToCap.isFailure,
+        )
+
+        val bumpByOne = runCatching { strangersView.update("memberCount", 2).await() }
+        assertTrue(
+            "Even a single increment needs a membership to go with it, got $bumpByOne",
+            bumpByOne.isFailure,
+        )
+
+        assertEquals(1L, memberCount(admin, group.groupId))
+        assertEquals(true, groupDoc(admin, group.groupId).getBoolean("inviteLinkActive"))
+    }
+
+    /**
+     * Two people joining a group that has plenty of room, at the same moment.
+     *
+     * Nothing is being contended for here: the cap is nowhere near, and both
+     * joins are individually legal. Two people scanning the same QR code
+     * together is an ordinary thing to do, so both must simply succeed and the
+     * count must land on 3. If Firestore retries the loser's transaction
+     * against fresh state, that is exactly what happens.
+     */
+    @Test
+    fun twoUsersJoiningAGroupWithRoom_bothSucceed() = runBlocking {
+        val admin = newUser()
+        val group = createGroup(admin, cap = 10)
+
+        val first = newUser()
+        val second = newUser()
+
+        val results = listOf(first, second).map { joiner ->
+            async(Dispatchers.IO) {
+                FirebaseGroupRepositoryImpl(joiner.firestore)
+                    .joinGroup(group.groupId, joiner.uid)
+            }
+        }.awaitAll()
+
+        assertEquals(
+            "Both joins are legal and the group has room, got $results",
+            2,
+            results.count { it.isSuccess },
+        )
+        assertEquals(3L, memberCount(admin, group.groupId))
+    }
+
+    /**
      * `CHECKLIST.md` §6.2: "Two devices joining the last slot simultaneously →
      * exactly one succeeds (transaction test)".
      *
@@ -150,19 +221,15 @@ class GroupJoinEmulatorTest {
      * concurrency control. Two identities are genuinely signed in at once here,
      * so the race is real rather than two calls from one client.
      *
-     * What is asserted is the invariant that matters: the cap holds, exactly
-     * one racer gets the slot, and the count is left correct.
+     * The cap holds, exactly one racer gets the slot, the count is left
+     * correct, and the loser is told the group is full rather than being
+     * offered a Retry that could never work.
      *
-     * Deliberately NOT asserted: which [AppError] the loser receives. Observed
-     * behaviour is [AppError.PermissionDenied], not [AppError.Conflict], and
-     * that is a real gap rather than a quirk of the test. Both racers read
-     * `memberCount = 2` and pass the in-transaction cap check, so both try to
-     * write 3. The winner commits; at the loser's commit `resource.data` is
-     * already 3, so rules case A fails `memberCount > resource.data.memberCount`
-     * and Firestore rejects it outright instead of aborting for contention and
-     * retrying. The repository's own `Conflict` is therefore never reached.
-     * The join screen keys its "group is full" dead end off `Conflict`, so a
-     * user who loses this race sees a generic, retryable error instead.
+     * That last assertion is the one with history. The loser's cap check is
+     * enforced by rules case A at commit, not by the check inside the
+     * transaction, so the SDK reports PERMISSION_DENIED and `joinGroup()`'s own
+     * Conflict is never thrown. `joinFailure()` re-reads the group and restores
+     * the distinction.
      */
     @Test
     fun twoUsersRacingForTheLastSlot_exactlyOneSucceeds() = runBlocking {
@@ -194,6 +261,12 @@ class GroupJoinEmulatorTest {
             "The other racer must be refused rather than silently counted, got $results",
             1,
             results.count { it.isFailure },
+        )
+        val loserError = results.firstNotNullOf { it.exceptionOrNull() }
+        assertTrue(
+            "The loser must be told the group is full, not handed a retryable " +
+                "error, but was $loserError",
+            loserError is AppError.Conflict,
         )
         assertEquals(3L, memberCount(admin, group.groupId))
         assertEquals(false, groupDoc(admin, group.groupId).getBoolean("inviteLinkActive"))

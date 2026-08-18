@@ -5,7 +5,9 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.pamoja.app.util.BillingIdentity
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -29,6 +31,39 @@ class PamojaApp : Application(), Configuration.Provider {
             .setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
 
         initializeAppCheck()
+
+        // A no-op until an API key exists, which needs the Play merchant chain.
+        // Called here rather than lazily so that the moment a key is added, the
+        // SDK is live on the next launch with nothing else to remember.
+        BillingIdentity.configure(this)
+        trackBillingIdentity()
+    }
+
+    /**
+     * Keeps RevenueCat pointed at whoever is signed in.
+     *
+     * An auth state listener rather than a call in each sign-in path. There are
+     * three ways into this app, Google, phone and email, and a fourth would be
+     * easy to add and easy to forget here; FirebaseAuth.currentUser is already
+     * this app's single source of truth for identity, so the listener is the
+     * one place that cannot fall out of step with it. It also fires at launch
+     * for a session that was already signed in, which is what re-aliases the
+     * SDK after a reinstall.
+     *
+     * Not doing this is a silent failure, not a crash: entitlements attach to
+     * an anonymous per-install id, so a subscription belongs to a phone rather
+     * than a person and Restore Purchases finds nothing on a new device while
+     * the user is still being billed.
+     */
+    private fun trackBillingIdentity() {
+        FirebaseAuth.getInstance().addAuthStateListener { auth ->
+            val user = auth.currentUser
+            if (user != null) {
+                BillingIdentity.onSignedIn(user.uid)
+            } else {
+                BillingIdentity.onSignedOut()
+            }
+        }
     }
 
     /**

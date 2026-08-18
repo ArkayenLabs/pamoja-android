@@ -5,7 +5,7 @@ import com.pamoja.app.data.remote.firebase.FirebaseAvatarRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseGroupRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseStepRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseUserRepositoryImpl
-import com.pamoja.app.data.repository.FreeOnlySubscriptionRepository
+import com.pamoja.app.data.repository.RevenueCatSubscriptionRepository
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.GroupRepository
@@ -59,6 +59,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSubscriptionRepository(
-        impl: FreeOnlySubscriptionRepository
+        impl: RevenueCatSubscriptionRepository
     ): SubscriptionRepository
 }

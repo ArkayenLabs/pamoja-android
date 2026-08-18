@@ -56,6 +56,9 @@ ossLicenses = "0.13.0"
 # Without it a remote avatar means hand-rolling download, decode and caching.
 coil = "2.7.0"
 
+# Billing. The SDK that powers the Shipaton-mandated purchase.
+revenuecat = "10.16.2"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -121,6 +124,9 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+
+# Billing
+revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 
 # Applied through a buildscript classpath rather than the plugins DSL, because
 # this one publishes no plugin marker artifact and so cannot be resolved by id.

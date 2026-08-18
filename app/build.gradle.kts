@@ -18,6 +18,26 @@ val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) load(keystorePropertiesFile.inputStream())
 }
 
+// ── RevenueCat public SDK key, from local.properties (never committed) ──
+//
+// Defaults to empty on purpose. There is no key yet: it cannot exist until the
+// Play merchant chain finishes, and a build that failed without one would block
+// every developer and CI run for a reason unrelated to what they are building.
+//
+// Empty means the SDK is never configured, and RevenueCatSubscriptionRepository
+// reports Free with nothing for sale, which is exactly the behaviour the app
+// has today. Nothing silently grants Premium in its absence.
+//
+// This is RevenueCat's *public* key, which is designed to ship inside the APK.
+// It is kept out of Git anyway, because a key in source is a key that gets
+// copied into the wrong project and is awkward to rotate.
+val localPropertiesFile = rootProject.file("local.properties")
+val localProperties = Properties().apply {
+    if (localPropertiesFile.exists()) load(localPropertiesFile.inputStream())
+}
+val revenueCatApiKey: String =
+    (localProperties["revenueCatApiKey"] as String?)?.trim().orEmpty()
+
 android {
     namespace = "com.pamoja.app"
     compileSdk = 36
@@ -29,6 +49,8 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
     }
 
     signingConfigs {
@@ -130,6 +152,10 @@ dependencies {
     implementation(libs.play.services.code.scanner)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.text.google.fonts)
+
+    // Billing. Pulls Play Billing in transitively; do not add it separately or
+    // the two versions fight.
+    implementation(libs.revenuecat.purchases)
 
 
 

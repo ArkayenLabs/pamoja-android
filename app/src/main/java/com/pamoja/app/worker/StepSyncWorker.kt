@@ -101,6 +101,11 @@ class StepSyncWorker @AssistedInject constructor(
             Log.i(TAG, "Sync success | steps=$todaySteps | duration=${durationMs}ms")
             analyticsManager.logStepsSyncSuccess(user.userId, todaySteps, durationMs)
 
+            // Read BEFORE the timestamp below overwrites it. Zero means no sync
+            // has ever landed, which is the one moment worth telling someone the
+            // thing is actually on. After this line that fact is unrecoverable.
+            val isFirstEverSync = (userPreferences.lastSyncTime.firstOrNull() ?: 0L) == 0L
+
             // Recorded only here, after the write landed. Settings reads this to
             // say when steps last reached the server, so it must never count a
             // run that read Health Connect and then failed to save.
@@ -110,7 +115,7 @@ class StepSyncWorker @AssistedInject constructor(
             publishWeeklyTotals(user.userId, todaySteps, todayStr)
 
             // ── Smart Notifications Trigger ──────────────────────────────
-            checkAndTriggerNotification(user.userId, todaySteps)
+            checkAndTriggerNotification(user.userId, todaySteps, isFirstEverSync)
 
             Result.success()
         } catch (e: Exception) {
@@ -192,7 +197,11 @@ class StepSyncWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun checkAndTriggerNotification(userId: String, todaySteps: Long) {
+    private suspend fun checkAndTriggerNotification(
+        userId: String,
+        todaySteps: Long,
+        isFirstEverSync: Boolean,
+    ) {
         try {
             // Frequency, quiet hours, actionable-window and engagement backoff
             // are all decided inside SmartNotificationEngine, it needs the full
@@ -288,6 +297,25 @@ class StepSyncWorker @AssistedInject constructor(
                 membersData[userIndex - 1].name
             } else null
 
+            // ── Somebody joined since the last sync ──────────────────────────
+            //
+            // Derived from the same stored member count the overtake guard uses,
+            // so the two can never disagree: a change in size means a join, which
+            // suppresses "you were overtaken" and reports the join instead.
+            //
+            // Requires a previous count above zero, or the very first sync would
+            // announce the whole group as new arrivals. The caller is excluded,
+            // because being told you joined is not news.
+            val newMemberName: String? = if (
+                previousMemberCount in 1 until membersData.size
+            ) {
+                memberships
+                    .filter { it.userId != userId }
+                    .maxByOrNull { it.joinedAt }
+                    ?.displayName
+                    ?.takeIf { it.isNotBlank() }
+            } else null
+
             userPreferences.saveLeaderboardPosition(userRank, membersData.size)
 
             val context = NotificationContext(
@@ -305,6 +333,14 @@ class StepSyncWorker @AssistedInject constructor(
                 stepsToOvertakeMemberAhead = stepsToOvertake,
                 memberWhoJustPassedYouName = overtakenBy,
                 goalReachedJustNow = goalReachedJustNow,
+                newMemberName = newMemberName,
+                isFirstEverSync = isFirstEverSync,
+                // currentStreakDays and streakAtRiskToday are deliberately left
+                // at their defaults, which makes the streak branch in
+                // SmartNotificationEngine unreachable. Nothing records a streak:
+                // there is no per-day goal and no history of past weeks to count
+                // from. Wiring this needs that data to exist first, and the
+                // engine branch is kept because it is what will read it.
                 now = LocalTime.now(),
                 today = today.dayOfWeek,
                 hoursSinceLastNotification =

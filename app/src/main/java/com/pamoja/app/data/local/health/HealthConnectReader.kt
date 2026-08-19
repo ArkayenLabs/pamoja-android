@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.Metadata
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -84,4 +86,100 @@ class HealthConnectReader @Inject constructor(
             null
         }
     }
+
+    /**
+     * Today's steps broken down by the app that wrote them.
+     *
+     * Diagnostic, for the debug build only. It exists because Pamoja and Google
+     * Fit can show different totals for the same day and there is no way to tell
+     * from the app which explanation is true:
+     *
+     *  - **Two writers.** Health Connect is a shared store. If a watch, an OEM
+     *    health app and Fit all record the same walk, [readTodaySteps] returns
+     *    the sum across them while Fit's own screen shows only Fit's share.
+     *    Nothing is broken; the two numbers are measuring different things.
+     *  - **A miscount.** Something genuinely inflates the total, in which case
+     *    the aggregate will not reconcile against the per-record sum.
+     *
+     * Both possibilities look identical from a single number, so this returns
+     * the aggregate *and* the raw records side by side. If they disagree, that
+     * gap is the bug. If they agree but several origins appear, the difference
+     * against Fit is expected.
+     *
+     * This is also the groundwork for trusting only recognised writers and
+     * rejecting typed-in steps, which any competitive or paid feature needs
+     * before its leaderboard can be believed.
+     */
+    suspend fun readTodayStepsBySource(): StepSourceBreakdown? {
+        return try {
+            if (!isAvailable()) return null
+            val client = HealthConnectClient.getOrCreate(context)
+            if (!client.permissionController.getGrantedPermissions()
+                    .containsAll(REQUIRED_PERMISSIONS)) return null
+
+            val today     = LocalDate.now()
+            val startTime = today.atStartOfDay(ZoneId.systemDefault()).toInstant()
+            val endTime   = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+            val range     = TimeRangeFilter.between(startTime, endTime)
+
+            val aggregate = client.aggregate(
+                AggregateRequest(
+                    metrics         = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = range,
+                )
+            )[StepsRecord.COUNT_TOTAL] ?: 0L
+
+            val records = client.readRecords(
+                ReadRecordsRequest(
+                    recordType      = StepsRecord::class,
+                    timeRangeFilter = range,
+                )
+            ).records
+
+            val sources = records
+                .groupBy { it.metadata.dataOrigin.packageName }
+                .map { (packageName, rows) ->
+                    StepSource(
+                        packageName = packageName,
+                        steps       = rows.sumOf { it.count },
+                        recordCount = rows.size,
+                        manualCount = rows.count {
+                            it.metadata.recordingMethod == Metadata.RECORDING_METHOD_MANUAL_ENTRY
+                        },
+                    )
+                }
+                .sortedByDescending { it.steps }
+
+            StepSourceBreakdown(
+                aggregateTotal = aggregate,
+                rawRecordTotal = records.sumOf { it.count },
+                sources        = sources,
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
+
+/** One app's contribution to today's steps. See [HealthConnectReader.readTodayStepsBySource]. */
+data class StepSource(
+    val packageName: String,
+    val steps: Long,
+    val recordCount: Int,
+    /** Records the user typed in by hand rather than a device recording them. */
+    val manualCount: Int,
+)
+
+/**
+ * Today's steps, as the aggregate and as the raw records behind it.
+ *
+ * [aggregateTotal] is what the app actually syncs. [rawRecordTotal] is the plain
+ * sum of every record. They are expected to differ when writers overlap, because
+ * aggregation de-duplicates and a plain sum does not, so the gap between them is
+ * the measurement worth looking at rather than either number alone.
+ */
+data class StepSourceBreakdown(
+    val aggregateTotal: Long,
+    val rawRecordTotal: Long,
+    val sources: List<StepSource>,
+)

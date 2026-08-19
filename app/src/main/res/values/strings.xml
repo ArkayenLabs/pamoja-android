@@ -439,6 +439,8 @@
     <string name="settings_debug">DEBUG</string>
     <string name="settings_debug_notifications_title">Send test notifications</string>
     <string name="settings_debug_notifications_subtitle">One per channel, bypassing quiet hours and throttling</string>
+    <string name="settings_debug_step_sources_title">Step sources today</string>
+    <string name="settings_debug_step_sources_subtitle">Which apps wrote steps today, and whether the totals reconcile</string>
     <string name="settings_version">Pamoja v%1$s</string>
     <string name="settings_title">Settings</string>
     <string name="settings_back_desc">Back</string>

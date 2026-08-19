@@ -1,289 +1,252 @@
 # Pamoja
 
-**Pamoja** is an Android step-tracking app that lets users form groups and work toward a shared weekly step goal together. Steps are read from [Health Connect](https://developer.android.com/health-and-fitness/guides/health-connect) and synced to the cloud via Firebase, so every group member's progress is visible in a real-time leaderboard.
+Pamoja is an Android app for walking together. A small group sets one weekly step
+goal and works toward it as a team, with every member's contribution visible to
+the rest. Steps are read from
+[Health Connect](https://developer.android.com/health-and-fitness/guides/health-connect)
+on the member's own device and synced through Firebase, so the shared total stays
+current without anyone having to report anything.
 
-> *"Pamoja"* — Swahili for *"together"*.
+*Pamoja* is Swahili for *together*.
 
----
+The product is built around a shared goal rather than a ranking. Group size is
+small by design, the week is a fixed window every member agrees on, and the
+screens are written so that the person contributing least is not the person the
+interface points at.
+
+This repository is the Android client. It is pre-release and has not yet been
+published to Google Play.
 
 ## Features
 
-- **Anonymous Authentication** — Users sign in anonymously via Firebase Auth. No email/password required; the Firebase SDK persists the session across app restarts and reinstalls.
-- **Profile Setup** — Onboarding collects the user's name, age, height, and weight.
-- **Health Connect Integration** — Reads daily step counts from Google Health Connect (built-in on Android 14+, available via Play Store on Android 9–13). No foreground service or hardware sensor registration needed.
-- **Group Creation & Invite Links** — Users create walking groups with a configurable weekly step target and member cap (default 70,000 steps/week, max 10 members). A `pamoja://join/{groupId}` invite link is generated for sharing.
-- **Join via Invite Link** — Members paste an invite link to join a group. The link auto-deactivates when the group reaches its member cap.
-- **Real-time Leaderboard** — The group detail screen shows each member's today-steps and weekly-steps, ranked by today's count, with a combined weekly total and progress toward the group target.
-- **Admin Controls** — Group admins can update the weekly step target. Non-admin members can also edit the target if the group's `canMembersEditTarget` flag is enabled.
-- **Background Step Sync** — A `WorkManager` periodic worker runs every 30 minutes (when network is available and battery is not low) to read today's steps from Health Connect and write them to Firestore.
-- **Play In-App Update** — Supports flexible in-app updates via the Play Core library for seamless version upgrades during closed testing.
-- **Dark Mode Only** — Premium dark theme with an indigo accent palette, custom Outfit typography, and edge-to-edge display.
+**Groups and membership**
 
----
+- Create a group with a weekly step target, a member cap between 2 and 20, and a
+  chosen start day for the week
+- Join by invite link, by QR code in person, or by pasting a code
+- Member cap enforced atomically, so two people joining the last slot at the same
+  moment cannot both get in
+- Admin controls for the group name, goal, cap, week start day, photo, and member
+  removal, with handover when an admin leaves
 
-## Tech Stack
+**Steps and progress**
 
-| Layer | Technology |
-|---|---|
-| **Language** | Kotlin |
-| **UI** | Jetpack Compose + Material 3 |
-| **Navigation** | Compose Navigation |
-| **Architecture** | MVVM + Clean Architecture (domain / data / ui layers) |
-| **Dependency Injection** | Hilt (Dagger) |
-| **Authentication** | Firebase Auth (anonymous) |
-| **Database** | Cloud Firestore (real-time listeners via `callbackFlow`) |
-| **Messaging** | Firebase Cloud Messaging (FCM) — dependency included |
-| **Health Data** | Health Connect (`androidx.health.connect:connect-client`) |
-| **Background Work** | WorkManager with Hilt worker injection |
-| **Local Storage** | Jetpack DataStore Preferences |
-| **In-App Updates** | Play In-App Update KTX |
-| **Typography** | Outfit font family (bundled TTF files) |
-| **Min SDK** | 26 (Android 8.0) |
-| **Target / Compile SDK** | 36 |
+- Daily step totals read from Health Connect, aggregated across every app that
+  writes them, with no foreground service and no hardware sensor registration
+- A background sync scheduled through WorkManager, plus an opportunistic sync
+  when the app is resumed
+- One shared weekly total per group, over a window every member shares, plus a
+  per-member leaderboard showing today and the week so far
+- Offline states that say when a figure was last known to be true, rather than
+  presenting a stale number as current
 
----
+**Account and data**
 
-## Project Structure
+- Sign in with Google, a phone number and SMS code, or email and password
+- Profile with an optional photo, and a per-user setting controlling whether that
+  photo is visible to other group members
+- Export every piece of data the app holds about you, as readable JSON, saved
+  wherever you choose through the system document picker
+- Delete your account and all associated data, including memberships, step
+  history, and stored images
 
-```
-pamoja-android/
-├── app/
-│   ├── src/main/
-│   │   ├── java/com/pamoja/app/
-│   │   │   ├── MainActivity.kt          # Entry point — session check, edge-to-edge, in-app update
-│   │   │   ├── Pamoja.kt                # Application class — HiltAndroidApp, WorkManager config
-│   │   │   │
-│   │   │   ├── data/                    # Data layer
-│   │   │   │   ├── local/
-│   │   │   │   │   ├── health/
-│   │   │   │   │   │   ├── HealthConnectReader.kt    # Reads today's steps from Health Connect
-│   │   │   │   │   │   ├── StepCounterManager.kt     # Hardware step counter manager (legacy)
-│   │   │   │   │   │   ├── StepCounterService.kt     # Step counter service (legacy)
-│   │   │   │   │   │   └── StepReader.kt             # Step reader abstraction (legacy)
-│   │   │   │   │   └── preferences/
-│   │   │   │   │       └── UserPreferences.kt        # DataStore-backed user preferences
-│   │   │   │   ├── remote/
-│   │   │   │   │   ├── firebase/
-│   │   │   │   │   │   ├── FirebaseAuthRepositoryImpl.kt
-│   │   │   │   │   │   ├── FirebaseGroupRepositoryImpl.kt
-│   │   │   │   │   │   ├── FirebaseStepRepositoryImpl.kt
-│   │   │   │   │   │   └── FirebaseUserRepositoryImpl.kt
-│   │   │   │   │   └── model/           # Firestore DTOs with toDomain() / fromDomain()
-│   │   │   │   │       ├── GroupDto.kt
-│   │   │   │   │       ├── MembershipDto.kt
-│   │   │   │   │       ├── StepEntryDto.kt
-│   │   │   │   │       └── UserDto.kt
-│   │   │   │   └── repository/          # (empty — repository impls are in remote/firebase)
-│   │   │   │
-│   │   │   ├── di/                      # Hilt modules
-│   │   │   │   ├── AppModule.kt         # FirebaseAuth, Firestore, UserPreferences, StepCounterManager
-│   │   │   │   ├── RepositoryModule.kt  # Binds repository interfaces → Firebase implementations
-│   │   │   │   └── WorkerModule.kt      # Provides WorkManager instance
-│   │   │   │
-│   │   │   ├── domain/                  # Domain layer (pure Kotlin)
-│   │   │   │   ├── model/
-│   │   │   │   │   ├── Group.kt         # groupId, name, adminId, weeklyTarget, maxMemberCap, inviteLink
-│   │   │   │   │   ├── Membership.kt    # userId, groupId, role, canEditTarget
-│   │   │   │   │   ├── StepEntry.kt     # userId, stepCount, date
-│   │   │   │   │   └── User.kt          # userId, name, photoUrl, age, height, weight, deviceToken
-│   │   │   │   ├── repository/          # Repository interfaces
-│   │   │   │   │   ├── AuthRepository.kt
-│   │   │   │   │   ├── GroupRepository.kt
-│   │   │   │   │   ├── StepRepository.kt
-│   │   │   │   │   └── UserRepository.kt
-│   │   │   │   └── usecase/             # Business logic use cases
-│   │   │   │       ├── AuthUseCases.kt      # SignUp, SignIn, SignInAnonymously, SignOut, GetCurrentUser, IsUserLoggedIn
-│   │   │   │       ├── GroupUseCases.kt     # CreateGroup, GetGroup, JoinGroup, GetGroupMembers, GetUserGroups, UpdateWeeklyTarget, GetMembership
-│   │   │   │       ├── StepUseCases.kt      # SyncTodaySteps, GetGroupStepsForWeek, GetStepsForUser
-│   │   │   │       └── UserUseCases.kt      # CreateUser, GetUser, UpdateUser, SaveDeviceToken
-│   │   │   │
-│   │   │   ├── ui/                      # Presentation layer
-│   │   │   │   ├── Navigation.kt        # Screen sealed class (route definitions)
-│   │   │   │   ├── PamojaNavGraph.kt    # Compose NavHost wiring all screens
-│   │   │   │   ├── CreateOrJoinGroupScreen.kt
-│   │   │   │   ├── CreateOrJoinViewModel.kt
-│   │   │   │   ├── components/          # (shared composables — currently empty)
-│   │   │   │   ├── onboarding/
-│   │   │   │   │   ├── WelcomeScreen.kt
-│   │   │   │   │   ├── SignInScreen.kt
-│   │   │   │   │   ├── SignInViewModel.kt
-│   │   │   │   │   ├── ProfileSetupScreen.kt
-│   │   │   │   │   ├── OnboardingViewModel.kt
-│   │   │   │   │   ├── HealthConnectScreen.kt
-│   │   │   │   │   └── HealthConnectViewModel.kt
-│   │   │   │   ├── home/
-│   │   │   │   │   ├── HomeScreen.kt
-│   │   │   │   │   └── HomeViewModel.kt
-│   │   │   │   ├── group/
-│   │   │   │   │   ├── CreateGroupScreen.kt
-│   │   │   │   │   ├── CreateGroupViewModel.kt
-│   │   │   │   │   ├── GroupScreen.kt
-│   │   │   │   │   └── GroupViewModel.kt
-│   │   │   │   ├── invite/
-│   │   │   │   │   ├── InviteScreen.kt
-│   │   │   │   │   └── InviteViewModel.kt
-│   │   │   │   └── theme/
-│   │   │   │       ├── Color.kt         # Design system color tokens (indigo, green, amber, etc.)
-│   │   │   │       ├── Theme.kt         # Dark-only Material 3 color scheme
-│   │   │   │       └── Type.kt          # Outfit font family + full Material 3 type scale
-│   │   │   │
-│   │   │   ├── util/
-│   │   │   │   └── WorkManagerScheduler.kt  # Enqueues/cancels periodic step-sync work
-│   │   │   │
-│   │   │   └── worker/
-│   │   │       └── StepSyncWorker.kt    # Periodic worker — reads HC steps, writes to Firestore
-│   │   │
-│   │   ├── res/
-│   │   │   ├── drawable/                # Adaptive icon foreground/background
-│   │   │   ├── font/                    # Outfit TTF weights (Light, Regular, Medium, SemiBold, Bold)
-│   │   │   ├── mipmap-*/               # Launcher icons (all densities)
-│   │   │   ├── values/                  # strings.xml, colors.xml, themes.xml
-│   │   │   └── xml/                     # Backup rules, data extraction rules
-│   │   │
-│   │   └── AndroidManifest.xml
-│   │
-│   ├── build.gradle.kts                 # App-level build config (signing, minify, dependencies)
-│   ├── proguard-rules.pro               # R8/ProGuard keep rules for Firebase, Hilt, HC, etc.
-│   └── google-services.json             # Firebase project config
-│
-├── build.gradle.kts                     # Root-level plugins
-├── settings.gradle.kts                  # Project name "Pamoja", single :app module
-├── gradle/
-│   └── libs.versions.toml              # Version catalog (AGP 8.13.2, Kotlin 2.0.21, Compose BOM 2025.05.00, etc.)
-├── gradle.properties
-├── gradlew / gradlew.bat
-└── keystore.properties                  # Signing credentials (git-ignored)
-```
+**Notifications**
 
----
+- Local notifications chosen by an on-device engine that weighs quiet hours,
+  frequency, muted categories, and how recently you last engaged
+- An in-app activity centre recording what was sent, so a missed notification can
+  still be caught up on
 
 ## Architecture
 
-The project follows **Clean Architecture** with three distinct layers:
+Three layers, with dependencies pointing inward:
 
 ```
-┌─────────────────────────────────────────┐
-│  UI Layer (Compose screens + ViewModels)│
-│  ↕ exposes StateFlow<UiState>           │
-├─────────────────────────────────────────┤
-│  Domain Layer (Use Cases + Models)      │
-│  ↕ pure Kotlin, no Android imports      │
-├─────────────────────────────────────────┤
-│  Data Layer (Firebase repos + DTOs)     │
-│  ↕ Firestore, Health Connect, DataStore │
-└─────────────────────────────────────────┘
+UI (Compose screens, ViewModels)
+        |
+        v
+Domain (use cases, models, repository interfaces)
+        |
+        v
+Data (Firebase, Health Connect, DataStore)
 ```
 
-- **Domain layer** defines repository interfaces and use cases with input validation.
-- **Data layer** implements those interfaces with Firebase and Health Connect, using DTO ↔ domain mappers.
-- **UI layer** uses Hilt-injected ViewModels that expose `StateFlow<UiState>` to Compose screens.
-- **Dependency Injection** via Hilt wires everything together across three modules: `AppModule`, `RepositoryModule`, and `WorkerModule`.
+- The domain layer is pure Kotlin. No Android imports, no Firebase imports, and
+  no user-facing text.
+- The data layer implements the domain's repository interfaces and maps Firebase
+  errors to a domain error type at its boundary, so nothing above it handles a
+  `FirebaseFirestoreException`.
+- ViewModels call use cases and expose immutable state as `StateFlow<UiState>`.
+  Screens receive lambdas for navigation and never touch a `NavController`.
 
----
+Every fallible call returns `Result<T>`, and failures are a sealed `AppError`
+type matched on by class rather than by message text. User-facing wording for
+each error lives in the UI layer, because copy is a design decision.
 
-## Navigation Flow
+Real-time data (group members, the user's groups) is exposed as `Flow` backed by
+Firestore snapshot listeners.
+
+## Tech stack
+
+| Area | Choice |
+|---|---|
+| Language | Kotlin 2.0.21 |
+| UI | Jetpack Compose, Material 3 |
+| Architecture | Clean Architecture with MVVM |
+| Dependency injection | Hilt 2.56.1 |
+| Auth | Firebase Auth (Google, phone, email) |
+| Database | Cloud Firestore |
+| Health data | Health Connect 1.1.0-rc01 |
+| Background work | WorkManager with Hilt worker injection |
+| Local storage | DataStore Preferences |
+| Billing | RevenueCat 10.16.2, integrated but not yet active |
+| Crash and analytics | Firebase Crashlytics, Firebase Analytics |
+| Integrity | Firebase App Check with Play Integrity |
+| Type | Bricolage Grotesque, Plus Jakarta Sans, IBM Plex Mono, via Google Fonts |
+| Min SDK | 26 (Android 8.0) |
+| Compile and target SDK | 36 |
+
+The build uses a single `:app` module and a Gradle version catalog at
+`gradle/libs.versions.toml`. The `namespace` (`com.pamoja.app`) and the
+`applicationId` (`com.arkayenlabs.pamoja`) differ deliberately.
+
+## Project structure
 
 ```
-Welcome ──→ ProfileSetup ──→ HealthConnect ──→ Home
-   │                                            │
-   └──→ SignIn ────────────────────────────→ Home
-                                                │
-                                       ┌────────┴────────┐
-                                       ↓                  ↓
-                                  CreateGroup       GroupScreen
-                                       │            (leaderboard)
-                                       ↓
-                                  InviteScreen
-                                       │
-                                       ↓
-                                  GroupScreen
+app/src/main/java/com/pamoja/app/
+  data/
+    local/health/          Health Connect reader
+    local/preferences/     DataStore
+    remote/firebase/       Repository implementations
+    remote/model/          Firestore DTOs
+  di/                      Hilt modules
+  domain/
+    error/                 AppError
+    model/                 Group, Membership, StepEntry, User, WeekWindow
+    repository/            Interfaces
+    usecase/               Use cases, grouped by entity
+  ui/
+    theme/                 Design tokens, light and dark
+    components/            Shared composables
+    <feature>/             One package per feature, screen plus ViewModel
+  worker/                  StepSyncWorker
 ```
 
-- **Welcome** → first-time users go to profile setup; returning users go to sign-in.
-- **Home** → lists all groups the user belongs to; provides options to create or join a group.
-- **GroupScreen** → real-time leaderboard with today's and weekly step counts, progress ring, admin controls.
+Firestore security rules and indexes live at the repository root in
+`firestore.rules` and `firestore.indexes.json`. Cloud Storage rules are in
+`storage.rules`.
 
----
+## Data model
 
-## Firestore Collections
-
-| Collection | Document ID | Key Fields |
+| Collection | Document ID | Purpose |
 |---|---|---|
-| `users` | `{userId}` | `name`, `age`, `height`, `weight`, `deviceToken` |
-| `groups` | `{groupId}` | `name`, `adminId`, `weeklyTarget`, `maxMemberCap`, `inviteLink`, `inviteLinkActive` |
-| `memberships` | `{userId}_{groupId}` | `userId`, `groupId`, `role` (`admin`/`member`), `canEditTarget` |
-| `steps` | `{userId}_{date}` | `userId`, `stepCount`, `date` (ISO format `YYYY-MM-DD`) |
+| `users` | `{userId}` | Private profile. Readable only by its owner. |
+| `groups` | `{groupId}` | Group settings, member count, cached weekly total. |
+| `memberships` | `{userId}_{groupId}` | Who is in which group, with the display name, photo, and step totals the leaderboard reads. |
+| `steps` | `{userId}_{date}` | One row per person per day. Readable only by its owner. |
 
-> **Note:** The `steps` collection requires a composite Firestore index on `userId` + `date` for the weekly group query. When first run, check Logcat for the auto-generated index creation link.
+Some fields are denormalised onto the membership document on purpose. A member's
+display name, photo, and step totals are copied there so that rendering a
+leaderboard is a single query rather than one read per member, and so that the
+step history itself never has to be readable by anyone other than its owner.
 
----
+## Security
 
-## Prerequisites
+Access is enforced by Firestore and Cloud Storage rules, not by the client. The
+rules are the source of truth and the client is written to satisfy them.
 
-- **Android Studio** Ladybug (2024.3.1) or newer
-- **JDK 11+**
-- **Android SDK 36** (compile & target SDK)
-- **A Firebase project** with:
-  - Anonymous Authentication enabled
-  - Cloud Firestore database created
-  - `google-services.json` placed in `app/`
-- **Health Connect** app installed on the test device (built-in on Android 14+)
+- A user's profile and raw step history are readable only by that user
+- Group documents can be read by ID, which the invite flow needs, but cannot be
+  listed, so the set of groups cannot be enumerated
+- Membership queries are permitted only where the caller belongs to the group
+  being queried
+- Step entries and published totals are bounded, so an implausible figure cannot
+  be written to a leaderboard
+- Joining a group is a transaction whose member cap is enforced by the rules as
+  well as by the client
 
----
+Rules changes are exercised against the Firebase emulator by the instrumented
+test suite before being deployed. See [Testing](#testing).
 
-## Getting Started
+## Development environment
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/ArkayenLabs/pamoja-android.git
-   cd pamoja-android
-   ```
+- Android Studio Ladybug (2024.3.1) or newer
+- JDK 17 for the Gradle toolchain, with the project compiling to JVM target 11
+- Android SDK 36
+- Node.js, for the Firebase CLI used by the emulator-backed tests
 
-2. **Configure Firebase:**
-   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Enable **Anonymous** sign-in under Authentication → Sign-in method
-   - Create a **Cloud Firestore** database
-   - Download `google-services.json` and place it in the `app/` directory
+A Firebase project is required, with Authentication (Google, phone, and
+email/password), Cloud Firestore, and Cloud Storage enabled. Place its
+`google-services.json` in `app/`. That file is not committed.
 
-3. **Set up signing (release builds):**
-   Create a `keystore.properties` file in the project root:
-   ```properties
-   storeFile=path/to/your/keystore.jks
-   storePassword=your_store_password
-   keyAlias=your_key_alias
-   keyPassword=your_key_password
-   ```
+## Build
 
-4. **Build and run:**
-   ```bash
-   ./gradlew assembleDebug
-   ```
-   Or open the project in Android Studio and run on a device/emulator with API 26+.
+```bash
+./gradlew assembleDebug
+```
 
-5. **Create the Firestore composite index:**
-   On first run, the group steps query will log an index creation URL in Logcat. Click the link to create the required composite index in the Firebase Console.
+A release build additionally needs a `keystore.properties` in the repository
+root:
 
----
+```properties
+storeFile=path/to/keystore.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
 
-## Build Variants
+```bash
+./gradlew assembleRelease
+```
 
-| Variant | Minify | Shrink Resources | Signing | Notes |
-|---|---|---|---|---|
-| `debug` | ❌ | ❌ | Debug keystore | Fast builds, readable stack traces |
-| `release` | ✅ | ✅ | Release keystore | R8 full mode with custom ProGuard rules |
+Release builds run R8 with resource shrinking. Debug and release use different
+App Check providers, selected by build variant rather than at runtime, so the
+debug provider cannot reach a release build.
 
----
+The RevenueCat public SDK key is read from `local.properties` as
+`revenueCatApiKey` and defaults to empty. With no key the SDK is never
+configured and every account resolves to the free tier, so the project builds
+and runs without one.
 
-## Key Design Decisions
+## Testing
 
-- **Anonymous auth over email/password:** Eliminates onboarding friction. Firebase persists the anonymous token across app restarts, so `FirebaseAuth.currentUser` is the single source of truth for session state — not DataStore.
-- **Health Connect over raw sensors:** No foreground service needed. Battery-efficient, works reliably across OEM battery optimizers (Samsung, Xiaomi, OnePlus), and data persists even when the app isn't running.
-- **WorkManager for background sync:** Periodic 30-minute sync with network and battery constraints. Uses `KEEP` policy so re-entering the group screen doesn't reset the schedule.
-- **Firestore real-time listeners:** Group members and step data use `callbackFlow`-based snapshot listeners so the leaderboard updates live without manual refresh.
-- **Dark-mode only:** Premium feel with an indigo accent palette, custom Outfit typography, and near-black backgrounds.
+Unit tests run on the JVM and need nothing else:
 
----
+```bash
+./gradlew test
+```
+
+The instrumented suite is emulator-backed and uses no mocks. It drives the real
+repository code against a real Firestore emulator loading this repository's real
+`firestore.rules`, signed in as real Firebase Auth users, because several
+invariants are enforced jointly by the client and the rules and testing either
+half against a stand-in for the other proves very little.
+
+Start the emulators first, then run the suite against a connected device or AVD:
+
+```bash
+firebase emulators:start --only auth,firestore
+```
+
+```bash
+./gradlew connectedDebugAndroidTest
+```
+
+These cover the member cap under genuine concurrency, weekly step aggregation and
+its window boundaries, and who is allowed to read each collection.
+
+Lint runs clean of errors:
+
+```bash
+./gradlew lint
+```
+
+## Status
+
+Pre-release. The app builds in debug and release, the test suites pass, and the
+Firestore rules are deployed. It has not been published to Google Play, and
+in-app purchases are integrated but not yet enabled.
 
 ## License
 
-*No license file included yet. Please add one before distributing.*
+No open source license has been applied to this repository.

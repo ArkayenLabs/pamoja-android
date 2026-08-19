@@ -69,34 +69,6 @@ class FirebaseStepRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun getGroupStepsForWeek(
-        memberIds: List<String>,
-        startDate: String,
-        endDate: String
-    ): Flow<List<StepEntry>> = callbackFlow {
-        if (memberIds.isEmpty()) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
-
-        val listener = stepsCollection
-            .whereIn("userId", memberIds)
-            .whereGreaterThanOrEqualTo("date", startDate)
-            .whereLessThanOrEqualTo("date", endDate)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                val entries = snapshot?.documents?.mapNotNull {
-                    it.toObject(StepEntryDto::class.java)?.toDomain()
-                } ?: emptyList()
-                trySend(entries)
-            }
-        awaitClose { listener.remove() }
-    }
-
     override suspend fun syncTodaySteps(userId: String): Result<Unit> {
         return try {
             val todaySteps = healthConnectReader.readTodaySteps()

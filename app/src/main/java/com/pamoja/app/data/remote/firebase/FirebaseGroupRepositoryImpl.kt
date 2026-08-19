@@ -316,6 +316,51 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    override fun getGroupMemberships(groupId: String): Flow<List<Membership>> = callbackFlow {
+        val listener = membershipsCollection
+            .whereEqualTo("groupId", groupId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
+
+                trySend(
+                    snapshot.documents.mapNotNull {
+                        it.toObject(MembershipDto::class.java)?.toDomain()
+                    }
+                )
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun publishMyWeeklySteps(
+        groupId: String,
+        userId: String,
+        steps: Long,
+        weekStart: String,
+        todaySteps: Long,
+        todayDate: String,
+    ): Result<Unit> {
+        return try {
+            membershipsCollection
+                .document("${userId}_${groupId}")
+                .update(
+                    mapOf(
+                        "weeklySteps" to steps,
+                        "weekStart" to weekStart,
+                        "todaySteps" to todaySteps,
+                        "todayDate" to todayDate,
+                    )
+                )
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
     override suspend fun getMembership(userId: String, groupId: String): Result<Membership> {
         return try {
             val snapshot = membershipsCollection

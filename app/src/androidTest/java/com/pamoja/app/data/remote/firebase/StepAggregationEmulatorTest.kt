@@ -3,29 +3,37 @@ package com.pamoja.app.data.remote.firebase
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pamoja.app.data.local.health.HealthConnectReader
+import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.StepEntry
 import com.pamoja.app.domain.model.WeekWindow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.util.UUID
 
 /**
- * Weekly step aggregation, exercised against a real Firestore emulator.
+ * Weekly step aggregation, and who is allowed to see it.
  *
- * `CHECKLIST.md` §6.3 names this as a data-corruption risk: the combined group
- * total is the number the whole product is about, and it is assembled from a
- * compound query (`whereIn` on member ids, plus a range over `date`) whose
- * boundaries are easy to get wrong and impossible to eyeball.
+ * `CHECKLIST.md` §6.3 names this as a data-corruption risk: the combined total
+ * is the number the whole product is about.
  *
- * The window itself comes from [WeekWindow], which has its own unit tests.
- * What is checked here is that the query built from it selects exactly the
- * right documents out of a database that also contains the wrong ones.
+ * Its shape changed on 2026-08-19. The leaderboard used to query every member's
+ * step documents, and that query could not be secured at all: a Firestore list
+ * rule is checked against what the query constrains, and it named no group, so
+ * no rule could permit it without permitting any signed-in account to read every
+ * user's step history. Each member now publishes their own totals onto their own
+ * membership and the leaderboard reads those.
+ *
+ * So these tests come in two halves: the totals still add up, and the steps
+ * collection is now private.
  *
  * Requires the emulators, see [FirebaseEmulator].
  */
@@ -34,7 +42,6 @@ class StepAggregationEmulatorTest {
 
     private val clients = mutableListOf<FirebaseEmulator.Client>()
 
-    /** Real reader, never used by the paths under test, but the constructor wants one. */
     private val healthConnectReader by lazy {
         HealthConnectReader(InstrumentationRegistry.getInstrumentation().targetContext)
     }
@@ -53,38 +60,41 @@ class StepAggregationEmulatorTest {
     private suspend fun newUser(): FirebaseEmulator.Client =
         FirebaseEmulator.signIn().also { clients += it }
 
-    private fun repositoryFor(client: FirebaseEmulator.Client) =
+    private fun stepsOf(client: FirebaseEmulator.Client) =
         FirebaseStepRepositoryImpl(client.firestore, healthConnectReader)
 
-    /** Each user writes their own steps, which is the only thing the rules allow. */
+    private fun groupsOf(client: FirebaseEmulator.Client) =
+        FirebaseGroupRepositoryImpl(client.firestore)
+
     private suspend fun record(client: FirebaseEmulator.Client, date: LocalDate, steps: Long) {
-        repositoryFor(client)
-            .saveStepEntry(StepEntry(client.uid, steps, date.toString()))
-            .getOrThrow()
+        stepsOf(client).saveStepEntry(StepEntry(client.uid, steps, date.toString())).getOrThrow()
     }
 
-    private suspend fun weekEntries(
-        reader: FirebaseEmulator.Client,
-        memberIds: List<String>,
-        startDay: DayOfWeek,
-        today: LocalDate,
-    ): List<StepEntry> =
-        repositoryFor(reader)
-            .getGroupStepsForWeek(
-                memberIds,
-                WeekWindow.startOf(startDay, today),
-                WeekWindow.endOf(startDay, today),
-            )
-            .first()
+    private suspend fun createGroup(admin: FirebaseEmulator.Client): Group {
+        val group = Group(
+            groupId = UUID.randomUUID().toString(),
+            name = "Aggregation group",
+            adminId = admin.uid,
+            weeklyTarget = 70_000,
+            maxMemberCap = 10,
+            memberCount = 1,
+            createdAt = System.currentTimeMillis(),
+        )
+        groupsOf(admin).createGroup(group).getOrThrow()
+        return group
+    }
+
+    // ── The totals still add up ──────────────────────────────────────────────
 
     /**
-     * The week's edges are inclusive and its neighbours are not.
+     * A member's own week, which is what each device sums before publishing.
      *
-     * An off-by-one at either end silently moves a day's steps between weeks,
-     * which shows up as a total that shrinks overnight for no visible reason.
+     * The window's edges are inclusive and its neighbours are not. An off-by-one
+     * at either end silently moves a day's steps between weeks, which shows up
+     * as a total that shrinks overnight for no visible reason.
      */
     @Test
-    fun theWindowIncludesItsEdgesAndExcludesTheDaysEitherSide() = runBlocking {
+    fun myWeekIncludesItsEdgesAndExcludesTheDaysEitherSide() = runBlocking {
         val user = newUser()
         val today = LocalDate.of(2026, 8, 19)
         val start = LocalDate.parse(WeekWindow.startOf(DayOfWeek.MONDAY, today))
@@ -96,92 +106,141 @@ class StepAggregationEmulatorTest {
         record(user, end, 4_000)
         record(user, end.plusDays(1), 5_000)
 
-        val entries = weekEntries(user, listOf(user.uid), DayOfWeek.MONDAY, today)
+        val mine = stepsOf(user)
+            .getStepsForUserInRange(user.uid, start.toString(), end.toString())
+            .first()
 
-        assertEquals(
-            "Only the seven days of the window belong to it",
-            listOf(2_000L, 3_000L, 4_000L),
-            entries.map { it.stepCount }.sorted(),
-        )
-        assertEquals(9_000L, entries.sumOf { it.stepCount })
+        assertEquals(listOf(2_000L, 3_000L, 4_000L), mine.map { it.stepCount }.sorted())
+        assertEquals(9_000L, mine.sumOf { it.stepCount })
     }
 
     /**
-     * A different week start selects a different set of days from the same data.
-     *
-     * The week start is a group setting, so this is what stops one group's
-     * boundary leaking into another's total.
+     * `CHECKLIST.md` §6.3: "Combined group total equals the sum of member weekly
+     * totals", now assembled from what each member published onto their own
+     * membership rather than from a query across their step documents.
      */
     @Test
-    fun theWeekStartDayDecidesWhichDaysCount() = runBlocking {
-        val user = newUser()
-        val today = LocalDate.of(2026, 8, 19)
-        val mondayStart = LocalDate.parse(WeekWindow.startOf(DayOfWeek.MONDAY, today))
-
-        // The Sunday immediately before the Monday-start week. In a Sunday-start
-        // week it is day one; in a Monday-start week it belongs to the week before.
-        record(user, mondayStart.minusDays(1), 8_000)
-        record(user, mondayStart, 1_000)
-
-        val mondayWeek = weekEntries(user, listOf(user.uid), DayOfWeek.MONDAY, today)
-        val sundayWeek = weekEntries(user, listOf(user.uid), DayOfWeek.SUNDAY, today)
-
-        assertEquals(1_000L, mondayWeek.sumOf { it.stepCount })
-        assertEquals(9_000L, sundayWeek.sumOf { it.stepCount })
-    }
-
-    /**
-     * `CHECKLIST.md` §6.3: "Combined group total equals the sum of member
-     * weekly totals", and a non-member's steps are not swept in.
-     */
-    @Test
-    fun theGroupTotalIsTheSumOfItsMembersAndNobodyElse() = runBlocking {
-        val today = LocalDate.of(2026, 8, 19)
-        val monday = LocalDate.parse(WeekWindow.startOf(DayOfWeek.MONDAY, today))
-
+    fun theGroupTotalIsTheSumOfWhatEachMemberPublished() = runBlocking {
         val alice = newUser()
         val bob = newUser()
-        val stranger = newUser()
+        val group = createGroup(alice)
+        groupsOf(bob).joinGroup(group.groupId, bob.uid).getOrThrow()
 
-        record(alice, monday, 3_000)
-        record(alice, monday.plusDays(2), 4_500)
-        record(bob, monday.plusDays(1), 2_500)
-        // Large but inside the 300k anti-cheat ceiling the rules impose, so
-        // this is excluded by not being a member rather than by being rejected.
-        record(stranger, monday, 250_000)
+        val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
 
-        val members = listOf(alice.uid, bob.uid)
-        val entries = weekEntries(alice, members, DayOfWeek.MONDAY, today)
+        groupsOf(alice).publishMyWeeklySteps(group.groupId, alice.uid, 7_500, monday, 1_200, "2026-08-19").getOrThrow()
+        groupsOf(bob).publishMyWeeklySteps(group.groupId, bob.uid, 2_500, monday, 800, "2026-08-19").getOrThrow()
 
-        val perMember = members.associateWith { id ->
-            entries.filter { it.userId == id }.sumOf { it.stepCount }
-        }
-        assertEquals(7_500L, perMember[alice.uid])
-        assertEquals(2_500L, perMember[bob.uid])
-        assertEquals(
-            "The combined total must be exactly the sum of the member totals",
-            perMember.values.sum(),
-            entries.sumOf { it.stepCount },
-        )
-        assertEquals(10_000L, entries.sumOf { it.stepCount })
+        val memberships = groupsOf(alice).getGroupMemberships(group.groupId).first()
+
+        assertEquals(2, memberships.size)
+        assertEquals(7_500L, memberships.first { it.userId == alice.uid }.weeklySteps)
+        assertEquals(2_500L, memberships.first { it.userId == bob.uid }.weeklySteps)
+        assertEquals(10_000L, memberships.sumOf { it.weeklySteps })
+        assertEquals(2_000L, memberships.sumOf { it.todaySteps })
     }
 
-    /**
-     * A member who has never synced contributes zero rather than breaking the
-     * total or vanishing from it. `CHECKLIST.md` §6.3 asks for 0, not blank.
-     */
+    /** A member who has never synced contributes zero rather than breaking the total. */
     @Test
-    fun aMemberWithNoEntriesContributesZero() = runBlocking {
-        val today = LocalDate.of(2026, 8, 19)
-        val monday = LocalDate.parse(WeekWindow.startOf(DayOfWeek.MONDAY, today))
-
-        val active = newUser()
+    fun aMemberWhoNeverSyncedContributesZero() = runBlocking {
+        val alice = newUser()
         val silent = newUser()
-        record(active, monday, 6_000)
+        val group = createGroup(alice)
+        groupsOf(silent).joinGroup(group.groupId, silent.uid).getOrThrow()
 
-        val entries = weekEntries(active, listOf(active.uid, silent.uid), DayOfWeek.MONDAY, today)
+        val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
+        groupsOf(alice).publishMyWeeklySteps(group.groupId, alice.uid, 6_000, monday, 0, "").getOrThrow()
 
-        assertEquals(6_000L, entries.sumOf { it.stepCount })
-        assertEquals(0L, entries.filter { it.userId == silent.uid }.sumOf { it.stepCount })
+        val memberships = groupsOf(alice).getGroupMemberships(group.groupId).first()
+
+        assertEquals(6_000L, memberships.sumOf { it.weeklySteps })
+        assertEquals(0L, memberships.first { it.userId == silent.uid }.weeklySteps)
+        assertEquals("", memberships.first { it.userId == silent.uid }.weekStart)
+    }
+
+    /** Nobody may publish a figure onto somebody else's membership. */
+    @Test
+    fun aMemberCannotPublishOntoAnotherMembersRow() = runBlocking {
+        val alice = newUser()
+        val bob = newUser()
+        val group = createGroup(alice)
+        groupsOf(bob).joinGroup(group.groupId, bob.uid).getOrThrow()
+
+        val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
+        val forged = groupsOf(bob)
+            .publishMyWeeklySteps(group.groupId, alice.uid, 999_999, monday, 0, "")
+
+        assertTrue("Bob must not be able to write Alice's total, got $forged", forged.isFailure)
+    }
+
+    /** The ceiling exists so the leaderboard cannot be written an absurd number. */
+    @Test
+    fun anImplausibleTotalIsRefused() = runBlocking {
+        val alice = newUser()
+        val group = createGroup(alice)
+        val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
+
+        val absurd = runCatching {
+            alice.firestore.collection("memberships")
+                .document("${alice.uid}_${group.groupId}")
+                .update(mapOf("weeklySteps" to 50_000_000L, "weekStart" to monday))
+                .await()
+        }
+
+        assertTrue("A 50 million step week must be refused, got $absurd", absurd.isFailure)
+    }
+
+    // ── The steps collection is private ──────────────────────────────────────
+
+    /** The exposure this restructuring exists to close. */
+    @Test
+    fun aStrangerCannotEnumerateEveryUsersSteps() = runBlocking {
+        val alice = newUser()
+        record(alice, LocalDate.of(2026, 8, 19), 12_345)
+
+        val stranger = newUser()
+        val dump = runCatching {
+            stranger.firestore.collection("steps").get().await().size()
+        }
+
+        assertTrue(
+            "A signed-in account must not be able to read the steps collection, got $dump",
+            dump.isFailure,
+        )
+    }
+
+    /** Nor a group-mate's, which is what the old leaderboard query relied on. */
+    @Test
+    fun aGroupMateCannotReadYourStepDocuments() = runBlocking {
+        val alice = newUser()
+        val bob = newUser()
+        val group = createGroup(alice)
+        groupsOf(bob).joinGroup(group.groupId, bob.uid).getOrThrow()
+        record(alice, LocalDate.of(2026, 8, 19), 9_000)
+
+        val peek = runCatching {
+            bob.firestore.collection("steps")
+                .whereEqualTo("userId", alice.uid)
+                .get().await().size()
+        }
+
+        assertTrue(
+            "Sharing a group must not grant access to raw step history, got $peek",
+            peek.isFailure,
+        )
+    }
+
+    /** And the owner can still read their own, which export and deletion need. */
+    @Test
+    fun youCanStillReadYourOwnSteps() = runBlocking {
+        val user = newUser()
+        record(user, LocalDate.of(2026, 8, 17), 3_000)
+        record(user, LocalDate.of(2026, 8, 18), 4_000)
+
+        val mine = stepsOf(user)
+            .getStepsForUserInRange(user.uid, "2026-08-17", "2026-08-18")
+            .first()
+
+        assertEquals(7_000L, mine.sumOf { it.stepCount })
     }
 }

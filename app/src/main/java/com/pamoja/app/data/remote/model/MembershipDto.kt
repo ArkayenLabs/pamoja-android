@@ -9,7 +9,12 @@ data class MembershipDto(
     val canEditTarget: Boolean = false,
     /** Denormalised copy of the member's photo. Blank when they opted out. */
     val photoUrl: String = "",
-    val joinedAt: Long = 0L
+    val joinedAt: Long = 0L,
+    /** See Membership.weeklySteps. Written only by this member's own device. */
+    val weeklySteps: Long = 0L,
+    val weekStart: String = "",
+    val todaySteps: Long = 0L,
+    val todayDate: String = ""
 ) {
     fun toDomain() = com.pamoja.app.domain.model.Membership(
         userId = userId,
@@ -18,7 +23,11 @@ data class MembershipDto(
         role = role,
         canEditTarget = canEditTarget,
         photoUrl = photoUrl,
-        joinedAt = joinedAt
+        joinedAt = joinedAt,
+        weeklySteps = weeklySteps,
+        weekStart = weekStart,
+        todaySteps = todaySteps,
+        todayDate = todayDate
     )
 
     companion object {
@@ -29,7 +38,11 @@ data class MembershipDto(
             role = membership.role,
             canEditTarget = membership.canEditTarget,
             photoUrl = membership.photoUrl,
-            joinedAt = membership.joinedAt
+            joinedAt = membership.joinedAt,
+            weeklySteps = membership.weeklySteps,
+            weekStart = membership.weekStart,
+            todaySteps = membership.todaySteps,
+            todayDate = membership.todayDate
         )
     }
 }

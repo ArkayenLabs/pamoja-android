@@ -17,20 +17,29 @@ class SyncTodayStepsUseCase @Inject constructor(
     }
 }
 
-class GetGroupStepsForWeekUseCase @Inject constructor(
+/**
+ * The caller's own steps across one group's week.
+ *
+ * Replaces a query that read every member's step documents. That one could not
+ * be secured: a Firestore list rule is checked against what the query
+ * constrains, and it named no group, so any rule permitting it also permitted
+ * any signed-in account to read every user's step history. Each member now
+ * publishes their own total onto their membership instead, and the leaderboard
+ * reads those.
+ *
+ * [startDay] comes from the group, not the device. Two members of one group must
+ * aggregate over the same seven days or the shared total means nothing, and a
+ * user in two groups with different week starts has a different total in each.
+ */
+class GetMyStepsForWeekUseCase @Inject constructor(
     private val stepRepository: StepRepository
 ) {
-    /**
-     * [startDay] comes from the group, not from this device. Two members of one
-     * group must aggregate over the same seven days or the shared total means
-     * nothing.
-     */
     suspend operator fun invoke(
-        memberIds: List<String>,
+        userId: String,
         startDay: DayOfWeek,
     ): Flow<List<StepEntry>> =
-        stepRepository.getGroupStepsForWeek(
-            memberIds,
+        stepRepository.getStepsForUserInRange(
+            userId,
             WeekWindow.startOf(startDay),
             WeekWindow.endOf(startDay),
         )

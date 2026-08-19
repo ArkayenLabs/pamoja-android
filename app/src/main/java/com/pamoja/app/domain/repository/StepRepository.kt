@@ -11,10 +11,5 @@ interface StepRepository {
         startDate: String,
         endDate: String
     ): Flow<List<StepEntry>>
-    suspend fun getGroupStepsForWeek(
-        memberIds: List<String>,
-        startDate: String,
-        endDate: String
-    ): Flow<List<StepEntry>>
     suspend fun syncTodaySteps(userId: String): Result<Unit>
 }

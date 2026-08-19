@@ -12,6 +12,39 @@ interface GroupRepository {
     suspend fun getGroupByInviteLink(inviteLink: String): Result<Group>
     suspend fun joinGroup(groupId: String, userId: String): Result<Unit>
     fun getGroupMembers(groupId: String): Flow<List<User>>
+
+    /**
+     * The group's memberships, which carry each member's weekly step total.
+     *
+     * Separate from [getGroupMembers] because the leaderboard needs the steps
+     * and the group editor only needs the roster. Both read the same documents;
+     * neither screen opens both listeners.
+     *
+     * The steps live on the membership rather than being read from the steps
+     * collection, because that read could not be secured. A Firestore list rule
+     * is checked against what the query constrains, and the leaderboard's query
+     * named no group at all, so any rule permitting it also permitted any signed
+     * in account to read every user's step history.
+     */
+    fun getGroupMemberships(groupId: String): Flow<List<Membership>>
+
+    /**
+     * Publishes the caller's own weekly total onto their membership.
+     *
+     * Only ever the caller's own: the rules pin a membership write to its owner,
+     * so each member's figure is written by their own device after a sync. A
+     * member who has not synced recently therefore shows their last known total,
+     * which was already true before this data moved.
+     */
+    suspend fun publishMyWeeklySteps(
+        groupId: String,
+        userId: String,
+        steps: Long,
+        weekStart: String,
+        todaySteps: Long,
+        todayDate: String,
+    ): Result<Unit>
+
     suspend fun getMembership(userId: String, groupId: String): Result<Membership>
     fun getUserGroups(userId: String): Flow<List<Group>>
     suspend fun updateMemberCap(groupId: String, cap: Int): Result<Unit>

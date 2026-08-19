@@ -141,6 +141,67 @@ class GetGroupMembersUseCase @Inject constructor(
 }
 
 /**
+ * The group's memberships, which carry each member's weekly step total.
+ *
+ * What the leaderboard reads. The totals live on the membership because the
+ * query that used to fetch them from the steps collection could not be secured:
+ * a list rule may only refer to fields the query filters on, and that query
+ * named no group, so any rule permitting it also let any account read every
+ * user's step history.
+ */
+class GetGroupMembershipsUseCase @Inject constructor(
+    private val groupRepository: GroupRepository
+) {
+    operator fun invoke(groupId: String): Flow<List<Membership>> {
+        return groupRepository.getGroupMemberships(groupId)
+    }
+}
+
+/**
+ * Publishes the caller's own weekly total onto their membership in one group.
+ *
+ * Called once per group the user belongs to, after a sync. The figure is
+ * clamped rather than trusted, matching what the rules independently enforce,
+ * so a bad local read cannot put an implausible number on a leaderboard.
+ */
+class PublishMyWeeklyStepsUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    suspend operator fun invoke(
+        groupId: String,
+        userId: String,
+        steps: Long,
+        startDay: DayOfWeek,
+        todaySteps: Long,
+        todayDate: String,
+    ): Result<Unit> {
+        if (groupId.isBlank() || userId.isBlank()) return Result.success(Unit)
+        return groupRepository.publishMyWeeklySteps(
+            groupId = groupId,
+            userId = userId,
+            steps = steps.coerceIn(0L, MAX_PUBLISHABLE_WEEKLY_STEPS),
+            // The group's week, not the device's, so members in different
+            // locales stamp the same marker for the same week.
+            weekStart = WeekWindow.startOf(startDay),
+            todaySteps = todaySteps.coerceIn(0L, MAX_PUBLISHABLE_DAILY_STEPS),
+            todayDate = todayDate,
+        )
+    }
+
+    companion object {
+        /**
+         * Seven days at the same 300k ceiling the rules put on a single day's
+         * step entry. Mirrored here so the client refuses the same values the
+         * server would, rather than discovering it at the write.
+         */
+        const val MAX_PUBLISHABLE_WEEKLY_STEPS = 2_100_000L
+
+        /** The same ceiling the rules put on a single day's step entry. */
+        const val MAX_PUBLISHABLE_DAILY_STEPS = 300_000L
+    }
+}
+
+/**
  * Recomputes and publishes one group's cached weekly total.
  *
  * Deliberately a full recomputation rather than an increment. Several members

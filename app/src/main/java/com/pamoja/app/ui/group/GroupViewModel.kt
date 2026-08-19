@@ -10,11 +10,10 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
-import com.pamoja.app.domain.model.StepEntry
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
-import com.pamoja.app.domain.usecase.GetGroupMembersUseCase
-import com.pamoja.app.domain.usecase.GetGroupStepsForWeekUseCase
+import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.GetMembershipUseCase
 import com.pamoja.app.domain.usecase.GetStepsForUserUseCase
@@ -27,9 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -104,8 +100,7 @@ data class GroupUiState(
 @HiltViewModel
 class GroupViewModel @Inject constructor(
     private val getGroupUseCase: GetGroupUseCase,
-    private val getGroupMembersUseCase: GetGroupMembersUseCase,
-    private val getGroupStepsForWeekUseCase: GetGroupStepsForWeekUseCase,
+    private val getGroupMembershipsUseCase: GetGroupMembershipsUseCase,
     private val getStepsForUserUseCase: GetStepsForUserUseCase,
     private val getMembershipUseCase: GetMembershipUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
@@ -250,27 +245,20 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private fun observeMembersAndSteps(groupId: String, group: Group) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
-            getGroupMembersUseCase(groupId)
-                .flatMapLatest { members ->
-                    if (members.isEmpty()) {
-                        flowOf(members to Result.success(emptyList<StepEntry>()))
-                    } else {
-                        getGroupStepsForWeekUseCase(members.map { it.userId }, group.startDay)
-                            .map { entries -> members to Result.success(entries) }
-                            // Caught INSIDE the inner flow, so a steps failure
-                            // does not tear down the outer members flow with it.
-                            // This is what makes "names but no numbers" possible
-                            // instead of losing the whole screen. Still one
-                            // collect: no nested collector is introduced.
-                            .catch { error -> emit(members to Result.failure(error)) }
-                    }
-                }
+            // One flow, not two chained ones. The step figures now travel on the
+            // membership documents, so the members list and their numbers arrive
+            // in the same snapshot. That removes the inner flow this used to
+            // flatMapLatest into, and with it the nested-collect hazard the
+            // chained version had to be careful about.
+            //
+            // It also removes the "names but no numbers" partial state: there is
+            // no longer a separate read that can fail on its own. Either the
+            // memberships arrive or they do not.
+            getGroupMembershipsUseCase(groupId)
                 .catch { error ->
-                    // Only reached when MEMBERS fail, which does cost us the screen.
                     val appError = error.toAppError()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -278,18 +266,26 @@ class GroupViewModel @Inject constructor(
                         isGroupUnavailable = appError.isGroupGone(),
                     )
                 }
-                .collect { (members, stepsResult) ->
-                    val entries = stepsResult.getOrNull().orEmpty()
-                    val stepsError = stepsResult.exceptionOrNull()?.toAppError()
-
+                .collect { memberships ->
                     val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    val thisWeek = WeekWindow.startOf(group.startDay)
 
-                    val memberStepData = members.map { member ->
-                        val memberEntries = entries.filter { it.userId == member.userId }
+                    val memberStepData = memberships.map { membership ->
                         MemberStepData(
-                            user = member,
-                            todaySteps = memberEntries.find { it.date == today }?.stepCount ?: 0L,
-                            weeklySteps = memberEntries.sumOf { it.stepCount },
+                            user = User(
+                                userId = membership.userId,
+                                name = membership.displayName,
+                                photoUrl = membership.photoUrl.takeIf { it.isNotBlank() },
+                            ),
+                            // Both figures are read only when their own marker
+                            // says they belong to now. A member whose device has
+                            // not synced since yesterday, or since last week,
+                            // carries a stale number, and showing that as current
+                            // is the one way this denormalisation can lie.
+                            todaySteps = membership.todaySteps
+                                .takeIf { membership.todayDate == today } ?: 0L,
+                            weeklySteps = membership.weeklySteps
+                                .takeIf { membership.weekStart == thisWeek } ?: 0L,
                         )
                     }.sortedByDescending { it.todaySteps }
 
@@ -300,13 +296,10 @@ class GroupViewModel @Inject constructor(
                         hasLoadedMembers = true,
                         memberStepData = memberStepData,
                         combinedWeeklySteps = combinedWeekly,
-                        stepsError = stepsError,
+                        stepsError = null,
                     )
 
-                    // Not logged when the step read failed, since a total of zero
-                    // would otherwise look like a real result.
-                    if (stepsError == null &&
-                        combinedWeekly >= group.weeklyTarget &&
+                    if (combinedWeekly >= group.weeklyTarget &&
                         !weeklyGoalLoggedThisSession
                     ) {
                         weeklyGoalLoggedThisSession = true

@@ -314,6 +314,16 @@ service cloud.firestore {
       // possible without reading users/{userId}, which stays owner-only. It is
       // only ever written by its owner, so nobody can attach an image to
       // somebody else's row. Length-capped because it is a URL, not a payload.
+      // weeklySteps / todaySteps are the leaderboard figures, published here by
+      // the member's own device after a sync. They moved onto this document
+      // because reading them from the steps collection could not be secured, so
+      // they are bounded here in the same way a step entry is: this is now the
+      // number a leaderboard displays, and an unbounded one would be a cheat
+      // written straight to the scoreboard.
+      //
+      // 300k matches the per-day ceiling on a step entry, and the weekly ceiling
+      // is seven of those. Neither is a plausible human figure; both exist to
+      // stop an absurd one.
       allow update: if isSignedIn()
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.userId == request.auth.uid
@@ -321,7 +331,15 @@ service cloud.firestore {
                     && request.resource.data.get('displayName', '') is string
                     && request.resource.data.get('displayName', '').size() <= 100
                     && request.resource.data.get('photoUrl', '') is string
-                    && request.resource.data.get('photoUrl', '').size() <= 500;
+                    && request.resource.data.get('photoUrl', '').size() <= 500
+                    && request.resource.data.get('weeklySteps', 0) is int
+                    && request.resource.data.get('weeklySteps', 0) >= 0
+                    && request.resource.data.get('weeklySteps', 0) <= 2100000
+                    && request.resource.data.get('todaySteps', 0) is int
+                    && request.resource.data.get('todaySteps', 0) >= 0
+                    && request.resource.data.get('todaySteps', 0) <= 300000
+                    && request.resource.data.get('weekStart', '') is string
+                    && request.resource.data.get('todayDate', '') is string;
 
       // Remove yourself, or the group admin may remove anyone.
       allow delete: if isSignedIn()
@@ -334,8 +352,32 @@ service cloud.firestore {
     // ------------------------------------------------------------------ steps
 
     match /steps/{stepId} {
-      // Read + query for signed-in users (leaderboard aggregation).
-      allow read: if isSignedIn();
+      // Your own step history, and nobody else's.
+      //
+      // This said `allow read: if isSignedIn()` until 2026-08-19, and `read`
+      // covers `list`, so any account that had just signed up could run an
+      // unfiltered query and take every user's daily step counts. Proven on the
+      // emulator rather than inferred. The same leftover as memberships, from
+      // the `allow read, write: if true` this file's header says it replaced.
+      //
+      // It could not be fixed by tightening the rule alone. The leaderboard used
+      // to query `whereIn("userId", memberIds)` over the whole collection, and a
+      // list rule is checked against what the query constrains, so it may only
+      // refer to fields the query filters on. That query named no group at all,
+      // which left no way to express "these people share a group with me" and
+      // therefore no rule that could permit it without permitting everything.
+      //
+      // So the query is gone. Each member now publishes their own weekly and
+      // daily totals onto their own membership document, and the leaderboard
+      // reads those, which are already restricted to that group's members. This
+      // collection is once again private to the person it describes, and the
+      // only readers left are that user's own export and deletion.
+      allow get: if isSignedIn()
+                 && resource != null
+                 && resource.data.userId == request.auth.uid;
+
+      allow list: if isSignedIn()
+                  && resource.data.userId == request.auth.uid;
 
       // You may only ever write YOUR OWN step data, the document ID must match
       // your UID, and the value must be a sane non-negative integer.

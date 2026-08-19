@@ -12,8 +12,9 @@ import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.StepRepository
 import com.pamoja.app.domain.usecase.GetGroupUseCase
-import com.pamoja.app.domain.usecase.GetGroupMembersUseCase
-import com.pamoja.app.domain.usecase.GetGroupStepsForWeekUseCase
+import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
+import com.pamoja.app.domain.usecase.GetMyStepsForWeekUseCase
+import com.pamoja.app.domain.usecase.PublishMyWeeklyStepsUseCase
 import com.pamoja.app.domain.usecase.GetUserGroupsUseCase
 import com.pamoja.app.domain.usecase.PublishGroupWeeklyTotalUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
@@ -52,8 +53,9 @@ class StepSyncWorker @AssistedInject constructor(
     private val healthConnectReader: HealthConnectReader,
     private val analyticsManager: AnalyticsManager,
     private val getGroupUseCase: GetGroupUseCase,
-    private val getGroupMembersUseCase: GetGroupMembersUseCase,
-    private val getGroupStepsForWeekUseCase: GetGroupStepsForWeekUseCase,
+    private val getGroupMembershipsUseCase: GetGroupMembershipsUseCase,
+    private val getMyStepsForWeekUseCase: GetMyStepsForWeekUseCase,
+    private val publishMyWeeklyStepsUseCase: PublishMyWeeklyStepsUseCase,
     private val getUserGroupsUseCase: GetUserGroupsUseCase,
     private val publishGroupWeeklyTotalUseCase: PublishGroupWeeklyTotalUseCase,
     private val smartNotificationHelper: SmartNotificationHelper,
@@ -105,7 +107,7 @@ class StepSyncWorker @AssistedInject constructor(
             userPreferences.saveLastSyncTime(System.currentTimeMillis())
 
             // ── Refresh each group's cached weekly total ─────────────────
-            publishWeeklyTotals(user.userId)
+            publishWeeklyTotals(user.userId, todaySteps, todayStr)
 
             // ── Smart Notifications Trigger ──────────────────────────────
             checkAndTriggerNotification(user.userId, todaySteps)
@@ -135,21 +137,53 @@ class StepSyncWorker @AssistedInject constructor(
      * whole worker would re-read Health Connect and rewrite the step entry to
      * fix nothing.
      */
-    private suspend fun publishWeeklyTotals(userId: String) {
+    private suspend fun publishWeeklyTotals(
+        userId: String,
+        todaySteps: Long,
+        todayDate: String,
+    ) {
         try {
             val groups = getUserGroupsUseCase(userId).firstOrNull().orEmpty()
             for (group in groups) {
-                val members = getGroupMembersUseCase(group.groupId).firstOrNull().orEmpty()
-                if (members.isEmpty()) continue
+                // This device publishes THIS user's figures and nobody else's.
+                // The rules pin a membership write to its owner, and the steps
+                // collection is now readable only by the person it belongs to,
+                // so reading the group's other members here is neither possible
+                // nor needed.
+                //
                 // Each group's own week, not this device's. A user can belong to
-                // groups with different start days at the same time.
-                val entries = getGroupStepsForWeekUseCase(
-                    members.map { it.userId },
-                    group.startDay,
-                ).firstOrNull().orEmpty()
+                // groups with different start days at the same time, and so has
+                // a different weekly total in each.
+                val myWeek = getMyStepsForWeekUseCase(userId, group.startDay)
+                    .firstOrNull()
+                    .orEmpty()
+
+                publishMyWeeklyStepsUseCase(
+                    groupId = group.groupId,
+                    userId = userId,
+                    steps = myWeek.sumOf { it.stepCount },
+                    startDay = group.startDay,
+                    todaySteps = todaySteps,
+                    todayDate = todayDate,
+                ).onFailure { Log.w(TAG, "Own total not published for ${group.groupId}", it) }
+
+                // The group's cached total, recomputed from what every member has
+                // published onto their own membership. A member who has not synced
+                // recently contributes their last known figure, which was already
+                // true when this read their step documents instead.
+                val memberships = getGroupMembershipsUseCase(group.groupId)
+                    .firstOrNull()
+                    .orEmpty()
+                if (memberships.isEmpty()) continue
+
+                val thisWeek = WeekWindow.startOf(group.startDay)
+                val groupTotal = memberships
+                    .filter { it.weekStart == thisWeek }
+                    .sumOf { it.weeklySteps }
+
                 publishGroupWeeklyTotalUseCase(
                     group.groupId,
-                    entries.sumOf { it.stepCount },
+                    groupTotal,
                     group.startDay,
                 ).onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
             }
@@ -175,23 +209,27 @@ class StepSyncWorker @AssistedInject constructor(
             val groupResult = getGroupUseCase(activeGroupId)
             val group = groupResult.getOrNull() ?: return
 
-            val members = getGroupMembersUseCase(activeGroupId).firstOrNull() ?: return
-            if (members.isEmpty()) return
-
-            val memberIds = members.map { it.userId }
-            val weeklyEntries =
-                getGroupStepsForWeekUseCase(memberIds, group.startDay).firstOrNull() ?: return
+            // Ranking comes from the memberships, which carry each member's own
+            // published total. Reading their step documents is no longer possible
+            // and no longer necessary.
+            val memberships = getGroupMembershipsUseCase(activeGroupId).firstOrNull() ?: return
+            if (memberships.isEmpty()) return
 
             // Calculate statistics
             val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-            
+            val thisWeek = WeekWindow.startOf(group.startDay)
+
             // Map members to their weekly step counts
             data class MemberWeekly(val userId: String, val name: String, val steps: Long)
-            val membersData = members.map { member ->
-                val steps = weeklyEntries
-                    .filter { it.userId == member.userId }
-                    .sumOf { it.stepCount }
-                MemberWeekly(member.userId, member.name, steps)
+            val membersData = memberships.map { membership ->
+                MemberWeekly(
+                    membership.userId,
+                    membership.displayName,
+                    // Only counted when the marker says it is this week. A member
+                    // who has not synced since the rollover carries last week's
+                    // number, and ranking against that would be wrong.
+                    membership.weeklySteps.takeIf { membership.weekStart == thisWeek } ?: 0L,
+                )
             }.sortedByDescending { it.steps }
 
             // Find ranks and overtake targets
@@ -210,7 +248,7 @@ class StepSyncWorker @AssistedInject constructor(
 
             val userName = userPreferences.userName.firstOrNull() ?: "there"
             val weeklyGoal = group.weeklyTarget.toLong()
-            val groupStepsTotal = weeklyEntries.sumOf { it.stepCount }
+            val groupStepsTotal = membersData.sumOf { it.steps }
             val groupAgeMs = currentTime - group.createdAt
             val userStepsThisWeek = membersData.firstOrNull { it.userId == userId }?.steps ?: 0L
 

@@ -230,6 +230,29 @@ class StepAggregationEmulatorTest {
         )
     }
 
+    /**
+     * Asking for a day you have no steps for must come back empty, not denied.
+     *
+     * The get rule authorises on the document ID rather than its contents
+     * precisely because of this case: a missing document has no `userId` to
+     * compare, and testing one raises an evaluation error that surfaces as
+     * PERMISSION_DENIED. Caught by the worker tests, which read a step entry
+     * they had deliberately not written.
+     */
+    @Test
+    fun readingADayWithNoStepsIsEmptyRatherThanDenied() = runBlocking {
+        val user = newUser()
+
+        val missing = runCatching {
+            user.firestore.collection("steps")
+                .document("${user.uid}_2026-01-01")
+                .get().await()
+        }
+
+        assertTrue("Reading your own absent day must be allowed, got $missing", missing.isSuccess)
+        assertTrue("and it should simply not exist", missing.getOrNull()?.exists() == false)
+    }
+
     /** And the owner can still read their own, which export and deletion need. */
     @Test
     fun youCanStillReadYourOwnSteps() = runBlocking {

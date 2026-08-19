@@ -32,7 +32,7 @@ import javax.inject.Singleton
  * absorb the annoyance while the high-value channels survive.
  */
 @Singleton
-class SmartNotificationHelper @Inject constructor(
+open class SmartNotificationHelper @Inject constructor(
     @ApplicationContext private val context: Context,
     private val activityLog: ActivityLogStore,
 ) {
@@ -132,7 +132,7 @@ class SmartNotificationHelper @Inject constructor(
     }
 
     /** The categories the system is currently refusing, for the engine. */
-    fun mutedCategories(): Set<NotificationCategory> =
+    open fun mutedCategories(): Set<NotificationCategory> =
         NotificationCategory.entries.filterNot { isCategoryEnabled(it) }.toSet()
 
     /**
@@ -151,7 +151,7 @@ class SmartNotificationHelper @Inject constructor(
         }
 
     /** Posts a notification. No-ops if the user has revoked the permission. */
-    fun show(notification: PamojaNotification) {
+    open fun show(notification: PamojaNotification) {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
         val builder = NotificationCompat.Builder(context, notification.category.channelId)

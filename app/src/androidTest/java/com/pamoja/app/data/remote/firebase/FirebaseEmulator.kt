@@ -62,6 +62,8 @@ object FirebaseEmulator {
     class Client(
         val uid: String,
         val firestore: FirebaseFirestore,
+        /** Exposed so tests can build the real AuthRepository rather than a stand-in. */
+        val auth: FirebaseAuth,
         private val app: FirebaseApp,
     ) {
         fun close() = app.delete()
@@ -87,7 +89,7 @@ object FirebaseEmulator {
         val created = auth.createUserWithEmailAndPassword(email, "test-password-123").await()
         val uid = created.user?.uid ?: error("Auth emulator returned no uid")
 
-        return Client(uid, firestore, app)
+        return Client(uid, firestore, auth, app)
     }
 
     /**

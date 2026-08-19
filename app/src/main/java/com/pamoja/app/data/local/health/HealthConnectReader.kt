@@ -28,7 +28,7 @@ import javax.inject.Singleton
  *  - Standard Google permission dialog, users trust it more
  */
 @Singleton
-class HealthConnectReader @Inject constructor(
+open class HealthConnectReader @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
@@ -61,7 +61,7 @@ class HealthConnectReader @Inject constructor(
      * Reads the total steps recorded in Health Connect for today (midnight → now).
      * Returns null if Health Connect is unavailable or permission is not granted.
      */
-    suspend fun readTodaySteps(): Long? {
+    open suspend fun readTodaySteps(): Long? {
         return try {
             if (!isAvailable()) return null
             val client = HealthConnectClient.getOrCreate(context)

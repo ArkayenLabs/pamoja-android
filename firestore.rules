@@ -372,10 +372,22 @@ service cloud.firestore {
       // reads those, which are already restricted to that group's members. This
       // collection is once again private to the person it describes, and the
       // only readers left are that user's own export and deletion.
+      // Authorised on the document ID, not on the document's contents, because
+      // a get for a day with no steps has no contents to read. Testing
+      // `resource.data.userId` there raises an evaluation error rather than
+      // returning false, so asking "do I have steps for this date" would come
+      // back PERMISSION_DENIED instead of empty. `resource != null` does not
+      // save it. Same shape of trap as the memberships get rule.
+      //
+      // Reading the ID is exactly as strict: the create rule below pins the ID
+      // to `{uid}_{date}` and the data's userId to the same uid, so the two can
+      // never disagree. Firebase UIDs are alphanumeric, so the segment before
+      // the first underscore is the whole uid.
       allow get: if isSignedIn()
-                 && resource != null
-                 && resource.data.userId == request.auth.uid;
+                 && stepId.split('_')[0] == request.auth.uid;
 
+      // A list, by contrast, only ever sees documents that exist, and userId is
+      // the field every remaining query filters on.
       allow list: if isSignedIn()
                   && resource.data.userId == request.auth.uid;
 

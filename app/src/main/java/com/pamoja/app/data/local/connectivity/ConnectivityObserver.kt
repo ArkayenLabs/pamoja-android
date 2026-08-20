@@ -26,14 +26,20 @@ import javax.inject.Singleton
  * flickers three times on every walk out of the house reads as a bug.
  */
 @Singleton
-class ConnectivityObserver @Inject constructor(
+open class ConnectivityObserver @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
 
     private val manager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    val isOnline: Flow<Boolean> = callbackFlow {
+    /**
+     * Open, and the class with it, so a test can supply a connection state.
+     * Same reason [com.pamoja.app.data.local.health.HealthConnectReader] is
+     * open: the real one reports what the device is actually doing, which a
+     * test cannot drive. No behaviour change.
+     */
+    open val isOnline: Flow<Boolean> = callbackFlow {
         val callback = object : ConnectivityManager.NetworkCallback() {
 
             override fun onCapabilitiesChanged(

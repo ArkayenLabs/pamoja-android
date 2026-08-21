@@ -23,14 +23,24 @@
   same commit. The Data Safety form, the privacy policy and this page must all
   agree with the code.
 
-  STYLING HERE IS NEVER PUBLISHED. The website discards the <head> and <style>
-  block and renders the <body> inside its own layout, exactly as it does for
-  terms and privacy. The CSS below exists only so the file is readable when
-  opened straight off disk. Structure is what matters; colours here change
+  DO NOT WRITE LITERAL HTML TAG SYNTAX ANYWHERE IN THIS COMMENT.
+
+  fetch-legal.mjs on the website finds the FIRST body tag in the file and
+  extracts from there. It does not strip comments first. An earlier version of
+  this comment spelled out the body tag while explaining that very mechanism,
+  so extraction began in the middle of the comment and published the rest of
+  these developer notes as visible page text. privacy-pamoja.html and
+  terms-pamoja.html have never contained tag syntax in their comments, which is
+  the only reason they were never bitten.
+
+  STYLING HERE IS NEVER PUBLISHED. The website discards the document head and
+  the style block, and renders the body inside its own layout, exactly as it
+  does for terms and privacy. The CSS below exists only so the file is readable
+  when opened straight off disk. Structure is what matters; colours here change
   nothing on the live page.
 
-  The <h1> and the <p class="dates"> line ARE read from the body and published
-  as-is. Do not remove or rename them.
+  The page heading and the paragraph carrying the "Last updated" date ARE read
+  from the body and published as-is. Do not remove or rename them.
 -->
 <html lang="en">
 <head>

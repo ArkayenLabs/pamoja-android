@@ -84,6 +84,25 @@ the Data Safety review.** Google does fetch it.
 4. It renders each document's **body** inside the site's layout, then prerenders
    the result to static HTML.
 
+🔴 **Never write literal HTML tag syntax in these files' header comments.**
+The fetch script finds the **first** body tag in the file and extracts from
+there, without stripping comments first. On 2026-08-21 the comment at the top of
+`delete-account-pamoja.html` spelled out the body tag while explaining this very
+mechanism, so extraction started mid-comment and published the remaining
+developer notes as visible text on the live page. `privacy-pamoja.html` and
+`terms-pamoja.html` have never contained tag syntax in their comments, which is
+the only reason this had not happened before.
+
+Check before committing an edit to any of them:
+
+```bash
+sed -n '1,/^<html/p' web/delete-account-pamoja.html | grep -c "<body>\|<head>\|<style>"
+```
+
+Zero is the only acceptable answer. Worth hardening on the website side too, by
+stripping comments before locating the body, so a comment can never decide where
+a legal document begins.
+
 Two consequences worth knowing before editing:
 
 - **The `<head>` and `<style>` block are discarded.** The site applies its own

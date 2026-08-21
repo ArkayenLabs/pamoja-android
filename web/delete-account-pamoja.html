@@ -1,0 +1,192 @@
+<!doctype html>
+<!--
+  Pamoja, Account Deletion Request
+  Route: https://www.arkayenlabs.com/privacy/pamoja/delete-account
+
+  Matches the convention already used for the sibling app:
+  /privacy/freshtrack/delete-account. Section order and headings deliberately
+  mirror that page, since a Play reviewer may well see both.
+
+  WHY THIS PAGE EXISTS: Google Play's Data Safety form requires a publicly
+  reachable URL where someone can request account and data deletion WITHOUT
+  installing the app and WITHOUT signing in. A privacy policy that merely
+  mentions deletion does not satisfy it, and a missing or unreachable URL here
+  is a common cause of rejection and of removal after publishing.
+
+  So this page must stay:
+    - publicly reachable, no login, no app install, no redirect to the store
+    - honest about what is deleted, what is kept, and for how long
+
+  SOURCE OF TRUTH for the behaviour described below is
+  FirebaseUserRepositoryImpl.deleteAllUserData plus DeleteAccountUseCase in the
+  pamoja-android repo. If the deletion flow changes, change this page in the
+  same commit. The Data Safety form, the privacy policy and this page must all
+  agree with the code.
+
+  STYLING HERE IS NEVER PUBLISHED. The website discards the <head> and <style>
+  block and renders the <body> inside its own layout, exactly as it does for
+  terms and privacy. The CSS below exists only so the file is readable when
+  opened straight off disk. Structure is what matters; colours here change
+  nothing on the live page.
+
+  The <h1> and the <p class="dates"> line ARE read from the body and published
+  as-is. Do not remove or rename them.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delete your account, Pamoja</title>
+  <style>
+    :root {
+      --bg: #f8f7fc;
+      --card: #ffffff;
+      --text: #16141f;
+      --muted: #575371;
+      --brand: #6c63e8;
+      --border: rgba(22, 20, 31, 0.10);
+      --warn-bg: rgba(214, 69, 69, 0.08);
+      --warn: #c0392b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0b11;
+        --card: #14141f;
+        --text: #f5f4fa;
+        --muted: #a9a6c0;
+        --brand: #7b7ff2;
+        --border: rgba(255, 255, 255, 0.10);
+        --warn-bg: rgba(255, 122, 122, 0.12);
+        --warn: #ff8f8f;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+    header { margin-bottom: 40px; }
+    h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .dates { color: var(--muted); font-size: 0.9rem; margin: 0; }
+    h2 { font-size: 1.15rem; margin: 40px 0 12px; letter-spacing: -0.01em; }
+    h3 { font-size: 1rem; margin: 24px 0 8px; color: var(--muted); }
+    p, li { color: var(--text); }
+    ul, ol { padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    a { color: var(--brand); }
+    strong { font-weight: 650; }
+    .callout {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--brand);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+    .callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.95rem;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    @media (min-width: 620px) {
+      table { display: table; white-space: normal; }
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 650; font-size: 0.85rem; }
+    footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Delete your Pamoja account (Arkayen Labs)</h1>
+      <p class="dates">Last updated 20 August 2026</p>
+    </header>
+
+    <p>You can delete your Pamoja account and everything stored with it at any time. There are two ways, and both remove the same data.</p>
+
+    <h2>Fastest way: delete inside the app</h2>
+    <p>Immediate, and needs nothing from us.</p>
+    <ol>
+      <li>Open Pamoja and go to <strong>Settings</strong>.</li>
+      <li>Scroll to <strong>Account actions</strong>.</li>
+      <li>Tap <strong>Delete Account</strong>.</li>
+      <li>Sign in again when asked. Nothing is deleted at this point.</li>
+      <li>Confirm with <strong>Delete Permanently</strong>.</li>
+    </ol>
+    <p>We ask you to sign in again first. That is a security requirement, not an obstacle: it stops someone who picks up an unlocked phone from destroying your account.</p>
+
+    <h2>If you cannot open the app</h2>
+    <p>Use this if you have uninstalled Pamoja, cannot sign in, or would simply rather we did it.</p>
+    <div class="callout">
+      <p style="margin:0 0 8px"><strong>Email <a href="mailto:support@arkayenlabs.com?subject=Delete%20my%20Pamoja%20account">support@arkayenlabs.com</a></strong> with the subject <strong>&ldquo;Delete my Pamoja account&rdquo;</strong>.</p>
+      <p style="margin:0">Send it from the email address you signed in with, or tell us the phone number on the account, so we can identify it. We will never ask you for your password, and you should never send us one.</p>
+    </div>
+    <p>We action emailed requests within <strong>30 days</strong>, and in practice far sooner, and confirm by reply once it is done. If we cannot match your request to an account we will tell you, rather than delete someone else&rsquo;s data.</p>
+
+    <h2>What is deleted</h2>
+    <p>Permanently, with no recovery window:</p>
+    <table>
+      <tr><th>Data</th><th>What it is</th></tr>
+      <tr><td>Your profile</td><td>Name, and the age, height and weight you chose to enter</td></tr>
+      <tr><td>Your profile photo</td><td>The image file itself, removed from storage, not merely unlinked</td></tr>
+      <tr><td>Your step history</td><td>Every daily step record Pamoja has stored for you</td></tr>
+      <tr><td>Your group memberships</td><td>You leave every group, and each group&rsquo;s member count and invite link are corrected</td></tr>
+      <tr><td>Your sign-in record</td><td>The account itself, including the email address or phone number used to sign in</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <p style="margin:0"><strong>This cannot be undone.</strong> There is no recovery period and no archived copy to restore from. Signing up again later creates a genuinely new account with no history.</p>
+    </div>
+
+    <h3>If you are the admin of a group</h3>
+    <p>Groups are not destroyed when their admin leaves. Before your account is removed the group is handed to another member, so the people in it keep their group and their shared progress. If you are its only member, the group goes with you.</p>
+
+    <h2>What is retained</h2>
+    <p>A small amount of data outlives the account, none of which can identify you once it is gone:</p>
+    <ul>
+      <li><strong>The groups you belonged to.</strong> A group&rsquo;s own record, its name and its combined weekly totals, belongs to that group rather than to you, so it survives your departure. Nothing in it identifies you once your membership is deleted.</li>
+      <li><strong>Anonymous, aggregated analytics.</strong> Counts of events such as &ldquo;a group was created&rdquo;, never tied back to a person.</li>
+      <li><strong>Crash reports</strong>, retained for up to <strong>90 days</strong> so we can fix what caused them.</li>
+      <li><strong>Records we are required by law to keep</strong>, where any apply.</li>
+      <li><strong>Provider backups.</strong> Our infrastructure providers may hold fragments briefly, an unavoidable consequence of how backups work. They are never used to restore a deleted account and age out on their own.</li>
+    </ul>
+
+    <h2>Data on your device</h2>
+    <p>Deleting your account clears what Pamoja stores on our side. Data held on the phone itself is separate:</p>
+    <ul>
+      <li><strong>Pamoja&rsquo;s own settings and cache</strong> go when you uninstall the app, or when you clear its storage in Android Settings.</li>
+      <li><strong>Your steps in Health Connect belong to Health Connect, not to us.</strong> Deleting your Pamoja account does not remove them, because they were never ours. Manage or delete them in the Health Connect app.</li>
+    </ul>
+    <p>If you want Pamoja to stop reading your steps but want to keep your account, you do not need this page at all: revoke Pamoja&rsquo;s access in <strong>Health Connect &rarr; App permissions</strong>. We stop reading new steps immediately.</p>
+
+    <h2>Questions?</h2>
+    <p>Write to <a href="mailto:support@arkayenlabs.com">support@arkayenlabs.com</a>. Our <a href="/privacy/pamoja">Privacy Policy</a> explains what we collect and why, and the <a href="/terms/pamoja">Terms of Use</a> cover the rest.</p>
+
+    <footer>
+      <p>Pamoja is operated by Balaji Thukuntala, sole proprietor, trading as Arkayen Labs, Mumbai, Maharashtra, India.</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # Redeploys arkayenlabs.com when a published legal document changes.
 #
-# The website renders web/terms-pamoja.html and web/privacy-pamoja.html
-# directly: its build fetches them from this repo, so the pages are always the
+# The website renders web/terms-pamoja.html, web/privacy-pamoja.html and
+# web/delete-account-pamoja.html directly: its build fetches them from this repo, so the pages are always the
 # current text rather than a hand-maintained copy. The catch is that it only
 # refetches when it builds. Without this, editing the terms here leaves the
 # published version stale until someone happens to redeploy the site, which is
@@ -23,6 +23,7 @@ on:
     paths:
       - "web/terms-pamoja.html"
       - "web/privacy-pamoja.html"
+      - "web/delete-account-pamoja.html"
   # Lets you force a redeploy from the Actions tab without editing a file.
   workflow_dispatch:
 

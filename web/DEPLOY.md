@@ -22,12 +22,35 @@ declared apex could never verify.
 |---|---|---|
 | `https://www.arkayenlabs.com/privacy/pamoja` | `privacy-pamoja.html` | live ✅ |
 | `https://www.arkayenlabs.com/terms/pamoja` | `terms-pamoja.html` | live ✅ |
+| `https://www.arkayenlabs.com/privacy/pamoja/delete-account` | `delete-account-pamoja.html` | 🔴 **not live, needs a website-repo change** |
 | `https://www.arkayenlabs.com/.well-known/assetlinks.json` | `assetlinks.json` | live ✅, all three fingerprints |
 | `https://www.arkayenlabs.com/pamoja/join/<code>` | `join-landing.html` | live ✅ |
 
 `<code>` is an opaque group id. The route matches **any** value in that segment
 and always returns the same page; the app reads the code from the URL, the page
 itself does not.
+
+## 🔴 The deletion page needs work in the OTHER repo too
+
+Added 2026-08-20. `web/delete-account-pamoja.html` is the Play-mandated account
+deletion URL, and **pushing it here is not enough to publish it.** The website's
+prebuild fetches a *fixed list* of documents, currently terms and privacy, so a
+third file is invisible to it until that list changes.
+
+Three changes, all in the **website** repo:
+
+1. Add `delete-account-pamoja.html` to the prebuild fetch list, beside the two
+   that are already there.
+2. Add the route `/privacy/pamoja/delete-account`, matching the convention the
+   sibling app already uses at `/privacy/freshtrack/delete-account`.
+3. Nothing else. It renders through the same body-into-layout path.
+
+The path filter in `.github/workflows/redeploy-website.yml` in *this* repo has
+already been extended to include the file, so once the website knows about it,
+edits here republish it like the other two.
+
+🔴 **Until all three are done the URL 404s, and a 404 on the deletion URL fails
+the Data Safety review.** Google does fetch it.
 
 ## How publishing works
 

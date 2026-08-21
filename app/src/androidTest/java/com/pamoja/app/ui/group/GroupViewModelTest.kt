@@ -623,6 +623,7 @@ class GroupViewModelTest {
             groupId: String,
             name: String,
             weeklyTarget: Int,
+            dailyPerPersonTarget: Int,
             maxMemberCap: Int,
             canMembersEditTarget: Boolean,
             weekStartDay: String,

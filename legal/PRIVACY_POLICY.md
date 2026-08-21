@@ -185,6 +185,9 @@ We keep your data for as long as your account exists.
 
 ### Deleting your account
 
+Full instructions, including how to delete without the app, live on the
+dedicated page: **https://www.arkayenlabs.com/privacy/pamoja/delete-account**
+
 **Settings → Delete Account** removes everything, in this order:
 
 1. Every membership you hold, with each group's member count corrected

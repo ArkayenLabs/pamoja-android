@@ -297,19 +297,22 @@ fun PhotoCropScreen(
  * stored at, so that zooming in still has real pixels to crop from rather than
  * upscaling a thumbnail.
  */
-private fun decodeForCrop(context: Context, imageUri: String): Bitmap? = runCatching {
+internal fun decodeForCrop(context: Context, imageUri: String): Bitmap? = runCatching {
     val uri = imageUri.toUri()
 
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    context.contentResolver.openInputStream(uri)?.use {
-        BitmapFactory.decodeStream(it, null, bounds)
-    } ?: return null
+    // The stream is null-checked, the decode result is NOT, and the two must
+    // stay separate statements. Folding them into one `?.use { decode } ?: return`
+    // reads as a stream check but is really a check on the decoded bitmap, and
+    // decodeStream returns null *by contract* while inJustDecodeBounds is set,
+    // so that form rejects every photo ever picked. It shipped that way and did
+    // exactly that; `decodesARealJpeg` in PhotoCropDecodeTest pins it.
+    val boundsStream = context.contentResolver.openInputStream(uri) ?: return@runCatching null
+    boundsStream.use { BitmapFactory.decodeStream(it, null, bounds) }
 
-    // decodeStream returns null by contract while inJustDecodeBounds is set, so
-    // the dimensions it wrote are the only usable signal. Null-checking its
-    // result here is the bug that once rejected every photo ever picked.
+    // The dimensions it wrote are the only usable signal.
     val longestEdge = max(bounds.outWidth, bounds.outHeight)
-    if (longestEdge <= 0) return null
+    if (longestEdge <= 0) return@runCatching null
 
     val options = BitmapFactory.Options().apply {
         inSampleSize = generateSequence(1) { it * 2 }

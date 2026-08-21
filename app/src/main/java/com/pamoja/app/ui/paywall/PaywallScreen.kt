@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.BillingPeriod
-import com.pamoja.app.domain.model.PlanLimits
 import com.pamoja.app.domain.repository.SubscriptionPlan
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
@@ -59,10 +58,14 @@ import com.pamoja.app.ui.theme.Spacing
 /**
  * The upgrade screen.
  *
- * Every number it advertises comes from `PlanLimits`, the same object the gates
- * read, so the screen cannot promise twenty members while a slider stops at
- * fifteen. Prices come from the store as pre-formatted strings, never computed
- * here, because Play prices are set per country and change without a release.
+ * It advertises no caps or counts at all, and that is deliberate. This screen
+ * used to headline "up to 20 members" against 8 on free; see `PlanLimits` for
+ * why that model was dropped. A pleasant side effect is that there is no longer
+ * any number here that could drift out of step with a gate, which is the bug
+ * the old version had to actively guard against.
+ *
+ * Prices come from the store as pre-formatted strings, never computed here,
+ * because Play prices are set per country and change without a release.
  *
  * Placed after the aha moment, never before it. For Pamoja that moment is
  * seeing your first synced steps land on the group leaderboard, and paywalling
@@ -127,25 +130,15 @@ fun PaywallScreen(
 
                 // ── What you get ────────────────────────────────────────────
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.x4)) {
+                    // Group size is deliberately absent from this list. It
+                    // used to be the headline benefit, 20 members against 8 on
+                    // free, and that was the model dropped on 2026-08-21: see
+                    // PlanLimits. Nobody upgrades to add a 21st member, and the
+                    // wall sat inside the invite loop the product grows by.
                     Benefit(
                         icon = PamojaIcons.Users,
-                        title = pluralStringResource(
-                            R.plurals.paywall_benefit_members,
-                            PlanLimits.PREMIUM_MEMBER_CAP,
-                            PlanLimits.PREMIUM_MEMBER_CAP,
-                        ),
-                        body = stringResource(
-                            R.string.paywall_benefit_members_sub,
-                            PlanLimits.FREE_MEMBER_CAP,
-                        ),
-                    )
-                    Benefit(
-                        icon = PamojaIcons.Add,
-                        title = stringResource(R.string.paywall_benefit_groups),
-                        body = stringResource(
-                            R.string.paywall_benefit_groups_sub,
-                            PlanLimits.FREE_CREATED_GROUPS,
-                        ),
+                        title = stringResource(R.string.paywall_benefit_group),
+                        body = stringResource(R.string.paywall_benefit_group_sub),
                     )
                     Benefit(
                         icon = PamojaIcons.Clock,

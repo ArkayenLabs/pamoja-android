@@ -46,7 +46,10 @@ android {
         applicationId = "com.arkayenlabs.pamoja"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        // Closed testing has already consumed earlier codes, and Play refuses
+        // an upload that reuses one. Raise this again if the Console says the
+        // code is taken; it only ever goes up.
+        versionCode = 2
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

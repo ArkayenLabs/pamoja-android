@@ -638,17 +638,16 @@
     <!-- ── Paywall ────────────────────────────────────────────────────── -->
     <string name="paywall_close">Close</string>
     <string name="paywall_title">Pamoja Premium</string>
-    <string name="paywall_subtitle">Bigger groups, and everything your walking adds up to.</string>
-    <string name="paywall_benefit_members_sub">Free groups hold %1$d</string>
-    <string name="paywall_benefit_groups">Start as many groups as you like</string>
-    <string name="paywall_benefit_groups_sub">Free lets you start %1$d</string>
+    <string name="paywall_subtitle">One of you subscribes. Everyone in the group gets it.</string>
+    <string name="paywall_benefit_group">Covers your whole group</string>
+    <string name="paywall_benefit_group_sub">One member subscribes and every member gets Premium, however many of you there are</string>
     <string name="paywall_benefit_history">Your full history</string>
     <string name="paywall_benefit_history_sub">Every week you have walked, plus a weekly recap</string>
     <string name="paywall_benefit_stats">Charts, trends and records</string>
     <string name="paywall_benefit_stats_sub">See how this week compares, and beat your best</string>
     <!-- Reassurance, and literally true: paywalling tracking would break the
          groups free members are already in. -->
-    <string name="paywall_free_forever">Step tracking, your leaderboard, and joining any group you are invited to stay free forever.</string>
+    <string name="paywall_free_forever">Creating groups, inviting people, group size, step tracking and your leaderboard stay free forever, on every plan.</string>
     <string name="paywall_plan_annual">Yearly</string>
     <string name="paywall_plan_monthly">Monthly</string>
     <string name="paywall_period_year">year</string>
@@ -687,12 +686,6 @@
     </plurals>
     <!-- Never one in practice, but a count followed by a noun is exactly the
          shape that produced "1 members" on the group dashboard. -->
-    <!-- The cap is 20 today so "one" never renders, but the cap is a constant
-         that can move, and this is the shape that produced "1 members". -->
-    <plurals name="paywall_benefit_members">
-        <item quantity="one">Up to %1$d person in a group</item>
-        <item quantity="other">Up to %1$d people in a group</item>
-    </plurals>
     <!-- Trial length comes from the store, so it is genuinely variable. -->
     <plurals name="paywall_disclosure_trial">
         <item quantity="one">Free for %1$d day, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</item>

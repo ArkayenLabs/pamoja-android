@@ -38,36 +38,11 @@ class RestorePurchasesUseCase @Inject constructor(
 }
 
 /**
- * The largest member cap this account may set on a group it creates.
+ * Group size and group creation are deliberately NOT gated.
  *
- * A flow rather than a value, because a purchase must widen the slider on a
- * screen that is already open.
+ * `ObserveMemberCapLimitUseCase` and `ObserveCanCreateGroupUseCase` used to
+ * live here and were deleted on 2026-08-21 along with the size paywall they
+ * enforced. See PlanLimits for why: charging for group size throttles the one
+ * loop this product grows through. If a future change reintroduces a cap that
+ * differs by tier, it is reintroducing the model that was measured and rejected.
  */
-class ObserveMemberCapLimitUseCase @Inject constructor(
-    private val subscriptionRepository: SubscriptionRepository,
-) {
-    operator fun invoke(): Flow<Int> =
-        subscriptionRepository.entitlement.map { PlanLimits.memberCapFor(it) }
-}
-
-/**
- * Whether another group may be created.
- *
- * Counts only groups this user *administers*, never groups they joined.
- * Joining is unlimited on every plan and always will be: an invitation that
- * bounces because the invitee is at a cap breaks the one loop this product
- * depends on, and punishes the wrong person entirely, since the one who paid
- * is the person whose group just lost a member.
- */
-class ObserveCanCreateGroupUseCase @Inject constructor(
-    private val subscriptionRepository: SubscriptionRepository,
-    private val groupRepository: GroupRepository,
-) {
-    operator fun invoke(userId: String): Flow<Boolean> = combine(
-        subscriptionRepository.entitlement,
-        groupRepository.getUserGroups(userId),
-    ) { entitlement, groups ->
-        val created = groups.count { it.adminId == userId }
-        PlanLimits.canCreateGroup(entitlement, created)
-    }
-}

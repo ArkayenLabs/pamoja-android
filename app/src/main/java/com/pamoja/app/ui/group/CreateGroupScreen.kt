@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaNotice
@@ -104,11 +105,15 @@ fun CreateGroupScreen(
     }
     val nameError = nameErrorFor(groupName)
 
-    val stepPresets      = listOf(35_000, 50_000, 70_000, 100_000, 150_000)
-    val stepPresetLabels = listOf("35k", "50k", "70k", "100k", "150k")
+    // Per person per day, not a group total. See StepGoal for why: a total
+    // cannot be judged without dividing it by members and days, and it made the
+    // goal easier the bigger the group got.
+    val stepPresets      = StepGoal.PRESETS_DAILY_PER_PERSON
+    val stepPresetLabels = listOf("4k", "6k", "8k", "10k", "12k")
     val selectedIndex    = weeklyTargetIndex.toInt()
-    val selectedTarget   = stepPresets[selectedIndex]
+    val selectedPerPerson = stepPresets[selectedIndex]
     val memberCount      = maxMembers.toInt()
+    val selectedTarget   = StepGoal.weeklyTotalFor(selectedPerPerson, memberCount)
 
     LaunchedEffect(uiState.createdGroupId) {
         uiState.createdGroupId?.let {
@@ -192,7 +197,7 @@ fun CreateGroupScreen(
                             label = stringResource(R.string.create_group_weekly_goal),
                         ) {
                             Text(
-                                text  = "%,d".format(selectedTarget),
+                                text  = "%,d".format(selectedPerPerson),
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontSize = MaterialTheme.typography.headlineMedium.fontSize,
                                     fontWeight = FontWeight.Bold,
@@ -238,7 +243,7 @@ fun CreateGroupScreen(
                             text = pluralStringResource(
                                 R.plurals.create_group_goal_hint,
                                 memberCount,
-                                "%,d".format(selectedTarget / 7 / memberCount),
+                                "%,d".format(selectedTarget),
                                 memberCount,
                             ),
                             style = MaterialTheme.typography.bodySmall,
@@ -463,7 +468,7 @@ fun CreateGroupScreen(
                         onClick = rememberSingleClick {
                             viewModel.createGroup(
                                 name                 = groupName.trim(),
-                                weeklyTarget         = selectedTarget,
+                                dailyPerPersonTarget = selectedPerPerson,
                                 maxMemberCap         = memberCount,
                                 canMembersEditTarget = canMembersEdit,
                                 weekStartDay         = weekStartDay

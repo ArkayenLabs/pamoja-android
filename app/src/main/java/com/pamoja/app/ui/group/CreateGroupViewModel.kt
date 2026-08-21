@@ -60,7 +60,7 @@ class CreateGroupViewModel @Inject constructor(
 
     fun createGroup(
         name: String,
-        weeklyTarget: Int,
+        dailyPerPersonTarget: Int,
         maxMemberCap: Int,
         canMembersEditTarget: Boolean,
         weekStartDay: DayOfWeek,
@@ -82,7 +82,7 @@ class CreateGroupViewModel @Inject constructor(
             val result = createGroupUseCase(
                 name = name,
                 adminId = user.userId,
-                weeklyTarget = weeklyTarget,
+                dailyPerPersonTarget = dailyPerPersonTarget,
                 maxMemberCap = maxMemberCap,
                 canMembersEditTarget = canMembersEditTarget,
                 weekStartDay = weekStartDay,

@@ -437,6 +437,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         groupId: String,
         name: String,
         weeklyTarget: Int,
+        dailyPerPersonTarget: Int,
         maxMemberCap: Int,
         canMembersEditTarget: Boolean,
         weekStartDay: String,
@@ -451,6 +452,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                     mapOf(
                         "name" to name,
                         "weeklyTarget" to weeklyTarget,
+                        "dailyPerPersonTarget" to dailyPerPersonTarget,
                         "maxMemberCap" to maxMemberCap,
                         "canMembersEditTarget" to canMembersEditTarget,
                         "weekStartDay" to weekStartDay,

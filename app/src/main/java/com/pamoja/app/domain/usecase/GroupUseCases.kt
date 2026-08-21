@@ -4,6 +4,7 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AvatarRepository
@@ -25,15 +26,29 @@ class CreateGroupUseCase @Inject constructor(
     suspend operator fun invoke(
         name: String,
         adminId: String,
-        weeklyTarget: Int,
+        dailyPerPersonTarget: Int,
         maxMemberCap: Int,
         canMembersEditTarget: Boolean,
         weekStartDay: DayOfWeek = WeekWindow.localeDefault(),
     ): Result<Group> {
         if (name.isBlank()) return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
         if (adminId.isBlank()) return Result.failure(AppError.SessionExpired())
-        if (weeklyTarget <= 0) return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
+        if (dailyPerPersonTarget < StepGoal.MIN_DAILY_PER_PERSON ||
+            dailyPerPersonTarget > StepGoal.MAX_DAILY_PER_PERSON
+        ) {
+            return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
+        }
         if (maxMemberCap < 2) return Result.failure(AppError.Validation(ValidationField.MemberCapTooSmall))
+
+        // Sized on the cap the admin just chose, not on the single member the
+        // group has this second.
+        //
+        // Deriving from memberCount here would set a brand new group's first
+        // week to one person's worth of steps, and the first week is the one
+        // that decides whether anybody comes back. Members join over the first
+        // day or two, so the cap is the better estimate of who this goal is
+        // for. The rollover then corrects it to whoever actually turned up.
+        val weeklyTarget = StepGoal.weeklyTotalFor(dailyPerPersonTarget, maxMemberCap)
 
         val groupId = UUID.randomUUID().toString()
         val inviteLink = "pamoja://join/$groupId"
@@ -43,6 +58,7 @@ class CreateGroupUseCase @Inject constructor(
             name = name,
             adminId = adminId,
             weeklyTarget = weeklyTarget,
+            dailyPerPersonTarget = dailyPerPersonTarget,
             maxMemberCap = maxMemberCap,
             memberCount = 1,  // Admin is the first member
             canMembersEditTarget = canMembersEditTarget,
@@ -248,7 +264,7 @@ class UpdateGroupSettingsUseCase @Inject constructor(
         group: Group,
         editorId: String,
         name: String,
-        weeklyTarget: Int,
+        dailyPerPersonTarget: Int,
         maxMemberCap: Int,
         canMembersEditTarget: Boolean,
         weekStartDay: DayOfWeek,
@@ -267,7 +283,9 @@ class UpdateGroupSettingsUseCase @Inject constructor(
         if (trimmed.length > MAX_GROUP_NAME_LENGTH) {
             return Result.failure(AppError.Validation(ValidationField.GroupNameTooLong))
         }
-        if (weeklyTarget <= 0 || weeklyTarget > MAX_WEEKLY_TARGET) {
+        if (dailyPerPersonTarget < StepGoal.MIN_DAILY_PER_PERSON ||
+            dailyPerPersonTarget > StepGoal.MAX_DAILY_PER_PERSON
+        ) {
             return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
         }
         if (maxMemberCap < MIN_MEMBER_CAP || maxMemberCap > MAX_MEMBER_CAP) {
@@ -281,10 +299,15 @@ class UpdateGroupSettingsUseCase @Inject constructor(
             )
         }
 
+        // Sized on the cap being saved, matching how creation sizes it, so
+        // editing the cap and editing the goal stay consistent with each other.
+        val weeklyTarget = StepGoal.weeklyTotalFor(dailyPerPersonTarget, maxMemberCap)
+
         return groupRepository.updateGroupSettings(
             groupId = group.groupId,
             name = trimmed,
             weeklyTarget = weeklyTarget,
+            dailyPerPersonTarget = dailyPerPersonTarget,
             maxMemberCap = maxMemberCap,
             canMembersEditTarget = canMembersEditTarget,
             weekStartDay = weekStartDay.name,
@@ -294,7 +317,6 @@ class UpdateGroupSettingsUseCase @Inject constructor(
     companion object {
         const val MIN_MEMBER_CAP = 2
         const val MAX_MEMBER_CAP = 20
-        const val MAX_WEEKLY_TARGET = 1_000_000
         const val MAX_GROUP_NAME_LENGTH = 100
     }
 }

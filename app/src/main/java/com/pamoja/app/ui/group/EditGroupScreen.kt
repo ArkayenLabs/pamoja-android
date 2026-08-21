@@ -61,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
+import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
 import com.pamoja.app.ui.components.GroupAvatar
 import com.pamoja.app.ui.components.OfflineBanner
@@ -338,17 +339,35 @@ private fun EditGroupContent(
                 Text(
                     text = stringResource(
                         R.string.edit_group_goal_value,
-                        "%,d".format(uiState.weeklyTarget),
+                        "%,d".format(uiState.dailyPerPersonTarget),
                     ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.accentPrimary,
                 )
+                // The derived group total, so the admin still sees the number
+                // the leaderboard is measured against. Secondary on purpose:
+                // it is the consequence of the choice, not the choice.
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.edit_group_goal_total,
+                        uiState.maxMemberCap,
+                        "%,d".format(
+                            StepGoal.weeklyTotalFor(
+                                uiState.dailyPerPersonTarget,
+                                uiState.maxMemberCap,
+                            )
+                        ),
+                        uiState.maxMemberCap,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textTertiary,
+                )
                 Slider(
-                    value = uiState.weeklyTarget.toFloat(),
+                    value = uiState.dailyPerPersonTarget.toFloat(),
                     onValueChange = {
                         // Rounded to the nearest step so the number reads as a
                         // goal rather than a sensor reading.
-                        viewModel.onWeeklyTargetChange(
+                        viewModel.onDailyPerPersonChange(
                             (it / GoalStep).toInt() * GoalStep
                         )
                     },
@@ -641,6 +660,6 @@ private fun EditCard(content: @Composable ColumnScope.() -> Unit) {
     )
 }
 
-private const val GoalMin = 10_000
-private const val GoalMax = 500_000
-private const val GoalStep = 5_000
+private const val GoalMin = StepGoal.MIN_DAILY_PER_PERSON
+private const val GoalMax = StepGoal.MAX_DAILY_PER_PERSON
+private const val GoalStep = 500

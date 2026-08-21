@@ -4,7 +4,28 @@ data class Group(
     val groupId: String = "",
     val name: String = "",
     val adminId: String = "",
-    val weeklyTarget: Int = 70000,
+    /**
+     * The group's weekly total, still absolute and still what everything
+     * compares against.
+     *
+     * **Derived from [dailyPerPersonTarget], not chosen directly.** See
+     * [StepGoal] for why the per-person figure is the real setting and this is
+     * the computed one. Recomputed at week rollover rather than when someone
+     * joins, so the bar never moves under people mid-week.
+     */
+    val weeklyTarget: Int = StepGoal.weeklyTotalFor(
+        StepGoal.DEFAULT_DAILY_PER_PERSON,
+        members = 1,
+    ),
+    /**
+     * The actual setting: steps per person per day.
+     *
+     * **Zero means a legacy group**, created before the goal was expressed this
+     * way. Those keep whatever [weeklyTarget] they were given rather than
+     * having it silently rewritten, so read [effectiveDailyPerPerson] rather
+     * than this field when showing a number to anyone.
+     */
+    val dailyPerPersonTarget: Int = StepGoal.DEFAULT_DAILY_PER_PERSON,
     val maxMemberCap: Int = 10,
     val memberCount: Int = 0,
     val canMembersEditTarget: Boolean = false,
@@ -58,4 +79,33 @@ data class Group(
 ) {
     /** Resolved, with the locale fallback applied. Use this, never the raw field. */
     val startDay: java.time.DayOfWeek get() = WeekWindow.parseStartDay(weekStartDay)
+
+    /** True for a group created before the goal was expressed per person. */
+    val hasLegacyGoal: Boolean get() = dailyPerPersonTarget <= 0
+
+    /**
+     * The per-person figure to show, for any group.
+     *
+     * For a legacy group this is back-computed from the total it was given,
+     * which is the only way to put a human number next to a goal nobody chose
+     * per person. Show this, never [dailyPerPersonTarget].
+     */
+    val effectiveDailyPerPerson: Int
+        get() = if (hasLegacyGoal) {
+            StepGoal.dailyPerPersonFor(weeklyTarget, memberCount)
+        } else {
+            dailyPerPersonTarget
+        }
+
+    /**
+     * What [weeklyTarget] would be if it were recomputed for the current
+     * membership right now.
+     *
+     * Not applied automatically: recomputing on join would move the bar
+     * mid-week and drop everyone's progress the moment a friend joined, which
+     * punishes the exact behaviour the product wants. The rollover job applies
+     * it, and the edit screen shows it as a preview.
+     */
+    val weeklyTargetForCurrentMembers: Int
+        get() = StepGoal.weeklyTotalFor(effectiveDailyPerPerson, memberCount)
 }

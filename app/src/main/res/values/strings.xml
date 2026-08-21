@@ -24,12 +24,12 @@
     <string name="crop_failed">That image could not be opened. Try another one.</string>
 
     <!-- ── Editing an existing group, admin only ───────────────────────── -->
-    <string name="edit_group_title">Group settings</string>
+    <string name="edit_group_title">Edit group</string>
     <string name="edit_group_name_label">Group name</string>
     <string name="edit_group_name_placeholder">Family, work, running club</string>
-    <string name="edit_group_goal">Weekly goal</string>
-    <string name="edit_group_goal_sub">The combined steps everyone is working towards each week.</string>
-    <string name="edit_group_goal_value">%1$s steps</string>
+    <string name="edit_group_goal">Daily goal per person</string>
+    <string name="edit_group_goal_sub">What each member aims for per day. The group total scales with how many of you there are.</string>
+    <string name="edit_group_goal_value">%1$s steps a day each</string>
     <string name="edit_group_cap">Group size</string>
     <string name="edit_group_cap_sub">How many people can be in this group at once.</string>
     <!-- A count followed by a noun, so a plural. Reuses member_count rather
@@ -307,7 +307,7 @@
     <string name="create_group_name_placeholder">e.g. Morning Walkers</string>
     <string name="create_group_name_required">Give the group a name</string>
     <string name="create_group_name_too_long">That is a little long, keep it under 50</string>
-    <string name="create_group_weekly_goal">Weekly step goal</string>
+    <string name="create_group_weekly_goal">Daily goal per person</string>
     <string name="create_group_max_members">Max members</string>
     <string name="create_group_members_edit">Members can edit goal</string>
     <!-- A group setting, not a personal one, and the copy says so. The whole
@@ -706,9 +706,13 @@
     <!-- Translates a weekly group total into what it asks of one person on one
          day, which is the only form of the number anyone can act on. The cap
          starts at 2 so "one" never renders today, but the noun follows a count. -->
+    <plurals name="edit_group_goal_total">
+        <item quantity="one">%1$s steps a week for %2$d member.</item>
+        <item quantity="other">%1$s steps a week for %2$d members.</item>
+    </plurals>
     <plurals name="create_group_goal_hint">
-        <item quantity="one">About %1$s steps a day each with %2$d person.</item>
-        <item quantity="other">About %1$s steps a day each with %2$d people.</item>
+        <item quantity="one">That is %1$s steps a week with %2$d person.</item>
+        <item quantity="other">That is %1$s steps a week with %2$d people.</item>
     </plurals>
     <!-- Auth top-bar step markers, rendered uppercase. They name the flow, not
          the screen, so someone deep in a sign-up knows what they are doing. -->

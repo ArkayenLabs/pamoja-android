@@ -5,6 +5,10 @@ data class GroupDto(
     val name: String = "",
     val adminId: String = "",
     val weeklyTarget: Int = 70000,
+    // Zero on every group written before the goal became a per-person figure.
+    // Group.hasLegacyGoal keys off exactly that, so the default must stay 0
+    // here even though the domain default is 8,000.
+    val dailyPerPersonTarget: Int = 0,
     val maxMemberCap: Int = 10,
     val memberCount: Int = 0,
     val canMembersEditTarget: Boolean = false,
@@ -24,6 +28,7 @@ data class GroupDto(
         name = name,
         adminId = adminId,
         weeklyTarget = weeklyTarget,
+        dailyPerPersonTarget = dailyPerPersonTarget,
         maxMemberCap = maxMemberCap,
         memberCount = memberCount,
         canMembersEditTarget = canMembersEditTarget,
@@ -42,6 +47,7 @@ data class GroupDto(
             name = group.name,
             adminId = group.adminId,
             weeklyTarget = group.weeklyTarget,
+            dailyPerPersonTarget = group.dailyPerPersonTarget,
             maxMemberCap = group.maxMemberCap,
             memberCount = group.memberCount,
             canMembersEditTarget = group.canMembersEditTarget,

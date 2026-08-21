@@ -90,7 +90,15 @@ service cloud.firestore {
                     && request.resource.data.maxMemberCap >= 2
                     && request.resource.data.maxMemberCap <= 20
                     && request.resource.data.weeklyTarget > 0
-                    && request.resource.data.weeklyTarget <= 1000000
+                    // 2,800,000 is StepGoal.MAX_WEEKLY_TOTAL: the largest group
+                    // the product allows (20) at the highest per-person figure
+                    // (20,000) for seven days. Keep the two in step.
+                    //
+                    // It was 1,000,000, which was not merely conservative: the
+                    // recommended default at the premium member cap is
+                    // 20 x 8,000 x 7 = 1,120,000, so the old ceiling refused the
+                    // default. GroupGoalRulesEmulatorTest pins both halves.
+                    && request.resource.data.weeklyTarget <= 2800000
                     && request.resource.data.name is string
                     && request.resource.data.name.size() > 0
                     && request.resource.data.name.size() <= 100;
@@ -143,6 +151,7 @@ service cloud.firestore {
           && onlyChanged([
                'name',
                'weeklyTarget',
+               'dailyPerPersonTarget',
                'maxMemberCap',
                'canMembersEditTarget',
                'weekStartDay',
@@ -155,7 +164,7 @@ service cloud.firestore {
           && request.resource.data.maxMemberCap <= 20
           && request.resource.data.maxMemberCap >= resource.data.memberCount
           && request.resource.data.weeklyTarget > 0
-          && request.resource.data.weeklyTarget <= 1000000
+          && request.resource.data.weeklyTarget <= 2800000
           && request.resource.data.name is string
           && request.resource.data.name.size() > 0
           && request.resource.data.name.size() <= 100
@@ -168,7 +177,7 @@ service cloud.firestore {
           && resource.data.canMembersEditTarget == true
           && onlyChanged(['weeklyTarget'])
           && request.resource.data.weeklyTarget > 0
-          && request.resource.data.weeklyTarget <= 1000000
+          && request.resource.data.weeklyTarget <= 2800000
         )
         ||
         // --- Case D: LEAVING. The count comes down by exactly one and the

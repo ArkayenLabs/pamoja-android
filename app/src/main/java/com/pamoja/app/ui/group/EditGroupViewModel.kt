@@ -7,6 +7,7 @@ import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
@@ -36,7 +37,8 @@ data class EditGroupUiState(
     val currentUserId: String = "",
 
     val name: String = "",
-    val weeklyTarget: Int = 70_000,
+    /** The setting. The group total is derived from it, never edited directly. */
+    val dailyPerPersonTarget: Int = StepGoal.DEFAULT_DAILY_PER_PERSON,
     val maxMemberCap: Int = 10,
     val canMembersEditTarget: Boolean = false,
     val weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
@@ -68,7 +70,7 @@ data class EditGroupUiState(
     val isDirty: Boolean
         get() = group?.let {
             name.trim() != it.name ||
-                weeklyTarget != it.weeklyTarget ||
+                dailyPerPersonTarget != it.effectiveDailyPerPerson ||
                 maxMemberCap != it.maxMemberCap ||
                 canMembersEditTarget != it.canMembersEditTarget ||
                 weekStartDay != it.startDay
@@ -140,7 +142,10 @@ class EditGroupViewModel @Inject constructor(
                         group = group,
                         currentUserId = user.userId,
                         name = group.name,
-                        weeklyTarget = group.weeklyTarget,
+                        // effective, not raw: a legacy group has no
+                        // per-person figure stored, so this back-computes the
+                        // one its total implies rather than showing zero.
+                        dailyPerPersonTarget = group.effectiveDailyPerPerson,
                         maxMemberCap = group.maxMemberCap,
                         canMembersEditTarget = group.canMembersEditTarget,
                         weekStartDay = group.startDay,
@@ -182,8 +187,13 @@ class EditGroupViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(name = value)
     }
 
-    fun onWeeklyTargetChange(value: Int) {
-        _uiState.value = _uiState.value.copy(weeklyTarget = value)
+    fun onDailyPerPersonChange(value: Int) {
+        _uiState.value = _uiState.value.copy(
+            dailyPerPersonTarget = value.coerceIn(
+                StepGoal.MIN_DAILY_PER_PERSON,
+                StepGoal.MAX_DAILY_PER_PERSON,
+            )
+        )
     }
 
     fun onMemberCapChange(value: Int) {
@@ -215,7 +225,7 @@ class EditGroupViewModel @Inject constructor(
                 group = group,
                 editorId = state.currentUserId,
                 name = state.name,
-                weeklyTarget = state.weeklyTarget,
+                dailyPerPersonTarget = state.dailyPerPersonTarget,
                 maxMemberCap = state.maxMemberCap,
                 canMembersEditTarget = state.canMembersEditTarget,
                 weekStartDay = state.weekStartDay,

@@ -3,11 +3,35 @@
 Everything in this folder is served by the **arkayenlabs.com website**, which is
 a separate project from this Android repo.
 
-**You no longer hand anything over to deploy a legal change.** The website
-fetches `terms-pamoja.html` and `privacy-pamoja.html` from this repo at build
-time, and a GitHub Action here redeploys the site whenever either file changes
-on `dev`. Edit, commit, push; the published pages follow within a couple of
-minutes. See [How publishing works](#how-publishing-works) below.
+🔴 **The automatic redeploy has never actually worked. Verified 2026-08-21.**
+
+The intent is that the website fetches `terms-pamoja.html` and
+`privacy-pamoja.html` from this repo at build time, and a GitHub Action here
+redeploys the site whenever either changes on `dev`. That is what the workflow
+does. What was never done is **step 2 of its own setup notes**: the
+`VERCEL_DEPLOY_HOOK` secret does not exist in this repository.
+
+Measured, not assumed: `gh secret list` returns nothing, and
+`gh run list --workflow=redeploy-website.yml` shows exactly **one run ever**,
+the push on 2026-08-21, which failed at once with
+
+    VERCEL_DEPLOY_HOOK is not set.
+
+The workflow was added on 2026-08-14 in `1dcdc77`, so nothing has ever
+published through it. This paragraph previously read "You no longer hand
+anything over to deploy a legal change", which was aspirational and is the
+reason a legal page edit sat unpublished without anyone noticing.
+
+**Until the secret exists, every legal change needs a manual redeploy from the
+Vercel dashboard.** The prebuild refetches from `dev` on any build, so a manual
+deploy does pick up the current files; it just does not happen on its own.
+
+To fix it permanently, do both halves of the setup at the top of
+`.github/workflows/redeploy-website.yml`: create the deploy hook in Vercel, then
+add it here as the `VERCEL_DEPLOY_HOOK` Actions secret. Confirm with a push that
+touches a watched file and a green run.
+
+See [How publishing works](#how-publishing-works) below.
 
 **Canonical host is `www.arkayenlabs.com`.** The apex `arkayenlabs.com`
 307-redirects to www. That redirect is why the Android manifest declares only

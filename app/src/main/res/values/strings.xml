@@ -155,7 +155,6 @@
          because "showing old data" without saying how old is not much of a
          statement. %1$s is a wall-clock time in the device's own format. -->
     <string name="offline_showing_from">Showing data from %1$s</string>
-    <string name="group_last_synced">LAST SYNCED %1$s</string>
     <string name="group_leaderboard_as_of">AS OF %1$s</string>
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
@@ -738,6 +737,10 @@
     <string name="group_insight_complete">Goal met. Everything from here is a bonus.</string>
     <string name="group_insight_on_track">%1$s steps a day each from here, and you are ahead of pace.</string>
     <string name="group_insight_behind">%1$s steps a day each from here and you are there.</string>
+    <!-- The rung above "behind": the arithmetic still produces a number, but it
+         is one nobody can walk, and printing it reads as mockery. Shows no
+         figure at all, on purpose. -->
+    <string name="group_insight_unreachable">The full goal is out of reach this week. Every step still counts, and next week starts fresh.</string>
     <string name="group_pace_complete">Goal met</string>
     <string name="group_pace_on_track">On track</string>
     <string name="group_pace_keep_going">Keep going</string>

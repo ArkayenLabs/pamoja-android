@@ -81,6 +81,7 @@ import com.pamoja.app.ui.components.NoticeTone
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.ui.components.GroupDashboardSkeleton
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.formatSyncTime
@@ -777,13 +778,16 @@ fun GroupProgressCard(
                 // last true. Suppressed rather than guessed, per the states
                 // deck: a pace reading that decays on its own is worse than no
                 // pace reading.
-                if (isStale && lastSyncedAt != null) {
-                    Text(
-                        text = stringResource(R.string.group_last_synced, lastSyncedAt),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.textTertiary,
-                    )
-                } else if (!isStale) {
+                // No timestamp in the ring. It used to carry one, which was
+                // three copies of the same fact on one screen: the offline
+                // banner already says "Showing data from 2:05 PM", and the
+                // leaderboard header says "AS OF 2:05 PM" below. The ring's
+                // copy also wrapped to two lines inside RingInnerSafeWidth,
+                // adding a fifth line to a circle laid out for four and pushing
+                // the whole stack off centre. The banner is unmissable and sits
+                // directly above, so the figure is not being passed off as
+                // current.
+                if (!isStale) {
                     PaceBadge(progress = progress, daysLeft = daysLeft)
                 }
                 Spacer(modifier = Modifier.height(Spacing.x2))
@@ -978,18 +982,30 @@ private fun GroupInsightCard(
     val tint = if (pace == Pace.Behind) colors.accentAmber else colors.accentTeal
     val tone = if (pace == Pace.Behind) colors.accentAmberSubtle else colors.accentTealSubtle
 
+    // The rung above "behind". The arithmetic keeps producing a number long
+    // after the goal stops being reachable, and printing "26,417 steps a day
+    // each" to a group that is 20% of the way through its week reads as
+    // mockery rather than advice. Past what a person could actually walk, the
+    // honest move is to stop quoting a figure at all and say so.
+    //
+    // The bound is StepGoal.MAX_DAILY_PER_PERSON rather than a number invented
+    // here, because that constant already encodes "the top of what a walking
+    // group sustains". A goal nobody could have set is a goal nobody can hit.
+    val isUnreachable = perPersonPerDay > StepGoal.MAX_DAILY_PER_PERSON
+
     val number = "%,d".format(perPersonPerDay)
-    val sentence = when (pace) {
-        Pace.Complete -> stringResource(R.string.group_insight_complete)
-        Pace.OnTrack  -> stringResource(R.string.group_insight_on_track, number)
-        Pace.Behind   -> stringResource(R.string.group_insight_behind, number)
+    val sentence = when {
+        pace == Pace.Complete -> stringResource(R.string.group_insight_complete)
+        pace == Pace.OnTrack  -> stringResource(R.string.group_insight_on_track, number)
+        isUnreachable         -> stringResource(R.string.group_insight_unreachable)
+        else                  -> stringResource(R.string.group_insight_behind, number)
     }
 
-    val styled = remember(sentence, number, pace, colors) {
+    val styled = remember(sentence, number, pace, isUnreachable, colors) {
         buildAnnotatedString {
             append(sentence)
             val start = sentence.indexOf(number)
-            if (pace != Pace.Complete && start >= 0) {
+            if (pace != Pace.Complete && !isUnreachable && start >= 0) {
                 addStyle(
                     SpanStyle(
                         fontFamily = DisplayFontFamily,

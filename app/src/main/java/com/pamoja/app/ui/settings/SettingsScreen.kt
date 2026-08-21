@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -414,7 +413,11 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
+                    // No statusBarsPadding() here. The Column above already
+                    // applies the Scaffold's innerPadding, which carries the
+                    // status bar inset because enableEdgeToEdge() is on, so
+                    // adding it again inset the header twice and left an
+                    // obvious gap above the back button.
                     .padding(horizontal = Spacing.x2, vertical = Spacing.x2),
                 verticalAlignment = Alignment.CenterVertically
             ) {

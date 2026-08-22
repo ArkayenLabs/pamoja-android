@@ -139,4 +139,9 @@ unaddressed: worth an explicit `<exclude>` pass after launch, not before.
 
 - [ ] Re-read the deployed privacy page and confirm it matches every row above
 - [ ] Confirm the store listing's data-safety summary reads the way you expect
-- [ ] Record the filing date here so the next session does not re-derive it
+- [x] **Filed 2026-08-22.** Walked through every field live against this
+      sheet. One mismatch found and fixed during filing: Name was answered as
+      collected-only, but it must be Shared (App functionality) since the
+      leaderboard shows it to every group member via
+      `MembershipDto.displayName`, same reason User IDs is shared. Everything
+      else matched this sheet on the first pass.

@@ -19,9 +19,10 @@ import kotlin.math.roundToInt
  * | 8       | 1,250                    |
  * | 20      | 500                      |
  *
- * Since the member cap is 8 on free and 20 on premium, that meant **paying made
- * the goal 2.5x easier**. The incentive was backwards, and it got worse the
- * more premium sold.
+ * At the time, the member cap was 8 on free and 20 on premium, so **paying made
+ * the goal 2.5x easier**. The incentive was backwards, and it got worse the more
+ * premium sold. That particular trap is gone twice over: the goal now scales
+ * with the group, and group size is no longer sold at all (see [PlanLimits]).
  *
  * So [dailyPerPerson] is the admin's intent and the only figure any screen
  * asks for. [weeklyTotalFor] derives the absolute, which is still stored on the

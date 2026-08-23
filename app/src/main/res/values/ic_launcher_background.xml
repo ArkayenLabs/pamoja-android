@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- The brand's light-theme surface, #FAF5EF, matching what the mark sits
+         on inside the app (Welcome screen). Not Studio's default #FFFFFF. -->
+    <color name="ic_launcher_background">#FAF5EF</color>
 </resources>

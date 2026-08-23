@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Pamoja mark's monochrome layer, for Android 13+ themed icons.
+
+  Same geometry as ic_launcher_foreground_pamoja.xml. No colour choice matters
+  here: the OS extracts this shape's alpha and recolours it to match whatever
+  the user's own wallpaper and system theme call for, light or dark, which is
+  the actual mechanism that makes an icon "work on both backgrounds" rather
+  than a colour picked by us. Missing this layer, which is what shipped before
+  this file existed, is why the icon looked unfinished specifically on Android
+  13+ devices with themed icons turned on: the system had nothing to fall back
+  to, so it fell back to nothing.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M46.5,54m-16.5,0a16.5,16.5 0,1 1,33 0a16.5,16.5 0,1 1,-33 0"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6.5"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M61.5,54m-16.5,0a16.5,16.5 0,1 1,33 0a16.5,16.5 0,1 1,-33 0"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6.5"
+        android:fillColor="#00000000" />
+</vector>

@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
@@ -65,8 +66,23 @@ class MainActivity : ComponentActivity() {
     /** Set by onCreate and onNewIntent, consumed once by the composition. */
     private val launchTarget = MutableStateFlow<LaunchTarget?>(null)
 
+    /**
+     * Flips once startDestination below has actually resolved. Read from the
+     * splash's keep-on-screen condition, which is polled on the main thread on
+     * every frame, same thread this is written from inside the produceState
+     * block, so a plain var is safe without further synchronisation.
+     *
+     * Tied to real readiness rather than a fixed delay: the splash covers
+     * exactly the auth check and the DataStore onboarding read this activity
+     * already had to do, the same wait that used to render as a blank frame
+     * before the NavHost was allowed to start.
+     */
+    private var isReadyToShowContent = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setKeepOnScreenCondition { !isReadyToShowContent }
         enableEdgeToEdge()
 
         handleIntent(intent)
@@ -116,6 +132,7 @@ class MainActivity : ComponentActivity() {
                             Screen.ProfileSetup.route
                         }
                     }
+                    isReadyToShowContent = true
                 }
 
                 val target by launchTarget.collectAsState()

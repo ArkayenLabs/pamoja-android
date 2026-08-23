@@ -24,9 +24,6 @@ import com.pamoja.app.domain.usecase.ReauthenticateWithGoogleUseCase
 import com.pamoja.app.domain.usecase.ReauthenticateWithPhoneUseCase
 import com.pamoja.app.domain.usecase.SignOutUseCase
 import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
-import com.pamoja.app.util.NotificationContext
-import com.pamoja.app.util.SmartNotificationEngine
-import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.WorkManagerScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,7 +114,6 @@ data class SettingsUiState(
      * output made of package names and counts read at runtime, it is never
      * translated, and it cannot reach a release build.
      */
-    val debugStepReport: String? = null,
 )
 
 @HiltViewModel
@@ -127,7 +123,6 @@ class SettingsViewModel @Inject constructor(
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val userPreferences: UserPreferences,
-    private val notificationHelper: SmartNotificationHelper,
     private val getAuthMethodsUseCase: GetAuthMethodsUseCase,
     private val reauthenticateWithGoogleUseCase: ReauthenticateWithGoogleUseCase,
     private val reauthenticateWithEmailUseCase: ReauthenticateWithEmailUseCase,
@@ -499,134 +494,6 @@ class SettingsViewModel @Inject constructor(
             reauthPhoneNumber = null,
             isLoading = false,
         )
-    }
-
-    /**
-     * Posts one notification per channel, ignoring every gate.
-     *
-     * Only reachable from a debug build. Guarded again at the call site, so
-     * neither the row nor this path can ship.
-     */
-    /**
-     * Reports which apps wrote today's steps into Health Connect.
-     *
-     * Exists to answer a specific question: Pamoja and Google Fit can disagree
-     * about the same day, and a single number cannot say whether that is a bug
-     * or two apps measuring different things. Health Connect is a shared store,
-     * so Pamoja reads the total across every writer while Fit's own screen shows
-     * only what Fit recorded.
-     *
-     * Read the output like this:
-     *
-     *  - **More than one source listed** — the gap against Fit is expected.
-     *    Pamoja is counting a watch or an OEM health app that Fit is not.
-     *  - **Aggregate below the raw sum** — normal, and the amount is how much
-     *    overlap Health Connect de-duplicated away.
-     *  - **Aggregate ABOVE the raw sum** — that should not happen, and it is the
-     *    signature of a real miscount.
-     *  - **Any manual records** — typed in by hand, not measured, and the first
-     *    thing to distrust on a leaderboard.
-     *
-     * Only reachable from a debug build, guarded again at the call site.
-     */
-    fun runStepSourceDiagnostic() {
-        if (!com.pamoja.app.BuildConfig.DEBUG) return
-
-        viewModelScope.launch {
-            val breakdown = healthConnectReader.readTodayStepsBySource()
-            if (breakdown == null) {
-                _uiState.value = _uiState.value.copy(
-                    debugStepReport = "Health Connect unavailable, or the steps " +
-                        "permission is not granted. Nothing to report."
-                )
-                return@launch
-            }
-
-            val report = buildString {
-                appendLine("Synced total (aggregate): ${breakdown.aggregateTotal}")
-                appendLine("Sum of raw records:       ${breakdown.rawRecordTotal}")
-                val delta = breakdown.rawRecordTotal - breakdown.aggregateTotal
-                appendLine(
-                    when {
-                        delta > 0 -> "De-duplicated away:       $delta (normal, writers overlap)"
-                        delta < 0 -> "AGGREGATE EXCEEDS RAW by ${-delta}. That is a real miscount."
-                        else      -> "No overlap between writers."
-                    }
-                )
-                appendLine()
-                if (breakdown.sources.isEmpty()) {
-                    appendLine("No step records today, from any app.")
-                } else {
-                    appendLine("Sources (${breakdown.sources.size}):")
-                    breakdown.sources.forEach { source ->
-                        appendLine("• ${source.packageName}")
-                        append("    ${source.steps} steps, ${source.recordCount} records")
-                        if (source.manualCount > 0) {
-                            append(", ${source.manualCount} MANUAL")
-                        }
-                        appendLine()
-                    }
-                    if (breakdown.sources.size > 1) {
-                        appendLine()
-                        appendLine(
-                            "More than one app is writing steps, so Pamoja counting " +
-                                "more than Google Fit is expected rather than wrong."
-                        )
-                    }
-                }
-            }
-
-            _uiState.value = _uiState.value.copy(debugStepReport = report)
-        }
-    }
-
-    fun dismissDebugStepReport() {
-        _uiState.value = _uiState.value.copy(debugStepReport = null)
-    }
-
-    fun sendDebugNotifications() {
-        if (!com.pamoja.app.BuildConfig.DEBUG) return
-
-        viewModelScope.launch {
-            val name = _uiState.value.userName.ifBlank { "Ravi" }
-
-            // Values chosen so every candidate builds: a goal just reached, a
-            // teammate just ahead, a new member and a streak all at once, which
-            // never happens in reality but exercises all four channels.
-            val context = NotificationContext(
-                userName = name,
-                groupId = "debug-group",
-                groupName = "Debug Group",
-                memberCount = 5,
-                groupAgeMs = 14L * 24 * 60 * 60 * 1000,
-                weeklyGoal = 70_000,
-                groupStepsTotal = 70_500,
-                userStepsThisWeek = 14_200,
-                userStepsToday = 6_400,
-                daysLeftInWeek = 2,
-                memberJustAheadName = "Priya",
-                stepsToOvertakeMemberAhead = 320,
-                memberWhoJustPassedYouName = "Arjun",
-                goalReachedJustNow = true,
-                newMemberName = "Meera",
-                isFirstEverSync = true,
-                currentStreakDays = 6,
-                streakAtRiskToday = true,
-                now = java.time.LocalTime.now(),
-                today = java.time.LocalDate.now().dayOfWeek,
-                hoursSinceLastNotification = 999,
-                consecutiveIgnored = 0,
-                rotationSeed = java.time.LocalDate.now().dayOfYear,
-            )
-
-            val samples = SmartNotificationEngine.debugSamples(context)
-            samples.forEach { notificationHelper.show(it) }
-
-            _uiState.value = _uiState.value.copy(
-                messageRes = R.string.settings_debug_posted,
-                messageArg = samples.size
-            )
-        }
     }
 
     fun clearMessages() {

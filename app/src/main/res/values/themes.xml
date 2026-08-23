@@ -2,4 +2,22 @@
 <resources>
 
     <style name="Theme.Pamoja" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!--
+      Shown for exactly as long as MainActivity's startDestination take to
+      resolve (the auth check plus the DataStore onboarding read), never a
+      fixed duration. See MainActivity.installSplashScreen's
+      setKeepOnScreenCondition.
+
+      The icon is the same PNG as the launcher's foreground layer
+      (mipmap-xxxhdpi/ic_launcher_foreground_pamoja.png), already inset inside
+      a safe circle with margin to spare, so it is reused as-is rather than a
+      second copy of the same asset.
+    -->
+    <style name="Theme.Pamoja.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground_pamoja</item>
+        <item name="postSplashScreenTheme">@style/Theme.Pamoja</item>
+    </style>
+
 </resources>

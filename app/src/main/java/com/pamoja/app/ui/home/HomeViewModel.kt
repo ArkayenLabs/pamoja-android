@@ -116,6 +116,7 @@ class HomeViewModel @Inject constructor(
     init {
         observeConnectivity()
         observeUnreadActivity()
+        observeUserName()
         loadHome()
     }
 
@@ -135,6 +136,29 @@ class HomeViewModel @Inject constructor(
     fun dismissHealthConnectPrompt() {
         healthPromptDismissed = true
         _uiState.value = _uiState.value.copy(needsHealthConnect = false)
+    }
+
+    /**
+     * Keeps the greeting tied to the stored name for as long as this ViewModel
+     * lives.
+     *
+     * Collected rather than read once, because HomeViewModel is not recreated
+     * when you go to Edit Profile and come back: the ViewModel survives, so a
+     * one-shot read taken in [loadHome] left the greeting on the old name until
+     * a pull to refresh or a process death. Editing your name and returning to
+     * a dashboard still greeting the previous one is the bug this fixes.
+     *
+     * EditProfileViewModel.save writes the new name here as well as to
+     * Firestore, so this fires the moment a save succeeds.
+     */
+    private fun observeUserName() {
+        viewModelScope.launch {
+            userPreferences.userName.collect { name ->
+                if (!name.isNullOrBlank()) {
+                    _uiState.value = _uiState.value.copy(userName = name)
+                }
+            }
+        }
     }
 
     private fun observeUnreadActivity() {
@@ -176,13 +200,16 @@ class HomeViewModel @Inject constructor(
             // everyone, on every sign-in method. The display name lives on the
             // Firestore profile. Cache first so the greeting is right on the
             // first frame, then confirm against the document.
-            val cachedName = userPreferences.userName.firstOrNull().orEmpty()
-            _uiState.value = _uiState.value.copy(userName = cachedName, isLoading = false)
+            _uiState.value = _uiState.value.copy(isLoading = false)
 
+            // Confirms the cached name against the document and writes any
+            // difference back. Does not set userName directly: observeUserName
+            // is the single writer of that field, so this update reaches the
+            // greeting the same way an edit from the profile screen does.
+            val cachedName = userPreferences.userName.firstOrNull().orEmpty()
             getUserUseCase(user.userId).onSuccess { profile ->
-                if (profile.name.isNotBlank()) {
-                    if (profile.name != cachedName) userPreferences.saveUserName(profile.name)
-                    _uiState.value = _uiState.value.copy(userName = profile.name)
+                if (profile.name.isNotBlank() && profile.name != cachedName) {
+                    userPreferences.saveUserName(profile.name)
                 }
             }
 

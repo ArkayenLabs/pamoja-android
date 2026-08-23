@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark-theme surfaceApp from Color.kt (#141110), overriding the light
+         #FAF5EF at values/ic_launcher_background.xml by resource qualifier
+         rather than a second colour name. Used for both the adaptive icon's
+         background layer and the splash background below. -->
+    <color name="ic_launcher_background">#141110</color>
+</resources>

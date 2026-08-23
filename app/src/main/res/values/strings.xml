@@ -436,11 +436,6 @@
     <string name="settings_reauth_body">For your safety we ask you to sign in again before deleting an account. Nothing has been deleted yet.</string>
     <string name="settings_reauth_phone_body">For your safety we text a code to the number on this account before deleting it. Nothing has been deleted yet.</string>
     <string name="settings_reauth_code_body">Enter the code we sent to %1$s. Nothing has been deleted yet.</string>
-    <string name="settings_debug">DEBUG</string>
-    <string name="settings_debug_notifications_title">Send test notifications</string>
-    <string name="settings_debug_notifications_subtitle">One per channel, bypassing quiet hours and throttling</string>
-    <string name="settings_debug_step_sources_title">Step sources today</string>
-    <string name="settings_debug_step_sources_subtitle">Which apps wrote steps today, and whether the totals reconcile</string>
     <string name="settings_version">Pamoja v%1$s</string>
     <string name="settings_title">Settings</string>
     <string name="settings_back_desc">Back</string>
@@ -455,7 +450,6 @@
     <string name="settings_code_expired">That code expired. Send a new one.</string>
     <string name="settings_code_wrong">That code is not right</string>
     <string name="settings_code_send_failed">Could not send the code</string>
-    <string name="settings_debug_posted">Posted %1$d test notifications</string>
 
     <!-- ── Edit profile ───────────────────────────────────────────────── -->
     <string name="profile_edit_title">Edit profile</string>

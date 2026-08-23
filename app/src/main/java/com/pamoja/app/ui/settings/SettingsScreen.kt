@@ -15,14 +15,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,7 +50,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -245,48 +242,6 @@ fun SettingsScreen(
                 viewModel.deleteAccount()
             },
             onDismiss = { showDeleteConfirmDialog = false },
-        )
-    }
-
-    // Debug only, and gated again in the ViewModel. Deliberately unstyled next to
-    // the rest of the screen: this is diagnostic output to be read precisely and
-    // copied out, so it is monospaced, selectable and scrollable rather than
-    // pretty. It never reaches a release build.
-    uiState.debugStepReport?.let { report ->
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissDebugStepReport() },
-            containerColor = colors.surface3,
-            shape = RoundedCornerShape(PamojaRadii.xl),
-            title = {
-                Text(
-                    text = stringResource(R.string.settings_debug_step_sources_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.textPrimary,
-                )
-            },
-            text = {
-                SelectionContainer {
-                    Text(
-                        text = report,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                        ),
-                        color = colors.textSecondary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 420.dp)
-                            .verticalScroll(rememberScrollState()),
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.dismissDebugStepReport() }) {
-                    Text(
-                        text = stringResource(R.string.common_dismiss),
-                        color = colors.accentPrimary,
-                    )
-                }
-            },
         )
     }
 
@@ -775,38 +730,6 @@ fun SettingsScreen(
                     )
                 }
 
-                // ─── Debug tools, never present in a release build ───────────
-                if (com.pamoja.app.BuildConfig.DEBUG) {
-                    Spacer(modifier = Modifier.height(Spacing.x8))
-
-                    SectionLabel(stringResource(R.string.settings_debug), color = colors.textTertiary)
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Spacing.x6)
-                            .clip(RoundedCornerShape(PamojaRadii.xl))
-                            .background(colors.surface1)
-                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                    ) {
-                        SettingsRow(
-                            icon = PamojaIcons.Notification,
-                            title = stringResource(R.string.settings_debug_notifications_title),
-                            subtitle = stringResource(R.string.settings_debug_notifications_subtitle),
-                            iconColor = colors.textSecondary,
-                            onClick = { viewModel.sendDebugNotifications() }
-                        )
-
-                        SettingsRow(
-                            icon = PamojaIcons.Footprints,
-                            title = stringResource(R.string.settings_debug_step_sources_title),
-                            subtitle = stringResource(R.string.settings_debug_step_sources_subtitle),
-                            iconColor = colors.textSecondary,
-                            onClick = { viewModel.runStepSourceDiagnostic() }
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(Spacing.x12))
 
                 // App version signature
@@ -825,7 +748,14 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(Spacing.x2))
                     Text(
-                        text = stringResource(R.string.settings_version, "1.0.0"),
+                        // Read from the build rather than typed here. It was
+                        // hardcoded "1.0.0", so it would have kept claiming
+                        // 1.0.0 on every future release regardless of what was
+                        // actually shipped.
+                        text = stringResource(
+                            R.string.settings_version,
+                            com.pamoja.app.BuildConfig.VERSION_NAME,
+                        ),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.textTertiary,
                         textAlign = TextAlign.Center

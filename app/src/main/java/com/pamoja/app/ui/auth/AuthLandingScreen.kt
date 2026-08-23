@@ -24,7 +24,7 @@ import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.components.PamojaRingMark
+import com.pamoja.app.ui.components.PamojaMark
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.Spacing
@@ -66,7 +66,7 @@ fun AuthLandingScreen(
 
             Spacer(modifier = Modifier.height(Spacing.x8))
 
-            PamojaRingMark()
+            PamojaMark()
 
             Spacer(modifier = Modifier.height(Spacing.x5))
 

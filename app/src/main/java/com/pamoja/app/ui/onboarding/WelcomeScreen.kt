@@ -36,7 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.OnboardingProgressBar
-import com.pamoja.app.ui.components.PamojaRingMark
+import com.pamoja.app.ui.components.PamojaMark
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -85,7 +85,7 @@ fun WelcomeScreen(
                 // The Pamoja mark itself, the same two rings the sign-in screen
                 // shows. A gradient tile with a glyph in it was a placeholder
                 // for a logo rather than the logo.
-                PamojaRingMark(size = 72.dp)
+                PamojaMark(size = 72.dp)
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
 

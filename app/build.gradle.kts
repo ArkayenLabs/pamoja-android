@@ -46,11 +46,16 @@ android {
         applicationId = "com.arkayenlabs.pamoja"
         minSdk = 26
         targetSdk = 36
-        // Closed testing has already consumed earlier codes, and Play refuses
-        // an upload that reuses one. Raise this again if the Console says the
-        // code is taken; it only ever goes up.
-        versionCode = 2
-        versionName = "1.0"
+        // Closed testing and the first upload have consumed earlier codes, and
+        // Play refuses an upload that reuses one. Raise this again if the
+        // Console says the code is taken; it only ever goes up.
+        versionCode = 3
+
+        // Three-part on purpose. The Settings screen used to print a hardcoded
+        // "1.0.0" next to a versionName of "1.0", so the two disagreed; that
+        // screen now reads BuildConfig.VERSION_NAME, and this is the value it
+        // shows.
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
@@ -96,6 +101,7 @@ android {
 dependencies {
     // Core
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 

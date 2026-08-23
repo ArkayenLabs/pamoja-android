@@ -774,10 +774,6 @@ fun GroupProgressCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.width(RingInnerSafeWidth),
             ) {
-                // Withheld while stale, and replaced by when these numbers were
-                // last true. Suppressed rather than guessed, per the states
-                // deck: a pace reading that decays on its own is worse than no
-                // pace reading.
                 // No timestamp in the ring. It used to carry one, which was
                 // three copies of the same fact on one screen: the offline
                 // banner already says "Showing data from 2:05 PM", and the

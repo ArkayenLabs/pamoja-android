@@ -118,8 +118,15 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onPhoneNumberChange(number: String) {
-        _uiState.value = _uiState.value.copy(
-            phoneNumber = number.filter { it.isDigit() },
+        val state = _uiState.value
+        // Capped to the country's own longest valid length, so typing past it
+        // is simply impossible rather than producing a "too short" message
+        // for a number that is actually too long. The field still accepts a
+        // shorter, genuinely incomplete number; only the ceiling is enforced
+        // here.
+        val digitsOnly = number.filter { it.isDigit() }.take(state.country.nationalDigits.last)
+        _uiState.value = state.copy(
+            phoneNumber = digitsOnly,
             error = null,
         )
     }

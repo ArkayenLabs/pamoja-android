@@ -848,7 +848,13 @@ private fun AddPhoneDialog(
 
                 PamojaTextField(
                     value = number,
-                    onValueChange = { number = it.filter { char -> char.isDigit() } },
+                    // Capped to the country's own longest valid length, same
+                    // reason as the sign-in phone screen: the field must not
+                    // accept more digits than the country could ever need.
+                    onValueChange = {
+                        number = it.filter { char -> char.isDigit() }
+                            .take(country.nationalDigits.last)
+                    },
                     label = stringResource(R.string.phone_label),
                     placeholder = stringResource(R.string.phone_placeholder),
                     keyboardType = KeyboardType.Phone,

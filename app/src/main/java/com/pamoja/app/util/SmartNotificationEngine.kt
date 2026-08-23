@@ -236,7 +236,7 @@ object SmartNotificationEngine {
         // implies a bottom one.
         if (ctx.goalReachedJustNow) {
             out += achievement(seed, ctx, 100, listOf(
-                "Goal smashed" to "All of you got there. Go sit down.",
+                "Goal smashed" to "All of you got there. Nicely done.",
                 "That is the week" to "Weekly goal done. Take the win.",
                 "You did it" to "Every single one of you.",
             ))

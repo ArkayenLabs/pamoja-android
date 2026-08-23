@@ -185,6 +185,7 @@
     <string name="phone_label">Phone number</string>
     <string name="phone_placeholder">Your number</string>
     <string name="phone_too_short">That number looks too short for %1$s. Check the digits after the dial code.</string>
+    <string name="phone_too_long">That number looks too long for %1$s. Check the digits after the dial code.</string>
     <string name="phone_send_code">Send code</string>
     <string name="phone_select_country">Select country</string>
     <string name="phone_search_country">Country or dial code</string>

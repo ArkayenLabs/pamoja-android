@@ -94,7 +94,16 @@ fun PhoneEntryScreen(
 
     val digits = uiState.phoneNumber.length
     val isComplete = digits in uiState.country.nationalDigits
-    val tooShortMessage = stringResource(R.string.phone_too_short, uiState.country.name)
+    // Two messages, not one. digits could fail isComplete by being either
+    // side of the country's valid range, and the field has no max-length
+    // cap, so someone can type 12 digits into a 10-digit country and see
+    // "too short" printed at them. That happened, was reported, and is
+    // exactly the kind of copy bug that makes an app look untrustworthy.
+    val lengthErrorMessage = if (digits > uiState.country.nationalDigits.last) {
+        stringResource(R.string.phone_too_long, uiState.country.name)
+    } else {
+        stringResource(R.string.phone_too_short, uiState.country.name)
+    }
 
     Box(
         modifier = Modifier
@@ -247,7 +256,7 @@ fun PhoneEntryScreen(
                     if (!isComplete) {
                         // Resolved here rather than inside the lambda, since a
                         // click handler is not a composable scope.
-                        blurError = tooShortMessage
+                        blurError = lengthErrorMessage
                     } else {
                         activity?.let(viewModel::sendCode)
                     }

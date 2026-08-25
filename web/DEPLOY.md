@@ -44,9 +44,9 @@ declared apex could never verify.
 
 | URL | Serves | Status |
 |---|---|---|
-| `https://www.arkayenlabs.com/privacy/pamoja` | `privacy-pamoja.html` | live ✅ |
-| `https://www.arkayenlabs.com/terms/pamoja` | `terms-pamoja.html` | live ✅ |
-| `https://www.arkayenlabs.com/privacy/pamoja/delete-account` | `delete-account-pamoja.html` | 🔴 **not live, needs a website-repo change** |
+| `https://www.arkayenlabs.com/privacy/pamoja` | `privacy-pamoja.html` | live ✅, confirmed 2026-08-24, mentions Health Connect |
+| `https://www.arkayenlabs.com/terms/pamoja` | `terms-pamoja.html` | live ✅, confirmed 2026-08-24, §9 covers subscriptions |
+| `https://www.arkayenlabs.com/privacy/pamoja/delete-account` | `delete-account-pamoja.html` | live ✅, confirmed 2026-08-24 — the website-repo change below is done |
 | `https://www.arkayenlabs.com/.well-known/assetlinks.json` | `assetlinks.json` | live ✅, all three fingerprints |
 | `https://www.arkayenlabs.com/pamoja/join/<code>` | `join-landing.html` | live ✅ |
 
@@ -54,14 +54,15 @@ declared apex could never verify.
 and always returns the same page; the app reads the code from the URL, the page
 itself does not.
 
-## 🔴 The deletion page needs work in the OTHER repo too
+## The deletion page's website-repo work — done, verified live 2026-08-24
 
-Added 2026-08-20. `web/delete-account-pamoja.html` is the Play-mandated account
-deletion URL, and **pushing it here is not enough to publish it.** The website's
-prebuild fetches a *fixed list* of documents, currently terms and privacy, so a
-third file is invisible to it until that list changes.
+Added 2026-08-20, and as of 2026-08-24 all three pieces below are confirmed
+live by fetching the URL directly (title "Delete Your Pamoja Account | Arkayen
+Labs", real content, not a 404 or SPA shell). The section below is kept as the
+record of what had to happen, not as outstanding work — re-open it only if the
+URL starts 404ing again.
 
-Three changes, all in the **website** repo:
+The three changes this needed, all in the **website** repo:
 
 1. Add `delete-account-pamoja.html` to the prebuild fetch list, beside the two
    that are already there.
@@ -69,12 +70,22 @@ Three changes, all in the **website** repo:
    sibling app already uses at `/privacy/freshtrack/delete-account`.
 3. Nothing else. It renders through the same body-into-layout path.
 
-The path filter in `.github/workflows/redeploy-website.yml` in *this* repo has
-already been extended to include the file, so once the website knows about it,
-edits here republish it like the other two.
+The path filter in `.github/workflows/redeploy-website.yml` in *this* repo was
+already extended to include the file, so edits here republish it like the other
+two.
 
-🔴 **Until all three are done the URL 404s, and a 404 on the deletion URL fails
-the Data Safety review.** Google does fetch it.
+**The open question in this paragraph is now answered, 2026-08-25.** It used to
+end "confirm which before assuming automatic republishing works end to end",
+because the deletion page could equally have gone live by a manual Vercel
+deploy. It had. The `VERCEL_DEPLOY_HOOK` secret did not exist: the repo held
+**zero** Actions secrets, which is why both workflow runs on 2026-08-21
+(`32505223322` and `32506395057`) failed, and why editing a legal document
+published nothing for four days without anyone noticing.
+
+Fixed the same day. The secret was created, and run **`32815746866`** was
+dispatched manually and **succeeded in 7s**. The chain works end to end now,
+for the first time. If you change a legal document, check the Actions tab for a
+green run rather than assuming.
 
 ## How publishing works
 

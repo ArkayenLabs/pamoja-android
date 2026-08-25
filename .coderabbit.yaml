@@ -1,15 +1,19 @@
 # CodeRabbit configuration for Pamoja
 # https://docs.coderabbit.ai/guides/configure-coderabbit
 #
-# DELIBERATELY DORMANT FOR NOW.
+# auto_review was disabled while the redesign was mid-flight, so that findings
+# would not pile up against screens about to be replaced. The redesign shipped,
+# so it is on as of 2026-08-25.
 #
-# auto_review is disabled because the redesign is mid-flight and screens are
-# still being rewritten. Reviewing them now would generate findings against code
-# that is about to be replaced, and the noise would train us to ignore it.
+# ARMED, NOT ACTIVE. CodeRabbit only reviews pull requests, and this repository
+# has had zero across 141 commits: everything lands straight on dev. So this
+# flag currently changes nothing. It is set now so the first pull request, if
+# one is ever opened, is reviewed rather than quietly missed.
 #
-# TO TURN IT ON after the redesign, set reviews.auto_review.enabled to true.
-# Until then it can still be invoked on demand by commenting "@coderabbitai
-# review" on a pull request.
+# The unconditional safety net is .github/workflows/android-ci.yml, which runs
+# on every push to dev with no pull request required. That covers compilation,
+# 28 unit tests, 63 instrumented tests and lint. What it cannot cover is the
+# judgement in path_instructions below, which is what this file is really for.
 
 language: en-GB
 
@@ -24,7 +28,7 @@ reviews:
   collapse_walkthrough: true
 
   auto_review:
-    enabled: false
+    enabled: true
     drafts: false
     base_branches:
       - main

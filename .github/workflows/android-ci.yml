@@ -50,11 +50,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      # 21 is for firebase-tools, which refuses to start the Firestore emulator
+      # on anything older. 17 is listed last so it becomes the default JAVA_HOME
+      # and Gradle runs on the same JDK as a local build.
+      - name: Set up JDK 17 and 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: |
+            21
+            17
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -95,11 +100,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      # 21 is for firebase-tools, which refuses to start the Firestore emulator
+      # on anything older. 17 is listed last so it becomes the default JAVA_HOME
+      # and Gradle runs on the same JDK as a local build.
+      - name: Set up JDK 17 and 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: |
+            21
+            17
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -136,7 +146,8 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: firebase emulators:exec --only auth,firestore --project pamoja-android-1ac6d "./gradlew connectedDebugAndroidTest"
+          # firebase runs on 21, the gradlew it spawns is put back on 17.
+          script: JAVA_HOME=$JAVA_HOME_21_X64 firebase emulators:exec --only auth,firestore --project pamoja-android-1ac6d "JAVA_HOME=$JAVA_HOME_17_X64 ./gradlew connectedDebugAndroidTest"
 
       - name: Upload instrumented reports
         if: always()

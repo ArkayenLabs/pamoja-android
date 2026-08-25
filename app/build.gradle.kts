@@ -61,18 +61,28 @@ android {
         buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
     }
 
+    // Only created when keystore.properties is present. Without this guard the
+    // unsafe `as String` cast on a null throws while the android block is still
+    // configuring, so EVERY task fails, including assembleDebug and test, which
+    // need no signing at all. That broke CI and any fresh clone of this repo.
+    // Same reasoning already applied to revenueCatApiKey above.
     signingConfigs {
-        create("release") {
-            storeFile     = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-            keyAlias      = keystoreProperties["keyAlias"] as String
-            keyPassword   = keystoreProperties["keyPassword"] as String
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile     = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias      = keystoreProperties["keyAlias"] as String
+                keyPassword   = keystoreProperties["keyPassword"] as String
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig   = signingConfigs.getByName("release")
+            // Null where keystore.properties is absent, which yields an unsigned
+            // release build rather than a failed configuration. A signed AAB
+            // still requires the file, exactly as before.
+            signingConfig   = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

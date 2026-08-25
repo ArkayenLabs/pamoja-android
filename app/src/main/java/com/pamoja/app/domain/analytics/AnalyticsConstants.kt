@@ -43,8 +43,6 @@ object AnalyticsParam {
     const val USER_ID = "user_id"
     const val GROUP_ID = "group_id"
     const val GROUP_NAME = "group_name"
-    const val STEP_COUNT = "step_count"
-    const val TOTAL_STEPS = "total_steps"
     const val TARGET = "target"
     const val REASON = "reason"
     const val TIMESTAMP = "timestamp"

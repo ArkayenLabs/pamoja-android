@@ -304,7 +304,7 @@ class GroupViewModel @Inject constructor(
                     ) {
                         weeklyGoalLoggedThisSession = true
                         analyticsManager.logWeeklyGoalReached(
-                            groupId, combinedWeekly, group.weeklyTarget
+                            groupId, group.weeklyTarget
                         )
                     }
                 }

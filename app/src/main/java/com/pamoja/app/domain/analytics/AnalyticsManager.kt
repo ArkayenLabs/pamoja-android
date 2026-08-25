@@ -10,6 +10,13 @@ package com.pamoja.app.domain.analytics
  * - Never call Firebase Analytics directly from ViewModels or Composables.
  * - Always use this interface.
  * - Analytics calls should be triggered from ViewModels, never from Composables.
+ * - **No step count, and no other Health Connect reading, goes into an event.**
+ *   Event names, group ids and durations are fine; the measurement is not.
+ *   Step data belongs in Firestore, where `firestore.rules` protects it.
+ *   `logWeeklyGoalReached` and `logStepsSyncSuccess` each carried one until
+ *   2026-08-25. `legal/DATA_SAFETY.md` and the Play Health apps declaration
+ *   both state that Health Connect data reaches no third party, so the two
+ *   parameters were removed rather than the claim softened. Do not add one back.
  */
 interface AnalyticsManager {
 
@@ -60,7 +67,7 @@ interface AnalyticsManager {
     fun logGroupScreenViewed(groupId: String)
 
     /** Combined weekly steps crossed the group's weekly target (logged once per session). */
-    fun logWeeklyGoalReached(groupId: String, totalSteps: Long, target: Int)
+    fun logWeeklyGoalReached(groupId: String, target: Int)
 
     // ── Invites ─────────────────────────────────────────────────────────────────
 
@@ -76,7 +83,7 @@ interface AnalyticsManager {
     fun logStepsSyncStarted(userId: String)
 
     /** StepSyncWorker successfully wrote steps to Firestore. */
-    fun logStepsSyncSuccess(userId: String, stepCount: Long, durationMs: Long)
+    fun logStepsSyncSuccess(userId: String, durationMs: Long)
 
     /** StepSyncWorker encountered an error. */
     fun logStepsSyncFailed(userId: String, reason: String, durationMs: Long)

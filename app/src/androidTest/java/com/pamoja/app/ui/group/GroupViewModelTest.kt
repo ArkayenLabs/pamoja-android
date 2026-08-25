@@ -543,10 +543,10 @@ class GroupViewModelTest {
 
     /** Records what the ViewModel chose to log instead of sending it anywhere. */
     private class RecordingAnalytics : AnalyticsManager {
-        val weeklyGoalReached = mutableListOf<Long>()
+        val weeklyGoalReached = mutableListOf<String>()
 
-        override fun logWeeklyGoalReached(groupId: String, totalSteps: Long, target: Int) {
-            weeklyGoalReached += totalSteps
+        override fun logWeeklyGoalReached(groupId: String, target: Int) {
+            weeklyGoalReached += groupId
         }
 
         override fun logEvent(eventName: String, params: Map<String, Any>?) = Unit
@@ -565,7 +565,7 @@ class GroupViewModelTest {
         override fun logInviteScreenViewed(groupId: String) = Unit
         override fun logInviteLinkUsed(groupId: String, userId: String) = Unit
         override fun logStepsSyncStarted(userId: String) = Unit
-        override fun logStepsSyncSuccess(userId: String, stepCount: Long, durationMs: Long) = Unit
+        override fun logStepsSyncSuccess(userId: String, durationMs: Long) = Unit
         override fun logStepsSyncFailed(userId: String, reason: String, durationMs: Long) = Unit
         override fun logStepsSyncSkipped(userId: String, durationMs: Long) = Unit
     }

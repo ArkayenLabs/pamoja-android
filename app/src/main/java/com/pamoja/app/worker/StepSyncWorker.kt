@@ -87,7 +87,12 @@ class StepSyncWorker @AssistedInject constructor(
             }
 
             val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-            Log.d(TAG, "Read $todaySteps steps for $todayStr")
+            // The count itself is deliberately not logged. logcat is readable by
+            // anyone holding the device with debugging on, and is bundled into
+            // `adb bugreport` output, so a step reading in here is a Health
+            // Connect value leaving the app by a route nobody audits. Log that a
+            // read happened, never what it said. Same rule as AnalyticsManager.
+            Log.d(TAG, "Read steps for $todayStr")
 
             // ── Write to Firestore (one write per worker execution) ──────
             val entry = StepEntry(
@@ -98,8 +103,8 @@ class StepSyncWorker @AssistedInject constructor(
             stepRepository.saveStepEntry(entry).getOrElse { throw it }
 
             val durationMs = System.currentTimeMillis() - startTime
-            Log.i(TAG, "Sync success | steps=$todaySteps | duration=${durationMs}ms")
-            analyticsManager.logStepsSyncSuccess(user.userId, todaySteps, durationMs)
+            Log.i(TAG, "Sync success | duration=${durationMs}ms")
+            analyticsManager.logStepsSyncSuccess(user.userId, durationMs)
 
             // Read BEFORE the timestamp below overwrites it. Zero means no sync
             // has ever landed, which is the one moment worth telling someone the

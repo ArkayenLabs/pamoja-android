@@ -102,10 +102,9 @@ class FirebaseAnalyticsManager @Inject constructor(
         ))
     }
 
-    override fun logWeeklyGoalReached(groupId: String, totalSteps: Long, target: Int) {
+    override fun logWeeklyGoalReached(groupId: String, target: Int) {
         logEvent(AnalyticsEvent.WEEKLY_GOAL_REACHED, mapOf(
             AnalyticsParam.GROUP_ID to groupId,
-            AnalyticsParam.TOTAL_STEPS to totalSteps,
             AnalyticsParam.TARGET to target
         ))
     }
@@ -133,10 +132,9 @@ class FirebaseAnalyticsManager @Inject constructor(
         ))
     }
 
-    override fun logStepsSyncSuccess(userId: String, stepCount: Long, durationMs: Long) {
+    override fun logStepsSyncSuccess(userId: String, durationMs: Long) {
         logEvent(AnalyticsEvent.STEPS_SYNC_SUCCESS, mapOf(
             AnalyticsParam.USER_ID to userId,
-            AnalyticsParam.STEP_COUNT to stepCount,
             AnalyticsParam.DURATION_MS to durationMs
         ))
     }

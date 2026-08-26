@@ -39,6 +39,21 @@ service firebase.storage {
     // it the group's photo; that requires writing photoUrl on the group
     // document, and firestore.rules case B allows only the admin to do it. A
     // member could therefore upload a file nobody is ever pointed at.
+    //
+    // {groupId} IS A FREE WILDCARD, and that is the weakness of this block. The
+    // avatars/ rule above pins one object per user precisely so that "a user who
+    // could choose the name could fill the bucket with objects nobody can find
+    // to delete" cannot happen. Here the uploader picks the first path segment,
+    // so one account can write an unbounded number of distinct 2 MB objects by
+    // varying it, and nothing in the app ever deletes them.
+    //
+    // The UUID shape below narrows that; it does not close it. A group id is a
+    // UUID v4 (UpdateGroupPhotoUseCase passes group.groupId, and
+    // CreateGroupUseCase mints it with UUID.randomUUID()), so anything that is
+    // not one is junk and is now refused. Somebody willing to generate random
+    // UUIDs is still unbounded. The controls that actually bound this are App
+    // Check ENFORCEMENT, which is a Firebase console setting and not something
+    // this file can assert, and a Cloud Storage budget alert.
     match /group_avatars/{groupId}/{uploaderId} {
 
       // Any signed-in user, because group photos appear on Home for every
@@ -47,6 +62,9 @@ service firebase.storage {
 
       allow write: if request.auth != null
                    && request.auth.uid + '.jpg' == uploaderId
+                   && groupId.matches(
+                        '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+                      )
                    && request.resource.size < 2 * 1024 * 1024
                    && request.resource.contentType == 'image/jpeg';
 

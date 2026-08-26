@@ -7,6 +7,32 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--
+      The Advertising ID permission arrives on its own, from
+      com.google.android.gms:play-services-measurement-api, pulled in by
+      firebase-analytics. It is not declared above and never was: the source
+      manifest asks for three permissions and the MERGED manifest shipped nine.
+
+      Removed, because every document this project has already filed says the
+      app does not do this. legal/PRIVACY_POLICY.md states "Pamoja contains no
+      advertising" and that Health Connect data is "never used for advertising
+      or marketing", and legal/DATA_SAFETY.md's "Device or other IDs" row cites
+      only the Firebase instance, Installations and FCM identifiers. Nothing in
+      app/src references AdvertisingId, AD_ID or adservices. Shipping an
+      undisclosed advertising identifier alongside health data is a rejection
+      cause during review and a removal cause after it.
+
+      Firebase Analytics keeps working; it loses ad-ID-based attribution, which
+      this app does not use.
+
+      Check the MERGED manifest, not this file, before an upload:
+        app/build/intermediates/merged_manifest/release/processReleaseMainManifest/AndroidManifest.xml
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove" />
+
     <!-- Required so Android allows our app to talk to the Health Connect app -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />

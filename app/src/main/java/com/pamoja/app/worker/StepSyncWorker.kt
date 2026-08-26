@@ -73,7 +73,7 @@ class StepSyncWorker @AssistedInject constructor(
             return Result.failure()
         }
 
-        analyticsManager.logStepsSyncStarted(user.userId)
+        analyticsManager.logStepsSyncStarted()
 
         return try {
             // ── Read today's steps from Health Connect ───────────────────
@@ -82,7 +82,7 @@ class StepSyncWorker @AssistedInject constructor(
             if (todaySteps == null) {
                 val durationMs = System.currentTimeMillis() - startTime
                 Log.w(TAG, "Health Connect returned null (unavailable/revoked) | duration=${durationMs}ms")
-                analyticsManager.logStepsSyncSkipped(user.userId, durationMs)
+                analyticsManager.logStepsSyncSkipped(durationMs)
                 return Result.success()
             }
 
@@ -104,7 +104,7 @@ class StepSyncWorker @AssistedInject constructor(
 
             val durationMs = System.currentTimeMillis() - startTime
             Log.i(TAG, "Sync success | duration=${durationMs}ms")
-            analyticsManager.logStepsSyncSuccess(user.userId, durationMs)
+            analyticsManager.logStepsSyncSuccess(durationMs)
 
             // Read BEFORE the timestamp below overwrites it. Zero means no sync
             // has ever landed, which is the one moment worth telling someone the
@@ -126,7 +126,12 @@ class StepSyncWorker @AssistedInject constructor(
         } catch (e: Exception) {
             val durationMs = System.currentTimeMillis() - startTime
             Log.e(TAG, "Sync failed | duration=${durationMs}ms | attempt=$runAttemptCount", e)
-            analyticsManager.logStepsSyncFailed(user.userId, e.message ?: "unknown", durationMs)
+            // The exception's TYPE, never its message. Firebase messages carry
+            // document paths, and this is the same rule AppError follows: match
+            // on type, never on message text.
+            analyticsManager.logStepsSyncFailed(
+                e::class.java.simpleName ?: "unknown", durationMs
+            )
             Result.retry()
         }
     }
@@ -381,7 +386,13 @@ class StepSyncWorker @AssistedInject constructor(
             // Optimistically count this as ignored; MainActivity resets the
             // counter to 0 when the user actually opens from a notification.
             userPreferences.incrementIgnoredNotifications()
-            Log.i(TAG, "Notification sent [${notification.category}] ${notification.title}")
+            // The category, never the title. Several titles interpolate another
+            // group member's first name (SmartNotificationEngine's "$who just
+            // passed you", "$who joined"), and logcat is readable by anyone
+            // holding the device with debugging on and is bundled into
+            // `adb bugreport`. Same rule as the step count above: log that it
+            // happened, never what it said.
+            Log.i(TAG, "Notification sent [${notification.category}]")
 
         } catch (e: Exception) {
             Log.e(TAG, "Error building notification", e)

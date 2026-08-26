@@ -43,6 +43,29 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/groups/$(groupId)).data.adminId == request.auth.uid;
     }
 
+    // A photoUrl is rendered by Coil on every other member's device, so an
+    // arbitrary URL here is an attacker-chosen fetch from each viewer's phone:
+    // their IP, their approximate location and the moment they opened the
+    // screen, delivered to a host of somebody else's choosing. Length was the
+    // only thing checked until 2026-08-25.
+    //
+    // Blank is the opted-out state and must stay legal. Everything else has to
+    // be a download URL from this project's own bucket.
+    //
+    // Both forms are accepted deliberately. This project's bucket is
+    // `pamoja-android-1ac6d.firebasestorage.app`, the newer style, and which of
+    // the two shapes getDownloadUrl() returns is an SDK detail that has changed
+    // before and is not worth betting every avatar upload on. Matching both
+    // removes the silent-failure risk the single-host version carried, while
+    // still refusing any host that is not Firebase Storage, which is the point:
+    // an arbitrary URL here is an attacker-chosen fetch from every other
+    // member's phone.
+    function isOwnStorageUrl(url) {
+      return url == ''
+        || url.matches('https://firebasestorage[.]googleapis[.]com/v0/b/[^/]+/o/.*')
+        || url.matches('https://[^/]+[.]firebasestorage[.]app/.*');
+    }
+
     function onlyChanged(allowedKeys) {
       return request.resource.data.diff(resource.data)
                .affectedKeys()
@@ -101,7 +124,22 @@ service cloud.firestore {
                     && request.resource.data.weeklyTarget <= 2800000
                     && request.resource.data.name is string
                     && request.resource.data.name.size() > 0
-                    && request.resource.data.name.size() <= 100;
+                    && request.resource.data.name.size() <= 100
+                    // Case B validates photoUrl and Case E bounds the step
+                    // cache; create validated neither, so everything an admin
+                    // was stopped from doing later could simply be baked in at
+                    // creation instead. `allow get` hands this document to any
+                    // signed-in user, so an unbounded string here is one they
+                    // serve to other people. CreateGroupUseCase writes "" and 0
+                    // for all three, so none of this constrains the app.
+                    && request.resource.data.get('photoUrl', '') is string
+                    && request.resource.data.get('photoUrl', '').size() <= 500
+                    && isOwnStorageUrl(request.resource.data.get('photoUrl', ''))
+                    && request.resource.data.get('weeklySteps', 0) is int
+                    && request.resource.data.get('weeklySteps', 0) >= 0
+                    && request.resource.data.get('weeklySteps', 0) <= 42000000
+                    && request.resource.data.get('weekStart', '') is string
+                    && request.resource.data.get('weekStart', '').size() <= 32;
 
       allow update: if
         // --- Case A: a JOIN. A signed-in user adds exactly themselves.
@@ -160,6 +198,7 @@ service cloud.firestore {
              ])
           && request.resource.data.get('photoUrl', '') is string
           && request.resource.data.get('photoUrl', '').size() <= 500
+          && isOwnStorageUrl(request.resource.data.get('photoUrl', ''))
           && request.resource.data.maxMemberCap >= 2
           && request.resource.data.maxMemberCap <= 20
           && request.resource.data.maxMemberCap >= resource.data.memberCount
@@ -172,12 +211,21 @@ service cloud.firestore {
         ||
         // --- Case C: a member edits the weekly target, but only where the
         //     admin enabled it for this group.
+        //
+        //     Membership is checked explicitly, for the reason Case E already
+        //     spells out: `allow get` on groups hands a group document to ANY
+        //     signed-in user, because the invite preview needs that. Until
+        //     2026-08-25 this clause tested only isSignedIn(), so anyone
+        //     holding a forwarded invite link could rewrite the weekly goal of
+        //     a group they had never joined. The comment said "a member"; the
+        //     condition did not. Proven on the emulator, not inferred.
         (
           isSignedIn()
           && resource.data.canMembersEditTarget == true
           && onlyChanged(['weeklyTarget'])
           && request.resource.data.weeklyTarget > 0
           && request.resource.data.weeklyTarget <= 2800000
+          && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
         )
         ||
         // --- Case D: LEAVING. The count comes down by exactly one and the
@@ -192,12 +240,35 @@ service cloud.firestore {
         //     caller's membership is still present at this point even though the
         //     same transaction is about to delete it. That is what proves they
         //     were actually a member rather than decrementing a stranger's group.
+        //
+        //     exists() ALONE is not enough, and that was the bug here until
+        //     2026-08-25: it stays true for a member who is not leaving, so any
+        //     member could send this same update repeatedly and walk memberCount
+        //     down to zero while still sitting in the group. Proven on the
+        //     emulator: two members, count driven 2 -> 0, both memberships still
+        //     present, after which the cap bound nothing. !existsAfter() is the
+        //     missing half, and the mirror of the getAfter() Case A uses to tie
+        //     an increment to a real join.
+        //
+        //     The admin branch is separate because removeMember() deletes
+        //     SOMEBODY ELSE's membership, so the caller's own survives the
+        //     commit and !existsAfter() would refuse every removal. Allowing it
+        //     for the admin is not a widening: they can already delete the whole
+        //     group. Group size is not a paid feature either (see PlanLimits,
+        //     where the size paywall was deliberately removed), so there is no
+        //     revenue boundary here for an admin to move.
         (
           isSignedIn()
           && onlyChanged(['memberCount', 'inviteLinkActive'])
           && request.resource.data.memberCount == resource.data.memberCount - 1
           && request.resource.data.memberCount >= 0
-          && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
+          && (
+               (
+                 exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
+                 && !existsAfter(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
+               )
+               || isGroupAdmin(groupId)
+             )
         )
         ||
         // --- Case E: a MEMBER publishes the cached weekly step total, so the
@@ -211,11 +282,18 @@ service cloud.firestore {
         //     display-only data, but it is the number the whole product is about.
         //
         //     Only the two cache keys may move, and the total may not be negative.
+        //     Bounded above as well as below since 2026-08-25. A member's own
+        //     row is capped at 2,100,000 in the memberships rule, but this
+        //     aggregate had no ceiling at all, so any member could write an
+        //     arbitrary total onto the number Home renders as the group's
+        //     progress. 42,000,000 is the largest honest value the product can
+        //     produce: the member cap of 20 at that same per-person ceiling.
         (
           isSignedIn()
           && onlyChanged(['weeklySteps', 'weekStart'])
           && request.resource.data.weeklySteps is int
           && request.resource.data.weeklySteps >= 0
+          && request.resource.data.weeklySteps <= 42000000
           && request.resource.data.weekStart is string
           && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
         )
@@ -307,13 +385,61 @@ service cloud.firestore {
       // exist. Requiring the field made this rule reject any client that did
       // not write it, which broke group creation outright. It is a display
       // string, so only its length is worth enforcing, never its presence.
+      //
+      // What the ID pattern does NOT do, and what was missing here until
+      // 2026-08-25, is tie the membership to the group's own accounting. The
+      // rule asked only "is this document named after you", so any signed-in
+      // user holding a groupId could write themselves straight into a group: no
+      // cap check, no invite check, memberCount untouched. Proven on the
+      // emulator: 30 accounts inserted into a group whose cap was 2 and whose
+      // memberCount stayed at 1, each of them then passing the `list` rule below
+      // and reading the whole roster with everyone's live step figures. Group ids
+      // come from invite links, and links get forwarded.
+      //
+      // So the create is now bound to one of the two commits that legitimately
+      // produce a membership:
+      //
+      //   - createGroup(), where the caller is the group's admin. The group
+      //     document is written first and separately, so get() and getAfter()
+      //     agree here and adminId is what authorises it.
+      //   - joinGroup(), where the SAME transaction raises memberCount by one.
+      //     Case A above independently bounds that increment against
+      //     maxMemberCap, so the cap now gates the membership too.
+      //
+      // joinedAt is floored at the group's creation time because
+      // deleteAllUserData() picks the successor admin with
+      // minByOrNull { joinedAt }: an unvalidated joinedAt of 0 makes the writer
+      // the permanent front-runner for inheriting the group. get(..., 0) on
+      // createdAt rather than a bare dereference, because groups written before
+      // that field existed decode as 0 and a missing field raises an evaluation
+      // error rather than yielding false.
       allow create: if isSignedIn()
                     && membershipId == request.auth.uid + '_' + request.resource.data.groupId
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.get('displayName', '') is string
                     && request.resource.data.get('displayName', '').size() <= 100
                     && request.resource.data.get('photoUrl', '') is string
-                    && request.resource.data.get('photoUrl', '').size() <= 500;
+                    && request.resource.data.get('photoUrl', '').size() <= 500
+                    && isOwnStorageUrl(request.resource.data.get('photoUrl', ''))
+                    && request.resource.data.get('weeklySteps', 0) is int
+                    && request.resource.data.get('weeklySteps', 0) >= 0
+                    && request.resource.data.get('weeklySteps', 0) <= 2100000
+                    && request.resource.data.get('todaySteps', 0) is int
+                    && request.resource.data.get('todaySteps', 0) >= 0
+                    && request.resource.data.get('todaySteps', 0) <= 300000
+                    && request.resource.data.get('joinedAt', 0) is int
+                    && request.resource.data.get('joinedAt', 0) >=
+                         get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                           .data.get('createdAt', 0)
+                    && (
+                         getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                           .data.adminId == request.auth.uid
+                         ||
+                         getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                           .data.memberCount ==
+                         get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                           .data.memberCount + 1
+                       );
 
       // A member may not silently promote themselves to admin. They may update
       // their own displayName and photoUrl, which is what the profile fan-out
@@ -333,14 +459,32 @@ service cloud.firestore {
       // 300k matches the per-day ceiling on a step entry, and the weekly ceiling
       // is seven of those. Neither is a plausible human figure; both exist to
       // stop an absurd one.
+      //
+      // onlyChanged() added 2026-08-25. Pinning userId and role field by field
+      // left every OTHER field free, groupId included, so a member could point
+      // their own membership document at a different group and appear on that
+      // group's leaderboard with a weeklySteps of 2,100,000 without ever having
+      // joined it. Proven on the emulator. The same gap left joinedAt rewritable
+      // after the fact, which is the successor-admin ordering. Listing the keys
+      // is both tighter and shorter than pinning the rest one at a time, and it
+      // is what Case B on groups already does.
       allow update: if isSignedIn()
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.role == resource.data.role
+                    && onlyChanged([
+                         'displayName',
+                         'photoUrl',
+                         'weeklySteps',
+                         'weekStart',
+                         'todaySteps',
+                         'todayDate'
+                       ])
                     && request.resource.data.get('displayName', '') is string
                     && request.resource.data.get('displayName', '').size() <= 100
                     && request.resource.data.get('photoUrl', '') is string
                     && request.resource.data.get('photoUrl', '').size() <= 500
+                    && isOwnStorageUrl(request.resource.data.get('photoUrl', ''))
                     && request.resource.data.get('weeklySteps', 0) is int
                     && request.resource.data.get('weeklySteps', 0) >= 0
                     && request.resource.data.get('weeklySteps', 0) <= 2100000
@@ -449,16 +593,21 @@ service cloud.firestore {
 //      onto membership documents, so nothing reads another person's profile and
 //      age/height/weight are no longer reachable by anyone but the owner.
 //
-//   3. REMAINING: `steps` is still readable by any signed-in user. Step documents
-//      are keyed "{userId}_{date}" and users cannot be enumerated, so this is not
-//      directly scrapable, but someone who learns a UID can read that person's
-//      step history. Closing it means denormalising weekly totals onto membership
-//      documents too, at the cost of a write per sync.
+//   3. DONE. `steps` is owner-only, on both get and list. The get rule authorises
+//      on the document ID because a day with no steps has no contents to read;
+//      see the rule itself. Weekly and daily totals are denormalised onto the
+//      membership documents, which is what removed the last cross-user read.
 //
-//   4. ENABLE FIREBASE APP CHECK so only your genuine app binary can talk to
-//      Firestore at all. Highest-value remaining control for this architecture.
+//   4. DONE in the client: PamojaApp.initializeAppCheck() installs Play Integrity
+//      in release and the debug provider in debug. Installing the provider is
+//      NOT enforcement. Nothing is rejected until App Check enforcement is
+//      switched on per-service in the Firebase console, and the debug token must
+//      be registered before it is, or every development build starts failing
+//      every Firestore call. Confirm the console state; this file cannot.
 //
-//   5. Move the join into a Cloud Function to close the memberCount griefing
-//      gap (Case A above lets a signed-in user increment the count without
-//      actually joining). Low real-world risk, requires knowing a UUID v4.
+//   5. STALE, removed. This said Case A let a signed-in user increment the count
+//      without joining. It has not since getAfter() was added on 2026-08-18: the
+//      increment is refused unless the joiner's membership exists after the
+//      commit. Left standing, a wrong sentence in this file is exactly how the
+//      August 2026 memberCount hole was justified in the first place.
 // ============================================================================

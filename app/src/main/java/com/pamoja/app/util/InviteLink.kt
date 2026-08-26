@@ -43,12 +43,26 @@ object InviteLink {
         val input = raw.trim()
 
         // Legacy: pamoja://join/{code}
+        //
+        // The `!contains('/')` matters as much here as it does on the https
+        // branch below, and its absence was a crash rather than a cosmetic
+        // difference. A code is spliced straight into a navigation route as
+        // Screen.JoinPreview.createRoute("join/$code"), and that route declares
+        // a single path segment. A code carrying a slash matches no destination
+        // and NavController.navigate throws.
+        //
+        // Reachable from outside the app: this scheme is BROWSABLE, so any web
+        // page or any installed app can fire pamoja://join/a/b. Worse,
+        // MainActivity persists the code to DataStore before it is used, so the
+        // bad value survives a restart and Home re-fires it on every launch.
+        // Verified on the JVM against this function: "pamoja://join/a/b"
+        // returned "a/b".
         if (input.startsWith("pamoja://join/", ignoreCase = true)) {
             return input.removePrefix("pamoja://join/")
                 .substringBefore('?')
                 .substringBefore('#')
                 .trim('/')
-                .takeIf { it.isNotBlank() }
+                .takeIf { it.isNotBlank() && !it.contains('/') }
         }
 
         // https(://)www.arkayenlabs.com/pamoja/join/{code}, scheme optional

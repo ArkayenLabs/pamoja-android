@@ -618,7 +618,12 @@ fun SettingsScreen(
                                 android.os.Build.MANUFACTURER,
                                 android.os.Build.MODEL,
                                 android.os.Build.VERSION.RELEASE,
-                                "1.0.0",
+                                // Not a literal. The About row below was fixed
+                                // to read BuildConfig.VERSION_NAME for exactly
+                                // this reason and this call site was missed, so
+                                // every support mail will report 1.0.0 forever,
+                                // which is worse than reporting nothing.
+                                com.pamoja.app.BuildConfig.VERSION_NAME,
                                 uiState.userId.ifBlank { "-" },
                             )
                             val intent = Intent(Intent.ACTION_SENDTO).apply {

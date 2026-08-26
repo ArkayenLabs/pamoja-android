@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+   Android 11 and below (android:fullBackupContent). The Android 12+ equivalent
+   is data_extraction_rules.xml, and the two must agree.
+
+   This file was the untouched Android Studio template until 2026-08-25, which
+   meant "back everything up": the DataStore, and the SharedPreferences file the
+   Firebase Auth SDK keeps the refresh token in. MainActivity's session comment
+   already notes that the Firebase token survives a backup restore, which is the
+   same fact seen from the other side.
+
+   Nothing here is worth restoring. Signing in re-derives all of it from the
+   server, and this is health-adjacent data on an app that is about to be
+   public, so the smaller the copy of it sitting in someone's Google account the
+   better.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Firebase Auth's token store lives here. -->
+    <exclude domain="sharedpref" path="." />
+    <!-- androidx DataStore: files/datastore/pamoja_prefs.preferences_pb -->
+    <exclude domain="file" path="datastore" />
+    <!-- WorkManager's scheduling database. -->
+    <exclude domain="database" path="." />
 </full-backup-content>

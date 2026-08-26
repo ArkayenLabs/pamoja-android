@@ -47,9 +47,27 @@ class CreateOrJoinViewModel @Inject constructor(
         }
     }
 
-    /** Normalises anything a user can paste into the code the preview expects. */
-    fun normalise(rawLinkOrCode: String): String =
-        InviteLink.parseCode(rawLinkOrCode) ?: rawLinkOrCode.trim()
+    /**
+     * Normalises anything a user can paste into the code the preview expects.
+     *
+     * The fallback is the dangerous half. parseCode returns null for anything
+     * that is not a Pamoja link, and returning the raw text regardless meant
+     * that pasting any URL, or scanning any QR code that carries one, produced
+     * a "code" full of slashes. Home passes that to onOpenInvite, which splices
+     * it into the single-segment route `join/{code}`, and navigation throws.
+     * Scanning someone else's wifi or website QR should say "not a Pamoja
+     * link", not take the app down.
+     *
+     * Blank is the right answer for unusable input: Home already treats a blank
+     * code as "not a Pamoja link" and shows that message.
+     */
+    fun normalise(rawLinkOrCode: String): String {
+        InviteLink.parseCode(rawLinkOrCode)?.let { return it }
+        val bare = rawLinkOrCode.trim()
+        // A bare invite code, hand-typed. Anything with a slash or whitespace is
+        // a pasted link that parseCode has already refused, not a code.
+        return if (bare.none { it == '/' || it.isWhitespace() }) bare else ""
+    }
 
     /**
      * Consumed once Home has navigated.

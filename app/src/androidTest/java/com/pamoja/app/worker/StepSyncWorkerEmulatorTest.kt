@@ -106,23 +106,23 @@ class StepSyncWorkerEmulatorTest {
         override fun logEvent(eventName: String, params: Map<String, Any>?) = Unit
         override fun logWelcomeScreenViewed() = Unit
         override fun logProfileSetupStarted() = Unit
-        override fun logProfileCompleted(userId: String) = Unit
+        override fun logProfileCompleted() = Unit
         override fun logHealthConnectScreenViewed() = Unit
         override fun logHealthConnectPermissionRequested() = Unit
-        override fun logHealthConnectPermissionGranted(userId: String) = Unit
+        override fun logHealthConnectPermissionGranted() = Unit
         override fun logHealthConnectPermissionDenied() = Unit
         override fun logHealthConnectSkipped() = Unit
         override fun logHomeScreenReached() = Unit
         override fun logGroupCreated(groupId: String, groupName: String) = Unit
-        override fun logGroupJoined(groupId: String, userId: String) = Unit
+        override fun logGroupJoined(groupId: String) = Unit
         override fun logGroupScreenViewed(groupId: String) = Unit
         override fun logWeeklyGoalReached(groupId: String, target: Int) = Unit
         override fun logInviteScreenViewed(groupId: String) = Unit
-        override fun logInviteLinkUsed(groupId: String, userId: String) = Unit
-        override fun logStepsSyncStarted(userId: String) = Unit
-        override fun logStepsSyncSuccess(userId: String, durationMs: Long) = Unit
-        override fun logStepsSyncFailed(userId: String, reason: String, durationMs: Long) = Unit
-        override fun logStepsSyncSkipped(userId: String, durationMs: Long) = Unit
+        override fun logInviteLinkUsed(groupId: String) = Unit
+        override fun logStepsSyncStarted() = Unit
+        override fun logStepsSyncSuccess(durationMs: Long) = Unit
+        override fun logStepsSyncFailed(reason: String, durationMs: Long) = Unit
+        override fun logStepsSyncSkipped(durationMs: Long) = Unit
     }
 
     /**

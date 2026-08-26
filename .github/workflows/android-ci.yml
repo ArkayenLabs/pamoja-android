@@ -34,7 +34,14 @@ on:
       - "web/**"
       - "legal/**"
       - "**/*.md"
+  # Base-branch filtered. A fork's pull request still runs its own
+  # build.gradle.kts on our runner, which is inherent to `pull_request` and is
+  # why GOOGLE_SERVICES_JSON is withheld by GitHub for fork PRs and both jobs
+  # fail closed without it. Keep "Require approval for all outside
+  # collaborators" on in Settings > Actions; that, not this filter, is the
+  # control that matters.
   pull_request:
+    branches: [dev, main]
   workflow_dispatch:
 
 # A burst of pushes should leave one run standing, not six.

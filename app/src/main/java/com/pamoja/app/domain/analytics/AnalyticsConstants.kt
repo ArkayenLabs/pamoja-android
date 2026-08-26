@@ -40,7 +40,6 @@ object AnalyticsEvent {
  * Used as keys in the `params` map passed to [AnalyticsManager.logEvent].
  */
 object AnalyticsParam {
-    const val USER_ID = "user_id"
     const val GROUP_ID = "group_id"
     const val GROUP_NAME = "group_name"
     const val TARGET = "target"

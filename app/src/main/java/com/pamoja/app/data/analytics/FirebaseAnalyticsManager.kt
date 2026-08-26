@@ -36,9 +36,8 @@ class FirebaseAnalyticsManager @Inject constructor(
         ))
     }
 
-    override fun logProfileCompleted(userId: String) {
+    override fun logProfileCompleted() {
         logEvent(AnalyticsEvent.PROFILE_COMPLETED, mapOf(
-            AnalyticsParam.USER_ID to userId,
             AnalyticsParam.TIMESTAMP to System.currentTimeMillis()
         ))
     }
@@ -55,9 +54,8 @@ class FirebaseAnalyticsManager @Inject constructor(
         ))
     }
 
-    override fun logHealthConnectPermissionGranted(userId: String) {
+    override fun logHealthConnectPermissionGranted() {
         logEvent(AnalyticsEvent.HEALTH_CONNECT_PERMISSION_GRANTED, mapOf(
-            AnalyticsParam.USER_ID to userId,
             AnalyticsParam.TIMESTAMP to System.currentTimeMillis()
         ))
     }
@@ -89,10 +87,9 @@ class FirebaseAnalyticsManager @Inject constructor(
         ))
     }
 
-    override fun logGroupJoined(groupId: String, userId: String) {
+    override fun logGroupJoined(groupId: String) {
         logEvent(AnalyticsEvent.GROUP_JOINED, mapOf(
             AnalyticsParam.GROUP_ID to groupId,
-            AnalyticsParam.USER_ID to userId
         ))
     }
 
@@ -117,39 +114,33 @@ class FirebaseAnalyticsManager @Inject constructor(
         ))
     }
 
-    override fun logInviteLinkUsed(groupId: String, userId: String) {
+    override fun logInviteLinkUsed(groupId: String) {
         logEvent(AnalyticsEvent.INVITE_LINK_USED, mapOf(
             AnalyticsParam.GROUP_ID to groupId,
-            AnalyticsParam.USER_ID to userId
         ))
     }
 
     // ── Step Sync ───────────────────────────────────────────────────────────────
 
-    override fun logStepsSyncStarted(userId: String) {
-        logEvent(AnalyticsEvent.STEPS_SYNC_STARTED, mapOf(
-            AnalyticsParam.USER_ID to userId
-        ))
+    override fun logStepsSyncStarted() {
+        logEvent(AnalyticsEvent.STEPS_SYNC_STARTED)
     }
 
-    override fun logStepsSyncSuccess(userId: String, durationMs: Long) {
+    override fun logStepsSyncSuccess(durationMs: Long) {
         logEvent(AnalyticsEvent.STEPS_SYNC_SUCCESS, mapOf(
-            AnalyticsParam.USER_ID to userId,
             AnalyticsParam.DURATION_MS to durationMs
         ))
     }
 
-    override fun logStepsSyncFailed(userId: String, reason: String, durationMs: Long) {
+    override fun logStepsSyncFailed(reason: String, durationMs: Long) {
         logEvent(AnalyticsEvent.STEPS_SYNC_FAILED, mapOf(
-            AnalyticsParam.USER_ID to userId,
             AnalyticsParam.REASON to reason,
             AnalyticsParam.DURATION_MS to durationMs
         ))
     }
 
-    override fun logStepsSyncSkipped(userId: String, durationMs: Long) {
+    override fun logStepsSyncSkipped(durationMs: Long) {
         logEvent(AnalyticsEvent.STEPS_SYNC_SKIPPED, mapOf(
-            AnalyticsParam.USER_ID to userId,
             AnalyticsParam.REASON to "hc_unavailable",
             AnalyticsParam.DURATION_MS to durationMs
         ))

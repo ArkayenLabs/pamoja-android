@@ -111,7 +111,7 @@ class OnboardingViewModel @Inject constructor(
                         isLoading = false,
                         isSuccess = true,
                     )
-                    analyticsManager.logProfileCompleted(userId)
+                    analyticsManager.logProfileCompleted()
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(

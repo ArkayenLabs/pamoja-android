@@ -35,7 +35,7 @@ class HealthConnectViewModel @Inject constructor(
 
     /** Called when the user grants Health Connect step-read permission. */
     fun onPermissionGranted(userId: String) {
-        analyticsManager.logHealthConnectPermissionGranted(userId)
+        analyticsManager.logHealthConnectPermissionGranted()
     }
 
     /** Called when the user denies Health Connect permission in the system dialog. */

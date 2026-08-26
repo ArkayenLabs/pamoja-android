@@ -130,8 +130,8 @@ class JoinGroupViewModel @Inject constructor(
 
             joinGroupUseCase(code, user.userId).fold(
                 onSuccess = {
-                    analyticsManager.logInviteLinkUsed(group.groupId, user.userId)
-                    analyticsManager.logGroupJoined(group.groupId, user.userId)
+                    analyticsManager.logInviteLinkUsed(group.groupId)
+                    analyticsManager.logGroupJoined(group.groupId)
                     _uiState.value = _uiState.value.copy(
                         isJoining = false,
                         joinedGroupId = group.groupId,

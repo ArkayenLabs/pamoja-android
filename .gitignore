@@ -28,6 +28,13 @@ SUMMARY.md
 design/
 rules/
 
+# Security review output, 2026-08-25. The patches are applied and the findings
+# are closed; this directory is the working artefacts: the seven patch files,
+# the emulator repro scripts, and the 765-line report. Kept on disk because the
+# repro suite is worth re-running after any rules change, out of the repo
+# because it documents holes in a public repository.
+security-patches/
+
 # Tooling output
 graphify-out/
 .kotlin/

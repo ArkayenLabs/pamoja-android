@@ -1,7 +1,7 @@
 # Terms of Use. Pamoja
 
-**Last updated: 12 August 2026**
-**Effective date: 12 August 2026**
+**Last updated: 19 September 2026**
+**Effective date: 19 September 2026**
 
 > ⚠️ **Not legal advice, and not yet reviewed by a lawyer.** All placeholders are
 > filled, but §4 (health disclaimer), §13 (liability) and §16 (governing law) are
@@ -86,47 +86,29 @@ In summary, and without limiting that policy:
 
 ## 9. Subscriptions and payments
 
-Pamoja is free to use. Tracking your steps and being part of a group are free, and will stay free. We also offer an optional paid subscription, **Pamoja Premium**, which unlocks additional features.
+**Plans and prices**
 
-**Plans and price**
+Available billing periods, local prices and any introductory offer are shown by Google Play before confirmation. Google Play handles payment; RevenueCat verifies subscription status. Do not rely on a price shown in an old screenshot.
 
-- Premium is offered as a **monthly** plan and an **annual** plan. The annual plan works out cheaper per month.
-- The price is shown in the app and on the Google Play listing **before you buy**, in your local currency where Google Play supports it. Prices vary by country.
-- Payment is taken by **Google Play**, not by us. Your purchase is also subject to Google Play's own terms.
+**Trials, renewal and cancellation**
 
-**Free trial**
+Any trial duration, eligibility and subsequent charge are stated in the purchase sheet. Subscriptions renew automatically unless cancelled. Manage cancellation in Google Play. Cancelling normally stops renewal without removing access for the paid period; store refunds, revocations and expiry can change access. Deleting your Pamoja account does not cancel the subscription.
 
-- The annual plan may be offered with a **7-day free trial**. Where a trial is offered, its length is stated in the app before you start it.
-- A trial **turns into a paid annual subscription automatically when it ends**, unless you cancel first, and you are charged the annual price at that point.
-- Cancelling during a trial keeps Premium until the trial's final day and you are not charged.
+**What is free and what Premium adds**
 
-**Renewal and cancellation**
+Step tracking, synchronization, group leaderboards and exporting your personal app data are free. A Premium plan supports the number of groups shown in its Google Play purchase sheet. Every current member of a covered group receives its group benefits; members do not each need to buy the plan. The app shows the available paid features and group capacity before checkout. These can include full weekly review history and trends, scheduled weekly planning and the Together Trail. A purchase does not make a member the group organizer. When the current plan has no open group spot, the subscriber can confirm moving coverage or choose an available higher-capacity plan.
 
-- Subscriptions **renew automatically** at the end of every billing period until you cancel.
-- Cancel any time in your Google Play account settings, or through **Manage subscription** in Pamoja's settings.
-- Cancelling stops the next renewal. It does not end the period you have already paid for, and it is not a refund. Premium stays active until that period ends.
+**Together Trail and planning**
 
-**What is free, and what Premium adds**
+The Together Trail is a finite shared walking adventure with bundled illustrated chapters. Contributions begin from each member's joining baseline. Planned contributions or rest choices affect the forecast; they do not create actual steps or silently assign another person more walking. The shared Trail target is confirmed at start. Estimates are not guarantees. Illustrations may be AI-assisted creative assets; the feature does not send health data to a generative AI service.
 
-- **Step tracking, syncing and your group leaderboard are free, and stay free.** So is **joining** groups: you can join as many as you are invited to, on any plan, forever. We will never stop you accepting an invitation.
-- On the free plan you can **create one group, with up to 8 members**.
-- Premium raises this to **unlimited groups with up to 20 members each**, and adds full step history, weekly recaps, charts and trends, achievements, and data export. The current list is always shown in the app.
+**When Premium ends**
 
-**What happens when Premium ends**
+Your account, group membership and ordinary step tracking remain. Features that require active Premium can become unavailable. A previously saved weekly plan remains scheduled. An already-started Trail has a finite completion allowance and earned content remains accessible to eligible current group members, subject to group existence and service availability. Starting another Trail requires active Premium. This is not an unlimited entitlement to future paid adventures.
 
-- **Nothing is deleted, and nobody is removed.** Every group you created stays, with all of its members, even if it holds more than the free plan allows. Your step history, and your membership of other people's groups, are untouched.
-- You keep viewing everything you already have. What stops is going *further*: creating an additional group, or adding a member beyond the free limits.
-- Joining groups stays unlimited.
-- Resubscribing restores full access immediately.
+**Changes and refunds**
 
-**Changes**
-
-- We may change subscription pricing. Existing subscribers are told before any change affects them, and a price rise never applies to a period already paid for.
-- What is included in free and in Premium may change over time. We will not take a feature away from you during a period you have already paid for.
-
-**Refunds**
-
-- **Refunds are handled by Google Play** under their refund policy, since they took the payment. We may consider a discretionary refund but are not obliged to give one.
+Price changes and refunds follow applicable law and Google Play rules. Review the purchase sheet and Google Play subscription settings for the terms that apply to your purchase. Contact support@arkayenlabs.com if a covered group member cannot access Premium; that member should not purchase a separate subscription merely to restore shared access.
 
 ## 10. Intellectual property
 

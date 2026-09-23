@@ -1,147 +1,46 @@
-# Play Data Safety form. Answer sheet
+# Pamoja — Play Data Safety reconciliation
 
-**Written 2026-08-20.** Every answer below was derived from the code, not from
-memory, with the source named next to it so it can be re-checked rather than
-trusted.
+Updated 19 September 2026 against the combined release source. This replaces the August answer sheet, whose claims about local-only notifications and no billing data are obsolete. This file is preparation, not evidence that the live Play form has been updated.
 
-🔴 **The form, this file, `legal/PRIVACY_POLICY.md`, the deployed privacy page
-and the app must all agree.** A mismatch between them is one of the most common
-causes of an app being rejected, and of being **removed after** it is already
-live. If any of the five changes, change all five in the same session.
+## Collection inventory
 
----
-
-## Before filling the form
-
-- [ ] Deploy `web/delete-account-pamoja.html` and confirm it loads **in a
-      private window with no login**. The form asks for this URL and Google
-      does check it. A page behind auth, or one that 404s, fails the review.
-- [ ] Confirm the URL: `https://www.arkayenlabs.com/privacy/pamoja/delete-account`
-      (matches the existing convention, `/privacy/freshtrack/delete-account`)
-- [ ] Confirm the privacy page links to it. Verified 2026-08-20 that it does
-      **not**, so the link has to be added when the page is deployed
-
----
-
-## Data types to declare
-
-Collected means it leaves the device. All of it does, since Firestore is remote.
-
-### Personal info
-
-| Type | Collected | Shared | Optional? | Purpose | Where in code |
-|---|---|---|---|---|---|
-| Name | Yes | **Yes, other users** | Required | App functionality | `UserDto.name`, denormalised to `MembershipDto.displayName` |
-| Email address | Yes | No | Required for email sign-in | App functionality, Account management | Firebase Auth, email provider |
-| Phone number | Yes | No | Required for phone sign-in | App functionality, Account management | Firebase Auth, phone provider |
-| User IDs | Yes | **Yes, other users** | Required | App functionality | Firebase UID, on every membership doc |
-
-Name is shared because the leaderboard shows it to every other member of your
-group. That is the product working as intended, not a leak, but it must be
-declared.
-
-### Health and fitness
-
-| Type | Collected | Shared | Optional? | Purpose | Where in code |
-|---|---|---|---|---|---|
-| Health info | Yes | No | **Optional** | App functionality | `UserDto.age`, `.height`, `.weight` |
-| Fitness info | Yes | **Yes, other users** | Required | App functionality | Step counts via Health Connect `READ_STEPS` |
-
-Age, height and weight are optional, owner-only, and never leave the `users`
-document, which `firestore.rules` locks to its owner. Step counts are shared
-because today's and this week's totals are denormalised onto the membership
-document so the group leaderboard can read them.
-
-🔴 **Health Connect data is never shared with any third party.** It goes only to
-this project's own Firebase and to other members of the user's own group. The
-Health Apps declaration must say the same thing.
-
-### Photos and videos
-
-| Type | Collected | Shared | Optional? | Purpose | Where in code |
-|---|---|---|---|---|---|
-| Photos | Yes | **Yes, other users** | Optional | App functionality | `avatars/{uid}/profile.jpg`, group photo |
-
-Optional in the real sense: a profile photo is only visible to other members
-when `showPhotoInGroups` is on, and that defaults to **false**.
-
-### App activity
-
-| Type | Collected | Shared | Optional? | Purpose | Where in code |
-|---|---|---|---|---|---|
-| App interactions | Yes | No | Required | Analytics | Firebase Analytics, 20 typed events in `AnalyticsManager` |
-
-### App info and performance
-
-| Type | Collected | Shared | Optional? | Purpose | Where in code |
-|---|---|---|---|---|---|
-| Crash logs | Yes | No | Required | Analytics | Firebase Crashlytics |
-| Diagnostics | Yes | No | Required | Analytics | Firebase Crashlytics / Performance |
-
-### Device or other IDs
-
-| Type | Collected | Shared | Optional? | Purpose | Where in code |
-|---|---|---|---|---|---|
-| Device or other IDs | Yes | No | Required | Analytics, App functionality | Firebase Analytics app instance ID, Firebase Installations ID, FCM registration |
-
-🔴 **Do not cite `UserDto.deviceToken` as the source, which an earlier draft of
-this file did.** `SaveDeviceTokenUseCase` exists but is **never called from
-anywhere**, so that field is never written and no push token of ours is stored.
-
-The declaration is still **Yes**, for a different reason: `firebase-messaging`,
-`firebase-analytics` and Crashlytics are all shipped, and those SDKs generate
-and transmit device-scoped identifiers on their own regardless of whether this
-app's code uses them.
-
-**Worth acting on after launch:** the app ships `firebase-messaging` but has no
-`FirebaseMessagingService` and no `MESSAGING_EVENT` intent filter, so it can
-never receive a push. Every notification the app shows is **local**, posted by
-`SmartNotificationHelper` from `StepSyncWorker`. The dependency is therefore
-collecting an identifier for a feature that does not exist. Removing it would
-shrink both the APK and this declaration. Do not remove it the day before a
-release; see the note in the release plan about not cleaning up dead code on the
-eve of shipping.
-
----
-
-## Security practices
-
-| Question | Answer | Basis |
+| Data | Actual use / recipient | User control / visibility |
 |---|---|---|
-| Is data encrypted in transit? | **Yes** | All traffic is Firebase over TLS. The one cleartext exception is `10.0.2.2` for the emulator, permitted only by the **debug** network security config, so it is not in the shipped app |
-| Can users request data deletion? | **Yes** | In-app, plus the web URL above |
-| Independent security review? | **No** | None has been done. Do not claim one |
-| Play Families policy? | **N/A** | Not targeted at children |
+| Name and account user ID | Firebase Auth/Firestore; group membership; account ID also used for RevenueCat identity | Name/ID on group membership records; email/phone are not shown to group members |
+| Email / phone | Firebase Authentication for selected sign-in method | Required for the chosen method; alternative methods exist |
+| Photos | Firebase Storage profile/group images | Optional; profile group sharing defaults off |
+| Fitness / step information | Firebase daily totals and dates; Trail aggregate time windows, joining baselines, credited deltas, revisions and sync timestamps | Health permission optional; joining a Trail is explicit; group totals and leaderboards visible to members; private Trail source records restricted |
+| Legacy age/height/weight | Private profile fields supplied by user | Optional; not required for steps; onboarding no longer requires them |
+| Purchase history | Google Play, RevenueCat and Firebase billing records: product/status/transaction references/expiry/plan capacity/group sponsorships | Optional purchase; not card or bank credentials; one sponsor may cover one or more groups according to the selected plan |
+| App interactions | Firebase Analytics events, including group IDs/names, configured targets, timestamps, duration and classified errors | No actual step readings or account email/phone/UID parameters in typed app events; SDK installation/device data still exists |
+| Crash logs / diagnostics | Firebase Crashlytics release crash reporting | Provider retention; no intentional raw health payload |
+| Device/installation IDs | Firebase Analytics, Crashlytics, Installations, FCM and App Check | Push registration is active functionality, not a future placeholder |
+| Planning and commitments | Firebase scheduled shared goals, answers and personal Trail commitments | Current group members see shared planning; Trail source details remain private |
+| Completion card/export | Locally generated and sent only to the app/location selected through Android | No automatic transmission; completion card omits member/group identities and source health history |
 
----
+For Play's “shared” answers, apply its definitions rather than treating every provider transmission as advertising sharing. Service-provider processing and expected user-initiated sharing have specific exceptions. Review the actual integrations before selecting these exceptions. Do not reuse the previous blanket “Health data never reaches any third party” claim: Firebase processes it for the app and selected group members receive product-visible totals.
 
-## Two judgement calls, both made deliberately
+## Source anchors
 
-**1. "Shared" is declared generously.** Google's definition of sharing centres
-on transfer to a *third party*, and name, steps and photos here are visible to
-other members of the user's own group rather than sold or sent onward. It would
-be arguable to declare no sharing at all. **Declare it anyway.** Under-declaring
-is what gets apps removed; over-declaring costs nothing but a line on the store
-listing, and "group members can see your name and step count" is the honest
-description of a social leaderboard.
+- app/src/main/java/com/pamoja/app/data/analytics/FirebaseAnalyticsManager.kt
+- app/src/main/java/com/pamoja/app/data/remote/firebase/FirebaseUserRepositoryImpl.kt
+- app/src/main/java/com/pamoja/app/data/remote/firebase/FirebaseAdventureRepository.kt
+- app/src/main/java/com/pamoja/app/util/WorkManagerScheduler.kt
+- app/src/main/java/com/pamoja/app/notifications/PamojaFirebaseMessagingService.kt
+- app/src/main/java/com/pamoja/app/ui/adventure/TrailCompletionShare.kt
+- functions-weekly/src/adventure-privacy.ts
+- functions/src/index.ts
+- app/src/main/AndroidManifest.xml (AD_ID removed; scoped FileProvider)
+- legal/PRIVACY_POLICY.md and web/privacy-pamoja.html
 
-**2. On-device backup is on, and is not what this form asks about.**
-`AndroidManifest.xml` sets `allowBackup="true"` with `backup_rules.xml` and
-`data_extraction_rules.xml` **still the untouched scaffold templates**, so every
-DataStore preference goes to the user's Google Drive backup. The Data Safety
-form does not ask about Android Auto Backup directly, so it changes no answer
-here. It is flagged because `CHECKLIST.md` §1.4 raised it and it is still
-unaddressed: worth an explicit `<exclude>` pass after launch, not before.
+## Release gate
 
----
+- [ ] Publish the revised privacy and deletion pages through the separate website deployment; verify live content.
+- [ ] Inspect and reconcile every live Play Data Safety answer, including purchase history, fitness data, photos and identifiers.
+- [ ] Verify Health Connect disclosure and background permission wording against the candidate.
+- [ ] Verify deletion/export with real authorized accounts; asynchronous Trail cleanup is not an immediate full-provider erasure guarantee.
+- [ ] Confirm billing retention and support deletion handling. The in-app flow does not erase all RevenueCat/Google Play/billing records.
+- [ ] Confirm Analytics/Crashlytics configuration and retention; do not invent provider retention periods.
+- [ ] Preserve no advertising/no sale/no health-to-AI behavior in the shipped candidate.
 
-## After filing
-
-- [ ] Re-read the deployed privacy page and confirm it matches every row above
-- [ ] Confirm the store listing's data-safety summary reads the way you expect
-- [x] **Filed 2026-08-22.** Walked through every field live against this
-      sheet. One mismatch found and fixed during filing: Name was answered as
-      collected-only, but it must be Shared (App functionality) since the
-      leaderboard shows it to every group member via
-      `MembershipDto.displayName`, same reason User IDs is shared. Everything
-      else matched this sheet on the first pass.
+References: [Play Data Safety definitions](https://support.google.com/googleplay/android-developer/answer/10787469), [RevenueCat customer identities](https://www.revenuecat.com/docs/customers/identifying-customers).

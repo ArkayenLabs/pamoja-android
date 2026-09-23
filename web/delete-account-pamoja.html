@@ -131,10 +131,10 @@
   <div class="wrap">
     <header>
       <h1>Delete your Pamoja account (Arkayen Labs)</h1>
-      <p class="dates">Last updated 20 August 2026</p>
+      <p class="dates">Last updated 19 September 2026</p>
     </header>
 
-    <p>You can delete your Pamoja account and everything stored with it at any time. There are two ways, and both remove the same data.</p>
+    <p>You can request deletion of your Pamoja account in the app or by contacting support. The records removed and the exceptions are described below.</p>
 
     <h2>Fastest way: delete inside the app</h2>
     <p>Immediate, and needs nothing from us.</p>
@@ -156,14 +156,15 @@
     <p>We action emailed requests within <strong>30 days</strong>, and in practice far sooner, and confirm by reply once it is done. If we cannot match your request to an account we will tell you, rather than delete someone else&rsquo;s data.</p>
 
     <h2>What is deleted</h2>
-    <p>Permanently, with no recovery window:</p>
+    <p>The account flow removes the following records. Server cleanup triggered by membership deletion runs asynchronously and may be retried.</p>
     <table>
       <tr><th>Data</th><th>What it is</th></tr>
       <tr><td>Your profile</td><td>Name, and the age, height and weight you chose to enter</td></tr>
-      <tr><td>Your profile photo</td><td>The image file itself, removed from storage, not merely unlinked</td></tr>
+      <tr><td>Your profile photo</td><td>Removal from storage is attempted. Contact support if a previous image remains accessible.</td></tr>
       <tr><td>Your step history</td><td>Every daily step record Pamoja has stored for you</td></tr>
       <tr><td>Your group memberships</td><td>You leave every group, and each group&rsquo;s member count and invite link are corrected</td></tr>
       <tr><td>Your sign-in record</td><td>The account itself, including the email address or phone number used to sign in</td></tr>
+      <tr><td>Personal Trail records</td><td>Membership deletion triggers cleanup of source windows, commitments and personal attribution. Earned group aggregates can remain for other members.</td></tr>
     </table>
 
     <div class="callout warn">
@@ -174,13 +175,13 @@
     <p>Groups are not destroyed when their admin leaves. Before your account is removed the group is handed to another member, so the people in it keep their group and their shared progress. If you are its only member, the group goes with you.</p>
 
     <h2>What is retained</h2>
-    <p>A small amount of data outlives the account, none of which can identify you once it is gone:</p>
+    <p>Some records can remain after the in-app deletion flow:</p>
     <ul>
-      <li><strong>The groups you belonged to.</strong> A group&rsquo;s own record, its name and its combined weekly totals, belongs to that group rather than to you, so it survives your departure. Nothing in it identifies you once your membership is deleted.</li>
-      <li><strong>Anonymous, aggregated analytics.</strong> Counts of events such as &ldquo;a group was created&rdquo;, never tied back to a person.</li>
-      <li><strong>Crash reports</strong>, retained for up to <strong>90 days</strong> so we can fix what caused them.</li>
+      <li><strong>Shared group progress.</strong> Group names and combined totals can remain for other members. Personal review and Trail attribution is removed by server cleanup; this is not instantaneous.</li>
+      <li><strong>Analytics and diagnostics.</strong> SDK installation identifiers and event records have provider-specific retention. The in-app account flow does not promise immediate erasure of every provider log.</li>
+      <li><strong>Billing records.</strong> Google Play, RevenueCat and our billing service retain subscription and transaction records outside the in-app deletion flow. Contact support about remaining personal data. Deleting the account does not cancel a Google Play subscription; cancel it in Google Play.</li>
       <li><strong>Records we are required by law to keep</strong>, where any apply.</li>
-      <li><strong>Provider backups.</strong> Our infrastructure providers may hold fragments briefly, an unavoidable consequence of how backups work. They are never used to restore a deleted account and age out on their own.</li>
+      <li><strong>Provider backups and copies you shared.</strong> Backup retention varies. Exports or cards already sent to another app cannot be erased by deleting your Pamoja account.</li>
     </ul>
 
     <h2>Data on your device</h2>

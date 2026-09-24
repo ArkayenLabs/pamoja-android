@@ -2,11 +2,10 @@ package com.pamoja.app.ui.invite
 
 import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,24 +29,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
@@ -57,10 +56,10 @@ import com.pamoja.app.ui.components.PamojaQrCode
 import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.util.InviteLink
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.util.InviteLink
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,25 +67,18 @@ fun InviteScreen(
     groupId: String,
     onGoToGroup: () -> Unit,
     onBack: () -> Unit,
-    viewModel: InviteViewModel = hiltViewModel()
+    viewModel: InviteViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
-    val uiState           by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val clipboardManager  = LocalClipboardManager.current
-    val context           = LocalContext.current
-    val scope             = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(groupId) { viewModel.loadGroup(groupId) }
 
-    // Always the verified https App Link, derived from the group ID rather than
-    // read from Firestore. Existing documents still hold the old pamoja:// string,
-    // which messengers refuse to render as a tappable link, so it is never shown.
-    // Incoming links of either form still resolve, see InviteLink.parseCode.
     val inviteLink = InviteLink.build(groupId)
-
-    // Resolved here because both are used inside click handlers and coroutine
-    // scopes, neither of which is a composable scope.
     val linkCopiedMessage = stringResource(R.string.invite_link_copied)
     val shareChooserTitle = stringResource(R.string.invite_share_chooser)
     val group = uiState.group
@@ -94,23 +86,15 @@ fun InviteScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.surfaceApp)
+            .background(colors.surfaceApp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-        OfflineBanner(isOffline = uiState.isOffline)
+            OfflineBanner(isOffline = uiState.isOffline)
 
-        // A way out that is not "go to group". Arriving here straight after
-        // creating one, the only exits were the group itself or the system
-        // back gesture, which is not an affordance anyone can see.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
             IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
                 Icon(
                     painter = painterResource(PamojaIcons.ArrowLeft),
@@ -119,270 +103,186 @@ fun InviteScreen(
                     modifier = Modifier.size(20.dp),
                 )
             }
-        }
 
-        // Scrolls. It used to be a fixed SpaceBetween column, so on a shorter
-        // phone the QR pushed the share and go-to-group controls off the bottom
-        // of the screen with no way to reach them.
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = Spacing.x6)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment   = Alignment.CenterHorizontally
-        ) {
-
-            // ── Top section ───────────────────────────────────────────────
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // Success icon, gradient circle
-                Box(contentAlignment = Alignment.Center) {
-                    // Outer glow
-                    Box(
-                        modifier = Modifier
-                            .size(110.dp)
-                            .clip(CircleShape)
-                            .background(colors.accentPrimarySubtle)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(RoundedCornerShape(PamojaRadii.xl))
-                            .background(
-                                brush = Brush.linearGradient(
-                                    listOf(colors.accentPrimary, colors.accentPrimaryPress)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter            = painterResource(PamojaIcons.Users),
-                            contentDescription = stringResource(R.string.invite_created_desc),
-                            tint               = colors.textOnBrand,
-                            modifier           = Modifier.size(32.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                Text(
-                    text      = stringResource(R.string.invite_created_title),
-                    style     = MaterialTheme.typography.headlineLarge,
-                    color     = colors.textPrimary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x2))
-
-                // Which group, and how many spots. Both come from the fetch, so
-                // until it answers they are placeholders rather than a guess:
-                // the cap used to default to 10 and read as fact before the real
-                // number arrived and quietly changed it.
-                when {
-                    !uiState.hasLoadedOnce -> {
-                        SkeletonBlock(
-                            modifier = Modifier.fillMaxWidth(0.5f),
-                            height   = 14.dp,
-                        )
-                        Spacer(modifier = Modifier.height(Spacing.x2))
-                        SkeletonBlock(
-                            modifier = Modifier.fillMaxWidth(0.75f),
-                            height   = 14.dp,
-                        )
-                    }
-
-                    group != null -> {
-                        Text(
-                            text      = stringResource(R.string.invite_group_label),
-                            style     = MaterialTheme.typography.bodySmall,
-                            color     = colors.textTertiary,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text      = group.name,
-                            style     = MaterialTheme.typography.titleMedium,
-                            color     = colors.textPrimary,
-                            textAlign = TextAlign.Center,
-                            maxLines  = 2,
-                            overflow  = TextOverflow.Ellipsis,
-                        )
-                        Spacer(modifier = Modifier.height(Spacing.x2))
-                        Text(
-                            text      = stringResource(R.string.invite_subtitle, group.maxMemberCap),
-                            style     = MaterialTheme.typography.bodyMedium,
-                            color     = colors.textSecondary,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    // The details failed, the link did not. Partial failure, so
-                    // the screen keeps doing the one job it was opened for.
-                    else -> PamojaNotice(
-                        icon  = PamojaIcons.AlertCircle,
-                        title = stringResource(R.string.invite_details_failed_title),
-                        body  = stringResource(
-                            if (uiState.isOffline) R.string.invite_offline_body
-                            else R.string.invite_details_failed_body
-                        ),
-                        tone  = if (uiState.isOffline) NoticeTone.Warning else NoticeTone.Danger,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // ── QR, for handing the invite to someone standing there ──
-                // Faster than reading a URL aloud, which is what this flow
-                // used to require for anyone not on a messaging app.
-                // 160 rather than the default 200. It only has to be scannable
-                // from across a table, and at 200 it crowded out everything
-                // below it on a normal phone.
-                PamojaQrCode(content = inviteLink, size = 160.dp)
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                Text(
-                    text      = stringResource(R.string.invite_qr_hint),
-                    style     = MaterialTheme.typography.bodySmall,
-                    color     = colors.textTertiary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x5))
-
-                // ── Invite link card ──────────────────────────────────────
-                val linkShape = RoundedCornerShape(PamojaRadii.md)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(linkShape)
-                        .background(colors.surface1)
-                        .border(width = 1.dp, color = colors.borderSubtle, shape = linkShape)
-                        .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text     = inviteLink,
-                        style    = MaterialTheme.typography.bodySmall,
-                        color    = colors.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
-                    IconButton(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(inviteLink))
-                            scope.launch { snackbarHostState.showSnackbar(linkCopiedMessage) }
-                        },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            painter            = painterResource(PamojaIcons.Copy),
-                            contentDescription = stringResource(R.string.invite_copy_desc),
-                            tint               = colors.accentPrimary,
-                            modifier           = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-
-            // ── Bottom CTAs ───────────────────────────────────────────────
-            // Top padding, not a Spacer: this column is a sibling of the scroll
-            // region rather than the last item in it, so nothing else separates
-            // it from the link card and the two rendered flush against each
-            // other on a short screen.
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = Spacing.x6)
                     .navigationBarsPadding()
-                    .padding(top = Spacing.x6, bottom = Spacing.x4),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Spacing.x3)
+                    .padding(bottom = Spacing.x3),
             ) {
-                // Share is the primary action, and the only one here.
-                //
-                // There used to be a full-width "Copy link" button directly
-                // below a link card that already had a copy icon on it: two
-                // controls, same result, one screen. Copying stays where the
-                // link is, which is where anyone looks for it.
-                //
-                // No app-specific share button on purpose. Hardcoding WhatsApp
-                // dead-ends whenever it is not installed and presumes which
-                // messenger the group uses. The system sheet surfaces WhatsApp
-                // first anyway for anyone who has it.
-                Button(
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            // The bare URL, nothing wrapped around it. Prose
-                            // before the link forced people to hand-edit the
-                            // message before it was usable, and it stops
-                            // messengers from rendering a link preview.
-                            putExtra(Intent.EXTRA_TEXT, inviteLink)
-                        }
-                        context.startActivity(Intent.createChooser(intent, shareChooserTitle))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape  = PillShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimary,
-                        contentColor   = colors.textOnBrand
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Share),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = colors.textOnBrand
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
-                    Text(
-                        text  = stringResource(R.string.invite_share),
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
+                val compact = maxHeight < 620.dp
+                val gap = if (compact) Spacing.x2 else Spacing.x3
+                val qrSize = if (compact) 124.dp else 156.dp
 
-                // Retry only for the details, and only when they are what failed.
-                if (uiState.hasLoadedOnce && group == null) {
-                    TextButton(
-                        onClick = { viewModel.retry() },
-                        enabled = !uiState.isLoading,
-                    ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (!uiState.hasLoadedOnce) {
+                            SkeletonBlock(
+                                modifier = Modifier.fillMaxWidth(0.72f),
+                                height = 32.dp,
+                            )
+                            Spacer(modifier = Modifier.height(gap))
+                            SkeletonBlock(
+                                modifier = Modifier.fillMaxWidth(0.56f),
+                                height = 14.dp,
+                            )
+                        } else if (group != null) {
+                            val heading = buildAnnotatedString {
+                                append(stringResource(R.string.invite_title_prefix))
+                                pushStyle(
+                                    SpanStyle(
+                                        color = colors.accentPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                )
+                                append(group.name)
+                                pop()
+                            }
+                            Text(
+                                text = heading,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = colors.textPrimary,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Spacer(modifier = Modifier.height(gap))
+                            Text(
+                                text = stringResource(R.string.invite_subtitle, group.maxMemberCap),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.textSecondary,
+                                textAlign = TextAlign.Center,
+                            )
+                        } else {
+                            PamojaNotice(
+                                icon = PamojaIcons.AlertCircle,
+                                title = stringResource(R.string.invite_details_failed_title),
+                                body = stringResource(
+                                    if (uiState.isOffline) R.string.invite_offline_body
+                                    else R.string.invite_details_failed_body
+                                ),
+                                tone = if (uiState.isOffline) NoticeTone.Warning else NoticeTone.Danger,
+                            )
+                        }
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        PamojaQrCode(content = inviteLink, size = qrSize)
+                        Spacer(modifier = Modifier.height(gap))
                         Text(
-                            text  = stringResource(R.string.common_try_again),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.accentPrimary
+                            text = stringResource(R.string.invite_qr_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textTertiary,
+                            textAlign = TextAlign.Center,
                         )
                     }
-                }
 
-                // Go to group, ghost text button with trailing arrow icon
-                TextButton(onClick = onGoToGroup) {
-                    Text(
-                        text  = stringResource(R.string.invite_go_to_group),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.accentPrimary
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x1))
-                    Icon(
-                        painter = painterResource(PamojaIcons.ArrowRight),
-                        contentDescription = null,
-                        tint = colors.accentPrimary,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(gap),
+                    ) {
+                        val linkShape = RoundedCornerShape(PamojaRadii.md)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(linkShape)
+                                .background(colors.surface1)
+                                .border(1.dp, colors.borderSubtle, linkShape)
+                                .padding(start = Spacing.x4, end = Spacing.x2, top = Spacing.x2, bottom = Spacing.x2),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = inviteLink,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.x2))
+                            IconButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(inviteLink))
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(linkCopiedMessage)
+                                    }
+                                },
+                                modifier = Modifier.size(44.dp),
+                            ) {
+                                Icon(
+                                    painter = painterResource(PamojaIcons.Copy),
+                                    contentDescription = stringResource(R.string.invite_copy_desc),
+                                    tint = colors.accentPrimary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, inviteLink)
+                                }
+                                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = PillShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.accentPrimary,
+                                contentColor = colors.textOnBrand,
+                            ),
+                        ) {
+                            Icon(
+                                painter = painterResource(PamojaIcons.Share),
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.x2))
+                            Text(
+                                text = stringResource(R.string.invite_share),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
+
+                        if (uiState.hasLoadedOnce && group == null) {
+                            TextButton(
+                                onClick = viewModel::retry,
+                                enabled = !uiState.isLoading,
+                            ) {
+                                Text(stringResource(R.string.common_try_again))
+                            }
+                        } else {
+                            TextButton(onClick = onGoToGroup) {
+                                Text(
+                                    text = stringResource(R.string.invite_go_to_group),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colors.accentPrimary,
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.x1))
+                                Icon(
+                                    painter = painterResource(PamojaIcons.ArrowRight),
+                                    contentDescription = null,
+                                    tint = colors.accentPrimary,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
+                    }
                 }
             }
-        }
         }
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier  = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }

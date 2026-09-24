@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,7 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +68,7 @@ fun JoinGroupScreen(
     viewModel: JoinGroupViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(code) { viewModel.resolve(code) }
 
@@ -141,7 +143,11 @@ private fun InvitePreviewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = Spacing.x6),
+            .padding(horizontal = Spacing.x6)
+            // The shared-goal explanation adds useful context, but it must not
+            // push the decision buttons off smaller phones or large-text
+            // layouts. Let the complete preview scroll as one readable page.
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(Spacing.x10))
@@ -198,6 +204,37 @@ private fun InvitePreviewContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(Spacing.x3))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(PamojaRadii.lg))
+                .background(colors.surface2)
+                .padding(horizontal = Spacing.x4, vertical = Spacing.x3),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.Users),
+                contentDescription = null,
+                tint = colors.accentPrimary,
+                modifier = Modifier.size(20.dp),
+            )
+            Column {
+                Text(
+                    text = stringResource(R.string.join_shared_goal_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = colors.textPrimary,
+                )
+                Text(
+                    text = stringResource(R.string.join_shared_goal_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(Spacing.x6))
 
         when {
@@ -230,7 +267,7 @@ private fun InvitePreviewContent(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(Spacing.x6))
 
         if (state.isAlreadyMember) {
             Button(

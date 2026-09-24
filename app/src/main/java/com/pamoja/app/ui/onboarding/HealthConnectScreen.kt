@@ -1,11 +1,9 @@
 package com.pamoja.app.ui.onboarding
 
 import android.content.Intent
-import androidx.annotation.DrawableRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,14 +15,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,18 +35,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pamoja.app.data.local.health.HealthConnectReader
-import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.OnboardingProgressBar
+import com.pamoja.app.data.local.health.HealthConnectReader
+import com.pamoja.app.ui.components.PamojaMark
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
@@ -57,23 +53,23 @@ import com.pamoja.app.ui.theme.Spacing
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-// Permission states, drives UI
-private enum class PermState { UNKNOWN, GRANTED, DENIED, HC_UNAVAILABLE }
+internal enum class PermState { UNKNOWN, GRANTED, DENIED, HC_UNAVAILABLE }
 
+/**
+ * A contextual permission primer shown only after a person creates or joins a
+ * group. It says the one fact needed to make an informed choice, then hands the
+ * decision to Android's native Health Connect permission UI.
+ */
 @Composable
 fun HealthConnectScreen(
     onConnected: () -> Unit,
     onSkip: () -> Unit,
-    viewModel: HealthConnectViewModel = hiltViewModel()
+    viewModel: HealthConnectViewModel = hiltViewModel(),
 ) {
-    val colors = LocalPamojaColors.current
     val healthConnectReader = viewModel.healthConnectReader
-    val userPreferences     = viewModel.userPreferences
-    val scope               = rememberCoroutineScope()
-    val context             = LocalContext.current
-    val snackbarHostState   = remember { SnackbarHostState() }
-
-    // Check current permission state on entry
+    val userPreferences = viewModel.userPreferences
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var permState by remember { mutableStateOf(PermState.UNKNOWN) }
 
     LaunchedEffect(Unit) {
@@ -83,345 +79,208 @@ fun HealthConnectScreen(
             healthConnectReader.hasPermission() -> PermState.GRANTED
             else -> PermState.UNKNOWN
         }
+
+        // Someone who connected previously should not see education they have
+        // already acted on just because they created or joined another group.
+        if (permState == PermState.GRANTED) {
+            userPreferences.setHealthConnectGranted(true)
+            onConnected()
+        }
     }
 
-    // Health Connect permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract()
+        contract = PermissionController.createRequestPermissionResultContract(),
     ) { granted ->
         scope.launch {
             val hasPermission = granted.containsAll(HealthConnectReader.REQUIRED_PERMISSIONS)
+            userPreferences.setHealthConnectGranted(hasPermission)
             if (hasPermission) {
-                userPreferences.setHealthConnectGranted(true)
                 permState = PermState.GRANTED
-                val userId = userPreferences.userId.first() ?: ""
+                val userId = userPreferences.userId.first().orEmpty()
                 viewModel.onPermissionGranted(userId)
                 onConnected()
             } else {
-                userPreferences.setHealthConnectGranted(false)
                 permState = PermState.DENIED
                 viewModel.onPermissionDenied()
             }
         }
     }
 
-    Box(
+    val openHealthSettings = {
+        val intent = if (android.os.Build.VERSION.SDK_INT >= 34) {
+            Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS").apply {
+                putExtra(Intent.EXTRA_PACKAGE_NAME, context.packageName)
+            }
+        } else {
+            Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+        }
+        context.startActivity(intent)
+    }
+
+    HealthConnectContent(
+        permState = permState,
+        onPrimary = {
+            when (permState) {
+                PermState.HC_UNAVAILABLE -> {
+                    viewModel.onSkipped()
+                    onSkip()
+                }
+                PermState.DENIED -> openHealthSettings()
+                PermState.GRANTED -> onConnected()
+                PermState.UNKNOWN -> {
+                    viewModel.onPermissionRequested()
+                    permissionLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
+                }
+            }
+        },
+        onSkip = {
+            viewModel.onSkipped()
+            onSkip()
+        },
+    )
+}
+
+/** Stateless rendering boundary used by visual and interaction tests. */
+@Composable
+internal fun HealthConnectContent(
+    permState: PermState,
+    onPrimary: () -> Unit,
+    onSkip: () -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+    val subtitle = when (permState) {
+        PermState.HC_UNAVAILABLE -> stringResource(R.string.hc_body_unavailable)
+        PermState.DENIED -> stringResource(R.string.hc_body_denied)
+        PermState.GRANTED -> stringResource(R.string.hc_body_granted)
+        PermState.UNKNOWN -> stringResource(R.string.hc_body_default)
+    }
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.surfaceApp)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Spacing.x5),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = Spacing.x6),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
+        Spacer(Modifier.height(Spacing.x5))
+        PamojaMark()
 
-            // ── Top content ─────────────────────────────────────────────
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Spacer(modifier = Modifier.height(Spacing.x8))
-
-                OnboardingProgressBar(currentStep = 3, totalSteps = 3)
-
-                Spacer(modifier = Modifier.height(Spacing.x12))
-
-                // Step ring illustration
-                Box(contentAlignment = Alignment.Center) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(colors.accentPrimarySubtle)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(PamojaRadii.xl))
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(colors.accentPrimary, colors.accentPrimaryPress)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter            = painterResource(PamojaIcons.Footprints),
-                            contentDescription = stringResource(R.string.hc_icon_desc),
-                            tint               = colors.textOnBrand,
-                            modifier           = Modifier.size(36.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x7))
-
-                Text(
-                    text      = stringResource(R.string.hc_title),
-                    style     = MaterialTheme.typography.headlineLarge,
-                    color     = colors.textPrimary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                val subtitle = when (permState) {
-                    PermState.HC_UNAVAILABLE ->
-                        stringResource(R.string.hc_body_unavailable)
-                    PermState.DENIED ->
-                        stringResource(R.string.hc_body_denied)
-                    PermState.GRANTED ->
-                        stringResource(R.string.hc_body_granted)
-                    else ->
-                        stringResource(R.string.hc_body_default)
-                }
-
-                Text(
-                    text      = subtitle,
-                    style     = MaterialTheme.typography.bodyMedium,
-                    color     = if (permState == PermState.DENIED) colors.statusDanger
-                                else colors.textSecondary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x7))
-
-                // What Pamoja accesses card
-                val cardShape = RoundedCornerShape(PamojaRadii.md)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(cardShape)
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, cardShape)
-                        .padding(Spacing.x5),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.x4)
-                ) {
-                    Text(
-                        text  = stringResource(R.string.hc_access_header),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.textSecondary
-                    )
-                    PermissionRow(
-                        icon      = PamojaIcons.Footprints,
-                        iconColor = colors.accentPrimary,
-                        iconBg    = colors.accentPrimarySubtle,
-                        title     = stringResource(R.string.hc_access_steps_title),
-                        subtitle  = stringResource(R.string.hc_access_steps_sub)
-                    )
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
-                    PermissionRow(
-                        icon      = PamojaIcons.Shield,
-                        iconColor = colors.accentTeal,
-                        iconBg    = colors.accentTealSubtle,
-                        title     = stringResource(R.string.hc_access_nothing_title),
-                        subtitle  = stringResource(R.string.hc_access_nothing_sub)
-                    )
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
-                    PermissionRow(
-                        icon      = PamojaIcons.Lock,
-                        iconColor = colors.accentTeal,
-                        iconBg    = colors.accentTealSubtle,
-                        title     = stringResource(R.string.hc_access_private_title),
-                        subtitle  = stringResource(R.string.hc_access_private_sub)
-                    )
-                }
-
-                if (permState == PermState.HC_UNAVAILABLE) {
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-                    Text(
-                        text      = stringResource(R.string.hc_unavailable_short),
-                        style     = MaterialTheme.typography.bodySmall,
-                        color     = colors.statusDanger,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            // ── Bottom CTAs ──────────────────────────────────────────────
-            // Top padding for the same reason as the invite screen: this column
-            // is a sibling of the content above rather than the last item in it,
-            // so without it the primary button renders flush against the access
-            // card and the two read as one welded block.
-            Column(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(top = Spacing.x6, bottom = Spacing.x4),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Spacing.x1)
-            ) {
-                when (permState) {
-
-                    // ── HC not on this device → skip only ────────────────
-                    PermState.HC_UNAVAILABLE -> {
-                        Button(
-                            onClick  = {
-                                viewModel.onSkipped()
-                                onSkip()
-                            },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = PillShape,
-                            colors   = ButtonDefaults.buttonColors(
-                                containerColor = colors.accentPrimary,
-                                contentColor   = colors.textOnBrand
-                            )
-                        ) {
-                            Text(
-                                text  = stringResource(R.string.hc_continue_without),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                    }
-
-                    // ── Denied → offer Settings shortcut + skip ──────────
-                    PermState.DENIED -> {
-                        Button(
-                            onClick = {
-                                val intent = if (android.os.Build.VERSION.SDK_INT >= 34) {
-                                Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS").apply {
-                                    putExtra(Intent.EXTRA_PACKAGE_NAME, context.packageName)
-                                }
-                            } else {
-                                Intent(androidx.health.connect.client.HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
-                            }
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = PillShape,
-                            colors   = ButtonDefaults.buttonColors(
-                                containerColor = colors.accentPrimary,
-                                contentColor   = colors.textOnBrand
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(PamojaIcons.Settings),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.size(Spacing.x2))
-                            Text(
-                                text  = stringResource(R.string.hc_open_settings),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        TextButton(onClick = {
-                            viewModel.onSkipped()
-                            onSkip()
-                        }) {
-                            Text(
-                                text  = stringResource(R.string.hc_skip),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textSecondary
-                            )
-                        }
-                    }
-
-                    // ── Granted → proceed ────────────────────────────────
-                    PermState.GRANTED -> {
-                        Button(
-                            onClick  = onConnected,
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = PillShape,
-                            colors   = ButtonDefaults.buttonColors(
-                                containerColor = colors.statusSuccess,
-                                contentColor   = colors.textOnBrand
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(PamojaIcons.Check),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.size(Spacing.x2))
-                            Text(
-                                text  = stringResource(R.string.hc_connected),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                    }
-
-                    // ── Unknown → request permission ─────────────────────
-                    else -> {
-                        Button(
-                            onClick = {
-                                viewModel.onPermissionRequested()
-                                permissionLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
-                            },
-                            modifier = Modifier.fillMaxWidth().height(56.dp),
-                            shape    = PillShape,
-                            colors   = ButtonDefaults.buttonColors(
-                                containerColor = colors.accentPrimary,
-                                contentColor   = colors.textOnBrand
-                            )
-                        ) {
-                            Text(
-                                text  = stringResource(R.string.hc_connect),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        TextButton(onClick = {
-                            viewModel.onSkipped()
-                            onSkip()
-                        }) {
-                            Text(
-                                text  = stringResource(R.string.hc_skip),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textSecondary
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier  = Modifier.align(Alignment.BottomCenter)
-        )
-    }
-}
-
-// ─── Permission explanation row ───────────────────────────────────────────────
-@Composable
-private fun PermissionRow(
-    @DrawableRes icon: Int,
-    iconColor: Color,
-    iconBg: Color,
-    title: String,
-    subtitle: String
-) {
-    val colors = LocalPamojaColors.current
-    Row(
-        verticalAlignment    = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
-    ) {
+        Spacer(Modifier.height(Spacing.x8))
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(PamojaRadii.sm))
-                .background(iconBg),
-            contentAlignment = Alignment.Center
+                .size(76.dp)
+                .clip(RoundedCornerShape(PamojaRadii.xl))
+                .background(colors.accentPrimarySubtle),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter            = painterResource(icon),
+                painter = painterResource(PamojaIcons.Footprints),
+                contentDescription = stringResource(R.string.hc_icon_desc),
+                tint = colors.accentPrimary,
+                modifier = Modifier.size(34.dp),
+            )
+        }
+
+        Spacer(Modifier.height(Spacing.x6))
+        Text(
+            text = stringResource(R.string.hc_title),
+            style = MaterialTheme.typography.headlineLarge,
+            color = colors.textPrimary,
+        )
+        Spacer(Modifier.height(Spacing.x2))
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (permState == PermState.DENIED || permState == PermState.HC_UNAVAILABLE) {
+                colors.statusDanger
+            } else {
+                colors.textSecondary
+            },
+        )
+
+        Spacer(Modifier.height(Spacing.x6))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(PamojaRadii.lg))
+                .background(colors.accentTealSubtle)
+                .border(
+                    width = 1.dp,
+                    color = colors.borderSubtle,
+                    shape = RoundedCornerShape(PamojaRadii.lg),
+                )
+                .padding(Spacing.x4),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.ShieldCheck),
                 contentDescription = null,
-                tint               = iconColor,
-                modifier           = Modifier.size(20.dp)
+                tint = colors.accentTeal,
+                modifier = Modifier.size(22.dp),
             )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Spacer(Modifier.width(Spacing.x3))
             Text(
-                text  = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textPrimary
-            )
-            Text(
-                text  = subtitle,
+                text = stringResource(R.string.hc_steps_only),
                 style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary
+                color = colors.textPrimary,
             )
         }
+
+        Spacer(Modifier.height(Spacing.x7))
+        Button(
+            onClick = onPrimary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = PillShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (permState == PermState.GRANTED) {
+                    colors.statusSuccess
+                } else {
+                    colors.accentPrimary
+                },
+                contentColor = colors.textOnBrand,
+            ),
+        ) {
+            val icon = when (permState) {
+                PermState.DENIED -> PamojaIcons.Settings
+                PermState.GRANTED -> PamojaIcons.Check
+                else -> PamojaIcons.Footprints
+            }
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(19.dp),
+            )
+            Spacer(Modifier.width(Spacing.x2))
+            Text(
+                text = stringResource(
+                    when (permState) {
+                        PermState.HC_UNAVAILABLE -> R.string.hc_continue_without
+                        PermState.DENIED -> R.string.hc_open_settings
+                        PermState.GRANTED -> R.string.hc_connected
+                        PermState.UNKNOWN -> R.string.hc_connect
+                    }
+                ),
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+
+        if (permState != PermState.GRANTED && permState != PermState.HC_UNAVAILABLE) {
+            TextButton(
+                onClick = onSkip,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            ) {
+                Text(
+                    text = stringResource(R.string.hc_skip),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textSecondary,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Spacing.x6))
     }
 }

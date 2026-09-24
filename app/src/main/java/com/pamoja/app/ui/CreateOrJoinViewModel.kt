@@ -8,21 +8,28 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PendingInviteUiState(
-    /** Code waiting to be previewed. Home navigates when this appears. */
+    /** Code waiting for the person to explicitly resume or dismiss. */
     val pendingCode: String? = null,
 )
+
+internal object PendingInvitePolicy {
+    const val MAX_AGE_MILLIS = 24L * 60L * 60L * 1_000L
+
+    fun isFresh(savedAt: Long, now: Long): Boolean =
+        savedAt > 0L && now >= savedAt && now - savedAt <= MAX_AGE_MILLIS
+}
 
 /**
  * Picks up an invite captured before the user could act on it.
  *
- * A link opened by someone with no account is stored, survives sign-in and
- * profile setup, and is honoured the moment Home appears, which is the first
- * point at which the invite can actually be resolved.
+ * A link opened by someone with no account is stored across sign-in and profile
+ * setup. Home then offers it as an explicit continuation instead of navigating
+ * without context during a later, unrelated app session.
  *
  * This used to perform the join itself. It now only surfaces the code, because
  * joining belongs behind the preview screen where a person can see the group
@@ -40,9 +47,13 @@ class CreateOrJoinViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val stored = userPreferences.pendingInviteCode.firstOrNull()
-            if (!stored.isNullOrBlank()) {
-                _uiState.value = PendingInviteUiState(pendingCode = stored)
+            val stored = userPreferences.pendingInvite.first()
+            when {
+                stored == null -> Unit
+                PendingInvitePolicy.isFresh(stored.savedAt, System.currentTimeMillis()) -> {
+                    _uiState.value = PendingInviteUiState(pendingCode = stored.code)
+                }
+                else -> userPreferences.clearPendingInviteCode()
             }
         }
     }
@@ -75,7 +86,12 @@ class CreateOrJoinViewModel @Inject constructor(
      * The stored code is cleared by the preview screen rather than here, so a
      * navigation that never completes does not lose the invite.
      */
-    fun clearPendingCode() {
+    fun markPendingInviteOpened() {
         _uiState.value = PendingInviteUiState(pendingCode = null)
+    }
+
+    fun dismissPendingInvite() {
+        _uiState.value = PendingInviteUiState(pendingCode = null)
+        viewModelScope.launch { userPreferences.clearPendingInviteCode() }
     }
 }

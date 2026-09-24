@@ -1,22 +1,17 @@
 package com.pamoja.app.ui.onboarding
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,63 +20,45 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
-import com.pamoja.app.ui.components.OnboardingProgressBar
+import com.pamoja.app.ui.components.PamojaMark
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 
+/**
+ * The one conditional identity step.
+ *
+ * Google and email sign-up already provide a name and never reach this screen.
+ * It exists for a new phone account, or a provider account whose name is empty.
+ */
 @Composable
 fun ProfileSetupScreen(
     onContinue: () -> Unit,
-    viewModel: OnboardingViewModel = hiltViewModel()
+    viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
-    val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var name by rememberSaveable { mutableStateOf("") }
 
-    var name   by remember { mutableStateOf("") }
-    var age    by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-
-    // Resolved up here because every validate lambda below runs on focus change,
-    // outside composable scope.
     val nameRequired = stringResource(R.string.profile_name_required)
     val nameTooLong = stringResource(R.string.profile_name_too_long)
-    val ageField = stringResource(R.string.profile_field_age)
-    val heightField = stringResource(R.string.profile_field_height)
-    val weightField = stringResource(R.string.profile_field_weight)
-    val ageNaN = stringResource(R.string.profile_number_invalid, ageField)
-    val ageRange = stringResource(R.string.profile_number_range, ageField)
-    val heightNaN = stringResource(R.string.profile_number_invalid, heightField)
-    val heightRange = stringResource(R.string.profile_number_range, heightField)
-    val weightNaN = stringResource(R.string.profile_number_invalid, weightField)
-    val weightRange = stringResource(R.string.profile_number_range, weightField)
-
-    // Each rule is defined once and asked twice: by the field on blur, and by
-    // the button on every recomposition. The button used to ask only
-    // name.isNotBlank(), so a name of pure spaces and an age of 999 both got
-    // through to Firestore untouched.
     val nameErrorFor: (String) -> String? = { input ->
         when {
             input.isBlank() -> nameRequired
@@ -89,14 +66,7 @@ fun ProfileSetupScreen(
             else -> null
         }
     }
-    val ageErrorFor: (String) -> String? = { it.validOptionalNumber(13..120, ageNaN, ageRange) }
-    val heightErrorFor: (String) -> String? = { it.validOptionalNumber(50..250, heightNaN, heightRange) }
-    val weightErrorFor: (String) -> String? = { it.validOptionalNumber(20..300, weightNaN, weightRange) }
-
-    val firstError = nameErrorFor(name)
-        ?: ageErrorFor(age)
-        ?: heightErrorFor(height)
-        ?: weightErrorFor(weight)
+    val nameError = nameErrorFor(name)
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -104,204 +74,136 @@ fun ProfileSetupScreen(
             onContinue()
         }
     }
-
-    LaunchedEffect(Unit) {
-        viewModel.onProfileSetupStarted()
+    LaunchedEffect(uiState.suggestedName) {
+        if (name.isBlank() && uiState.suggestedName.isNotBlank()) {
+            name = uiState.suggestedName
+        }
     }
+    LaunchedEffect(Unit) { viewModel.onProfileSetupStarted() }
 
-    Box(
+    ProfileSetupContent(
+        name = name,
+        onNameChange = { name = it },
+        validateName = nameErrorFor,
+        nameError = nameError,
+        isLoading = uiState.isLoading,
+        isOffline = uiState.isOffline,
+        errorBody = uiState.error?.toErrorCopy()?.body(context),
+        onSubmit = {
+            viewModel.createProfile(
+                name = name.trim(),
+                age = null,
+                height = null,
+                weight = null,
+            )
+        },
+    )
+}
+
+/** Stateless rendering boundary used by visual and interaction tests. */
+@Composable
+internal fun ProfileSetupContent(
+    name: String,
+    onNameChange: (String) -> Unit,
+    validateName: (String) -> String?,
+    nameError: String?,
+    isLoading: Boolean,
+    isOffline: Boolean,
+    errorBody: String?,
+    onSubmit: () -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.surfaceApp)
+            .statusBarsPadding(),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-        // Outside the scroll region so it stays put, and above the progress bar
-        // because being offline changes whether this step can finish at all.
-        OfflineBanner(isOffline = uiState.isOffline)
+        OfflineBanner(isOffline = isOffline)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.x6)
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
+                .padding(horizontal = Spacing.x5),
         ) {
-            Spacer(modifier = Modifier.height(Spacing.x8))
+            Spacer(Modifier.height(Spacing.x5))
+            PamojaMark()
 
-            // ── Pill progress bar ────────────────────────────────────────
-            OnboardingProgressBar(currentStep = 2, totalSteps = 3)
-
-            Spacer(modifier = Modifier.height(Spacing.x8))
-
+            Spacer(Modifier.height(Spacing.x8))
             Text(
-                text  = stringResource(R.string.profile_title),
+                text = stringResource(R.string.profile_title),
                 style = MaterialTheme.typography.headlineLarge,
-                color = colors.textPrimary
+                color = colors.textPrimary,
             )
-
-            Spacer(modifier = Modifier.height(Spacing.x2))
-
+            Spacer(Modifier.height(Spacing.x2))
             Text(
-                text  = stringResource(R.string.profile_subtitle),
+                text = stringResource(R.string.profile_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary
+                color = colors.textSecondary,
             )
 
-            Spacer(modifier = Modifier.height(Spacing.x8))
-
-            // No photo control here on purpose. createProfile builds the User
-            // and writes it with set(), so a photo uploaded on this screen would
-            // be erased the moment Continue lands, leaving a billed orphan in
-            // Storage. Photos are set in Edit Profile, which loads the document
-            // before copying onto it.
-
-            // ── Name field (required) ────────────────────────────────────
+            Spacer(Modifier.height(Spacing.x7))
             PamojaTextField(
-                value       = name,
-                onValueChange = { name = it },
-                label       = stringResource(R.string.profile_name_label),
+                value = name,
+                onValueChange = onNameChange,
+                label = stringResource(R.string.profile_name_label),
                 placeholder = stringResource(R.string.profile_name_placeholder),
-                enabled     = !uiState.isLoading,
-                validate    = nameErrorFor,
+                enabled = !isLoading,
+                validate = validateName,
             )
 
-            Spacer(modifier = Modifier.height(Spacing.x3))
-
-            // ── Optional stats row ───────────────────────────────────────
-            // Ranges are wide on purpose. These are optional fields and the
-            // point is to catch a mistyped digit, not to police anyone's body.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
-            ) {
-                PamojaTextField(
-                    value       = age,
-                    onValueChange = { age = it },
-                    label       = stringResource(R.string.profile_age_label),
-                    placeholder = stringResource(R.string.profile_optional_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    modifier    = Modifier.weight(1f),
-                    enabled     = !uiState.isLoading,
-                    validate    = ageErrorFor,
-                )
-                PamojaTextField(
-                    value       = height,
-                    onValueChange = { height = it },
-                    label       = stringResource(R.string.profile_height_label),
-                    placeholder = stringResource(R.string.profile_optional_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    modifier    = Modifier.weight(1f),
-                    enabled     = !uiState.isLoading,
-                    validate    = heightErrorFor,
-                )
-                PamojaTextField(
-                    value       = weight,
-                    onValueChange = { weight = it },
-                    label       = stringResource(R.string.profile_weight_label),
-                    placeholder = stringResource(R.string.profile_optional_placeholder),
-                    keyboardType = KeyboardType.Number,
-                    modifier    = Modifier.weight(1f),
-                    enabled     = !uiState.isLoading,
-                    validate    = weightErrorFor,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
-            // Inline and persistent. A snackbar carried this before, so a failed
-            // save announced itself for four seconds and then left the user
-            // looking at a filled-in form with no idea it had not been saved.
-            if (uiState.isOffline) {
+            if (isOffline) {
+                Spacer(Modifier.height(Spacing.x4))
                 PamojaNotice(
-                    icon  = PamojaIcons.AlertCircle,
+                    icon = PamojaIcons.AlertCircle,
                     title = stringResource(R.string.profile_offline_title),
-                    body  = stringResource(R.string.profile_offline_body),
-                    tone  = NoticeTone.Warning,
+                    body = stringResource(R.string.profile_offline_body),
+                    tone = NoticeTone.Warning,
                 )
-                Spacer(modifier = Modifier.height(Spacing.x3))
-            } else if (uiState.error != null) {
+            } else if (errorBody != null) {
+                Spacer(Modifier.height(Spacing.x4))
                 PamojaNotice(
-                    icon  = PamojaIcons.AlertCircle,
+                    icon = PamojaIcons.AlertCircle,
                     title = stringResource(R.string.profile_failed_title),
-                    body  = uiState.error!!.toErrorCopy().body(context),
-                    tone  = NoticeTone.Danger,
+                    body = errorBody,
+                    tone = NoticeTone.Danger,
                 )
-                Spacer(modifier = Modifier.height(Spacing.x3))
             }
 
+            Spacer(Modifier.height(Spacing.x7))
             Button(
-                onClick = {
-                    viewModel.createProfile(
-                        name   = name.trim(),
-                        age    = age.toIntOrNull(),
-                        height = height.toFloatOrNull(),
-                        weight = weight.toFloatOrNull()
-                    )
-                },
-                enabled  = firstError == null && uiState.canSubmit,
+                onClick = onSubmit,
+                enabled = nameError == null && !isLoading && !isOffline,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape  = PillShape,
+                shape = PillShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor         = colors.accentPrimary,
-                    contentColor           = colors.textOnBrand,
+                    containerColor = colors.accentPrimary,
+                    contentColor = colors.textOnBrand,
                     disabledContainerColor = colors.accentPrimarySubtle,
-                    disabledContentColor   = colors.textTertiary
-                )
+                    disabledContentColor = colors.textTertiary,
+                ),
             ) {
-                if (uiState.isLoading) {
+                if (isLoading) {
                     CircularProgressIndicator(
-                        modifier    = Modifier.size(18.dp),
-                        color       = colors.textTertiary,
+                        color = colors.textTertiary,
                         strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp),
                     )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
+                } else {
+                    Text(
+                        text = stringResource(R.string.common_continue),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
                 }
-                Text(
-                    text  = stringResource(if (uiState.isLoading) R.string.profile_creating else R.string.common_continue),
-                    style = MaterialTheme.typography.labelLarge
-                )
             }
 
-            // Why Continue is dead. Skipped while the form is still untouched,
-            // because an empty optional field is not a mistake worth flagging.
-            val anythingTyped = name.isNotEmpty() || age.isNotEmpty() ||
-                height.isNotEmpty() || weight.isNotEmpty()
-            if (anythingTyped && firstError != null) {
-                Spacer(modifier = Modifier.height(Spacing.x2))
-                Text(
-                    text  = firstError,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.statusDanger,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x10))
-        }
+            Spacer(Modifier.height(Spacing.x8))
         }
     }
-}
-
-/**
- * Optional numeric field check.
- *
- * Blank passes, because these fields are genuinely optional and flagging an
- * empty one would be nagging. Anything present has to be a plausible number.
- *
- * Messages are passed in already resolved. This runs from a focus-change
- * callback, which is not a composable scope, so it cannot look them up itself.
- */
-private fun String.validOptionalNumber(
-    range: IntRange,
-    notANumber: String,
-    outOfRange: String,
-): String? {
-    if (isBlank()) return null
-    val value = toIntOrNull() ?: return notANumber
-    return if (value in range) null else outOfRange
 }

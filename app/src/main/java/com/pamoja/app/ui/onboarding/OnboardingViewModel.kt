@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -23,6 +24,7 @@ data class OnboardingUiState(
     val error: AppError? = null,
     val isSuccess: Boolean = false,
     val isOffline: Boolean = false,
+    val suggestedName: String = "",
 ) {
     /**
      * The profile write cannot be queued offline.
@@ -52,6 +54,12 @@ class OnboardingViewModel @Inject constructor(
     private var profileSetupStartedLogged = false
 
     init {
+        viewModelScope.launch {
+            val suggestedName = userPreferences.userName.first().orEmpty().trim()
+            if (suggestedName.isNotEmpty()) {
+                _uiState.value = _uiState.value.copy(suggestedName = suggestedName)
+            }
+        }
         viewModelScope.launch {
             connectivityObserver.isOnline.collect { online ->
                 _uiState.value = _uiState.value.copy(

@@ -22,6 +22,7 @@ import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.SmartNotificationEngine
 import com.pamoja.app.util.NotificationContext
 import com.pamoja.app.util.minuteOfDayToTime
+import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -59,7 +60,8 @@ class StepSyncWorker @AssistedInject constructor(
     private val getUserGroupsUseCase: GetUserGroupsUseCase,
     private val publishGroupWeeklyTotalUseCase: PublishGroupWeeklyTotalUseCase,
     private val smartNotificationHelper: SmartNotificationHelper,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val widgetUpdater: PamojaWidgetUpdater,
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -102,6 +104,21 @@ class StepSyncWorker @AssistedInject constructor(
             )
             stepRepository.saveStepEntry(entry).getOrElse { throw it }
 
+            // Once per account/day, recover days missed while the app was closed.
+            // A partial read or failed write leaves the checkpoint unset for retry.
+            if (!userPreferences.hasCaughtUpSteps(user.userId, todayStr)) {
+                val recovered = com.pamoja.app.domain.usecase.recoverRecentSteps(
+                    today = LocalDate.parse(todayStr),
+                    read = healthConnectReader::readStepsForDate,
+                    save = { date, steps ->
+                        stepRepository.saveStepEntry(StepEntry(
+                            userId = user.userId, date = date.toString(), stepCount = steps,
+                        )).getOrThrow()
+                    },
+                )
+                if (recovered) userPreferences.markStepsCaughtUp(user.userId, todayStr)
+            }
+
             val durationMs = System.currentTimeMillis() - startTime
             Log.i(TAG, "Sync success | duration=${durationMs}ms")
             analyticsManager.logStepsSyncSuccess(durationMs)
@@ -117,7 +134,12 @@ class StepSyncWorker @AssistedInject constructor(
             userPreferences.saveLastSyncTime(System.currentTimeMillis())
 
             // ── Refresh each group's cached weekly total ─────────────────
-            publishWeeklyTotals(user.userId, todaySteps, todayStr)
+            val widgetGroups = publishWeeklyTotals(user.userId, todaySteps, todayStr)
+            val personalWeekSteps = getMyStepsForWeekUseCase(
+                user.userId,
+                java.time.DayOfWeek.MONDAY,
+            ).firstOrNull().orEmpty().sumOf { it.stepCount }
+            widgetUpdater.publish(todaySteps, personalWeekSteps, widgetGroups)
 
             // ── Smart Notifications Trigger ──────────────────────────────
             checkAndTriggerNotification(user.userId, todaySteps, isFirstEverSync)
@@ -156,9 +178,10 @@ class StepSyncWorker @AssistedInject constructor(
         userId: String,
         todaySteps: Long,
         todayDate: String,
-    ) {
-        try {
+    ): List<com.pamoja.app.domain.model.Group> {
+        return try {
             val groups = getUserGroupsUseCase(userId).firstOrNull().orEmpty()
+            val widgetGroups = mutableListOf<com.pamoja.app.domain.model.Group>()
             for (group in groups) {
                 // This device publishes THIS user's figures and nobody else's.
                 // The rules pin a membership write to its owner, and the steps
@@ -169,7 +192,8 @@ class StepSyncWorker @AssistedInject constructor(
                 // Each group's own week, not this device's. A user can belong to
                 // groups with different start days at the same time, and so has
                 // a different weekly total in each.
-                val myWeek = getMyStepsForWeekUseCase(userId, group.startDay)
+                val reportingDate = WeekWindow.todayFor(group)
+                val myWeek = getMyStepsForWeekUseCase(userId, group.startDay, reportingDate)
                     .firstOrNull()
                     .orEmpty()
 
@@ -180,6 +204,7 @@ class StepSyncWorker @AssistedInject constructor(
                     startDay = group.startDay,
                     todaySteps = todaySteps,
                     todayDate = todayDate,
+                    reportingDate = reportingDate,
                 ).onFailure { Log.w(TAG, "Own total not published for ${group.groupId}", it) }
 
                 // The group's cached total, recomputed from what every member has
@@ -191,7 +216,7 @@ class StepSyncWorker @AssistedInject constructor(
                     .orEmpty()
                 if (memberships.isEmpty()) continue
 
-                val thisWeek = WeekWindow.startOf(group.startDay)
+                val thisWeek = WeekWindow.startOf(group.startDay, reportingDate)
                 val groupTotal = memberships
                     .filter { it.weekStart == thisWeek }
                     .sumOf { it.weeklySteps }
@@ -200,10 +225,18 @@ class StepSyncWorker @AssistedInject constructor(
                     group.groupId,
                     groupTotal,
                     group.startDay,
+                    reportingDate,
                 ).onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
+
+                widgetGroups += group.copy(
+                    weeklySteps = groupTotal,
+                    weekStart = thisWeek,
+                )
             }
+            widgetGroups
         } catch (e: Exception) {
             Log.w(TAG, "Weekly totals refresh failed", e)
+            emptyList()
         }
     }
 
@@ -219,14 +252,22 @@ class StepSyncWorker @AssistedInject constructor(
             val lastTime = userPreferences.lastNotificationTime.firstOrNull() ?: 0L
             val currentTime = System.currentTimeMillis()
 
-            val activeGroupId = userPreferences.activeGroupId.firstOrNull()
-            if (activeGroupId.isNullOrBlank()) {
-                Log.d(TAG, "No active group set. Skipping notification check.")
+            // Notifications used to depend on opening a group screen at least
+            // once, because that was the only place activeGroupId was saved.
+            // A person who created or joined a group and stayed on Home could
+            // therefore sync forever without this engine running. Resolve the
+            // preference against current memberships and choose a safe fallback.
+            val groups = getUserGroupsUseCase(userId).firstOrNull().orEmpty()
+            if (groups.isEmpty()) {
+                Log.d(TAG, "No groups available. Skipping notification check.")
                 return
             }
-
-            val groupResult = getGroupUseCase(activeGroupId)
-            val group = groupResult.getOrNull() ?: return
+            val preferredGroupId = userPreferences.activeGroupId.firstOrNull()
+            val group = groups.firstOrNull { it.groupId == preferredGroupId } ?: groups.first()
+            val activeGroupId = group.groupId
+            if (activeGroupId != preferredGroupId) {
+                userPreferences.saveActiveGroupId(activeGroupId)
+            }
 
             // Ranking comes from the memberships, which carry each member's own
             // published total. Reading their step documents is no longer possible
@@ -235,8 +276,10 @@ class StepSyncWorker @AssistedInject constructor(
             if (memberships.isEmpty()) return
 
             // Calculate statistics
-            val todayStr = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-            val thisWeek = WeekWindow.startOf(group.startDay)
+            val today = LocalDate.now()
+            val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val reportingDate = WeekWindow.todayFor(group)
+            val thisWeek = WeekWindow.startOf(group.startDay, reportingDate)
 
             // Map members to their weekly step counts
             data class MemberWeekly(val userId: String, val name: String, val steps: Long)
@@ -265,6 +308,15 @@ class StepSyncWorker @AssistedInject constructor(
                 nextMemberName = targetMember.name
             }
 
+            var memberBehindName: String? = null
+            var stepsAheadOfMemberBehind = 0L
+            if (userIndex == 0 && membersData.size > 1) {
+                val memberBehind = membersData[1]
+                memberBehindName = memberBehind.name
+                stepsAheadOfMemberBehind =
+                    (membersData[0].steps - memberBehind.steps).coerceAtLeast(0L)
+            }
+
             val userName = userPreferences.userName.firstOrNull() ?: "there"
             val weeklyGoal = group.weeklyTarget.toLong()
             val groupStepsTotal = membersData.sumOf { it.steps }
@@ -275,16 +327,7 @@ class StepSyncWorker @AssistedInject constructor(
             // `8 - today.dayOfWeek.value`, which silently assumed Monday and
             // would have told a Sunday-start group it had one day left on its
             // first day.
-            val today = LocalDate.now()
-            val daysLeftInWeek = WeekWindow.daysLeftIn(group.startDay, today)
-
-            // Was the goal crossed by this sync? Compared against the total we
-            // recorded last time so we fire exactly once, on the crossing.
-            val previousTotal = userPreferences.lastKnownGroupTotal.firstOrNull() ?: 0L
-            val goalReachedJustNow = weeklyGoal > 0 &&
-                previousTotal < weeklyGoal &&
-                groupStepsTotal >= weeklyGoal
-            userPreferences.saveLastKnownGroupTotal(groupStepsTotal)
+            val daysLeftInWeek = WeekWindow.daysLeftIn(group.startDay, reportingDate)
 
             // ── Detect locally that someone overtook this user ───────────────
             // No server needed: compare our leaderboard position against the one
@@ -307,24 +350,10 @@ class StepSyncWorker @AssistedInject constructor(
                 membersData[userIndex - 1].name
             } else null
 
-            // ── Somebody joined since the last sync ──────────────────────────
-            //
-            // Derived from the same stored member count the overtake guard uses,
-            // so the two can never disagree: a change in size means a join, which
-            // suppresses "you were overtaken" and reports the join instead.
-            //
-            // Requires a previous count above zero, or the very first sync would
-            // announce the whole group as new arrivals. The caller is excluded,
-            // because being told you joined is not news.
-            val newMemberName: String? = if (
-                previousMemberCount in 1 until membersData.size
-            ) {
-                memberships
-                    .filter { it.userId != userId }
-                    .maxByOrNull { it.joinedAt }
-                    ?.displayName
-                    ?.takeIf { it.isNotBlank() }
-            } else null
+            val userJustTookLead =
+                previousRank > 1 &&
+                    previousMemberCount == membersData.size &&
+                    userRank == 1
 
             userPreferences.saveLeaderboardPosition(userRank, membersData.size)
 
@@ -342,8 +371,12 @@ class StepSyncWorker @AssistedInject constructor(
                 memberJustAheadName = nextMemberName,
                 stepsToOvertakeMemberAhead = stepsToOvertake,
                 memberWhoJustPassedYouName = overtakenBy,
-                goalReachedJustNow = goalReachedJustNow,
-                newMemberName = newMemberName,
+                userJustTookLead = userJustTookLead,
+                memberJustBehindName = memberBehindName,
+                stepsAheadOfMemberBehind = stepsAheadOfMemberBehind,
+                // Cross-device joins and group-goal crossings are owned by the
+                // Firestore-triggered FCM path. Supplying them here as well
+                // would produce a second local notification on the syncing phone.
                 isFirstEverSync = isFirstEverSync,
                 // currentStreakDays and streakAtRiskToday are deliberately left
                 // at their defaults, which makes the streak branch in

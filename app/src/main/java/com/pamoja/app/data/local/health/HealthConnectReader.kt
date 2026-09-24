@@ -2,6 +2,8 @@ package com.pamoja.app.data.local.health
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
+import kotlinx.coroutines.CancellationException
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.metadata.Metadata
@@ -10,22 +12,17 @@ import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
+import java.time.Instant
 import java.time.ZoneId
+import com.pamoja.app.domain.model.AdventureSourceWindow
+import com.pamoja.app.domain.model.AdventureStepObservation
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Reads today's cumulative step count from Health Connect.
- *
- * Health Connect is a system-level data store managed by Google, it works
- * reliably in the background without a foreground service. It works on any
- * app installed from the Play Store (any track: internal, closed, production).
- *
- * Why Health Connect instead of Sensor.TYPE_STEP_COUNTER:
- *  - Battery-optimized: no background sensor registration
- *  - Reliable across OEM battery-killers (Samsung, Xiaomi, OnePlus)
- *  - Data persists even when the app is not running
- *  - Standard Google permission dialog, users trust it more
+ * Reads daily aggregated steps. Background reads require the optional Health
+ * Connect permission on supported devices; Android may defer scheduled work.
+ * Stored readings can be recovered when access resumes.
  */
 @Singleton
 open class HealthConnectReader @Inject constructor(
@@ -37,6 +34,7 @@ open class HealthConnectReader @Inject constructor(
         val REQUIRED_PERMISSIONS = setOf(
             HealthPermission.getReadPermission(StepsRecord::class)
         )
+        val BACKGROUND_PERMISSIONS = setOf(HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
     }
 
     /**
@@ -61,14 +59,56 @@ open class HealthConnectReader @Inject constructor(
      * Reads the total steps recorded in Health Connect for today (midnight → now).
      * Returns null if Health Connect is unavailable or permission is not granted.
      */
-    open suspend fun readTodaySteps(): Long? {
+    fun supportsBackgroundRead(): Boolean = isAvailable() &&
+        HealthConnectClient.getOrCreate(context).features.getFeatureStatus(
+            HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND,
+        ) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+
+    suspend fun hasBackgroundPermission(): Boolean = supportsBackgroundRead() &&
+        HealthConnectClient.getOrCreate(context).permissionController.getGrantedPermissions()
+            .containsAll(BACKGROUND_PERMISSIONS)
+
+    open suspend fun readTodaySteps(): Long? = readStepsForDate(LocalDate.now())
+
+    /** Adventure-only UTC query. The caller uses the server-issued observation
+     * cutoff; locale/travel must not move an already identified source window.
+     * Shared by explicit foreground contribution and enrolled background sync. */
+    open suspend fun readAdventureSteps(
+        window: AdventureSourceWindow,
+        observedThrough: Instant,
+    ): AdventureStepObservation? {
+        require(observedThrough > window.start && observedThrough <= window.endExclusive)
+        return try {
+            if (!isAvailable()) return null
+            val client = HealthConnectClient.getOrCreate(context)
+            if (!client.permissionController.getGrantedPermissions()
+                    .containsAll(REQUIRED_PERMISSIONS)) return null
+            val result = client.aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(window.start, observedThrough),
+                ),
+            )
+            // Unlike the ordinary display counter, an absent source must not
+            // seed a zero baseline and later credit pre-join activity.
+            val steps = result[StepsRecord.COUNT_TOTAL] ?: return null
+            if (steps !in 0L..200_000L) return null
+            AdventureStepObservation(window, observedThrough, steps)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    open suspend fun readStepsForDate(date: LocalDate): Long? {
         return try {
             if (!isAvailable()) return null
             val client = HealthConnectClient.getOrCreate(context)
             if (!client.permissionController.getGrantedPermissions()
                     .containsAll(REQUIRED_PERMISSIONS)) return null
 
-            val today     = LocalDate.now()
+            val today     = date
             val startTime = today.atStartOfDay(ZoneId.systemDefault()).toInstant()
             val endTime   = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
 
@@ -82,6 +122,8 @@ open class HealthConnectReader @Inject constructor(
                 )
             )
             response[StepsRecord.COUNT_TOTAL] ?: 0L
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             null
         }

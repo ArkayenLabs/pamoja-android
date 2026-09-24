@@ -35,16 +35,13 @@ class UserPreferences @Inject constructor(
     companion object {
         val KEY_USER_ID                  = stringPreferencesKey("user_id")
         val KEY_USER_NAME                = stringPreferencesKey("user_name")
+        val KEY_INTRO_SEEN               = booleanPreferencesKey("intro_seen")
         val KEY_IS_ONBOARDED             = booleanPreferencesKey("is_onboarded")
         val KEY_HEALTH_CONNECT_GRANTED   = booleanPreferencesKey("health_connect_granted")
         val KEY_ACTIVE_GROUP_ID          = stringPreferencesKey("active_group_id")
         val KEY_STEP_BASELINE_DATE       = stringPreferencesKey("step_baseline_date")
         val KEY_STEP_BASELINE_VALUE      = stringPreferencesKey("step_baseline_value")
         val KEY_LAST_NOTIFICATION_TIME   = longPreferencesKey("last_notification_time")
-
-        // Group total at the previous sync, lets us fire the "goal reached"
-        // notification exactly once, on the crossing, rather than every sync.
-        val KEY_LAST_KNOWN_GROUP_TOTAL   = longPreferencesKey("last_known_group_total")
 
         // Whether the notification primer has been shown. Not whether the
         // permission was granted, which the OS already knows: this only stops
@@ -65,9 +62,10 @@ class UserPreferences @Inject constructor(
 
         // An invite code from a link or QR that we could not act on yet,
         // usually because the user had not finished onboarding. Held here so
-        // the invite survives the whole signup flow and is honoured the moment
-        // they reach Home, instead of being silently lost.
+        // the invite survives signup, then Home offers a clear resume-or-dismiss
+        // choice instead of silently losing it or forcing it into a later session.
         val KEY_PENDING_INVITE_CODE      = stringPreferencesKey("pending_invite_code")
+        val KEY_PENDING_INVITE_SAVED_AT  = longPreferencesKey("pending_invite_saved_at")
 
         // A property of this phone, not of the account, which is why it is the
         // one key that survives clearAll(). See the note there.
@@ -85,10 +83,24 @@ class UserPreferences @Inject constructor(
         // that a formatted string would not.
         val KEY_QUIET_START_MINUTE       = intPreferencesKey("quiet_hours_start_minute")
         val KEY_QUIET_END_MINUTE         = intPreferencesKey("quiet_hours_end_minute")
+
+        // Bounded, account-scoped receipt keys for FCM's at-least-once delivery.
+        // Kept local: the backend does not need to know which tray entries this
+        // installation has already rendered.
+        val KEY_REMOTE_NOTIFICATION_EVENTS = stringSetPreferencesKey("remote_notification_events")
+
+        // One receipt per account, group and week. A completed goal deserves a
+        // real in-app moment, but replaying it on every visit would turn the
+        // celebration into an interruption.
+        val KEY_WEEKLY_GOAL_CELEBRATIONS = stringSetPreferencesKey("weekly_goal_celebrations")
+
+        private const val MAX_REMOTE_NOTIFICATION_EVENTS = 50
+        private const val MAX_WEEKLY_GOAL_CELEBRATIONS = 100
     }
 
     val userId: Flow<String?>  = context.dataStore.data.map { it[KEY_USER_ID] }
     val userName: Flow<String?> = context.dataStore.data.map { it[KEY_USER_NAME] }
+    val hasSeenIntro: Flow<Boolean> = context.dataStore.data.map { it[KEY_INTRO_SEEN] ?: false }
     val isOnboarded: Flow<Boolean> = context.dataStore.data.map { it[KEY_IS_ONBOARDED] ?: false }
     val isHealthConnectGranted: Flow<Boolean> = context.dataStore.data.map {
         it[KEY_HEALTH_CONNECT_GRANTED] ?: false
@@ -100,9 +112,6 @@ class UserPreferences @Inject constructor(
     }
     val lastNotificationTime: Flow<Long> = context.dataStore.data.map {
         it[KEY_LAST_NOTIFICATION_TIME] ?: 0L
-    }
-    val lastKnownGroupTotal: Flow<Long> = context.dataStore.data.map {
-        it[KEY_LAST_KNOWN_GROUP_TOTAL] ?: 0L
     }
     val consecutiveIgnoredNotifications: Flow<Int> = context.dataStore.data.map {
         it[KEY_CONSECUTIVE_IGNORED] ?: 0
@@ -176,8 +185,50 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    suspend fun saveLastKnownGroupTotal(total: Long) {
-        context.dataStore.edit { it[KEY_LAST_KNOWN_GROUP_TOTAL] = total }
+    /** Returns true exactly once for a remote event on this installation. */
+    suspend fun consumeRemoteNotificationEvent(userId: String, eventId: String): Boolean {
+        val receipt = "$userId:$eventId"
+        var isNew = false
+        context.dataStore.edit { preferences ->
+            val existing = preferences[KEY_REMOTE_NOTIFICATION_EVENTS].orEmpty()
+            if (receipt !in existing) {
+                isNew = true
+                preferences[KEY_REMOTE_NOTIFICATION_EVENTS] =
+                    (existing + receipt).toList()
+                        .takeLast(MAX_REMOTE_NOTIFICATION_EVENTS)
+                        .toSet()
+            }
+        }
+        return isNew
+    }
+
+    private val catchUpKey = stringPreferencesKey("step_catch_up_day")
+    suspend fun hasCaughtUpSteps(userId: String, today: String): Boolean =
+        context.dataStore.data.first()[catchUpKey] == "$userId:$today"
+
+    suspend fun markStepsCaughtUp(userId: String, today: String) {
+        context.dataStore.edit { it[catchUpKey] = "$userId:$today" }
+    }
+
+    /** Returns true once per account, group and completed week on this install. */
+    suspend fun consumeWeeklyGoalCelebration(
+        userId: String,
+        groupId: String,
+        weekStart: String,
+    ): Boolean {
+        val receipt = "$userId:$groupId:$weekStart"
+        var isNew = false
+        context.dataStore.edit { preferences ->
+            val existing = preferences[KEY_WEEKLY_GOAL_CELEBRATIONS].orEmpty()
+            if (receipt !in existing) {
+                isNew = true
+                preferences[KEY_WEEKLY_GOAL_CELEBRATIONS] =
+                    (existing + receipt).toList()
+                        .takeLast(MAX_WEEKLY_GOAL_CELEBRATIONS)
+                        .toSet()
+            }
+        }
+        return isNew
     }
 
     /** Called when a notification is posted, assumed ignored until proven otherwise. */
@@ -205,16 +256,37 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    val pendingInviteCode: Flow<String?> = context.dataStore.data.map {
-        it[KEY_PENDING_INVITE_CODE]
+    data class PendingInvite(
+        val code: String,
+        val savedAt: Long,
+    )
+
+    val pendingInvite: Flow<PendingInvite?> = context.dataStore.data.map { preferences ->
+        val code = preferences[KEY_PENDING_INVITE_CODE]
+        if (code.isNullOrBlank()) null else PendingInvite(
+            code = code,
+            // Zero deliberately expires values written by an older APK that
+            // had no timestamp. Resurfacing an unknowably old invitation is
+            // exactly the surprise this record now prevents.
+            savedAt = preferences[KEY_PENDING_INVITE_SAVED_AT] ?: 0L,
+        )
     }
 
-    suspend fun savePendingInviteCode(code: String) {
-        context.dataStore.edit { it[KEY_PENDING_INVITE_CODE] = code }
+    suspend fun savePendingInviteCode(
+        code: String,
+        savedAt: Long = System.currentTimeMillis(),
+    ) {
+        context.dataStore.edit {
+            it[KEY_PENDING_INVITE_CODE] = code
+            it[KEY_PENDING_INVITE_SAVED_AT] = savedAt
+        }
     }
 
     suspend fun clearPendingInviteCode() {
-        context.dataStore.edit { it.remove(KEY_PENDING_INVITE_CODE) }
+        context.dataStore.edit {
+            it.remove(KEY_PENDING_INVITE_CODE)
+            it.remove(KEY_PENDING_INVITE_SAVED_AT)
+        }
     }
 
     suspend fun saveUserId(userId: String) {
@@ -223,6 +295,10 @@ class UserPreferences @Inject constructor(
 
     suspend fun saveUserName(name: String) {
         context.dataStore.edit { it[KEY_USER_NAME] = name }
+    }
+
+    suspend fun setIntroSeen(seen: Boolean) {
+        context.dataStore.edit { it[KEY_INTRO_SEEN] = seen }
     }
 
     suspend fun setOnboarded(completed: Boolean) {
@@ -251,18 +327,20 @@ class UserPreferences @Inject constructor(
     /**
      * Wipes everything account-scoped, on sign out and on account deletion.
      *
-     * The theme is deliberately carried across. It describes how this phone
-     * should look, not who is signed in, and having the app snap back to the
-     * system theme the moment someone signs out reads as a bug rather than a
-     * reset.
+     * Theme, units and the completed product introduction are deliberately
+     * carried across. They describe this installation, not the signed-in
+     * account. Logging out must not replay first-run education.
      */
     suspend fun clearAll() {
         val theme = context.dataStore.data.map { it[KEY_THEME] }.first()
         val units = context.dataStore.data.map { it[KEY_UNIT_SYSTEM] }.first()
+        val introSeen = context.dataStore.data.map { it[KEY_INTRO_SEEN] }.first()
         context.dataStore.edit { prefs ->
             prefs.clear()
             theme?.let { prefs[KEY_THEME] = it }
             units?.let { prefs[KEY_UNIT_SYSTEM] = it }
+            introSeen?.let { prefs[KEY_INTRO_SEEN] = it }
         }
     }
+
 }

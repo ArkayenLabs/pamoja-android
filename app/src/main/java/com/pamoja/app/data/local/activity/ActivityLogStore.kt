@@ -16,7 +16,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Every notification this install has shown, newest first.
+ * Durable group events this install has shown, newest first.
  *
  * Stored as one JSON array in DataStore rather than in a database. Room would
  * mean a dependency, a schema, and migrations for what is a short, capped,
@@ -34,7 +34,7 @@ class ActivityLogStore @Inject constructor(
 ) {
 
     val items: Flow<List<ActivityItem>> = context.dataStore.data.map { prefs ->
-        parse(prefs[KEY_ACTIVITY_LOG])
+        parse(prefs[KEY_ACTIVITY_LOG]).filter(ActivityItem::belongsInUpdates)
     }
 
     /** How many are still unread, for the badge on Home. */
@@ -52,6 +52,7 @@ class ActivityLogStore @Inject constructor(
         body: String,
         groupId: String?,
     ) {
+        if (!category.belongsInUpdates()) return
         context.dataStore.edit { prefs ->
             val existing = parse(prefs[KEY_ACTIVITY_LOG])
 
@@ -150,3 +151,9 @@ class ActivityLogStore @Inject constructor(
         const val FIELD_READ = "read"
     }
 }
+
+/** Nudges and routine recaps belong in the tray only; this inbox keeps events. */
+private fun NotificationCategory.belongsInUpdates(): Boolean =
+    this == NotificationCategory.ACHIEVEMENT || this == NotificationCategory.GROUP_ACTIVITY
+
+private fun ActivityItem.belongsInUpdates(): Boolean = category.belongsInUpdates()

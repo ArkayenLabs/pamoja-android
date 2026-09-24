@@ -26,6 +26,17 @@ import java.util.Locale
  * being recomputed at each call site.
  */
 object WeekWindow {
+    /** Select the shared reporting week without relabeling personal daily steps. */
+    fun todayFor(group: Group, clock: java.time.Clock = java.time.Clock.systemUTC()): LocalDate {
+        val zone = runCatching { java.time.ZoneId.of(group.planningTimeZone) }.getOrNull()
+            ?: java.time.ZoneId.systemDefault()
+        return LocalDate.now(clock.withZone(zone))
+    }
+
+    fun isCurrent(group: Group): Boolean = isCurrent(group.weekStart, group.startDay, todayFor(group))
+
+    fun daysLeftIn(group: Group): Int = daysLeftIn(group.startDay, todayFor(group))
+
 
     private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 

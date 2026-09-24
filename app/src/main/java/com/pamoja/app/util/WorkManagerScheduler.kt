@@ -56,6 +56,12 @@ class WorkManagerScheduler @Inject constructor(
         )
 
         Log.d(TAG, "Step sync scheduled (KEEP policy, 15min interval)")
+        if (com.pamoja.app.BuildConfig.TOGETHER_TRAIL_ENABLED) {
+            val adventure = PeriodicWorkRequestBuilder<com.pamoja.app.worker.AdventureSyncWorker>(1, TimeUnit.HOURS)
+                .setConstraints(constraints).setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS).build()
+            workManager.enqueueUniquePeriodicWork(com.pamoja.app.worker.AdventureSyncWorker.WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP, adventure)
+        } else workManager.cancelUniqueWork(com.pamoja.app.worker.AdventureSyncWorker.WORK_NAME)
     }
 
     /**
@@ -85,6 +91,7 @@ class WorkManagerScheduler @Inject constructor(
     }
 
     fun cancelStepSync() {
+        workManager.cancelUniqueWork(com.pamoja.app.worker.AdventureSyncWorker.WORK_NAME)
         workManager.cancelUniqueWork(StepSyncWorker.WORK_NAME)
         Log.d(TAG, "Step sync cancelled")
     }

@@ -1,111 +1,53 @@
 package com.pamoja.app.domain.model
 
-import kotlin.math.roundToInt
-
 /**
- * The one place that decides what a group's weekly goal is.
+ * The single source of truth for Pamoja's shared weekly group goal.
  *
- * **The goal is expressed per person per day, not as a group total.** A total
- * cannot be judged by a human: to know whether 150,000 is easy or hard you have
- * to divide it by the number of members and then by seven, every time you see
- * it. A goal nobody can evaluate cannot motivate anyone.
+ * A group chooses one stable total. Everyone's steps pool into it, but nobody
+ * receives an individual quota. That matters for families and mixed-ability
+ * groups: one person may contribute a short daily walk while another contributes
+ * much more, and both are helping the same promise.
  *
- * A total is also wrong in a way that gets worse as the product succeeds. It
- * does not scale with the group, so with the old fixed 70,000 default:
- *
- * | Members | Steps per person per day |
- * |---------|--------------------------|
- * | 2       | 5,000                    |
- * | 8       | 1,250                    |
- * | 20      | 500                      |
- *
- * At the time, the member cap was 8 on free and 20 on premium, so **paying made
- * the goal 2.5x easier**. The incentive was backwards, and it got worse the more
- * premium sold. That particular trap is gone twice over: the goal now scales
- * with the group, and group size is no longer sold at all (see [PlanLimits]).
- *
- * So [dailyPerPerson] is the admin's intent and the only figure any screen
- * asks for. [weeklyTotalFor] derives the absolute, which is still stored on the
- * group and is still what the leaderboard, the celebration and `firestore.rules`
- * compare against. Deriving *and* storing it is deliberate: it keeps all of that
- * logic and the rules' simple numeric bound unchanged.
- *
- * This file exists because the ceiling for the same field used to be written in
- * four places that disagreed: 150,000 in the create screen's presets, no upper
- * bound at all in `CreateGroupUseCase`, 500,000 in the edit screen's slider, and
- * 1,000,000 in the edit use case and the rules. Anything that needs a bound must
- * read it from here.
+ * Member count is deliberately independent. Joining or leaving never moves the
+ * finish line, and changing the member cap never rewrites the goal.
  */
 object StepGoal {
 
-    /**
-     * Below this a goal is not worth setting. Deliberately low rather than
-     * aspirational, because a group recovering from a bad week should be able
-     * to set something they will actually hit.
-     */
-    const val MIN_DAILY_PER_PERSON = 2_000
+    /** Fast starting points. They are suggestions, not the only valid goals. */
+    val PRESETS_WEEKLY_TOTAL = listOf(35_000, 50_000, 70_000, 100_000, 150_000)
 
-    /**
-     * Roughly the top of what a walking group sustains. Above this the number
-     * stops being a goal and starts being a reason to quit.
-     */
-    const val MAX_DAILY_PER_PERSON = 20_000
+    const val MIN_SELECTABLE_WEEKLY_TOTAL = 10_000
+    const val MAX_SELECTABLE_WEEKLY_TOTAL = 2_800_000
+    const val DEFAULT_WEEKLY_TOTAL = 70_000
 
-    /**
-     * **8,000, not 10,000.** 10,000 is a marketing figure that came from the
-     * brand name of a 1960s Japanese pedometer, not from a health finding, and
-     * the measured benefit curve flattens closer to 7,500. 8,000 is also more
-     * achievable, and a goal that is never met demotivates faster than one that
-     * is slightly too easy.
-     */
-    const val DEFAULT_DAILY_PER_PERSON = 8_000
-
-    /** What the create and edit screens offer. Free on every tier, always. */
-    val PRESETS_DAILY_PER_PERSON = listOf(4_000, 6_000, 8_000, 10_000, 12_000)
-
-    /** The largest group the product allows. Mirrors the member cap. */
+    /** The largest group the product permits. Kept here for shared validation. */
     const val MAX_GROUP_MEMBERS = 20
 
-    private const val DAYS = 7
-
     /**
-     * The absolute ceiling any stored `weeklyTarget` may reach, and therefore
-     * the number `firestore.rules` must allow.
+     * Backward-compatible storage ceiling.
      *
-     * Derived rather than chosen, so it cannot drift from the inputs: the
-     * largest group the product permits, every member at the highest
-     * per-person figure, for seven days. Worth noting that the **default**
-     * already exceeded the old 1,000,000 rules ceiling at the premium cap
-     * (20 x 8,000 x 7 = 1,120,000), so that ceiling was not merely
-     * conservative, it made the recommended default unsavable.
+     * A short-lived per-person model could create totals well above the quick
+     * presets. The same ceiling is used for custom totals so those groups remain
+     * editable without silently changing their existing promise.
      */
-    const val MAX_WEEKLY_TOTAL = MAX_DAILY_PER_PERSON * MAX_GROUP_MEMBERS * DAYS
+    const val MAX_WEEKLY_TOTAL = 2_800_000
 
-    /**
-     * The weekly group total for [dailyPerPerson] across [members].
-     *
-     * [members] is coerced to at least one so a group mid-creation, or a
-     * document with a corrupt count, can never produce a target of zero, which
-     * would read as "already achieved" everywhere it is compared.
-     */
-    fun weeklyTotalFor(dailyPerPerson: Int, members: Int): Int =
-        dailyPerPerson.coerceIn(MIN_DAILY_PER_PERSON, MAX_DAILY_PER_PERSON) *
-            members.coerceAtLeast(1) *
-            DAYS
+    fun isPresetWeeklyTotal(weeklyTotal: Int): Boolean =
+        weeklyTotal in PRESETS_WEEKLY_TOTAL
 
-    /**
-     * The per-person figure a stored group total implies.
-     *
-     * Only for **display**, and only for groups created before the goal was
-     * expressed per person. Those keep whatever absolute target they were given
-     * rather than having it silently rewritten mid-week, so the screens still
-     * need something human to show next to it.
-     */
-    fun dailyPerPersonFor(weeklyTotal: Int, members: Int): Int =
-        (weeklyTotal.toDouble() / (members.coerceAtLeast(1) * DAYS)).roundToInt()
+    fun isSelectableWeeklyTotal(weeklyTotal: Int): Boolean =
+        weeklyTotal in MIN_SELECTABLE_WEEKLY_TOTAL..MAX_SELECTABLE_WEEKLY_TOTAL
 
-    /** Whether a stored total is one this model could have produced. */
     fun isValidWeeklyTotal(weeklyTotal: Int): Boolean =
-        weeklyTotal > 0 && weeklyTotal <= MAX_WEEKLY_TOTAL
+        isSelectableWeeklyTotal(weeklyTotal)
 
+    /**
+     * Edit options preserve a non-standard older total as an explicit choice.
+     * It is never rounded or replaced merely because another setting was saved.
+     */
+    fun editOptionsFor(currentWeeklyTotal: Int): List<Int> =
+        (PRESETS_WEEKLY_TOTAL + currentWeeklyTotal)
+            .filter(::isValidWeeklyTotal)
+            .distinct()
+            .sorted()
 }

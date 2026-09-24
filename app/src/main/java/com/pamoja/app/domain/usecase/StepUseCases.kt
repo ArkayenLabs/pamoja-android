@@ -37,11 +37,12 @@ class GetMyStepsForWeekUseCase @Inject constructor(
     suspend operator fun invoke(
         userId: String,
         startDay: DayOfWeek,
+        reportingDate: java.time.LocalDate = java.time.LocalDate.now(),
     ): Flow<List<StepEntry>> =
         stepRepository.getStepsForUserInRange(
             userId,
-            WeekWindow.startOf(startDay),
-            WeekWindow.endOf(startDay),
+            WeekWindow.startOf(startDay, reportingDate),
+            WeekWindow.endOf(startDay, reportingDate),
         )
 }
 

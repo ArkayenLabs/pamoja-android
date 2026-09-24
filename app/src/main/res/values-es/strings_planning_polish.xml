@@ -1,0 +1,9 @@
+<resources>
+    <string name="planning_calendar_label">Calendario del grupo · %1$s</string>
+    <string name="planning_details_action">Cómo funciona la planificación</string>
+    <string name="planning_details_body">La meta guardada comienza automáticamente la próxima semana. Tu respuesta ayuda a quien organiza el grupo a decidir si la cambia; las respuestas no cambian la meta automáticamente ni detienen el uso compartido de pasos.</string>
+    <string name="planning_response_explanation">Informa a quien organiza el grupo. Las respuestas no cambian la meta automáticamente.</string>
+    <string name="planning_current_week_unchanged">Empieza la próxima semana. Esta semana no cambia.</string>
+    <string name="next_week_together_body">Una meta compartida para la próxima semana.</string>
+    <string name="next_week_together_response_resting">Descansaré la próxima semana</string>
+</resources>

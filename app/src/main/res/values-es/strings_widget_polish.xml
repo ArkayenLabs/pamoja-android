@@ -1,0 +1,7 @@
+<resources>
+    <string name="widget_view_progress">Ver progreso →</string>
+    <string name="widget_open_group">Ver grupo →</string>
+    <string name="widget_steps_left">pasos por dar</string>
+    <string name="widget_goal_reached">Meta alcanzada</string>
+    <string name="widget_last_shared_update">Último total compartido · %1$s de %2$s</string>
+</resources>

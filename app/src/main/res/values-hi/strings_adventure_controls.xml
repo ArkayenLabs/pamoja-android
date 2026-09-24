@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trail_start">हमारा सफ़र शुरू करें</string>
+    <string name="trail_sponsor">समूह का Premium देखें</string>
+    <string name="trail_wait_organizer">समूह का आयोजक सफ़र शुरू कर सकता है। समूह के सभी सदस्यों को इसकी सुविधा मिलेगी।</string>
+    <string name="trail_sync">मेरे कदम सिंक करें</string>
+    <string name="trail_join">सिंक करके शामिल हों</string>
+    <string name="trail_pause">मेरे कदम जोड़ना रोकें</string>
+    <string name="trail_pause_body">नए कदम जुड़ना बंद हो जाएँगे। पहले जोड़े गए कदम बने रहेंगे। दोबारा शामिल होने पर नई सिंक से गिनती शुरू होगी।</string>
+    <string name="trail_confirm">पुष्टि करें</string>
+    <string name="trail_cancel">रद्द करें</string>
+    <string name="trail_finish">हमारे पूरे हुए सफ़र की याद सहेजें</string>
+    <string name="trail_progress">%2$s साझा कदमों में से %1$s</string>
+    <string name="trail_week">%1$s से शुरू सप्ताह · %2$s</string>
+    <string name="trail_commitment">अगले सप्ताह मेरे तय कदम</string>
+    <string name="trail_save_commitment">मेरी योजना सहेजें</string>
+    <string name="trail_rest">अगले सप्ताह आराम करें</string>
+    <string name="trail_rest_body">आराम चुनने पर अगले सप्ताह आपकी योजना शून्य हो जाती है। कदम जोड़ना रोकने तक आपके कदम जुड़ते रहेंगे। किसी और की योजना नहीं बढ़ेगी।</string>
+    <string name="trail_pace">आपकी चुनी हुई गति से: लगभग %1$s सप्ताह बाकी</string>
+    <string name="trail_no_pace">सभी भाग लेने वाले सदस्यों की योजना तय होने और कुल तय कदम शून्य से अधिक होने पर अनुमान दिखेगा।</string>
+    <string name="trail_locked">%1$s साझा कदमों पर खुलेगा</string>
+    <string name="trail_error">सफ़र की ताज़ा स्थिति की पुष्टि नहीं हो सकी। अपना कनेक्शन जाँचें और फिर कोशिश करने से पहले रिफ़्रेश करें।</string>
+    <string name="trail_health_error">कदमों की ताज़ा जानकारी चाहिए। Health Connect जोड़ें और कदम पढ़ने की अनुमति दें। कदमों का डेटा उपलब्ध होने पर फिर कोशिश करें।</string>
+    <string name="trail_device_error">आपके खाते से दूसरा फ़ोन कदम जोड़ रहा है। पहले कदम जोड़ना रोकें, फिर इस फ़ोन से दोबारा शामिल हों।</string>
+    <string name="trail_disabled">यह सफ़र अभी इस समूह के लिए उपलब्ध नहीं है।</string>
+    <string name="trail_stale">योजना बदल गई है। सहेजने से पहले वर्तमान सप्ताह और योजना देखने के लिए रिफ़्रेश करें।</string>
+    <string name="trail_access_error">इस खाते की अब समूह तक पहुँच नहीं है।</string>
+    <string name="trail_last_sync">आखिरी सफल सिंक: %1$s</string>
+    <string name="trail_refresh">रिफ़्रेश करें</string>
+    <string name="trail_back">वापस</string>
+    <string name="trail_connect">कदमों का डेटा जोड़ें</string>
+    <string name="trail_start_body">सफ़र शुरू होने पर साझा लक्ष्य तय हो जाता है। समूह का मौजूदा साप्ताहिक लक्ष्य नहीं बदलता।</string>
+    <string name="trail_saved_commitment">आपकी सहेजी गई योजना: %1$s कदम</string>
+    <string name="trail_target_range">%1$s से %2$s साझा कदमों के बीच चुनें।</string>
+    <string name="trail_commitment_range">अपने सप्ताह के लिए %1$s से %2$s कदमों के बीच चुनें।</string>
+</resources>

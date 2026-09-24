@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_dismiss">Cerrar</string>
+    <string name="common_continue">Continuar</string>
+    <string name="common_back">Atrás</string>
+    <string name="common_not_now">Ahora no</string>
+    <string name="common_try_again">Intentar de nuevo</string>
+    <string name="common_refresh">Actualizar</string>
+    <string name="common_sign_in">Iniciar sesión</string>
+    <string name="common_confirm">Confirmar</string>
+    <string name="common_show_password">Mostrar contraseña</string>
+    <string name="common_hide_password">Ocultar contraseña</string>
+    <string name="common_selected">Seleccionado</string>
+    <string name="common_back_to_groups">Volver a tus grupos</string>
+</resources>

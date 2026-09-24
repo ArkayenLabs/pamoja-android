@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from planning/2026-09-17/TOGETHER-TRAIL-CONTENT.json. Translation review pending. -->
+<resources>
+    <string name="adventure_title" formatted="false">El camino compartido</string>
+    <string name="adventure_promise" formatted="false">Sus caminatas de cada día. Una aventura compartida.</string>
+    <string name="adventure_intro" formatted="false">Descubran cinco lugares juntos. Caminen a su ritmo, estén donde estén.</string>
+    <string name="adventure_included" formatted="false">Una aventura original completa. Una persona paga y todo el grupo participa.</string>
+    <string name="adventure_access_body" formatted="false">Todos los miembros actuales pueden participar sin otra compra. Quien organiza el grupo inicia la aventura.</string>
+    <string name="adventure_goal" formatted="false">Meta de la aventura compartida</string>
+    <string name="adventure_goal_explanation" formatted="false">Confirma el total antes de empezar. Las metas semanales no cambian.</string>
+    <string name="adventure_starting_sync" formatted="false">Tu aporte comienza desde la sincronización al unirte. No se añaden pasos anteriores.</string>
+    <string name="adventure_rest_explanation" formatted="false">El compromiso de Sam pasa a cero. El de Alex no cambia. Los pasos acumulados se conservan.</string>
+    <string name="adventure_completion_title" formatted="false">Un camino para recordar</string>
+    <string name="adventure_completion_body" formatted="false">Cinco capítulos, un logro compartido. El recuerdo obtenido seguirá disponible cuando termine Premium.</string>
+    <string name="adventure_share_privacy" formatted="false">Compartir es opcional. No se incluyen datos privados de los miembros de forma predeterminada.</string>
+    <string name="adventure_chapter_list_title" formatted="false">Cinco lugares por descubrir</string>
+    <string name="adventure_opening_path_title" formatted="false">El comienzo del camino</string>
+    <string name="adventure_opening_path_story" formatted="false">Al otro lado de la puerta, el camino se pierde en una curva. No hace falta ver todo el recorrido para empezar. Sus caminatas han llevado al grupo hasta el primer claro. Aquí hay espacio para todos los ritmos.</string>
+    <string name="adventure_opening_path_reflection" formatted="false">¿Qué te ayudó a salir a caminar esta semana?</string>
+    <string name="adventure_opening_path_alt" formatted="false">Una puerta abierta da paso a un sendero que serpentea entre dos árboles.</string>
+    <string name="adventure_quiet_grove_title" formatted="false">El bosque tranquilo</string>
+    <string name="adventure_quiet_grove_story" formatted="false">Los árboles se acercan y el camino queda en silencio. Un banco espera a la sombra. Algunos días invitan a caminar más; otros, a descansar. Ambos forman parte de un viaje al que puedes volver. El bosque seguirá aquí cuando estés listo para continuar.</string>
+    <string name="adventure_quiet_grove_reflection" formatted="false">¿Qué haría que la próxima semana fuera más llevadera?</string>
+    <string name="adventure_quiet_grove_alt" formatted="false">Un banco bajo árboles verdes, junto a un sendero tranquilo.</string>
+    <string name="adventure_shared_bridge_title" formatted="false">El puente compartido</string>
+    <string name="adventure_shared_bridge_story" formatted="false">Un arroyo cruza el sendero y un puente ancho permite seguir adelante. Han llegado hasta aquí con días, caminatas y ritmos distintos. No hacía falta recorrer el mismo camino para alcanzar juntos este lugar.</string>
+    <string name="adventure_shared_bridge_reflection" formatted="false">¿Hay alguien a quien quieras agradecer que te acompañe?</string>
+    <string name="adventure_shared_bridge_alt" formatted="false">Un puente ancho de madera cruza un arroyo tranquilo.</string>
+    <string name="adventure_wide_horizon_title" formatted="false">El horizonte abierto</string>
+    <string name="adventure_wide_horizon_story" formatted="false">Los árboles dejan paso a una vista que se extiende más allá de las colinas. El camino recorrido es más largo de lo que parecía al empezar. No hace falta apresurar el último tramo. Ya saben cómo volver: una caminata a la vez.</string>
+    <string name="adventure_wide_horizon_reflection" formatted="false">¿Qué pequeño hábito de este viaje te gustaría conservar?</string>
+    <string name="adventure_wide_horizon_alt" formatted="false">Un sendero se abre hacia suaves colinas bajo un amplio cielo ámbar.</string>
+    <string name="adventure_lantern_clearing_title" formatted="false">El claro de las luces</string>
+    <string name="adventure_lantern_clearing_story" formatted="false">Al final del camino, unas luces iluminan un círculo bajo el cielo del atardecer. Aquí cuentan todas las caminatas: las cortas, las largas y las que llegaron después de una pausa. Han terminado este recorrido juntos. Es algo que vale la pena recordar.</string>
+    <string name="adventure_lantern_clearing_reflection" formatted="false">¿Cómo te gustaría que fuera su próxima aventura en grupo?</string>
+    <string name="adventure_lantern_clearing_alt" formatted="false">Unas luces cálidas iluminan un claro circular bajo el cielo del atardecer.</string>
+</resources>

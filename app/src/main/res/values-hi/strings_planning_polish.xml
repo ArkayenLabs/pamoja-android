@@ -1,0 +1,9 @@
+<resources>
+    <string name="planning_calendar_label">समूह का कैलेंडर · %1$s</string>
+    <string name="planning_details_action">योजना कैसे काम करती है</string>
+    <string name="planning_details_body">सहेजा गया लक्ष्य अगले सप्ताह अपने आप लागू होगा। आपके जवाब से आयोजक तय कर सकता है कि लक्ष्य बदलना है या नहीं। जवाब देने से लक्ष्य अपने आप नहीं बदलता और कदम साझा करना बंद नहीं होता।</string>
+    <string name="planning_response_explanation">आयोजक को बताएँ। जवाबों से लक्ष्य अपने आप नहीं बदलता।</string>
+    <string name="planning_current_week_unchanged">अगले सप्ताह शुरू होगा। यह सप्ताह नहीं बदलेगा।</string>
+    <string name="next_week_together_body">आने वाले सप्ताह के लिए साझा लक्ष्य।</string>
+    <string name="next_week_together_response_resting">अगले सप्ताह आराम करूँगा/करूँगी</string>
+</resources>

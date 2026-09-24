@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trail_start">Comenzar nuestra aventura</string>
+    <string name="trail_sponsor">Ver Premium del grupo</string>
+    <string name="trail_wait_organizer">La persona que organiza el grupo puede iniciar la aventura. Todo el grupo tiene acceso.</string>
+    <string name="trail_sync">Sincronizar mi aportación</string>
+    <string name="trail_join">Sincronizar y unirme</string>
+    <string name="trail_pause">Pausar mi aportación</string>
+    <string name="trail_pause_body">Los pasos nuevos dejarán de sumarse. Los pasos aportados se conservan. Al volver a unirte, comenzarás desde una nueva sincronización.</string>
+    <string name="trail_confirm">Confirmar</string>
+    <string name="trail_cancel">Cancelar</string>
+    <string name="trail_finish">Guardar nuestro recuerdo de la aventura</string>
+    <string name="trail_progress">%1$s de %2$s pasos compartidos</string>
+    <string name="trail_week">Semana del %1$s · %2$s</string>
+    <string name="trail_commitment">Mis pasos previstos para la próxima semana</string>
+    <string name="trail_save_commitment">Guardar mi compromiso</string>
+    <string name="trail_rest">Descansar la próxima semana</string>
+    <string name="trail_rest_body">Descansar pone tu plan de la próxima semana a cero. Tus pasos siguen sumándose a menos que pauses tu aportación. El compromiso de los demás no aumenta.</string>
+    <string name="trail_pace">Al ritmo que eligieron: quedan unas %1$s semanas</string>
+    <string name="trail_no_pace">La estimación aparecerá cuando quienes participan tengan un plan y el total previsto sea mayor que cero.</string>
+    <string name="trail_locked">Se desbloquea con %1$s pasos compartidos</string>
+    <string name="trail_error">No pudimos confirmar el estado actual de la aventura. Revisa tu conexión y actualiza antes de volver a intentarlo.</string>
+    <string name="trail_health_error">Hace falta una lectura reciente de pasos. Conecta Health Connect y permite el acceso a los pasos. Vuelve a intentarlo cuando haya datos disponibles.</string>
+    <string name="trail_device_error">Otro teléfono aporta pasos desde tu cuenta. Pausa la aportación y vuelve a unirte desde este teléfono.</string>
+    <string name="trail_disabled">Esta aventura aún no está disponible para este grupo.</string>
+    <string name="trail_stale">El plan cambió. Actualiza para ver la semana y el compromiso actuales antes de guardar.</string>
+    <string name="trail_access_error">Esta cuenta ya no tiene acceso al grupo.</string>
+    <string name="trail_last_sync">Última sincronización correcta: %1$s</string>
+    <string name="trail_refresh">Actualizar</string>
+    <string name="trail_back">Volver</string>
+    <string name="trail_connect">Conectar pasos</string>
+    <string name="trail_start_body">La meta compartida queda fija al iniciar la aventura. La meta semanal actual del grupo no cambia.</string>
+    <string name="trail_saved_commitment">Tu compromiso guardado: %1$s pasos</string>
+    <string name="trail_target_range">Elige entre %1$s y %2$s pasos compartidos.</string>
+    <string name="trail_commitment_range">Elige entre %1$s y %2$s pasos para tu semana.</string>
+</resources>

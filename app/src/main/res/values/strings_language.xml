@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_language">App language</string>
+    <string name="settings_language_system">Use device language</string>
+</resources>

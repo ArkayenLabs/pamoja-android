@@ -1,0 +1,11 @@
+<resources>
+    <string name="trail_open_action">Explorar la ruta →</string>
+    <string name="premium_trail_title">Una aventura. Todo el grupo.</string>
+    <string name="premium_trail_body">Caminen hacia cinco capítulos ilustrados en La ruta compartida. Elige tu compromiso semanal, tómate una semana de descanso y celebren llegar juntos. Una suscripción cubre al grupo.</string>
+    <string name="trail_share">Compartir nuestro logro</string>
+    <string name="trail_share_privacy">Comparte la ruta y la meta alcanzada. Sin nombres ni pasos individuales.</string>
+    <string name="trail_share_failed">No se pudo preparar la tarjeta. Inténtalo de nuevo.</string>
+    <string name="trail_share_goal">%1$s pasos, juntos</string>
+    <string name="trail_share_caption">Completamos La ruta compartida con Pamoja.</string>
+    <string name="trail_share_footer">Pequeñas caminatas. Una meta compartida.</string>
+</resources>

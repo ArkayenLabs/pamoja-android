@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_cancel">रद्द करें</string>
+    <string name="common_dismiss">बंद करें</string>
+    <string name="common_continue">आगे बढ़ें</string>
+    <string name="common_back">वापस</string>
+    <string name="common_not_now">अभी नहीं</string>
+    <string name="common_try_again">फिर कोशिश करें</string>
+    <string name="common_refresh">फिर से लोड करें</string>
+    <string name="common_sign_in">साइन इन करें</string>
+    <string name="common_confirm">पुष्टि करें</string>
+    <string name="common_show_password">पासवर्ड दिखाएँ</string>
+    <string name="common_hide_password">पासवर्ड छिपाएँ</string>
+    <string name="common_selected">चुना गया</string>
+    <string name="common_back_to_groups">अपने समूहों पर वापस जाएँ</string>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from planning/2026-09-17/TOGETHER-TRAIL-CONTENT.json. Translation review pending. -->
+<resources>
+    <string name="adventure_title" formatted="false">साथ का सफ़र</string>
+    <string name="adventure_promise" formatted="false">आप सबकी रोज़ की सैर। एक साझा सफ़र।</string>
+    <string name="adventure_intro" formatted="false">साथ मिलकर पाँच जगहें खोजें। जहाँ भी हों, अपनी रफ़्तार से चलें।</string>
+    <string name="adventure_included" formatted="false">एक पूरा मौलिक सफ़र। एक सदस्य का भुगतान पूरे समूह के लिए है।</string>
+    <string name="adventure_access_body" formatted="false">सभी मौजूदा सदस्य बिना दोबारा भुगतान किए शामिल हो सकते हैं। समूह का आयोजक सफ़र शुरू करता है।</string>
+    <string name="adventure_goal" formatted="false">साझा सफ़र का लक्ष्य</string>
+    <string name="adventure_goal_explanation" formatted="false">शुरू करने से पहले कुल लक्ष्य तय करें। साप्ताहिक लक्ष्य नहीं बदलेंगे।</string>
+    <string name="adventure_starting_sync" formatted="false">आपका योगदान शामिल होते समय किए गए सिंक से शुरू होगा। पहले के कदम नहीं जोड़े जाएँगे।</string>
+    <string name="adventure_rest_explanation" formatted="false">Sam का तय योगदान शून्य हो जाएगा। Alex का योगदान नहीं बदलेगा। अब तक जुड़े कदम बने रहेंगे।</string>
+    <string name="adventure_completion_title" formatted="false">याद रखने लायक सफ़र</string>
+    <string name="adventure_completion_body" formatted="false">पाँच अध्याय, एक साझा उपलब्धि। Premium खत्म होने के बाद भी आपकी कमाई हुई याद उपलब्ध रहेगी।</string>
+    <string name="adventure_share_privacy" formatted="false">शेयर करना आपकी इच्छा पर है। सदस्यों की निजी जानकारी अपने-आप शामिल नहीं होती।</string>
+    <string name="adventure_chapter_list_title" formatted="false">खोजने के लिए पाँच जगहें</string>
+    <string name="adventure_opening_path_title" formatted="false">सफ़र की शुरुआत</string>
+    <string name="adventure_opening_path_story" formatted="false">खुले दरवाज़े के आगे रास्ता मुड़ता है और नज़रों से ओझल हो जाता है। शुरुआत करने के लिए पूरा रास्ता देखना ज़रूरी नहीं। आप सबकी अलग-अलग सैर ने समूह को पहले पड़ाव तक पहुँचा दिया है। यहाँ हर रफ़्तार के लिए जगह है।</string>
+    <string name="adventure_opening_path_reflection" formatted="false">इस हफ़्ते किस बात ने आपको चलने के लिए प्रेरित किया?</string>
+    <string name="adventure_opening_path_alt" formatted="false">खुले दरवाज़े से एक घुमावदार रास्ता दो पेड़ों के बीच से गुज़रता है।</string>
+    <string name="adventure_quiet_grove_title" formatted="false">शांत उपवन</string>
+    <string name="adventure_quiet_grove_story" formatted="false">पेड़ों की छाँव में रास्ता शांत हो जाता है। एक बेंच आपका इंतज़ार कर रही है। कुछ दिन लंबी सैर के होते हैं, तो कुछ दिन आराम के। दोनों इस सफ़र का हिस्सा हैं। जब आप फिर चलने के लिए तैयार होंगे, यह उपवन यहीं मिलेगा।</string>
+    <string name="adventure_quiet_grove_reflection" formatted="false">अगले हफ़्ते का लक्ष्य आपके लिए आसान कैसे बन सकता है?</string>
+    <string name="adventure_quiet_grove_alt" formatted="false">हरे पेड़ों की छाँव में, शांत रास्ते के पास एक बेंच है।</string>
+    <string name="adventure_shared_bridge_title" formatted="false">साथ का पुल</string>
+    <string name="adventure_shared_bridge_story" formatted="false">रास्ते में एक छोटी नदी आती है और एक चौड़ा पुल सफ़र को आगे ले जाता है। आपके दिन, आपकी सैर और आपकी रफ़्तार अलग-अलग रही हैं। यहाँ साथ पहुँचने के लिए सबका एक जैसा चलना ज़रूरी नहीं था।</string>
+    <string name="adventure_shared_bridge_reflection" formatted="false">क्या आप किसी को साथ देने के लिए धन्यवाद कहना चाहेंगे?</string>
+    <string name="adventure_shared_bridge_alt" formatted="false">एक चौड़ा लकड़ी का पुल शांत छोटी नदी के ऊपर बना है।</string>
+    <string name="adventure_wide_horizon_title" formatted="false">खुला क्षितिज</string>
+    <string name="adventure_wide_horizon_story" formatted="false">पेड़ों के आगे नज़ारा पहाड़ियों तक फैल जाता है। शुरुआत में जितना लगा था, उससे कहीं लंबा रास्ता आप तय कर चुके हैं। आख़िरी हिस्से में जल्दी करने की ज़रूरत नहीं। आप जानते हैं कि एक-एक सैर के साथ वापस कैसे लौटना है।</string>
+    <string name="adventure_wide_horizon_reflection" formatted="false">इस सफ़र की कौन-सी छोटी आदत आप आगे भी रखना चाहेंगे?</string>
+    <string name="adventure_wide_horizon_alt" formatted="false">एक रास्ता हल्की पहाड़ियों और सुनहरे खुले आसमान की ओर जाता है।</string>
+    <string name="adventure_lantern_clearing_title" formatted="false">रोशनी का पड़ाव</string>
+    <string name="adventure_lantern_clearing_story" formatted="false">रास्ते के अंत में शाम के आसमान तले लालटेनें एक खुले पड़ाव को रोशन करती हैं। यहाँ आपकी हर सैर की जगह है: छोटी, लंबी और आराम के बाद फिर शुरू हुई सैर भी। आपने यह रास्ता साथ पूरा किया। यह याद रखने लायक है।</string>
+    <string name="adventure_lantern_clearing_reflection" formatted="false">आप अपना अगला साझा सफ़र कैसा चाहेंगे?</string>
+    <string name="adventure_lantern_clearing_alt" formatted="false">शाम के आसमान तले लालटेनों की गर्म रोशनी एक गोल खुले पड़ाव पर पड़ रही है।</string>
+</resources>

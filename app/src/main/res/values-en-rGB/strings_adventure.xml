@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from planning/2026-09-17/TOGETHER-TRAIL-CONTENT.json. Translation review pending. -->
+<resources>
+    <string name="adventure_title" formatted="false">The Together Trail</string>
+    <string name="adventure_promise" formatted="false">Your everyday walks. One shared adventure.</string>
+    <string name="adventure_intro" formatted="false">Discover five places together. Walk at your own pace, wherever you are.</string>
+    <string name="adventure_included" formatted="false">One complete original adventure. One sponsor covers the group.</string>
+    <string name="adventure_access_body" formatted="false">Every current member can join without another purchase. The organiser starts the adventure.</string>
+    <string name="adventure_goal" formatted="false">Shared adventure goal</string>
+    <string name="adventure_goal_explanation" formatted="false">Confirm the total before starting. Weekly goals remain unchanged.</string>
+    <string name="adventure_starting_sync" formatted="false">Your contribution starts from your joining sync. Earlier steps are not added.</string>
+    <string name="adventure_rest_explanation" formatted="false">Sam\'s commitment becomes zero. Alex\'s commitment stays the same. Earned steps are kept.</string>
+    <string name="adventure_completion_title" formatted="false">A trail worth remembering</string>
+    <string name="adventure_completion_body" formatted="false">Five chapters, one shared achievement. Your earned keepsake stays available after Premium ends.</string>
+    <string name="adventure_share_privacy" formatted="false">Sharing is optional. No private member details are included by default.</string>
+    <string name="adventure_chapter_list_title" formatted="false">Five places to discover</string>
+    <string name="adventure_opening_path_title" formatted="false">The Opening Path</string>
+    <string name="adventure_opening_path_story" formatted="false">Beyond the gate, the path bends out of sight. You do not need to see the whole trail to begin. Your separate walks have brought the group to its first clearing. There is room here for every pace.</string>
+    <string name="adventure_opening_path_reflection" formatted="false">What made it easier to get moving this week?</string>
+    <string name="adventure_opening_path_alt" formatted="false">An open gate leads to a winding path between two trees.</string>
+    <string name="adventure_quiet_grove_title" formatted="false">The Quiet Grove</string>
+    <string name="adventure_quiet_grove_story" formatted="false">The trees gather close and the trail grows quiet. A bench waits in the shade. Some days bring longer walks; others need a pause. Both belong in a journey you can keep returning to. The grove will still be here when you are ready.</string>
+    <string name="adventure_quiet_grove_reflection" formatted="false">What would make next week feel manageable?</string>
+    <string name="adventure_quiet_grove_alt" formatted="false">A bench rests beneath green trees beside a quiet path.</string>
+    <string name="adventure_shared_bridge_title" formatted="false">The Shared Bridge</string>
+    <string name="adventure_shared_bridge_story" formatted="false">A stream crosses the trail, and a broad bridge carries it onward. You reached this place through different days, different walks and different rhythms. None of those walks had to look the same to bring you here together.</string>
+    <string name="adventure_shared_bridge_reflection" formatted="false">Is there someone you would like to thank for joining you?</string>
+    <string name="adventure_shared_bridge_alt" formatted="false">A broad wooden bridge crosses a gentle stream.</string>
+    <string name="adventure_wide_horizon_title" formatted="false">The Wide Horizon</string>
+    <string name="adventure_wide_horizon_story" formatted="false">The trees open and the view stretches beyond the hills. The trail behind you is longer than it looked at the beginning. There is no need to hurry through the last part. You already know how to return, one ordinary walk at a time.</string>
+    <string name="adventure_wide_horizon_reflection" formatted="false">Which small part of this journey would you like to keep?</string>
+    <string name="adventure_wide_horizon_alt" formatted="false">A path opens onto gentle hills beneath a wide amber sky.</string>
+    <string name="adventure_lantern_clearing_title" formatted="false">The Lantern Clearing</string>
+    <string name="adventure_lantern_clearing_story" formatted="false">At the end of the trail, lanterns light a circle beneath the evening sky. This place holds all the walks that brought you here: short ones, long ones and the days you returned after a break. You finished this trail together. That is worth remembering.</string>
+    <string name="adventure_lantern_clearing_reflection" formatted="false">What would you like your next shared adventure to feel like?</string>
+    <string name="adventure_lantern_clearing_alt" formatted="false">Warm lanterns light a circular clearing beneath an evening sky.</string>
+</resources>

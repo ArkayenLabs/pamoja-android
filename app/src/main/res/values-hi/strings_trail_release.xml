@@ -1,0 +1,11 @@
+<resources>
+    <string name="trail_open_action">सफ़र देखें →</string>
+    <string name="premium_trail_title">एक सफ़र। पूरा समूह।</string>
+    <string name="premium_trail_body">साझा सफ़र में चलते हुए पाँच चित्रित अध्याय खोलें। अपने साप्ताहिक कदम तय करें, ज़रूरत हो तो एक सप्ताह आराम करें और साथ पूरा करने का जश्न मनाएँ। एक सदस्यता पूरे समूह के लिए है।</string>
+    <string name="trail_share">अपनी सफलता साझा करें</string>
+    <string name="trail_share_privacy">केवल सफ़र और पूरा हुआ लक्ष्य साझा होता है। किसी का नाम या निजी कदमों की गिनती नहीं।</string>
+    <string name="trail_share_failed">कार्ड तैयार नहीं हो सका। फिर कोशिश करें।</string>
+    <string name="trail_share_goal">%1$s कदम, साथ मिलकर</string>
+    <string name="trail_share_caption">हमने Pamoja के साथ साझा सफ़र पूरा किया।</string>
+    <string name="trail_share_footer">छोटी सैर। एक साझा मंज़िल।</string>
+</resources>

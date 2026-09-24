@@ -1,0 +1,7 @@
+<resources>
+    <string name="widget_view_progress">प्रगति देखें →</string>
+    <string name="widget_open_group">समूह खोलें →</string>
+    <string name="widget_steps_left">कदम बाकी</string>
+    <string name="widget_goal_reached">लक्ष्य पूरा हुआ</string>
+    <string name="widget_last_shared_update">पिछला साझा कुल · %2$s में से %1$s</string>
+</resources>

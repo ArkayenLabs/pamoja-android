@@ -1,0 +1,4 @@
+<resources>
+    <string name="edit_group_goal_organizer_only">Only the organiser can change the group’s goal.</string>
+    <string name="profile_preview_body">This is how teammates recognise you.</string>
+</resources>

@@ -6,9 +6,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.MemoryCacheSettings
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
+import org.json.JSONArray
+import org.json.JSONObject
 import java.net.HttpURLConnection
+import java.net.URLEncoder
 import java.net.URL
+import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -33,6 +39,7 @@ object FirebaseEmulator {
     const val HOST = "10.0.2.2"
     const val FIRESTORE_PORT = 8080
     const val AUTH_PORT = 9099
+    const val FUNCTIONS_PORT = 5001
 
     private val counter = AtomicInteger(0)
 
@@ -64,9 +71,19 @@ object FirebaseEmulator {
         val firestore: FirebaseFirestore,
         /** Exposed so tests can build the real AuthRepository rather than a stand-in. */
         val auth: FirebaseAuth,
+        /** Uses the same isolated app and identity as Auth and Firestore. */
+        val functions: FirebaseFunctions,
         private val app: FirebaseApp,
     ) {
-        fun close() = app.delete()
+        fun close() {
+            // Auth's emulator configuration retains app callbacks for the
+            // process lifetime. Deleting a named app here makes the next
+            // useEmulator call invoke a deleted app before it can sign in.
+            // End this client's session/listener transport instead; distinct
+            // app names and UIDs keep tests isolated until the runner exits.
+            auth.signOut()
+            kotlinx.coroutines.runBlocking { firestore.terminate().await() }
+        }
     }
 
     suspend fun signIn(): Client {
@@ -84,12 +101,15 @@ object FirebaseEmulator {
                 .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
                 .build()
         }
+        val functions = FirebaseFunctions.getInstance(app, "asia-south1").apply {
+            useEmulator(HOST, FUNCTIONS_PORT)
+        }
 
         val email = "user-${counter.get()}-${System.nanoTime()}@pamoja.test"
         val created = auth.createUserWithEmailAndPassword(email, "test-password-123").await()
         val uid = created.user?.uid ?: error("Auth emulator returned no uid")
 
-        return Client(uid, firestore, auth, app)
+        return Client(uid, firestore, auth, functions, app)
     }
 
     /**
@@ -102,6 +122,94 @@ object FirebaseEmulator {
     fun reset() {
         delete("http://$HOST:$FIRESTORE_PORT/emulator/v1/projects/$projectId/databases/(default)/documents")
         delete("http://$HOST:$AUTH_PORT/emulator/v1/projects/$projectId/accounts")
+    }
+
+    /**
+     * Seeds a server-owned document through the emulator REST API.
+     *
+     * The mobile SDK must never be given a rule exception just so a test can
+     * arrange canonical backend state. `Bearer owner` is understood only by
+     * the local emulator and represents the Admin SDK's rules-bypassing access.
+     */
+    fun seedServerDocument(
+        collection: String,
+        documentId: String,
+        fields: Map<String, Any?>,
+    ) {
+        require(collection.matches(Regex("^[A-Za-z][A-Za-z0-9]*$")))
+        seedServerDocumentPath("$collection/$documentId", fields)
+    }
+
+    /** Same server-owned seed path, including documents inside subcollections. */
+    fun seedServerDocumentPath(
+        documentPath: String,
+        fields: Map<String, Any?>,
+    ) {
+        val pathSegments = documentPath.split('/')
+        require(pathSegments.size % 2 == 0) { "A Firestore document path needs an even segment count" }
+        require(pathSegments.all { it.isNotBlank() }) { "Firestore path segments must not be blank" }
+        val encodedDocumentPath = pathSegments.joinToString("/") { segment ->
+            URLEncoder.encode(segment, StandardCharsets.UTF_8.name())
+        }
+        val url =
+            "http://$HOST:$FIRESTORE_PORT/v1/projects/$projectId/" +
+                "databases/(default)/documents/$encodedDocumentPath"
+        val body = JSONObject().put(
+            "fields",
+            JSONObject().apply {
+                fields.forEach { (key, value) -> put(key, firestoreValue(value)) }
+            },
+        ).toString()
+
+        val connection = URL(url).openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = "PATCH"
+            connection.doOutput = true
+            connection.connectTimeout = 10_000
+            connection.readTimeout = 10_000
+            connection.setRequestProperty("Authorization", "Bearer owner")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.outputStream.use { stream ->
+                stream.write(body.toByteArray(StandardCharsets.UTF_8))
+            }
+
+            val code = connection.responseCode
+            val responseBody = runCatching {
+                val responseStream = if (code in 200..299) {
+                    connection.inputStream
+                } else {
+                    connection.errorStream
+                }
+                responseStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            }.getOrDefault("")
+            check(code in 200..299) {
+                "Emulator seed failed ($code) for $documentPath: $responseBody"
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun firestoreValue(value: Any?): JSONObject = when (value) {
+        null -> JSONObject().put("nullValue", JSONObject.NULL)
+        is String -> JSONObject().put("stringValue", value)
+        is Boolean -> JSONObject().put("booleanValue", value)
+        is Int -> JSONObject().put("integerValue", value.toString())
+        is Long -> JSONObject().put("integerValue", value.toString())
+        is Instant -> JSONObject().put("timestampValue", value.toString())
+        is List<*> -> JSONObject().put(
+            "arrayValue",
+            JSONObject().put(
+                "values",
+                JSONArray().apply {
+                    value.forEach { item ->
+                        requireNotNull(item) { "Null list items are not supported" }
+                        put(firestoreValue(item))
+                    }
+                },
+            ),
+        )
+        else -> error("Unsupported Firestore emulator value: ${value::class.java.name}")
     }
 
     private fun delete(url: String) {

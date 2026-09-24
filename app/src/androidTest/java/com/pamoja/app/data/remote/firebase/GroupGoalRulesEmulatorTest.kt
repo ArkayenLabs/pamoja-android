@@ -13,22 +13,12 @@ import org.junit.runner.RunWith
 import java.util.UUID
 
 /**
- * The rules around the per-person goal, against the real emulator.
+ * Pins the shared-goal contract against the real Firestore emulator.
  *
- * Two rule changes are under test, and both are written in pairs as this
- * repository requires: one that the legitimate write still works, one that the
- * attacker is still blocked. A rule that denies everything passes the blocked
- * half on its own, and that mistake has been made here before.
- *
- * 1. **The ceiling moved from 1,000,000 to 2,800,000.** This was a correctness
- *    fix rather than a loosening: the recommended default at the premium member
- *    cap is 20 x 8,000 x 7 = **1,120,000**, so the old ceiling rejected the
- *    default. The new figure is `StepGoal.MAX_WEEKLY_TOTAL`, the largest value
- *    the model can produce, and anything above it must still be refused.
- * 2. **`dailyPerPersonTarget` joined the admin settings allowlist.** Without it
- *    every settings save is denied for naming a key the rule does not list.
- *
- * Requires the emulators, see [FirebaseEmulator].
+ * A group owns one pooled weekly target. Member count is capacity only: it must
+ * never multiply the target or create an individual quota. Presets are quick
+ * choices, while deliberate custom totals support differently sized groups.
+ * Only the organizer may move the official group promise.
  */
 @RunWith(AndroidJUnit4::class)
 class GroupGoalRulesEmulatorTest {
@@ -47,148 +37,227 @@ class GroupGoalRulesEmulatorTest {
     private suspend fun newUser(): FirebaseEmulator.Client =
         FirebaseEmulator.signIn().also { clients += it }
 
-    /** A group owned by [admin], written straight in as the create rule allows. */
     private suspend fun createGroup(
         admin: FirebaseEmulator.Client,
-        weeklyTarget: Int,
-        dailyPerPerson: Int = StepGoal.DEFAULT_DAILY_PER_PERSON,
+        weeklyTarget: Int = StepGoal.DEFAULT_WEEKLY_TOTAL,
+        dailyPerPerson: Int = 0,
         cap: Int = StepGoal.MAX_GROUP_MEMBERS,
+        canMembersEditTarget: Boolean = false,
     ): String {
         val groupId = UUID.randomUUID().toString()
         admin.firestore.collection("groups").document(groupId).set(
             mapOf(
                 "groupId" to groupId,
-                "name" to "Goal rules group",
+                "name" to "Shared goal group",
                 "adminId" to admin.uid,
                 "weeklyTarget" to weeklyTarget,
                 "dailyPerPersonTarget" to dailyPerPerson,
                 "maxMemberCap" to cap,
                 "memberCount" to 1,
-                "canMembersEditTarget" to false,
+                "canMembersEditTarget" to canMembersEditTarget,
                 "inviteLink" to "pamoja://join/$groupId",
                 "inviteLinkActive" to true,
                 "createdAt" to System.currentTimeMillis(),
                 "weekStartDay" to "MONDAY",
-            )
+            ),
         ).await()
         return groupId
     }
 
-    // ── The ceiling ─────────────────────────────────────────────────────────
-
-    /**
-     * The legitimate half, and the reason the ceiling had to move at all. This
-     * exact value was refused before the change.
-     */
     @Test
-    fun theDefaultGoalAtThePremiumCapCanBeCreated() = runBlocking {
-        val admin = newUser()
-        val target = StepGoal.weeklyTotalFor(
-            StepGoal.DEFAULT_DAILY_PER_PERSON,
-            StepGoal.MAX_GROUP_MEMBERS,
-        )
-        assertEquals("Guards the premise of this test", 1_120_000, target)
-
-        val groupId = createGroup(admin, weeklyTarget = target)
-
-        val stored = admin.firestore.collection("groups").document(groupId).get().await()
-        assertEquals(target.toLong(), stored.getLong("weeklyTarget"))
-    }
-
-    /** The largest value the model can produce must be storable. */
-    @Test
-    fun theHighestGoalTheModelCanProduceCanBeCreated() = runBlocking {
+    fun everySupportedSharedGoalCanBeCreatedWithoutAPerPersonQuota() = runBlocking {
         val admin = newUser()
 
-        val groupId = createGroup(admin, weeklyTarget = StepGoal.MAX_WEEKLY_TOTAL)
+        StepGoal.PRESETS_WEEKLY_TOTAL.forEach { target ->
+            val groupId = createGroup(admin, weeklyTarget = target)
+            val stored = admin.firestore.collection("groups").document(groupId).get().await()
 
-        val stored = admin.firestore.collection("groups").document(groupId).get().await()
-        assertEquals(StepGoal.MAX_WEEKLY_TOTAL.toLong(), stored.getLong("weeklyTarget"))
+            assertEquals(target.toLong(), stored.getLong("weeklyTarget"))
+            assertEquals(0L, stored.getLong("dailyPerPersonTarget"))
+        }
     }
 
-    /** The blocked half. The ceiling moved, it did not disappear. */
     @Test
-    fun aGoalAboveTheCeilingIsStillRefused() = runBlocking {
+    fun aCustomSharedGoalCanBeCreated() = runBlocking {
+        val admin = newUser()
+
+        val groupId = createGroup(admin, weeklyTarget = 300_000)
+        val stored = admin.firestore.collection("groups").document(groupId).get().await()
+
+        assertEquals(300_000L, stored.getLong("weeklyTarget"))
+    }
+
+    @Test
+    fun aGoalBelowTheProductMinimumCannotBeCreated() = runBlocking {
+        val admin = newUser()
+
+        val failed = runCatching { createGroup(admin, weeklyTarget = 9_999) }.isFailure
+
+        assertTrue("A meaningless group total must be rejected", failed)
+    }
+
+    @Test
+    fun aNewGroupCannotRestoreTheRetiredPerPersonQuota() = runBlocking {
         val admin = newUser()
 
         val failed = runCatching {
-            createGroup(admin, weeklyTarget = StepGoal.MAX_WEEKLY_TOTAL + 1)
+            createGroup(admin, dailyPerPerson = 8_000)
         }.isFailure
 
-        assertTrue("A target above the ceiling must be denied", failed)
+        assertTrue("New groups must not store an individual daily quota", failed)
     }
 
     @Test
-    fun aZeroGoalIsStillRefused() = runBlocking {
+    fun aNewGroupCannotGiveEveryMemberGoalEditingAccess() = runBlocking {
         val admin = newUser()
 
-        val failed = runCatching { createGroup(admin, weeklyTarget = 0) }.isFailure
+        val failed = runCatching {
+            createGroup(admin, canMembersEditTarget = true)
+        }.isFailure
 
-        assertTrue("A zero target must be denied", failed)
+        assertTrue("Only the organizer controls the official group goal", failed)
     }
 
-    // ── The new field on the settings allowlist ─────────────────────────────
-
-    /**
-     * The legitimate half. Without `dailyPerPersonTarget` on the allowlist the
-     * admin settings save is denied outright, so this is the test that would
-     * have caught shipping the model without touching the rules.
-     */
     @Test
-    fun theAdminCanSaveTheNewPerPersonField() = runBlocking {
+    fun changingTheMemberCapDoesNotChangeTheSharedGoal() = runBlocking {
         val admin = newUser()
-        val groupId = createGroup(admin, weeklyTarget = 560_000)
+        val groupId = createGroup(admin, weeklyTarget = 70_000, cap = 6)
 
         admin.firestore.collection("groups").document(groupId).update(
             mapOf(
-                "name" to "Renamed",
-                "weeklyTarget" to StepGoal.weeklyTotalFor(10_000, 20),
-                "dailyPerPersonTarget" to 10_000,
-                "maxMemberCap" to 20,
+                "name" to "Bigger family",
+                "weeklyTarget" to 70_000,
+                "dailyPerPersonTarget" to 0,
+                "maxMemberCap" to 12,
                 "canMembersEditTarget" to false,
                 "weekStartDay" to "MONDAY",
-            )
+            ),
         ).await()
 
         val stored = admin.firestore.collection("groups").document(groupId).get().await()
-        assertEquals(10_000L, stored.getLong("dailyPerPersonTarget"))
-        assertEquals(1_400_000L, stored.getLong("weeklyTarget"))
+        assertEquals(12L, stored.getLong("maxMemberCap"))
+        assertEquals(70_000L, stored.getLong("weeklyTarget"))
     }
 
-    /** The blocked half: a stranger may not move another group's goal. */
     @Test
-    fun aNonAdminCannotChangeThePerPersonField() = runBlocking {
+    fun anExistingNonStandardGoalCanBePreservedDuringMigration() = runBlocking {
         val admin = newUser()
-        val stranger = newUser()
-        val groupId = createGroup(admin, weeklyTarget = 560_000)
+        val groupId = UUID.randomUUID().toString()
+        FirebaseEmulator.seedServerDocument(
+            collection = "groups",
+            documentId = groupId,
+            fields = mapOf(
+                "groupId" to groupId,
+                "name" to "Older group",
+                "adminId" to admin.uid,
+                "weeklyTarget" to 1_120_000,
+                "dailyPerPersonTarget" to 8_000,
+                "maxMemberCap" to 20,
+                "memberCount" to 1,
+                "canMembersEditTarget" to false,
+                "inviteLinkActive" to true,
+                "weekStartDay" to "MONDAY",
+            ),
+        )
+
+        admin.firestore.collection("groups").document(groupId).update(
+            mapOf(
+                "name" to "Older group renamed",
+                "weeklyTarget" to 1_120_000,
+                "dailyPerPersonTarget" to 0,
+                "maxMemberCap" to 10,
+                "canMembersEditTarget" to false,
+                "weekStartDay" to "MONDAY",
+            ),
+        ).await()
+
+        val stored = admin.firestore.collection("groups").document(groupId).get().await()
+        assertEquals(1_120_000L, stored.getLong("weeklyTarget"))
+        assertEquals(0L, stored.getLong("dailyPerPersonTarget"))
+    }
+
+    @Test
+    fun anExistingGoalCanBeChangedToACustomValue() = runBlocking {
+        val admin = newUser()
+        val groupId = createGroup(admin)
+
+        admin.firestore.collection("groups").document(groupId)
+            .update("weeklyTarget", 300_000)
+            .await()
+
+        val stored = admin.firestore.collection("groups").document(groupId).get().await()
+        assertEquals(300_000L, stored.getLong("weeklyTarget"))
+    }
+
+    @Test
+    fun aMemberCannotMoveTheGoalEvenOnALegacyPermissionDocument() = runBlocking {
+        val admin = newUser()
+        val member = newUser()
+        val groupId = UUID.randomUUID().toString()
+        FirebaseEmulator.seedServerDocument(
+            collection = "groups",
+            documentId = groupId,
+            fields = mapOf(
+                "groupId" to groupId,
+                "name" to "Legacy shared goal group",
+                "adminId" to admin.uid,
+                "weeklyTarget" to 70_000,
+                "dailyPerPersonTarget" to 0,
+                "maxMemberCap" to 6,
+                "memberCount" to 2,
+                "canMembersEditTarget" to true,
+                "inviteLinkActive" to true,
+                "weekStartDay" to "MONDAY",
+            ),
+        )
+        FirebaseEmulator.seedServerDocument(
+            collection = "memberships",
+            documentId = "${member.uid}_$groupId",
+            fields = mapOf(
+                "membershipId" to "${member.uid}_$groupId",
+                "userId" to member.uid,
+                "groupId" to groupId,
+            ),
+        )
 
         val failed = runCatching {
-            stranger.firestore.collection("groups").document(groupId)
-                .update("dailyPerPersonTarget", 20_000)
+            member.firestore.collection("groups").document(groupId)
+                .update("weeklyTarget", 100_000)
                 .await()
         }.isFailure
 
-        assertTrue("Only the admin may move the goal", failed)
+        assertTrue("A member cannot move the organizer's group promise", failed)
     }
 
-    /**
-     * The admin allowlist must not have become a way to write anything. The
-     * step cache is written by every member's own device and must stay off it.
-     */
     @Test
-    fun theAdminStillCannotForgeTheStepCacheAlongsideTheGoal() = runBlocking {
+    fun aStrangerCannotChangeTheSharedGoal() = runBlocking {
         val admin = newUser()
-        val groupId = createGroup(admin, weeklyTarget = 560_000)
+        val stranger = newUser()
+        val groupId = createGroup(admin)
+
+        val failed = runCatching {
+            stranger.firestore.collection("groups").document(groupId)
+                .update("weeklyTarget", 100_000)
+                .await()
+        }.isFailure
+
+        assertTrue("An invite holder is not a group member", failed)
+    }
+
+    @Test
+    fun theAdminCannotForgeTheStepCacheAlongsideTheGoal() = runBlocking {
+        val admin = newUser()
+        val groupId = createGroup(admin)
 
         val failed = runCatching {
             admin.firestore.collection("groups").document(groupId).update(
                 mapOf(
-                    "dailyPerPersonTarget" to 6_000,
+                    "weeklyTarget" to 100_000,
                     "weeklySteps" to 9_999_999L,
-                )
+                ),
             ).await()
         }.isFailure
 
-        assertTrue("weeklySteps is not on the admin allowlist", failed)
+        assertTrue("weeklySteps is not part of goal editing", failed)
     }
 }

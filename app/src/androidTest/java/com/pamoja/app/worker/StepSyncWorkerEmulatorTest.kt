@@ -22,6 +22,7 @@ import com.pamoja.app.domain.usecase.PublishGroupWeeklyTotalUseCase
 import com.pamoja.app.domain.usecase.PublishMyWeeklyStepsUseCase
 import com.pamoja.app.util.PamojaNotification
 import com.pamoja.app.util.SmartNotificationHelper
+import com.pamoja.app.widgets.PamojaWidgetUpdater
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
@@ -162,6 +163,7 @@ class StepSyncWorkerEmulatorTest {
                         publishGroupWeeklyTotalUseCase = PublishGroupWeeklyTotalUseCase(groups),
                         smartNotificationHelper = notifier,
                         userPreferences = prefs,
+                        widgetUpdater = PamojaWidgetUpdater(appContext),
                     )
                 }
             )
@@ -332,5 +334,20 @@ class StepSyncWorkerEmulatorTest {
             user.firestore.collection("steps")
                 .document("${user.uid}_$today").get().await().getLong("stepCount"),
         )
+    }
+
+    /** Notification checks must not depend on visiting the group screen first. */
+    @Test
+    fun aRunWithNoActiveGroup_selectsAnExistingGroupForNotifications() = runBlocking {
+        val user = newUser()
+        val group = createGroup(user)
+        val preferences = UserPreferences(context)
+
+        assertEquals(null, preferences.activeGroupId.first())
+
+        val result = buildWorker(user, steps = 3_200).doWork()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        assertEquals(group.groupId, preferences.activeGroupId.first())
     }
 }

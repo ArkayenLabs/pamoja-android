@@ -9,6 +9,10 @@ import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.GroupAccess
+import com.pamoja.app.domain.model.GroupAccessSnapshot
+import com.pamoja.app.domain.model.GroupAccessState
+import com.pamoja.app.domain.model.GroupFeature
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.StepEntry
 import com.pamoja.app.domain.model.User
@@ -16,13 +20,16 @@ import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.GroupRepository
+import com.pamoja.app.domain.repository.GroupAccessRepository
 import com.pamoja.app.domain.repository.PhoneVerification
+import com.pamoja.app.domain.repository.PhoneVerificationPurpose
 import com.pamoja.app.domain.repository.StepRepository
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.GetMembershipUseCase
 import com.pamoja.app.domain.usecase.GetStepsForUserUseCase
+import com.pamoja.app.domain.usecase.ObserveGroupAccessUseCase
 import com.pamoja.app.domain.usecase.SyncTodayStepsUseCase
 import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +52,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.DayOfWeek
+import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -88,7 +96,7 @@ class GroupViewModelTest {
     private val lastWeek: String =
         WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.now().minusWeeks(1))
 
-    private val groupId = "group-1"
+    private val groupId = "6413795d-42d0-4f2b-80df-f017a9d32817"
     private val meId = "me"
 
     private val group = Group(
@@ -105,6 +113,7 @@ class GroupViewModelTest {
     private lateinit var auth: FakeAuthRepository
     private lateinit var steps: FakeStepRepository
     private lateinit var connectivity: FakeConnectivity
+    private lateinit var groupAccess: FakeGroupAccessRepository
     private lateinit var analytics: RecordingAnalytics
     private lateinit var prefs: UserPreferences
 
@@ -129,6 +138,7 @@ class GroupViewModelTest {
         auth = FakeAuthRepository()
         steps = FakeStepRepository()
         connectivity = FakeConnectivity(context)
+        groupAccess = FakeGroupAccessRepository()
         analytics = RecordingAnalytics()
         prefs = UserPreferences(context)
 
@@ -151,11 +161,16 @@ class GroupViewModelTest {
         getMembershipUseCase = GetMembershipUseCase(groups),
         getCurrentUserUseCase = GetCurrentUserUseCase(auth),
         updateWeeklyTargetUseCase = UpdateWeeklyTargetUseCase(groups),
+        leaveGroupUseCase = com.pamoja.app.domain.usecase.LeaveGroupUseCase(groups, GetCurrentUserUseCase(auth)),
         userPreferences = prefs,
         healthConnectReader = HealthConnectReader(context),
         analyticsManager = analytics,
         syncTodayStepsUseCase = SyncTodayStepsUseCase(steps),
         connectivityObserver = connectivity,
+        observeGroupAccessUseCase = ObserveGroupAccessUseCase(
+            repository = groupAccess,
+            clock = Clock.systemUTC(),
+        ),
     )
 
     /**
@@ -194,6 +209,34 @@ class GroupViewModelTest {
         weeklySteps = weeklySteps,
         weekStart = weekStart,
     )
+
+    @Test
+    fun serverConfirmedGroupAccessReachesTheScreenAndRevocationClearsIt() = runBlocking {
+        val vm = viewModel()
+        vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
+        groupAccess.access.value = Result.success(
+            GroupAccessSnapshot(
+                premiumAccess = GroupAccess(
+                    groupId = groupId,
+                    featureSet = setOf(GroupFeature.CircleV1),
+                    validUntilMillis = System.currentTimeMillis() + 60_000L,
+                ),
+            ),
+        )
+
+        val premium = vm.awaitState("Premium group access") {
+            it.groupAccess is GroupAccessState.Premium
+        }
+        assertTrue(premium.groupAccess.isPremium)
+
+        groupAccess.access.value = Result.success(GroupAccessSnapshot())
+
+        val free = vm.awaitState("revoked group access") {
+            it.groupAccess == GroupAccessState.Free
+        }
+        assertFalse(free.groupAccess.isPremium)
+    }
 
     // ── The denormalisation's one way to lie: stale markers ──────────────────
 
@@ -396,6 +439,26 @@ class GroupViewModelTest {
     }
 
     @Test
+    fun aCompletedWeekCelebratesOnceAcrossSnapshotsAndViewModels() = runBlocking {
+        val first = viewModel()
+        first.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me", weeklySteps = 80_000)))
+
+        first.awaitState("the celebration") { it.showGoalCelebration }
+        first.dismissGoalCelebration()
+        groups.memberships.emit(listOf(member(meId, "Me", weeklySteps = 90_000)))
+        first.awaitState("the later snapshot") { it.combinedWeeklySteps == 90_000L }
+        assertFalse(first.uiState.value.showGoalCelebration)
+
+        val reopened = viewModel()
+        reopened.loadGroup(groupId)
+        val reopenedState = reopened.awaitState("the reopened completed group") {
+            it.hasLoadedMembers && it.combinedWeeklySteps == 90_000L
+        }
+        assertFalse(reopenedState.showGoalCelebration)
+    }
+
+    @Test
     fun theWeeklyGoalIsNotLoggedBelowTheTarget() = runBlocking {
         val vm = viewModel()
         vm.loadGroup(groupId)
@@ -446,11 +509,11 @@ class GroupViewModelTest {
         assertNull(vm.uiState.value.actionError)
     }
 
-    /** A member may not move the target unless the admin allowed it. */
+    /** A retired legacy permission must not let a member move the organizer's target. */
     @Test
-    fun aMemberCannotChangeTheTargetWhenTheAdminHasNotAllowedIt() = runBlocking {
+    fun aMemberCannotChangeTheTargetEvenWhenAnOlderGroupAllowedIt() = runBlocking {
         groups.groupResult = Result.success(
-            group.copy(adminId = "someone-else", canMembersEditTarget = false)
+            group.copy(adminId = "someone-else", canMembersEditTarget = true)
         )
 
         val vm = viewModel()
@@ -623,13 +686,13 @@ class GroupViewModelTest {
             groupId: String,
             name: String,
             weeklyTarget: Int,
-            dailyPerPersonTarget: Int,
             maxMemberCap: Int,
             canMembersEditTarget: Boolean,
             weekStartDay: String,
         ): Result<Unit> = notUsed()
 
         override suspend fun removeMember(groupId: String, userId: String): Result<Unit> = notUsed()
+        override suspend fun deleteGroup(groupId: String): Result<Unit> = notUsed()
         override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> =
             notUsed()
 
@@ -683,6 +746,7 @@ class GroupViewModelTest {
         override suspend fun startPhoneVerification(
             phoneNumber: String,
             activity: Any,
+            purpose: PhoneVerificationPurpose,
         ): Result<PhoneVerification> = notUsed()
 
         override suspend fun verifyPhoneCode(verificationId: String, code: String): Result<User> =
@@ -692,6 +756,17 @@ class GroupViewModelTest {
         override suspend fun linkEmail(email: String, password: String): Result<User> = notUsed()
         override suspend fun linkPhone(verificationId: String, code: String): Result<User> =
             notUsed()
+    }
+
+    private class FakeGroupAccessRepository : GroupAccessRepository {
+        val access = MutableStateFlow<Result<GroupAccessSnapshot>>(
+            Result.success(GroupAccessSnapshot()),
+        )
+
+        override fun observeForCurrentMember(
+            groupId: String,
+            userId: String,
+        ) = access
     }
 }
 

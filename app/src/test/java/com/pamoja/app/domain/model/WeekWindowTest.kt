@@ -19,6 +19,30 @@ import java.util.Locale
  * Reference week: 2026-08-10 is a Monday, 2026-08-16 is the Sunday after it.
  */
 class WeekWindowTest {
+    @Test
+    fun `planning group resolves the same week from either side of the date line`() {
+        val group = Group(planningTimeZone = "Asia/Kolkata", weekStartDay = "MONDAY")
+        val instant = java.time.Instant.parse("2026-09-13T18:30:00Z")
+        val west = java.time.Clock.fixed(instant, java.time.ZoneId.of("America/Los_Angeles"))
+        val east = java.time.Clock.fixed(instant, java.time.ZoneId.of("Pacific/Kiritimati"))
+        assertEquals(LocalDate.parse("2026-09-14"), WeekWindow.todayFor(group, west))
+        assertEquals(WeekWindow.todayFor(group, west), WeekWindow.todayFor(group, east))
+        assertEquals("2026-09-14", WeekWindow.startOf(group.startDay, WeekWindow.todayFor(group, west)))
+        assertEquals(7, WeekWindow.daysLeftIn(group.startDay, WeekWindow.todayFor(group, west)))
+        assertEquals("2026-09-07", WeekWindow.startOf(group.startDay,
+            WeekWindow.todayFor(group, west.offsetByMillis(-1))))
+    }
+
+    @Test
+    fun `unconfigured and invalid zones preserve legacy calendar`() {
+        val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-09-13T18:30:00Z"), java.time.ZoneOffset.UTC)
+        val expected = LocalDate.now(clock.withZone(java.time.ZoneId.systemDefault()))
+        assertEquals(expected, WeekWindow.todayFor(Group(), clock))
+        assertEquals(expected, WeekWindow.todayFor(Group(planningTimeZone = "invalid"), clock))
+    }
+
+    private fun java.time.Clock.offsetByMillis(millis: Long): java.time.Clock =
+        java.time.Clock.offset(this, java.time.Duration.ofMillis(millis))
 
     private val monday = LocalDate.of(2026, 8, 10)
     private val wednesday = LocalDate.of(2026, 8, 12)

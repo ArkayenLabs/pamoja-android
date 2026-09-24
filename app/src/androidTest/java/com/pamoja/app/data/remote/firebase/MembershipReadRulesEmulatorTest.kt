@@ -2,9 +2,12 @@ package com.pamoja.app.data.remote.firebase
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pamoja.app.domain.model.Group
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -139,6 +142,33 @@ class MembershipReadRulesEmulatorTest {
         assertTrue(
             alicesGroups.map { it.groupId }.containsAll(listOf(first.groupId, second.groupId)),
         )
+    }
+
+    /**
+     * Home must react to the group document itself, not only to this user's
+     * membership document. Another member can publish the combined total while
+     * Alice is looking at Home, and Alice's membership does not change then.
+     */
+    @Test
+    fun aUsersGroupListReceivesLiveProgressFromAnotherMember() = runBlocking {
+        val alice = newUser()
+        val bob = newUser()
+        val group = createGroup(alice, "Live progress")
+        FirebaseGroupRepositoryImpl(bob.firestore).joinGroup(group.groupId, bob.uid).getOrThrow()
+
+        val aliceRepository = FirebaseGroupRepositoryImpl(alice.firestore)
+        val updatedGroup = async(start = CoroutineStart.UNDISPATCHED) {
+            aliceRepository.getUserGroups(alice.uid).first { groups ->
+                groups.any { it.groupId == group.groupId && it.weeklySteps == 12_345L }
+            }.first { it.groupId == group.groupId }
+        }
+
+        FirebaseGroupRepositoryImpl(bob.firestore)
+            .publishWeeklyTotal(group.groupId, 12_345L, "2026-08-31")
+            .getOrThrow()
+
+        val result = withTimeout(10_000) { updatedGroup.await() }
+        assertEquals(12_345L, result.weeklySteps)
     }
 
     /**

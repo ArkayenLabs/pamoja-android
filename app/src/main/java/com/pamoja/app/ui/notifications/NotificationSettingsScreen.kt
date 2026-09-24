@@ -28,12 +28,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +40,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +51,7 @@ import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
+import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
 import com.pamoja.app.util.NotificationCategory
 
@@ -72,7 +70,7 @@ fun NotificationSettingsScreen(
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // Re-checked on resume rather than at construction, because the usual way
@@ -317,11 +315,10 @@ private fun SectionLabel(text: String) {
 /**
  * One category, showing the real state of its Android notification channel.
  *
- * The switch is deliberately not interactive on its own. Android will not let
- * an app change a channel's importance once the channel exists, so a switch
- * that appeared to flip it would either lie or silently do nothing. Instead the
- * whole row is tappable and opens that channel's own system screen, which is
- * the only place the setting really lives. Coming back re-reads it.
+ * Android owns notification-channel state once a channel exists, so this row
+ * reports the real state and opens the one place it can actually be changed.
+ * A switch would imply an in-app toggle and feel broken when Android settings
+ * opened instead.
  */
 @Composable
 private fun CategoryToggle(
@@ -380,19 +377,23 @@ private fun CategoryToggle(
 
         Spacer(modifier = Modifier.width(Spacing.x3))
 
-        Switch(
-            checked = enabled,
-            // The row owns the tap. A switch that handled it too would give two
-            // targets for one action, and this one cannot be set directly.
-            onCheckedChange = null,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = colors.accentPrimary,
-                checkedBorderColor = colors.accentPrimary,
-                uncheckedThumbColor = colors.textTertiary,
-                uncheckedTrackColor = colors.surface2,
-                uncheckedBorderColor = colors.borderDefault,
+        Text(
+            text = stringResource(
+                if (enabled) R.string.notif_status_on else R.string.notif_status_off
             ),
+            style = MaterialTheme.typography.labelMedium,
+            color = if (enabled) colors.accentPrimary else colors.textTertiary,
+            modifier = Modifier
+                .clip(PillShape)
+                .background(if (enabled) colors.accentPrimarySubtle else colors.surface2)
+                .padding(horizontal = Spacing.x3, vertical = Spacing.x2),
+        )
+        Spacer(modifier = Modifier.width(Spacing.x2))
+        Icon(
+            painter = painterResource(PamojaIcons.ChevronRight),
+            contentDescription = null,
+            tint = colors.textTertiary,
+            modifier = Modifier.size(18.dp),
         )
     }
 }

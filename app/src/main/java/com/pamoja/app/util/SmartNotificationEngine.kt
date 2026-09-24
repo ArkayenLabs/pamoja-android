@@ -15,13 +15,11 @@ import java.time.LocalTime
 //    most devices. If it does not fit in the tray it does not exist. Titles
 //    are kept under ~30 characters and bodies under ~55.
 //
-// 2. NEVER INSERT THE GROUP NAME INTO A SENTENCE.
-//    Users name groups anything: "Sharma Family", "friends", "ready", "office",
-//    "The Walkers", a single letter. Dropping that into a sentence produces
-//    "friends needs 8,200" or "Still just you in ready". Both read as broken.
-//    So sentences always say "your group". The real name appears only as a
-//    standalone title, where no grammar can break, and only when it is short
-//    enough to survive the tray.
+// 2. PERSONAL MEANS SPECIFIC.
+//    A first name alone is cosmetic. Use the live group name, teammate, gap,
+//    step count, time pressure, or personal contribution that caused this
+//    notification. Group names are truncated and placed only where arbitrary
+//    user-created text cannot break the grammar.
 //
 // 3. WIT, NOT SHAME.
 //    Duolingo and Zomato are funny because they roast the SITUATION. Duo is
@@ -104,6 +102,9 @@ data class NotificationContext(
     val memberJustAheadName: String? = null,
     val stepsToOvertakeMemberAhead: Long = 0L,
     val memberWhoJustPassedYouName: String? = null,
+    val userJustTookLead: Boolean = false,
+    val memberJustBehindName: String? = null,
+    val stepsAheadOfMemberBehind: Long = 0L,
 
     val goalReachedJustNow: Boolean = false,
     val newMemberName: String? = null,
@@ -230,35 +231,54 @@ object SmartNotificationEngine {
         val progress = if (ctx.weeklyGoal > 0) {
             ctx.groupStepsTotal.toFloat() / ctx.weeklyGoal
         } else 0f
+        val group = groupLabel(ctx.groupName)
 
         // 100 · Goal reached. Peak end rule: this is both the peak and the
         // ending. Credit stays collective, because naming a top contributor
         // implies a bottom one.
         if (ctx.goalReachedJustNow) {
+            val total = format(ctx.groupStepsTotal)
+            val target = format(ctx.weeklyGoal)
             out += achievement(seed, ctx, 100, listOf(
-                "Goal smashed" to "All of you got there. Nicely done.",
-                "That is the week" to "Weekly goal done. Take the win.",
-                "You did it" to "Every single one of you.",
+                "$group did it." to "$total steps together. Goal met. Show-offs.",
+                "Goal met. Everyone act casual." to "$group crossed $target steps.",
             ))
         }
 
         // 90 · First ever sync. Kills the "is this thing even on" doubt that
         // quietly murders week one retention.
         if (ctx.isFirstEverSync) {
-            out += achievement(seed, ctx, 90, listOf(
-                "It is working" to "Your steps are live. Your group can see them.",
-                "You are on the board" to "Steps syncing. No excuses now.",
-            ))
+            val todaySteps = format(ctx.userStepsToday)
+            val variants = if (ctx.userStepsToday > 0L) {
+                listOf(
+                    "$todaySteps steps. Found them." to
+                        "You're live in $group. The board just changed.",
+                    "You are on the board." to
+                        "$todaySteps steps landed in $group. Good start.",
+                )
+            } else {
+                listOf(
+                    "You are live." to "$group is connected. Your next steps count.",
+                )
+            }
+            out += achievement(seed, ctx, 90, variants)
         }
 
         // 80 · Someone joined. Closes the loop for whoever sent the invite.
         ctx.newMemberName?.let { name ->
             val who = shortName(name)
-            out += groupActivity(seed, ctx, 80, listOf(
-                "$who joined" to "The group just grew.",
-                "$who is in" to "One more pair of legs.",
-                "Say hi to $who" to "They just joined your group.",
-            ))
+            val variants = if (ctx.memberCount == 2) {
+                listOf(
+                    "Now it’s a group." to "$who joined you. Two people, one weekly goal.",
+                )
+            } else {
+                listOf(
+                    "$who actually joined." to
+                        "$group is now ${ctx.memberCount} strong. Try to look normal.",
+                    "Say hi to $who." to "$group has ${ctx.memberCount} people now.",
+                )
+            }
+            out += groupActivity(seed, ctx, 80, variants)
         }
 
         // 70 · Close to the goal, running out of week. Goal gradient effect:
@@ -266,11 +286,32 @@ object SmartNotificationEngine {
         // singled out.
         if (remaining > 0 && progress >= 0.75f && ctx.daysLeftInWeek <= 2) {
             val left = format(remaining)
-            val when_ = if (ctx.daysLeftInWeek == 1) "Today is the last day." else "Two days left."
-            out += reminder(seed, ctx, 70, listOf(
-                "$left to go" to when_,
-                "So close" to "$left left. $when_",
-                "Nearly there" to "$left between you and the goal.",
+            val each = format(perMemberShare(remaining, ctx.memberCount))
+            val variants = if (ctx.daysLeftInWeek == 1) {
+                listOf(
+                    "Final day. $left left." to "$each each. Suspiciously doable.",
+                    "$left steps left." to "Open $group. Someone needs to call the walk.",
+                )
+            } else {
+                listOf(
+                    "$left steps left." to "$each each. Two days. Very doable.",
+                    "The goal is close." to "$left steps between $group and done.",
+                )
+            }
+            out += reminder(seed, ctx, 70, variants)
+        }
+
+        // 68 · The user just took first place. This is earned swagger, backed
+        // by the exact gap and the teammate who can take it back.
+        if (ctx.userJustTookLead &&
+            ctx.stepsAheadOfMemberBehind > 0L &&
+            !ctx.memberJustBehindName.isNullOrBlank()
+        ) {
+            val who = shortName(ctx.memberJustBehindName)
+            val gap = format(ctx.stepsAheadOfMemberBehind)
+            out += groupActivity(seed, ctx, 68, listOf(
+                "Look who is first." to
+                    "You, by $gap steps. Screenshot it before $who walks.",
             ))
         }
 
@@ -278,10 +319,11 @@ object SmartNotificationEngine {
         // user. Always paired with something actionable.
         ctx.memberWhoJustPassedYouName?.let { name ->
             val who = shortName(name)
+            val gap = format(ctx.stepsToOvertakeMemberAhead)
+            val walk = walkInSongs(ctx.stepsToOvertakeMemberAhead)
             out += groupActivity(seed, ctx, 65, listOf(
-                "$who just passed you" to "Rude. Also fixable.",
-                "$who slipped ahead" to "That is one walk away.",
-                "$who is ahead now" to "Surely not for long.",
+                "$who passed you." to "By $gap steps. That is annoyingly catchable.",
+                "Tiny problem: $who." to "$gap steps ahead. $walk should fix it.",
             ))
         }
 
@@ -294,10 +336,11 @@ object SmartNotificationEngine {
                 val who = shortName(name)
                 val g = format(gap)
                 val mins = minutesToWalk(gap)
+                val walk = walkInSongs(gap)
                 out += reminder(seed, ctx, 60, listOf(
-                    "$g behind $who" to "About a $mins minute walk. Just saying.",
-                    "$g from $who" to "That is $mins minutes of walking.",
-                    "$who is $g ahead" to "Catchable before bed.",
+                    "Tiny problem: $who." to
+                        "$who is $g steps ahead. $walk should fix it.",
+                    "$g steps behind $who." to "About $mins minutes. Annoyingly close.",
                 ))
             }
         }
@@ -307,17 +350,17 @@ object SmartNotificationEngine {
         if (ctx.streakAtRiskToday && ctx.currentStreakDays >= 3) {
             val days = ctx.currentStreakDays
             out += achievement(seed, ctx, 55, listOf(
-                "$days days so far" to "One walk keeps it going. Or do not. Genuinely fine.",
-                "$days day streak" to "Still alive. Your call today.",
+                "Your streak is being dramatic." to "It wants one walk before midnight.",
+                "$days days. Still alive." to "One walk keeps it safe tonight.",
             ))
         }
 
         // 50 · Monday recap.
         if (ctx.today == DayOfWeek.MONDAY) {
-            val mine = format(ctx.userStepsThisWeek)
+            val target = format(ctx.weeklyGoal)
             out += recap(seed, ctx, 50, listOf(
-                "New week" to "You put in $mine last week. Clean slate.",
-                "Here we go again" to "$mine steps behind you. Fresh target today.",
+                "New week. Same people." to "$target steps waiting in $group.",
+                "$group starts again." to "Fresh scoreboard. Go make it interesting.",
             ))
         }
 
@@ -332,9 +375,24 @@ object SmartNotificationEngine {
         ) {
             val left = format(remaining)
             out += reminder(seed, ctx, 40, listOf(
-                "Your group needs $left" to "Yours count too.",
-                "$left left this week" to "Every step lands in the same pot.",
-                "Group is $left short" to "Any walk helps close it.",
+                "Your steps count today." to "$group is $left short. Even a small walk changes it.",
+            ))
+        }
+
+        // 35 · A small, recoverable low-step day can take a gentle roast. This
+        // is only for someone who already moved on another day this week. Two
+        // quiet days or a hard week require warmth, and that data does not yet
+        // exist here, so the engine stays silent rather than guessing.
+        if (ctx.userStepsToday in 1L..500L &&
+            ctx.userStepsThisWeek > ctx.userStepsToday &&
+            !ctx.now.isBefore(LocalTime.of(16, 0))
+        ) {
+            val todaySteps = format(ctx.userStepsToday)
+            val name = personalName(ctx.userName)
+            val title = name?.let { "$it, be honest." } ?: "Be honest."
+            out += reminder(seed, ctx, 35, listOf(
+                title to "$todaySteps steps today. Did the phone stay home, or did you?",
+                "Your walking shoes asked." to "I said you were busy. Do not make me a liar.",
             ))
         }
 
@@ -342,21 +400,8 @@ object SmartNotificationEngine {
         // This roasts the empty room instead, and gives them the fix.
         if (ctx.memberCount <= 1 && ctx.groupAgeMs > TWELVE_HOURS_MS) {
             out += reminder(seed, ctx, 30, listOf(
-                "Party of one" to "Send that invite link to someone.",
-                "It is quiet in here" to "Pamoja works better with company.",
-            ))
-        }
-
-        // 20 · Weekend nudge. Lowest priority on purpose. It carries no news,
-        // so it should almost never win.
-        if (remaining > 0 &&
-            (ctx.today == DayOfWeek.SATURDAY || ctx.today == DayOfWeek.SUNDAY) &&
-            progress < 0.9f
-        ) {
-            val pct = percent(progress)
-            out += reminder(seed, ctx, 20, listOf(
-                "The sofa can wait" to "Your group is $pct percent there.",
-                "Weekend legs" to "$pct percent done. Room for more.",
+                "Strong leader. Tiny team." to "Still just you in $group. Send the invite.",
+                "Attendance today: you." to "Your invite link is getting lonely.",
             ))
         }
 
@@ -378,14 +423,35 @@ object SmartNotificationEngine {
         return if (name.length > MAX_NAME_IN_TITLE) name.take(MAX_NAME_IN_TITLE).trimEnd() else name
     }
 
+    private fun personalName(raw: String): String? =
+        shortName(raw).takeUnless {
+            it.isBlank() ||
+                it.equals("there", ignoreCase = true) ||
+                it.equals("friend", ignoreCase = true) ||
+                it.equals("someone", ignoreCase = true)
+        }
+
+    private fun groupLabel(raw: String): String {
+        val clean = raw.trim().replace(Regex("\\s+"), " ")
+        return if (clean.isBlank()) "Your group" else clean.take(MAX_NAME_IN_TITLE).trimEnd()
+    }
+
     /** Locale independent thousands separators, so tests stay stable. */
     private fun format(value: Long): String =
         value.toString().reversed().chunked(3).joinToString(",").reversed()
 
-    private fun percent(progress: Float): Int = (progress * 100).toInt().coerceIn(0, 100)
-
     /** Deliberately conservative, roughly 100 steps per minute. */
     private fun minutesToWalk(steps: Long): Int = (steps / 100).coerceAtLeast(1).toInt()
+
+    private fun walkInSongs(steps: Long): String {
+        val songs = ((minutesToWalk(steps) + 3) / 4).coerceAtLeast(1)
+        return if (songs == 1) "One song" else "$songs songs"
+    }
+
+    private fun perMemberShare(remaining: Long, memberCount: Int): Long {
+        val members = memberCount.coerceAtLeast(1).toLong()
+        return (remaining + members - 1) / members
+    }
 
     private fun achievement(
         seed: Int, ctx: NotificationContext, priority: Int, v: List<Pair<String, String>>,

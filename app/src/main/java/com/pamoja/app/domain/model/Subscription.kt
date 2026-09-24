@@ -20,6 +20,10 @@ data class Entitlement(
     val isInTrial: Boolean = false,
     /** Epoch millis this period ends. 0 when free. */
     val expiresAt: Long = 0L,
+    /** Number of groups this store tier may sponsor. */
+    val groupCapacity: Int = 0,
+    /** RevenueCat's current Google Play product identifier, used for upgrades. */
+    val productId: String? = null,
 ) {
     val isPremium: Boolean get() = tier == PlanTier.Premium
 }
@@ -45,20 +49,18 @@ data class Entitlement(
  * loop, and the loop stays free on every tier, permanently.
  *
  * **Premium is a property of a GROUP, not of a person.** One member pays and
- * every member of that group gets it, the Life360 Circle model, which reported
+ * every member of each covered group gets it. Store tiers define how many
+ * groups the payer can cover; the base tier covers one and the next tier covers
+ * two. This follows the Life360 Circle model, which reported
  * roughly 3.2 million paying Circles at about $142 per year each in Q2 2026 on
  * exactly this mechanic. It converts better because only one person has to say
  * yes, it is fairer because the organiser is usually the most motivated, and it
- * is simpler to implement: one purchase token, one server-side entitlement
- * fanned out to the group.
+ * is simple to understand: one store subscription, server-verified capacity,
+ * and group-level access shared with every current member.
  *
- * What premium sells is **depth**: history beyond the current week, the weekly
- * recap, streak insurance, group memory, captain tools. Depth only matters to a
- * group that is already engaged, which is exactly where willingness to pay sits.
- *
- * 🔴 **None of those features exist yet.** Do not wire an entry point to
- * `PaywallScreen` until they do. Selling a feature that has not been built is
- * both a Play policy problem and a refund conversation.
+ * What Premium sells is **depth**: completed-week history, collaborative weekly
+ * planning and Together Trail. These features are gated only after they have a
+ * working screen, server-side access check and recovery path.
  */
 object PlanLimits {
 

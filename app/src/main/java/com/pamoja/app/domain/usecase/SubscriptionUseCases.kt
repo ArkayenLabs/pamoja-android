@@ -26,8 +26,12 @@ class GetSubscriptionPlansUseCase @Inject constructor(
 class PurchaseSubscriptionUseCase @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
 ) {
-    suspend operator fun invoke(planId: String, activity: Any): Result<Entitlement> =
-        subscriptionRepository.purchase(planId, activity)
+    suspend operator fun invoke(
+        planId: String,
+        activity: Any,
+        replacingProductId: String? = null,
+    ): Result<Entitlement> =
+        subscriptionRepository.purchase(planId, activity, replacingProductId)
 }
 
 class RestorePurchasesUseCase @Inject constructor(

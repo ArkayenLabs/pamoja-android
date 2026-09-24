@@ -1,11 +1,11 @@
 package com.pamoja.app.ui.paywall
 
 import androidx.activity.compose.LocalActivity
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,8 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,14 +42,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.SponsorshipFailure
 import com.pamoja.app.domain.model.BillingPeriod
+import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.repository.SubscriptionPlan
+import com.pamoja.app.domain.repository.TrialPeriod
+import com.pamoja.app.domain.repository.TrialUnit
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.PamojaNotice
+import com.pamoja.app.ui.components.PamojaErrorState
+import com.pamoja.app.ui.components.PamojaConfirmDialog
 import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.theme.LocalPamojaColors
@@ -77,13 +87,143 @@ fun PaywallScreen(
     viewModel: PaywallViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = LocalActivity.current
+    var showMoveConfirmation by rememberSaveable { mutableStateOf(false) }
 
     // Nothing left to sell them once they are Premium.
     LaunchedEffect(uiState.justUpgraded) {
         if (uiState.justUpgraded) onDismiss()
+    }
+
+    val group = uiState.group
+    if (group == null) {
+        PaywallGroupContextState(
+            isLoading = uiState.isGroupLoading,
+            error = uiState.groupError,
+            onRetry = viewModel::loadGroupContext,
+            onDismiss = onDismiss,
+        )
+        return
+    }
+
+    if (showMoveConfirmation) {
+        PamojaConfirmDialog(
+            title = stringResource(R.string.paywall_move_title),
+            body = stringResource(if (uiState.purchaseContext?.subscriptionIsActive == true || uiState.hasUnconfirmedPurchase)
+                R.string.premium_move_named_body else R.string.premium_purchase_named_body,
+                uiState.purchaseContext?.sponsoredGroupName ?: stringResource(R.string.premium_another_group), group.name),
+            confirmLabel = stringResource(if (uiState.purchaseContext?.subscriptionIsActive == true || uiState.hasUnconfirmedPurchase)
+                R.string.paywall_move_confirm else R.string.premium_continue_checkout),
+            onConfirm = {
+                showMoveConfirmation = false
+                if (uiState.hasUnconfirmedPurchase) viewModel.moveSponsorshipHere()
+                else activity?.let { viewModel.purchase(it, confirmMove = true) }
+            },
+            onDismiss = { showMoveConfirmation = false },
+            isDestructive = false,
+        )
+    }
+
+    val purchaseContext = uiState.purchaseContext
+    if (purchaseContext != null && (purchaseContext.groupIsPremium || purchaseContext.subscriptionIsActive)) {
+        val needsCapacityUpgrade = purchaseContext.assignedElsewhere &&
+            !purchaseContext.hasAvailableGroupSlot
+        Column(modifier = Modifier.fillMaxSize().background(colors.surfaceApp)
+            .statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())
+            .padding(Spacing.x6), verticalArrangement = Arrangement.spacedBy(Spacing.x4)) {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.paywall_close)) }
+            Text(stringResource(R.string.paywall_title), style = MaterialTheme.typography.headlineLarge,
+                color = colors.textPrimary)
+            Text(group.name, style = MaterialTheme.typography.titleLarge, color = colors.textSecondary)
+            PamojaNotice(icon = PamojaIcons.Star,
+                title = stringResource(when {
+                    purchaseContext.groupIsPremium -> R.string.premium_group_active
+                    needsCapacityUpgrade -> R.string.premium_choose_group_title
+                    else -> R.string.premium_subscription_found
+                }),
+                body = stringResource(when {
+                    purchaseContext.groupIsPremium -> R.string.premium_group_active_body
+                    needsCapacityUpgrade -> R.string.premium_choose_group_body
+                    else -> R.string.premium_apply_existing_body
+                }),
+                tone = NoticeTone.Neutral)
+            if (!purchaseContext.groupIsPremium) {
+                if (purchaseContext.assignedElsewhere) Text(stringResource(R.string.premium_previous_group,
+                    purchaseContext.sponsoredGroupName ?: stringResource(R.string.premium_another_group)),
+                    color = colors.textSecondary)
+
+                if (needsCapacityUpgrade) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else if (uiState.plans.isEmpty()) {
+                        PamojaNotice(
+                            icon = PamojaIcons.AlertCircle,
+                            title = stringResource(R.string.premium_more_groups_unavailable_title),
+                            body = stringResource(R.string.premium_more_groups_unavailable_body),
+                            tone = NoticeTone.Warning,
+                        )
+                    } else {
+                        uiState.plans.forEach { plan ->
+                            PlanCard(
+                                plan = plan,
+                                isSelected = plan.id == uiState.selectedPlanId,
+                                onSelect = { viewModel.selectPlan(plan.id) },
+                                modifier = Modifier.fillMaxWidth().height(112.dp),
+                            )
+                        }
+                        uiState.selectedPlan?.let { plan ->
+                            Text(
+                                text = renewalDisclosure(plan),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.textSecondary,
+                            )
+                        }
+                        Button(
+                            enabled = uiState.selectedPlan != null && !uiState.isBusy &&
+                                !uiState.hasUnconfirmedPurchase,
+                            onClick = { activity?.let(viewModel::keepBothGroupsPremium) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.premium_keep_both_action))
+                        }
+                    }
+                    TextButton(
+                        enabled = !uiState.isBusy && !uiState.hasUnconfirmedPurchase,
+                        onClick = { showMoveConfirmation = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.paywall_move_action))
+                    }
+                } else {
+                    Button(
+                        enabled = !uiState.isBusy && !uiState.hasUnconfirmedPurchase,
+                        onClick = { activity?.let { viewModel.purchase(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.premium_apply_existing))
+                    }
+                }
+            }
+            if (purchaseContext.isGroupSponsor || purchaseContext.subscriptionIsActive) {
+                TextButton(onClick = { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("https://play.google.com/store/account/subscriptions"))) }) {
+                    Text(stringResource(R.string.premium_manage_play))
+                }
+            }
+            if (uiState.isBusy) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            (uiState.sponsorshipError ?: uiState.error)?.let { error ->
+                val copy = error.toErrorCopy()
+                PamojaNotice(icon = PamojaIcons.AlertCircle, title = stringResource(copy.title),
+                    body = copy.body(context), tone = NoticeTone.Warning)
+            }
+            TextButton(onClick = {
+                if (uiState.hasUnconfirmedPurchase) viewModel.retrySponsorshipVerification()
+                else viewModel.loadGroupContext()
+            }, enabled = !uiState.isBusy) { Text(stringResource(R.string.premium_refresh_status)) }
+        }
+        return
     }
 
     Box(
@@ -126,51 +266,40 @@ fun PaywallScreen(
                     color = colors.textSecondary,
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.x7))
+                Spacer(modifier = Modifier.height(Spacing.x3))
 
-                // ── What you get ────────────────────────────────────────────
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.x4)) {
-                    // Group size is deliberately absent from this list. It
-                    // used to be the headline benefit, 20 members against 8 on
-                    // free, and that was the model dropped on 2026-08-21: see
-                    // PlanLimits. Nobody upgrades to add a 21st member, and the
-                    // wall sat inside the invite loop the product grows by.
-                    Benefit(
-                        icon = PamojaIcons.Users,
-                        title = stringResource(R.string.paywall_benefit_group),
-                        body = stringResource(R.string.paywall_benefit_group_sub),
-                    )
-                    Benefit(
-                        icon = PamojaIcons.Clock,
-                        title = stringResource(R.string.paywall_benefit_history),
-                        body = stringResource(R.string.paywall_benefit_history_sub),
-                    )
-                    Benefit(
-                        icon = PamojaIcons.Trophy,
-                        title = stringResource(R.string.paywall_benefit_stats),
-                        body = stringResource(R.string.paywall_benefit_stats_sub),
-                    )
+                SponsoringGroupCard(group = group)
+
+                Spacer(modifier = Modifier.height(Spacing.x4))
+
+                PremiumIncludesCard(planningAvailable = purchaseContext?.planningAvailable == true,
+                    trailAvailable = com.pamoja.app.BuildConfig.TOGETHER_TRAIL_ENABLED && purchaseContext?.trailAvailable == true)
+
+                if (purchaseContext?.assignedElsewhere == true) {
+                    Spacer(modifier = Modifier.height(Spacing.x3))
+                    Text(stringResource(if (purchaseContext.subscriptionIsActive)
+                        R.string.premium_previous_group else R.string.premium_previous_group_inactive,
+                        purchaseContext.sponsoredGroupName ?: stringResource(R.string.premium_another_group)),
+                        color = colors.textSecondary, style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.x4))
 
-                // Says plainly what is not behind the wall. Reassurance, and
-                // also true: paywalling step tracking would break the groups
-                // free users are in.
-                Text(
-                    text = stringResource(R.string.paywall_free_forever),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textTertiary,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x7))
-
                 // ── Plans ───────────────────────────────────────────────────
                 when {
                     uiState.isLoading -> {
-                        SkeletonBlock(modifier = Modifier.fillMaxWidth(), height = 76.dp)
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-                        SkeletonBlock(modifier = Modifier.fillMaxWidth(), height = 76.dp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x3)) {
+                            SkeletonBlock(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1.05f),
+                            )
+                            SkeletonBlock(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1.05f),
+                            )
+                        }
                     }
 
                     uiState.plansUnavailable -> PamojaNotice(
@@ -180,18 +309,33 @@ fun PaywallScreen(
                         tone = NoticeTone.Neutral,
                     )
 
-                    else -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.x3)) {
-                        uiState.plans.forEach { plan ->
+                    uiState.plans.size == 1 -> {
+                        val plan = uiState.plans.single()
+                        PlanCard(
+                            plan = plan,
+                            isSelected = plan.id == uiState.selectedPlanId,
+                            onSelect = { viewModel.selectPlan(plan.id) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(112.dp),
+                        )
+                    }
+
+                    else -> Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x3)) {
+                        uiState.plans.take(2).forEach { plan ->
                             PlanCard(
                                 plan = plan,
                                 isSelected = plan.id == uiState.selectedPlanId,
                                 onSelect = { viewModel.selectPlan(plan.id) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1.05f),
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.x5))
+                Spacer(modifier = Modifier.height(Spacing.x4))
 
                 // ── The disclosure, before the button, never after ──────────
                 //
@@ -208,20 +352,36 @@ fun PaywallScreen(
                 }
 
                 uiState.error?.let { error ->
+                    val copy = error.toErrorCopy()
                     PamojaNotice(
                         icon = PamojaIcons.AlertCircle,
-                        title = stringResource(R.string.paywall_failed_title),
-                        body = error.toErrorCopy().body(context),
+                        title = stringResource(copy.title),
+                        body = copy.body(context),
                         tone = NoticeTone.Danger,
                     )
                     Spacer(modifier = Modifier.height(Spacing.x4))
                 }
 
+                if (uiState.isVerifyingSponsorship || uiState.sponsorshipError != null) {
+                    SponsorshipVerificationNotice(
+                        groupName = group.name,
+                        isVerifying = uiState.isVerifyingSponsorship,
+                        hasUnconfirmedPurchase = uiState.hasUnconfirmedPurchase,
+                        error = uiState.sponsorshipError,
+                        onRetry = viewModel::retrySponsorshipVerification,
+                        onMove = { showMoveConfirmation = true },
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.x4))
+                }
+
                 Button(
-                    onClick = { activity?.let(viewModel::purchase) },
+                    onClick = {
+                        if (purchaseContext?.assignedElsewhere == true) showMoveConfirmation = true
+                        else activity?.let { viewModel.purchase(it) }
+                    },
                     enabled = uiState.selectedPlan != null &&
-                        !uiState.isPurchasing &&
-                        !uiState.isRestoring,
+                        !uiState.isBusy &&
+                        !uiState.hasUnconfirmedPurchase,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -233,16 +393,23 @@ fun PaywallScreen(
                         disabledContentColor = colors.textTertiary,
                     ),
                 ) {
-                    if (uiState.isPurchasing) {
+                    if (uiState.isPurchasing || uiState.isVerifyingSponsorship) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
                             color = colors.textOnBrand,
                             strokeWidth = 2.dp,
                         )
+                        if (uiState.isVerifyingSponsorship) {
+                            Spacer(modifier = Modifier.width(Spacing.x2))
+                            Text(
+                                text = stringResource(R.string.paywall_verifying_button),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
                     } else {
                         Text(
                             text = stringResource(
-                                if ((uiState.selectedPlan?.trialDays ?: 0) > 0) {
+                                if (uiState.selectedPlan?.trial != null) {
                                     R.string.paywall_start_trial
                                 } else {
                                     R.string.paywall_subscribe
@@ -253,23 +420,13 @@ fun PaywallScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                Text(
-                    text = stringResource(R.string.paywall_cancel_anytime),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textTertiary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
                 Spacer(modifier = Modifier.height(Spacing.x2))
 
                 // Required by Play, and the thing a returning user on a new
                 // phone reaches for first.
                 TextButton(
                     onClick = { viewModel.restore() },
-                    enabled = !uiState.isPurchasing && !uiState.isRestoring,
+                    enabled = !uiState.isBusy && !uiState.hasUnconfirmedPurchase,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
@@ -293,26 +450,89 @@ fun PaywallScreen(
 }
 
 @Composable
-private fun Benefit(
-    @DrawableRes icon: Int,
-    title: String,
-    body: String,
+private fun PaywallGroupContextState(
+    isLoading: Boolean,
+    error: AppError?,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val colors = LocalPamojaColors.current
 
-    Row(verticalAlignment = Alignment.Top) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.surfaceApp)
+            .statusBarsPadding(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+                Icon(
+                    painter = painterResource(PamojaIcons.Close),
+                    contentDescription = stringResource(R.string.paywall_close),
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(PamojaRadii.xs))
-                .background(colors.accentPrimary.copy(alpha = 0.12f)),
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            when {
+                isLoading -> CircularProgressIndicator(
+                    color = colors.accentPrimary,
+                    strokeWidth = 2.dp,
+                )
+
+                error != null -> PamojaErrorState(
+                    error = error,
+                    onRetry = onRetry.takeIf { error.isRetryable },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Names the exact group before any price or purchase action appears.
+ *
+ * This is intentionally not inferred from the previous screen. The ViewModel
+ * has already reloaded both this group and the viewer's membership, so the
+ * label remains trustworthy after process recreation and stale navigation.
+ */
+@Composable
+internal fun SponsoringGroupCard(group: Group) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.md)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, shape)
+            .semantics(mergeDescendants = true) {}
+            .padding(Spacing.x4),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(PamojaRadii.sm))
+                .background(colors.accentPrimarySubtle),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(icon),
+                painter = painterResource(PamojaIcons.Users),
                 contentDescription = null,
                 tint = colors.accentPrimary,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(22.dp),
             )
         }
 
@@ -320,16 +540,145 @@ private fun Benefit(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
+                text = stringResource(R.string.paywall_sponsoring_label),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.accentPrimary,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = group.name,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary,
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                // Names the free limit next to the premium one. A benefit list
-                // that never says what you have today is asking people to
-                // guess whether they need it.
-                text = body,
+                text = stringResource(R.string.paywall_sponsoring_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        }
+    }
+}
+
+/** Payment and server assignment are separate states, stated without jargon. */
+@Composable
+internal fun SponsorshipVerificationNotice(
+    groupName: String,
+    isVerifying: Boolean,
+    hasUnconfirmedPurchase: Boolean,
+    error: AppError?,
+    onRetry: () -> Unit,
+    onMove: () -> Unit,
+) {
+    val context = LocalContext.current
+    if (isVerifying) {
+        PamojaNotice(
+            icon = PamojaIcons.Clock,
+            title = stringResource(R.string.paywall_verifying_title),
+            body = stringResource(R.string.paywall_verifying_body, groupName),
+            tone = NoticeTone.Info,
+        )
+        return
+    }
+
+    val visibleError = error ?: return
+    val waitingForRevenueCat =
+        (visibleError as? AppError.Sponsorship)?.reason ==
+            SponsorshipFailure.NoActiveSubscription &&
+            hasUnconfirmedPurchase
+    val assignedElsewhere =
+        (visibleError as? AppError.Sponsorship)?.reason ==
+            SponsorshipFailure.SubscriptionAssignedElsewhere &&
+            hasUnconfirmedPurchase
+    val targetChangedAfterPurchase =
+        (visibleError as? AppError.Sponsorship)?.reason in setOf(
+            SponsorshipFailure.GroupUnavailable,
+            SponsorshipFailure.NotCurrentMember,
+            SponsorshipFailure.GroupAlreadySponsored,
+        ) && hasUnconfirmedPurchase
+    val copy = visibleError.toErrorCopy()
+    PamojaNotice(
+        icon = PamojaIcons.AlertCircle,
+        title = if (waitingForRevenueCat) {
+            stringResource(R.string.paywall_verify_failed_title)
+        } else if (targetChangedAfterPurchase) {
+            stringResource(R.string.paywall_unassigned_title)
+        } else {
+            stringResource(copy.title)
+        },
+        body = if (waitingForRevenueCat) {
+            stringResource(R.string.paywall_verify_failed_body, groupName)
+        } else if (targetChangedAfterPurchase) {
+            stringResource(R.string.paywall_unassigned_body, groupName)
+        } else {
+            copy.body(context)
+        },
+        tone = if (waitingForRevenueCat || assignedElsewhere || targetChangedAfterPurchase) {
+            NoticeTone.Warning
+        } else {
+            NoticeTone.Danger
+        },
+        actionLabel = when {
+            assignedElsewhere -> stringResource(R.string.paywall_move_action)
+            visibleError.isRetryable -> stringResource(R.string.paywall_verify_retry)
+            else -> null
+        },
+        onAction = when {
+            assignedElsewhere -> onMove
+            visibleError.isRetryable -> onRetry
+            else -> null
+        },
+    )
+}
+
+@Composable
+private fun PremiumIncludesCard(planningAvailable: Boolean = false, trailAvailable: Boolean = false) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.md)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, shape)
+            .padding(Spacing.x3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(PamojaRadii.xs))
+                .background(colors.accentPrimary.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.Clock),
+                contentDescription = null,
+                tint = colors.accentPrimary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(Spacing.x3))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(when {
+                    trailAvailable -> R.string.premium_trail_title
+                    planningAvailable -> R.string.paywall_benefit_compact_title
+                    else -> R.string.premium_history_title
+                }),
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.textPrimary,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = stringResource(when {
+                    trailAvailable -> R.string.premium_trail_body
+                    planningAvailable -> R.string.paywall_benefit_compact_body
+                    else -> R.string.premium_history_body
+                }),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
             )
@@ -342,13 +691,13 @@ private fun PlanCard(
     plan: SubscriptionPlan,
     isSelected: Boolean,
     onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = LocalPamojaColors.current
     val shape = RoundedCornerShape(PamojaRadii.md)
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
+    Column(
+        modifier = modifier
             .clip(shape)
             .background(if (isSelected) colors.accentPrimarySubtle else colors.surface1)
             .border(
@@ -358,9 +707,12 @@ private fun PlanCard(
             )
             .clickable(onClick = onSelect)
             .padding(Spacing.x4),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = stringResource(
                     when (plan.period) {
@@ -368,27 +720,34 @@ private fun PlanCard(
                         BillingPeriod.Monthly -> R.string.paywall_plan_monthly
                     }
                 ),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.textPrimary,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = plan.price,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-            )
+            if (isSelected) {
+                Icon(
+                    painter = painterResource(PamojaIcons.Check),
+                    contentDescription = stringResource(R.string.common_selected),
+                    tint = colors.accentPrimary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
-
-        // Selection is carried by the tick as well as by colour and border, so
-        // it survives being read without colour perception.
-        if (isSelected) {
-            Icon(
-                painter = painterResource(PamojaIcons.Check),
-                contentDescription = stringResource(R.string.common_selected),
-                tint = colors.accentPrimary,
-                modifier = Modifier.size(20.dp),
-            )
-        }
+        Text(
+            text = plan.price,
+            style = MaterialTheme.typography.headlineSmall,
+            color = colors.textPrimary,
+        )
+        Text(
+            text = stringResource(
+                when (plan.period) {
+                    BillingPeriod.Annual -> R.string.paywall_per_year
+                    BillingPeriod.Monthly -> R.string.paywall_per_month
+                }
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.textTertiary,
+        )
     }
 }
 
@@ -404,15 +763,25 @@ private fun renewalDisclosure(plan: SubscriptionPlan): String {
             BillingPeriod.Monthly -> R.string.paywall_period_month
         }
     )
-    return if (plan.trialDays > 0) {
-        pluralStringResource(
-            R.plurals.paywall_disclosure_trial,
-            plan.trialDays,
-            plan.trialDays,
+    return plan.trial?.let { trial ->
+        stringResource(
+            R.string.paywall_disclosure_trial,
+            trialLabel(trial),
             plan.price,
             periodLabel,
         )
-    } else {
+    } ?: run {
         stringResource(R.string.paywall_disclosure, plan.price, periodLabel)
     }
+}
+
+@Composable
+private fun trialLabel(trial: TrialPeriod): String {
+    val resource = when (trial.unit) {
+        TrialUnit.Day -> R.plurals.paywall_trial_days
+        TrialUnit.Week -> R.plurals.paywall_trial_weeks
+        TrialUnit.Month -> R.plurals.paywall_trial_months
+        TrialUnit.Year -> R.plurals.paywall_trial_years
+    }
+    return pluralStringResource(resource, trial.value, trial.value)
 }

@@ -4,6 +4,17 @@ import com.pamoja.app.domain.model.BillingPeriod
 import com.pamoja.app.domain.model.Entitlement
 import kotlinx.coroutines.flow.Flow
 
+enum class TrialUnit { Day, Week, Month, Year }
+
+data class TrialPeriod(
+    val value: Int,
+    val unit: TrialUnit,
+) {
+    init {
+        require(value > 0) { "Trial period must be positive" }
+    }
+}
+
 /**
  * One plan the user can buy.
  *
@@ -13,12 +24,17 @@ import kotlinx.coroutines.flow.Flow
  * computed would eventually lie to somebody.
  */
 data class SubscriptionPlan(
+    /** RevenueCat package identifier. Unique even when base plans share a product. */
     val id: String,
+    /** Google Play subscription product identifier, retained for diagnostics. */
+    val storeProductId: String,
     val period: BillingPeriod,
     /** Formatted by the store, e.g. "₹999.00". Display only, never arithmetic. */
     val price: String,
-    /** Trial length in days, 0 when this plan has no trial. */
-    val trialDays: Int = 0,
+    /** How many groups this product covers. One for the original plan. */
+    val groupCapacity: Int = 1,
+    /** Exact store trial period. Null when this package has no free phase. */
+    val trial: TrialPeriod? = null,
 )
 
 /**
@@ -48,7 +64,11 @@ interface SubscriptionRepository {
      * Starts the store's purchase flow. [activity] is Any for the same reason
      * as in AuthRepository: the domain layer may not name an Android type.
      */
-    suspend fun purchase(planId: String, activity: Any): Result<Entitlement>
+    suspend fun purchase(
+        planId: String,
+        activity: Any,
+        replacingProductId: String? = null,
+    ): Result<Entitlement>
 
     /** Re-reads entitlements from the store, for a reinstall or a new device. */
     suspend fun restorePurchases(): Result<Entitlement>

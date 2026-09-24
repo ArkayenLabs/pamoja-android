@@ -29,16 +29,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,10 +51,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.StepGoal
+import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaNotice
@@ -78,16 +78,17 @@ fun CreateGroupScreen(
     viewModel: CreateGroupViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
-    val uiState           by viewModel.uiState.collectAsState()
+    val uiState           by viewModel.uiState.collectAsStateWithLifecycle()
 
     var groupName          by remember { mutableStateOf("") }
-    var weeklyTargetIndex  by remember { mutableFloatStateOf(2f) }
+    var weeklyTarget       by rememberSaveable {
+        mutableIntStateOf(StepGoal.DEFAULT_WEEKLY_TOTAL)
+    }
     // Seeded from the device locale, which is right for most people and is what
     // every comparable app defaults to. Monday across most of Europe and Asia,
     // Sunday in the US, Canada and Japan.
     var weekStartDay       by remember { mutableStateOf(WeekWindow.localeDefault()) }
     var maxMembers         by remember { mutableFloatStateOf(10f) }
-    var canMembersEdit     by remember { mutableStateOf(true) }
 
     // Hoisted: validate runs outside composable scope.
     val nameRequired = stringResource(R.string.create_group_name_required)
@@ -99,21 +100,13 @@ fun CreateGroupScreen(
     val nameErrorFor: (String) -> String? = { input ->
         when {
             input.isBlank() -> nameRequired
-            input.trim().length > 50 -> nameTooLong
+            input.trim().length > UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH -> nameTooLong
             else -> null
         }
     }
     val nameError = nameErrorFor(groupName)
 
-    // Per person per day, not a group total. See StepGoal for why: a total
-    // cannot be judged without dividing it by members and days, and it made the
-    // goal easier the bigger the group got.
-    val stepPresets      = StepGoal.PRESETS_DAILY_PER_PERSON
-    val stepPresetLabels = listOf("4k", "6k", "8k", "10k", "12k")
-    val selectedIndex    = weeklyTargetIndex.toInt()
-    val selectedPerPerson = stepPresets[selectedIndex]
     val memberCount      = maxMembers.toInt()
-    val selectedTarget   = StepGoal.weeklyTotalFor(selectedPerPerson, memberCount)
 
     LaunchedEffect(uiState.createdGroupId) {
         uiState.createdGroupId?.let {
@@ -182,10 +175,17 @@ fun CreateGroupScreen(
                     // ── Group name ─────────────────────────────────────────
                     PamojaTextField(
                         value         = groupName,
-                        onValueChange = { groupName = it },
+                        onValueChange = {
+                            groupName = it.take(UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH)
+                        },
                         label         = stringResource(R.string.create_group_name_label),
                         placeholder   = stringResource(R.string.create_group_name_placeholder),
                         enabled       = !uiState.isLoading,
+                        supportingText = stringResource(
+                            R.string.group_name_character_count,
+                            groupName.length,
+                            UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH,
+                        ),
                         validate      = nameErrorFor,
                     )
 
@@ -197,7 +197,7 @@ fun CreateGroupScreen(
                             label = stringResource(R.string.create_group_weekly_goal),
                         ) {
                             Text(
-                                text  = "%,d".format(selectedPerPerson),
+                                text  = "%,d".format(weeklyTarget),
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontSize = MaterialTheme.typography.headlineMedium.fontSize,
                                     fontWeight = FontWeight.Bold,
@@ -208,44 +208,15 @@ fun CreateGroupScreen(
 
                         Spacer(modifier = Modifier.height(Spacing.x4))
 
-                        PamojaSlider(
-                            value         = weeklyTargetIndex,
-                            onValueChange = { weeklyTargetIndex = it },
-                            valueRange    = 0f..4f,
-                            steps         = 3,
-                            accent        = colors.accentPrimary,
+                        WeeklyGoalPicker(
+                            selectedGoal = weeklyTarget,
+                            onGoalSelected = { weeklyTarget = it },
                         )
 
                         Spacer(modifier = Modifier.height(Spacing.x3))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            stepPresetLabels.forEachIndexed { index, label ->
-                                val active = index == selectedIndex
-                                Text(
-                                    text  = label,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                                    ),
-                                    color = if (active) colors.accentPrimary else colors.textTertiary
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-
-                        // What the number actually asks of a person. A weekly
-                        // group total means nothing until it is divided by seven
-                        // days and the people expected to walk it.
                         Text(
-                            text = pluralStringResource(
-                                R.plurals.create_group_goal_hint,
-                                memberCount,
-                                "%,d".format(selectedTarget),
-                                memberCount,
-                            ),
+                            text = stringResource(R.string.create_group_goal_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.textTertiary
                         )
@@ -294,44 +265,6 @@ fun CreateGroupScreen(
                         ) {
                             Text("2",  style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
                             Text("20", style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-
-                    // ── Members can edit goal toggle ───────────────────────
-                    SettingCard(verticalPadding = Spacing.x4) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text  = stringResource(R.string.create_group_members_edit),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = colors.textPrimary
-                                )
-                                Spacer(modifier = Modifier.height(Spacing.x1))
-                                Text(
-                                    text  = stringResource(R.string.create_group_members_edit_sub),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.textSecondary
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(Spacing.x3))
-                            Switch(
-                                checked         = canMembersEdit,
-                                onCheckedChange = { canMembersEdit = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor    = Color.White,
-                                    checkedTrackColor    = colors.accentPrimary,
-                                    checkedBorderColor   = colors.accentPrimary,
-                                    uncheckedThumbColor  = colors.textTertiary,
-                                    uncheckedTrackColor  = colors.surface2,
-                                    uncheckedBorderColor = colors.borderDefault
-                                )
-                            )
                         }
                     }
 
@@ -468,9 +401,8 @@ fun CreateGroupScreen(
                         onClick = rememberSingleClick {
                             viewModel.createGroup(
                                 name                 = groupName.trim(),
-                                dailyPerPersonTarget = selectedPerPerson,
+                                weeklyTarget = weeklyTarget,
                                 maxMemberCap         = memberCount,
-                                canMembersEditTarget = canMembersEdit,
                                 weekStartDay         = weekStartDay
                             )
                         },

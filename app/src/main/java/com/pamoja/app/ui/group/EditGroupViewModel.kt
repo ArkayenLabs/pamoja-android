@@ -11,6 +11,7 @@ import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
+import com.pamoja.app.domain.usecase.DeleteGroupUseCase
 import com.pamoja.app.domain.usecase.GetGroupMembersUseCase
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.RemoveGroupMemberUseCase
@@ -37,10 +38,9 @@ data class EditGroupUiState(
     val currentUserId: String = "",
 
     val name: String = "",
-    /** The setting. The group total is derived from it, never edited directly. */
-    val dailyPerPersonTarget: Int = StepGoal.DEFAULT_DAILY_PER_PERSON,
+    /** The stable group promise; it is never derived from member count. */
+    val weeklyTarget: Int = StepGoal.DEFAULT_WEEKLY_TOTAL,
     val maxMemberCap: Int = 10,
-    val canMembersEditTarget: Boolean = false,
     val weekStartDay: DayOfWeek = DayOfWeek.MONDAY,
 
     /** Everyone in the group, so the admin can remove someone. */
@@ -51,11 +51,14 @@ data class EditGroupUiState(
     /** The group's photo, blank when it has none. */
     val photoUrl: String = "",
     val isUploadingPhoto: Boolean = false,
+    val isDeleting: Boolean = false,
 
     val error: AppError? = null,
     val isSaved: Boolean = false,
+    val isDeleted: Boolean = false,
 ) {
     val isAdmin: Boolean get() = group != null && group.adminId == currentUserId
+    val weekStartLocked: Boolean get() = !group?.plannedWeekStart.isNullOrBlank()
 
     /**
      * The floor the cap slider may not go below.
@@ -70,14 +73,19 @@ data class EditGroupUiState(
     val isDirty: Boolean
         get() = group?.let {
             name.trim() != it.name ||
-                dailyPerPersonTarget != it.effectiveDailyPerPerson ||
+                weeklyTarget != it.weeklyTarget ||
                 maxMemberCap != it.maxMemberCap ||
-                canMembersEditTarget != it.canMembersEditTarget ||
                 weekStartDay != it.startDay
         } ?: false
 
     val canSave: Boolean
-        get() = isAdmin && isDirty && !isSaving && !isOffline && name.isNotBlank()
+        get() = isAdmin &&
+            isDirty &&
+            !isSaving &&
+            !isDeleting &&
+            !isOffline &&
+            name.isNotBlank() &&
+            name.trim().length <= UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH
 }
 
 /**
@@ -97,6 +105,7 @@ class EditGroupViewModel @Inject constructor(
     private val removeGroupMemberUseCase: RemoveGroupMemberUseCase,
     private val updateGroupPhotoUseCase: UpdateGroupPhotoUseCase,
     private val removeGroupPhotoUseCase: RemoveGroupPhotoUseCase,
+    private val deleteGroupUseCase: DeleteGroupUseCase,
     private val connectivityObserver: ConnectivityObserver,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -142,12 +151,8 @@ class EditGroupViewModel @Inject constructor(
                         group = group,
                         currentUserId = user.userId,
                         name = group.name,
-                        // effective, not raw: a legacy group has no
-                        // per-person figure stored, so this back-computes the
-                        // one its total implies rather than showing zero.
-                        dailyPerPersonTarget = group.effectiveDailyPerPerson,
+                        weeklyTarget = group.weeklyTarget,
                         maxMemberCap = group.maxMemberCap,
-                        canMembersEditTarget = group.canMembersEditTarget,
                         weekStartDay = group.startDay,
                         photoUrl = group.photoUrl,
                         error = null,
@@ -184,15 +189,15 @@ class EditGroupViewModel @Inject constructor(
     }
 
     fun onNameChange(value: String) {
-        _uiState.value = _uiState.value.copy(name = value)
+        _uiState.value = _uiState.value.copy(
+            name = value.take(UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH),
+        )
     }
 
-    fun onDailyPerPersonChange(value: Int) {
+    fun onWeeklyTargetChange(value: Int) {
         _uiState.value = _uiState.value.copy(
-            dailyPerPersonTarget = value.coerceIn(
-                StepGoal.MIN_DAILY_PER_PERSON,
-                StepGoal.MAX_DAILY_PER_PERSON,
-            )
+            weeklyTarget = value.takeIf(StepGoal::isValidWeeklyTotal)
+                ?: _uiState.value.weeklyTarget,
         )
     }
 
@@ -205,11 +210,8 @@ class EditGroupViewModel @Inject constructor(
         )
     }
 
-    fun onMembersEditTargetChange(value: Boolean) {
-        _uiState.value = _uiState.value.copy(canMembersEditTarget = value)
-    }
-
     fun onWeekStartDayChange(value: DayOfWeek) {
+        if (_uiState.value.weekStartLocked) return
         _uiState.value = _uiState.value.copy(weekStartDay = value)
     }
 
@@ -225,9 +227,8 @@ class EditGroupViewModel @Inject constructor(
                 group = group,
                 editorId = state.currentUserId,
                 name = state.name,
-                dailyPerPersonTarget = state.dailyPerPersonTarget,
+                weeklyTarget = state.weeklyTarget,
                 maxMemberCap = state.maxMemberCap,
-                canMembersEditTarget = state.canMembersEditTarget,
                 weekStartDay = state.weekStartDay,
             ).fold(
                 onSuccess = {
@@ -328,6 +329,30 @@ class EditGroupViewModel @Inject constructor(
                         error = e.toAppError(),
                     )
                 }
+            )
+        }
+    }
+
+    fun deleteGroup() {
+        val state = _uiState.value
+        val group = state.group ?: return
+        if (!state.isAdmin || state.isOffline || state.isDeleting) return
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(isDeleting = true, error = null)
+            deleteGroupUseCase(group, state.currentUserId).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isDeleting = false,
+                        isDeleted = true,
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isDeleting = false,
+                        error = error.toAppError(),
+                    )
+                },
             )
         }
     }

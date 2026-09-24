@@ -12,16 +12,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -37,12 +39,9 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -72,11 +71,10 @@ import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.formatSyncTime
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.PamojaNotice
+import com.pamoja.app.ui.components.PamojaBottomBar
+import com.pamoja.app.ui.components.PamojaMainTab
 import com.pamoja.app.ui.components.toSnackbarMessage
-import androidx.compose.runtime.DisposableEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -92,29 +90,26 @@ import com.pamoja.app.util.QrScanner
 import kotlinx.coroutines.launch
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
-import kotlinx.coroutines.delay
-import java.util.Calendar
 
 // PullToRefreshBox is still marked experimental in Material 3. It is the
 // official pull-to-refresh and the alternative is hand-rolling the gesture,
 // which would be worse and would still have to be replaced later.
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun GroupsScreen(
     onGroupClick: (String) -> Unit,
     onCreateGroup: () -> Unit,
+    onTodayClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onActivityClick: () -> Unit,
     onSessionExpired: () -> Unit,
     onOpenInvite: (String) -> Unit,
-    onConnectHealth: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
     val context = LocalContext.current
-    val uiState     by viewModel.uiState.collectAsState()
-    val joinUiState by joinViewModel.uiState.collectAsState()
+    val uiState     by viewModel.uiState.collectAsStateWithLifecycle()
+    val joinUiState by joinViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showJoinDialog by remember { mutableStateOf(false) }
@@ -126,18 +121,6 @@ fun HomeScreen(
 
     // Null until a sync has ever happened, which renders as no timestamp.
     val homeSyncedAt = formatSyncTime(context, uiState.lastSyncedAt)
-
-    // Re-read on resume, not just at construction. Health Connect permission
-    // can be granted or revoked in system settings while this screen is alive,
-    // and returning from granting it should clear the prompt immediately.
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshHealthConnectStatus()
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
 
     LaunchedEffect(uiState.error) {
         val error = uiState.error ?: return@LaunchedEffect
@@ -158,15 +141,6 @@ fun HomeScreen(
             viewModel.clearError()
         }
     }
-    // An invite captured before this person had an account. Opens the preview
-    // rather than joining, so they see the group before they are in it.
-    LaunchedEffect(joinUiState.pendingCode) {
-        joinUiState.pendingCode?.let { code ->
-            joinViewModel.clearPendingCode()
-            onOpenInvite(code)
-        }
-    }
-
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { /* The OS owns the answer; nothing here needs to react to it. */ }
@@ -174,7 +148,7 @@ fun HomeScreen(
     // The system dialog is no longer fired on arrival. It used to go up on the
     // first composition of Home, before the user had a group, any steps, or a
     // reason to say yes, and on Android 13+ that single denial is permanent.
-    // Now the primer asks first and only "Turn on" spends the real prompt.
+    // Now the primer asks first and only the allow action spends the real prompt.
     if (uiState.showNotificationPrimer &&
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
         ContextCompat.checkSelfPermission(
@@ -315,7 +289,10 @@ fun HomeScreen(
 
     Scaffold(
         containerColor = colors.surfaceApp,
-        snackbarHost   = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost   = { SnackbarHost(hostState = snackbarHostState) },
+        contentWindowInsets = WindowInsets.systemBars.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Top,
+        ),
     ) { innerPadding ->
 
         Box(
@@ -342,17 +319,9 @@ fun HomeScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Greeting header
+                    // Stable brand bar: no rotating copy or time-dependent greeting.
                     item {
-                        HomeHeader(
-                            name = uiState.userName
-                                .takeIf { it.isNotBlank() }
-                                ?.split(" ")
-                                ?.firstOrNull() ?: stringResource(R.string.home_greeting_fallback),
-                            onSettingsClick = onSettingsClick,
-                            onActivityClick = onActivityClick,
-                            unreadCount = uiState.unreadActivityCount,
-                        )
+                        GroupsHeader()
                     }
 
                     // Sits under the greeting rather than over the content, so
@@ -369,19 +338,29 @@ fun HomeScreen(
                         )
                     }
 
-                    // Without the permission nothing on this screen can ever be
-                    // anything but zero, so it is said here rather than left to
-                    // be discovered in Settings.
-                    if (uiState.needsHealthConnect) {
-                        item {
+                    item {
+                        GroupActions(
+                            onCreateGroup = onCreateGroup,
+                            onJoinGroup = { showJoinDialog = true },
+                        )
+                    }
+
+                    // An invitation from an interrupted sign-in is remembered,
+                    // but never forced into a later session. The person can see
+                    // why it is here, continue deliberately, or dismiss it.
+                    joinUiState.pendingCode?.let { code ->
+                        item(key = "pending-invite-$code") {
                             PamojaNotice(
-                                icon = PamojaIcons.Footprints,
-                                title = stringResource(R.string.home_health_needed_title),
-                                body = stringResource(R.string.home_health_needed_body),
-                                tone = NoticeTone.Warning,
-                                actionLabel = stringResource(R.string.home_health_needed_action),
-                                onAction = onConnectHealth,
-                                onDismiss = viewModel::dismissHealthConnectPrompt,
+                                icon = PamojaIcons.Link,
+                                title = stringResource(R.string.home_pending_invite_title),
+                                body = stringResource(R.string.home_pending_invite_body),
+                                tone = NoticeTone.Info,
+                                actionLabel = stringResource(R.string.home_pending_invite_action),
+                                onAction = {
+                                    joinViewModel.markPendingInviteOpened()
+                                    onOpenInvite(code)
+                                },
+                                onDismiss = joinViewModel::dismissPendingInvite,
                                 modifier = Modifier.padding(
                                     horizontal = Spacing.x6,
                                     vertical = Spacing.x2,
@@ -421,20 +400,16 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = colors.textTertiary,
                                 )
-                                // The count sits with the label, per the design.
-                                // It answers "is this all of them" without
-                                // making the reader count rows.
-                                Text(
-                                    text  = "${uiState.groups.size}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = colors.textTertiary,
-                                )
                             }
                         }
                     }
 
                     // Group cards
-                    items(uiState.groups) { group ->
+                    items(
+                        items = uiState.groups,
+                        key = Group::groupId,
+                        contentType = { "group" },
+                    ) { group ->
                         GroupCard(
                             group   = group,
                             onClick = { onGroupClick(group.groupId) }
@@ -454,11 +429,12 @@ fun HomeScreen(
                 }
                 }
 
-                // ── Floating bottom action bar ────────────────────────────
-                BottomActionBar(
-                    onCreateGroup = onCreateGroup,
-                    onJoinGroup   = { showJoinDialog = true },
-                    modifier      = Modifier.align(Alignment.BottomCenter)
+                PamojaBottomBar(
+                    selected = PamojaMainTab.Groups,
+                    onToday = onTodayClick,
+                    onGroups = {},
+                    onYou = onSettingsClick,
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
         }
@@ -467,160 +443,21 @@ fun HomeScreen(
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 @Composable
-private fun HomeHeader(
-    name: String,
-    onSettingsClick: () -> Unit,
-    onActivityClick: () -> Unit,
-    unreadCount: Int,
+private fun GroupsHeader(
 ) {
-    val colors = LocalPamojaColors.current
-    // Time-aware greeting. The hour is remembered, not the resolved string:
-    // stringResource cannot be called inside remember, and resolving outside it
-    // also means the greeting follows a language change.
-    val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
-    val greeting = stringResource(
-        when {
-            hour < 12 -> R.string.home_good_morning
-            hour < 17 -> R.string.home_good_afternoon
-            else -> R.string.home_good_evening
-        }
-    )
-
-    // Rotating motivational subtitles, cycles every 4 seconds
-    val subtitles = listOf(
-        stringResource(R.string.home_tagline_1),
-        stringResource(R.string.home_tagline_2),
-        stringResource(R.string.home_tagline_3),
-        stringResource(R.string.home_tagline_4),
-        stringResource(R.string.home_tagline_5),
-    )
-    var subtitleIndex by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(4_000)
-            subtitleIndex = (subtitleIndex + 1) % subtitles.size
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.x6)
-            .padding(top = Spacing.x4, bottom = Spacing.x1)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // headlineMedium, not headlineLarge, and clamped.
-            //
-            // The design draws this at its h1 size next to a single control, in
-            // a frame where "Good morning, Ravi" just fits. This header carries
-            // two controls, so on a 360dp phone the greeting gets about 224dp,
-            // and at 30sp even a short first name wrapped. Two lines is the
-            // fallback rather than the normal case now, and the name is capped
-            // so an unusually long one cannot push it past that.
-            Text(
-                text  = "$greeting, $name",
-                style = MaterialTheme.typography.headlineMedium,
-                color = colors.textPrimary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            // Activity, with a dot when something arrived since the last look.
-            // A dot rather than a count: the question people have is "did I
-            // miss anything", and a number invites reading it as a to-do list.
-            IconButton(
-                onClick = onActivityClick,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.TopEnd) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Bell),
-                        contentDescription = stringResource(R.string.activity_open_desc),
-                        tint = colors.accentPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    if (unreadCount > 0) {
-                        Box(
-                            modifier = Modifier
-                                .size(9.dp)
-                                .clip(CircleShape)
-                                // Ringed in the page colour so the dot stays
-                                // legible where it overlaps the bell.
-                                .background(colors.surfaceApp)
-                                .padding(1.dp)
-                                .clip(CircleShape)
-                                .background(colors.statusDanger)
-                        )
-                    }
-                }
-            }
-            IconButton(
-                onClick = onSettingsClick,
-                modifier = Modifier.size(44.dp) // Touch target
-            ) {
-                Icon(
-                    painter = painterResource(PamojaIcons.Settings),
-                    contentDescription = stringResource(R.string.home_settings_desc),
-                    tint = colors.accentPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(Spacing.x2))
-        // The design puts the tagline in the brand colour at semibold, which is
-        // what stops it reading as a second, greyer heading.
-        Text(
-            text  = subtitles[subtitleIndex],
-            style = MaterialTheme.typography.titleSmall,
-            color = colors.accentPrimary
-        )
-    }
-}
-
-// ─── Join via link card ───────────────────────────────────────────────────────
-@Composable
-private fun JoinLinkCard(onClick: () -> Unit) {
     val colors = LocalPamojaColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.x6, vertical = Spacing.x3)
-            .clip(RoundedCornerShape(PamojaRadii.md))
-            .background(colors.accentTealSubtle)
-            .clickable { onClick() }
-            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
+            .padding(horizontal = Spacing.x6)
+            .padding(top = Spacing.x3, bottom = Spacing.x2),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(colors.accentTeal.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(PamojaIcons.Link),
-                contentDescription = null,
-                tint     = colors.accentTeal,
-                modifier = Modifier.size(16.dp)
-            )
-        }
         Text(
-            text     = stringResource(R.string.home_join_cta),
-            style    = MaterialTheme.typography.bodyMedium,
-            color    = colors.accentTeal,
-            modifier = Modifier.weight(1f)
-        )
-        Icon(
-            painter = painterResource(PamojaIcons.ChevronRight),
-            contentDescription = null,
-            tint     = colors.accentTeal,
-            modifier = Modifier.size(16.dp)
+            text = stringResource(R.string.groups_title),
+            style = MaterialTheme.typography.headlineMedium,
+            color = colors.textPrimary,
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -676,7 +513,7 @@ fun GroupCard(group: Group, onClick: () -> Unit) {
             // from last week under this week's goal would be worse than showing
             // nothing, so a stale or missing marker renders no bar at all rather
             // than a confident zero.
-            if (WeekWindow.isCurrent(group.weekStart, group.startDay) && group.weeklyTarget > 0) {
+            if (WeekWindow.isCurrent(group) && group.weeklyTarget > 0) {
                 val fraction = (group.weeklySteps.toFloat() / group.weeklyTarget)
                     .coerceIn(0f, 1f)
 
@@ -772,31 +609,25 @@ private fun EmptyGroupsState() {
 // ─── Bottom action bar ────────────────────────────────────────────────────────
 // Two equal buttons side by side, floating above nav bar.
 @Composable
-private fun BottomActionBar(
+private fun GroupActions(
     onCreateGroup: () -> Unit,
     onJoinGroup: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val colors = LocalPamojaColors.current
-    // Gradient scrim behind the buttons so they're never transparent over content
-    Box(
-        modifier = modifier
+    Column(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(
-                brush = Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0f to colors.surfaceApp.copy(alpha = 0f),
-                        0.25f to colors.surfaceApp
-                    )
-                )
-            )
+            .padding(horizontal = Spacing.x6, vertical = Spacing.x4),
     ) {
+        Text(
+            text = stringResource(R.string.groups_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.textSecondary,
+        )
+        Spacer(modifier = Modifier.height(Spacing.x4))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = Spacing.x6, vertical = Spacing.x4),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
         ) {
             // Join (tonal secondary)
             Button(

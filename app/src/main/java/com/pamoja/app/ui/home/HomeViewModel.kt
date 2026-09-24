@@ -10,9 +10,14 @@ import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.StepEntry
+import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
+import com.pamoja.app.domain.usecase.GetMyStepsForWeekUseCase
 import com.pamoja.app.domain.usecase.GetUserGroupsUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
+import com.pamoja.app.util.WorkManagerScheduler
+import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,13 +26,25 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.DayOfWeek
 import javax.inject.Inject
+
+data class PersonalDay(
+    val date: LocalDate,
+    val steps: Long,
+)
 
 data class HomeUiState(
     val isLoading: Boolean = true,
     val groups: List<Group> = emptyList(),
     val userName: String = "",
+    val userPhotoUrl: String? = null,
+    /** The seven calendar days in Pamoja's stable Monday-to-Sunday personal week. */
+    val personalDays: List<PersonalDay> = emptyList(),
+    val hasLoadedPersonalSteps: Boolean = false,
     /**
      * Typed rather than a String so the screen can decide between a full error
      * state and a snackbar, and whether Retry is worth offering.
@@ -61,10 +78,9 @@ data class HomeUiState(
     /**
      * Health Connect is installed but not permitted, so no steps are arriving.
      *
-     * Checked here rather than only during onboarding. The permission screen is
-     * reachable from ProfileSetup alone, so anyone who declined it, reinstalled
-     * the app, or revoked it in system settings had a permanently stepless app
-     * and nothing on any screen saying why.
+     * Checked here as a recovery path after the contextual group connection.
+     * Anyone who declined it, reinstalled the app, or revoked it in system
+     * settings still needs a clear explanation of why steps are not arriving.
      *
      * False when Health Connect is unavailable entirely. That is not something
      * the user can act on from here, and a prompt that leads nowhere is worse
@@ -75,7 +91,7 @@ data class HomeUiState(
     val lastSyncedAt: Long = 0L,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
-    val hasContent: Boolean get() = groups.isNotEmpty()
+    val hasContent: Boolean get() = groups.isNotEmpty() || hasLoadedPersonalSteps
 
     val showEmptyState: Boolean get() = hasLoadedOnce && groups.isEmpty() && error == null
 
@@ -84,6 +100,13 @@ data class HomeUiState(
 
     /** Otherwise the error is a passing note over content that still stands. */
     val showErrorSnackbar: Boolean get() = error != null && hasContent
+
+    val personalWeekSteps: Long get() = personalDays.sumOf(PersonalDay::steps)
+
+    val todaySteps: Long get() = personalDays
+        .firstOrNull { it.date == LocalDate.now() }
+        ?.steps
+        ?: 0L
 }
 
 @HiltViewModel
@@ -91,17 +114,33 @@ class HomeViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val getUserGroupsUseCase: GetUserGroupsUseCase,
     private val getUserUseCase: GetUserUseCase,
+    private val getMyStepsForWeekUseCase: GetMyStepsForWeekUseCase,
     private val userPreferences: UserPreferences,
     private val analyticsManager: AnalyticsManager,
     private val connectivityObserver: ConnectivityObserver,
     private val activityLog: ActivityLogStore,
     private val healthConnectReader: HealthConnectReader,
+    private val workManagerScheduler: WorkManagerScheduler,
+    private val widgetUpdater: PamojaWidgetUpdater,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private var homeScreenReachedLogged = false
+
+    /**
+     * Exactly one Home data collector may exist at a time.
+     *
+     * Pull-to-refresh and Retry both restart the stream. Without keeping its
+     * Job, every call launched another permanent Firestore listener inside
+     * viewModelScope, so the screen became progressively busier the more it was
+     * refreshed.
+     */
+    private var homeLoadJob: Job? = null
+    private var personalStepsJob: Job? = null
+    private var personalStepEntries: List<StepEntry> = emptyList()
+    private var deviceTodaySteps: Long? = null
 
     /**
      * Session-scoped, deliberately not persisted.
@@ -126,16 +165,44 @@ class HomeViewModel @Inject constructor(
      */
     fun refreshHealthConnectStatus() {
         viewModelScope.launch {
-            val needed = !healthPromptDismissed &&
+            val needed = _uiState.value.groups.isNotEmpty() &&
+                !healthPromptDismissed &&
                 healthConnectReader.isAvailable() &&
                 !healthConnectReader.hasPermission()
             _uiState.value = _uiState.value.copy(needsHealthConnect = needed)
+            refreshDeviceTodaySteps()
         }
     }
 
     fun dismissHealthConnectPrompt() {
         healthPromptDismissed = true
         _uiState.value = _uiState.value.copy(needsHealthConnect = false)
+    }
+
+    /** Records the dashboard request before the system-owned dialog opens. */
+    fun onHealthConnectPermissionRequested() {
+        analyticsManager.logHealthConnectPermissionRequested()
+    }
+
+    /**
+     * Applies the platform result without routing through onboarding again.
+     *
+     * A grant immediately removes the warning and starts the normal sync path.
+     * A denial leaves the explanation visible so zero steps never look like a
+     * mysterious data bug.
+     */
+    fun onHealthConnectPermissionResult(granted: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setHealthConnectGranted(granted)
+            _uiState.value = _uiState.value.copy(needsHealthConnect = !granted)
+            if (granted) {
+                analyticsManager.logHealthConnectPermissionGranted()
+                workManagerScheduler.syncSoon()
+                refreshDeviceTodaySteps()
+            } else {
+                analyticsManager.logHealthConnectPermissionDenied()
+            }
+        }
     }
 
     /**
@@ -185,9 +252,11 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadHome() {
-        viewModelScope.launch {
+        homeLoadJob?.cancel()
+        homeLoadJob = viewModelScope.launch {
             val user = getCurrentUserUseCase()
             if (user == null) {
+                widgetUpdater.clear()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = AppError.SessionExpired(),
@@ -195,23 +264,28 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
-            // The auth record carries a UID and nothing else, so user.name here
-            // is always blank and the greeting fell back to "there" for
-            // everyone, on every sign-in method. The display name lives on the
-            // Firestore profile. Cache first so the greeting is right on the
-            // first frame, then confirm against the document.
+            // Firestore remains the source of truth for the name visible inside
+            // Pamoja groups, even when an auth provider also supplies one.
+            // Cache first so the greeting is right on the first frame, then
+            // confirm against the profile document.
             _uiState.value = _uiState.value.copy(isLoading = false)
 
             // Confirms the cached name against the document and writes any
             // difference back. Does not set userName directly: observeUserName
             // is the single writer of that field, so this update reaches the
             // greeting the same way an edit from the profile screen does.
-            val cachedName = userPreferences.userName.firstOrNull().orEmpty()
-            getUserUseCase(user.userId).onSuccess { profile ->
-                if (profile.name.isNotBlank() && profile.name != cachedName) {
-                    userPreferences.saveUserName(profile.name)
+            launch {
+                val cachedName = userPreferences.userName.firstOrNull().orEmpty()
+                getUserUseCase(user.userId).onSuccess { profile ->
+                    _uiState.value = _uiState.value.copy(userPhotoUrl = profile.photoUrl)
+                    if (profile.name.isNotBlank() && profile.name != cachedName) {
+                        userPreferences.saveUserName(profile.name)
+                    }
                 }
             }
+
+            observePersonalSteps(user.userId)
+            launch { refreshDeviceTodaySteps() }
 
             if (!homeScreenReachedLogged) {
                 homeScreenReachedLogged = true
@@ -227,6 +301,10 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 .collect { groups ->
+                    val needsHealthConnect = groups.isNotEmpty() &&
+                        !healthPromptDismissed &&
+                        healthConnectReader.isAvailable() &&
+                        !healthConnectReader.hasPermission()
                     _uiState.value = _uiState.value.copy(
                         groups = groups,
                         hasLoadedOnce = true,
@@ -236,7 +314,9 @@ class HomeViewModel @Inject constructor(
                         // if we have never explained it before.
                         showNotificationPrimer = groups.isNotEmpty() &&
                             !userPreferences.notificationPrimerShown.first(),
+                        needsHealthConnect = needsHealthConnect,
                     )
+                    publishWidgets()
                 }
         }
     }
@@ -274,6 +354,7 @@ class HomeViewModel @Inject constructor(
         if (_uiState.value.isRefreshing) return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isRefreshing = true, error = null)
+            refreshDeviceTodaySteps()
             loadHome()
             delay(REFRESH_SPINNER_MIN_MS)
             _uiState.value = _uiState.value.copy(isRefreshing = false)
@@ -284,8 +365,71 @@ class HomeViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(error = null)
     }
 
+    /**
+     * Personal progress is intentionally independent of any one group. A user
+     * may belong to circles with different week starts; their own dashboard
+     * stays Monday-to-Sunday while every group continues to use its stored
+     * shared boundary. A stable boundary also prevents the same account from
+     * changing its personal history when the phone locale changes.
+     */
+    private fun observePersonalSteps(userId: String) {
+        personalStepsJob?.cancel()
+        personalStepsJob = viewModelScope.launch {
+            val startDay = PERSONAL_WEEK_START_DAY
+            getMyStepsForWeekUseCase(userId, startDay)
+                .catch {
+                    _uiState.value = _uiState.value.copy(hasLoadedPersonalSteps = true)
+                }
+                .collect { entries ->
+                    personalStepEntries = entries
+                    publishPersonalDays(startDay)
+                }
+        }
+    }
+
+    /** Health Connect is the freshest source for today; Firestore fills history. */
+    private suspend fun refreshDeviceTodaySteps() {
+        val today = healthConnectReader.readTodaySteps() ?: return
+        deviceTodaySteps = today
+        publishPersonalDays(PERSONAL_WEEK_START_DAY)
+    }
+
+    private fun publishPersonalDays(startDay: java.time.DayOfWeek) {
+        val start = LocalDate.parse(WeekWindow.startOf(startDay))
+        val today = LocalDate.now()
+        val stepsByDate = personalStepEntries.mapNotNull { entry ->
+            runCatching { LocalDate.parse(entry.date) to entry.stepCount }.getOrNull()
+        }.toMap()
+        val days = (0L..6L).map { offset ->
+            val date = start.plusDays(offset)
+            PersonalDay(
+                date = date,
+                steps = if (date == today && deviceTodaySteps != null) {
+                    deviceTodaySteps!!
+                } else {
+                    stepsByDate[date] ?: 0L
+                },
+            )
+        }
+        _uiState.value = _uiState.value.copy(
+            personalDays = days,
+            hasLoadedPersonalSteps = true,
+        )
+        publishWidgets()
+    }
+
+    private fun publishWidgets() {
+        val state = _uiState.value
+        widgetUpdater.publish(
+            todaySteps = state.todaySteps,
+            weekSteps = state.personalWeekSteps,
+            groups = state.groups,
+        )
+    }
+
     private companion object {
         /** Long enough that the gesture is acknowledged, short enough not to stall. */
         const val REFRESH_SPINNER_MIN_MS = 450L
+        val PERSONAL_WEEK_START_DAY: DayOfWeek = DayOfWeek.MONDAY
     }
 }

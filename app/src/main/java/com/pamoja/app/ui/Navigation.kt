@@ -1,7 +1,11 @@
 package com.pamoja.app.ui
 
+import android.net.Uri
+import com.pamoja.app.domain.model.PamojaGroupId
+
 sealed class Screen(val route: String) {
-    object Welcome : Screen("welcome")
+    object IntroOne : Screen("intro/one")
+    object IntroTwo : Screen("intro/two")
 
     /**
      * Wrapper around the sign-in screens. They share one AuthViewModel scoped to
@@ -14,18 +18,37 @@ sealed class Screen(val route: String) {
     object Otp : Screen("otp")
     object EmailAuth : Screen("email_auth")
     object ForgotPassword : Screen("forgot_password?email={email}") {
-        fun createRoute(email: String) = "forgot_password?email=$email"
+        fun createRoute(email: String) = "forgot_password?email=${Uri.encode(email)}"
     }
 
     object ProfileSetup : Screen("profile_setup")
-    object HealthConnect : Screen("health_connect")
+    object HealthConnect : Screen("connect_steps/{groupId}") {
+        fun createRoute(groupId: String): String {
+            require(PamojaGroupId.isValid(groupId)) { "A valid group is required" }
+            return "connect_steps/$groupId"
+        }
+    }
     object Home : Screen("home")
+    object Groups : Screen("groups")
     object CreateGroup : Screen("create_group")
     object Invite : Screen("invite/{groupId}") {
         fun createRoute(groupId: String) = "invite/$groupId"
     }
     object Group : Screen("group/{groupId}") {
         fun createRoute(groupId: String) = "group/$groupId"
+    }
+    /** Completed weeks for one group. Current week progress remains on Group. */
+    object WeeklyReview : Screen("group/{groupId}/review") {
+        fun createRoute(groupId: String) = "group/$groupId/review"
+    }
+    object NextWeekPlan : Screen("group/{groupId}/plan") {
+        fun createRoute(groupId: String) = "group/$groupId/plan"
+    }
+    object Adventure : Screen("group/{groupId}/adventure") {
+        fun createRoute(groupId: String): String {
+            require(PamojaGroupId.isValid(groupId))
+            return "group/$groupId/adventure"
+        }
     }
     /** Admin-only settings for an existing group. */
     object EditGroup : Screen("group/{groupId}/edit") {
@@ -47,15 +70,21 @@ sealed class Screen(val route: String) {
     /** Open source licences, generated at build time. Legally required. */
     object Licenses : Screen("licenses")
 
-    /** Past notifications, after the system tray has forgotten them. */
+    /** Past updates, opened from the dashboard bell after the system tray forgets them. */
     object Activity : Screen("activity")
 
     /**
-     * Upgrade to Premium. Built, but deliberately without an entry point until
-     * a billing provider exists, since a paywall that cannot sell is worse
-     * than none.
+     * Upgrade one current group to Premium. Only its ID travels through
+     * navigation; the paywall reloads the name and membership before showing
+     * products. Its group-screen entry remains dormant unless the separate
+     * subscription sales switch is enabled.
      */
-    object Paywall : Screen("paywall")
+    object Paywall : Screen("group/{groupId}/sponsor") {
+        fun createRoute(groupId: String): String {
+            require(PamojaGroupId.isValid(groupId)) { "A valid group is required" }
+            return "group/$groupId/sponsor"
+        }
+    }
 
     /** Per-channel notification control and quiet hours. */
     object NotificationSettings : Screen("notification_settings")

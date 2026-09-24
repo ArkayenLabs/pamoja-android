@@ -37,13 +37,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,11 +59,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
-import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
 import com.pamoja.app.ui.components.GroupAvatar
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaConfirmDialog
+import com.pamoja.app.ui.components.PamojaDestructiveConfirmDialog
 import com.pamoja.app.ui.components.PamojaErrorState
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.SkeletonBlock
@@ -95,14 +93,16 @@ import java.time.DayOfWeek
 fun EditGroupScreen(
     onBack: () -> Unit,
     onSaved: () -> Unit,
+    onDeleted: () -> Unit,
     viewModel: EditGroupViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
     val context = LocalContext.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var pendingRemoval by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var pendingDeletion by rememberSaveable { mutableStateOf(false) }
 
     // Same two-step flow as the profile photo: pick, then frame, then upload.
     var pendingCropUri by rememberSaveable { mutableStateOf<String?>(null) }
@@ -112,6 +112,10 @@ fun EditGroupScreen(
 
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) onSaved()
+    }
+
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) onDeleted()
     }
 
     pendingCropUri?.let { uri ->
@@ -150,6 +154,26 @@ fun EditGroupScreen(
         )
     }
 
+    if (pendingDeletion) {
+        PamojaDestructiveConfirmDialog(
+            title = stringResource(R.string.edit_group_delete_title),
+            body = stringResource(R.string.edit_group_delete_body, uiState.group?.name.orEmpty()),
+            consequences = listOf(
+                stringResource(R.string.edit_group_delete_members),
+                stringResource(R.string.edit_group_delete_history),
+                stringResource(R.string.edit_group_delete_permanent),
+            ),
+            confirmationWord = uiState.group?.name.orEmpty(),
+            confirmationHint = stringResource(R.string.edit_group_delete_type_name),
+            confirmLabel = stringResource(R.string.edit_group_delete_confirm),
+            onConfirm = {
+                pendingDeletion = false
+                viewModel.deleteGroup()
+            },
+            onDismiss = { pendingDeletion = false },
+        )
+    }
+
     Scaffold(
         containerColor = colors.surfaceApp,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -177,6 +201,7 @@ fun EditGroupScreen(
                     viewModel = viewModel,
                     onBack = onBack,
                     onRequestRemove = { id, name -> pendingRemoval = id to name },
+                    onRequestDelete = { pendingDeletion = true },
                     photoPicker = photoPicker,
                 )
             }
@@ -190,6 +215,7 @@ private fun EditGroupContent(
     viewModel: EditGroupViewModel,
     onBack: () -> Unit,
     onRequestRemove: (String, String) -> Unit,
+    onRequestDelete: () -> Unit,
     photoPicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
 ) {
     val colors = LocalPamojaColors.current
@@ -326,6 +352,11 @@ private fun EditGroupContent(
                     label = stringResource(R.string.edit_group_name_label),
                     placeholder = stringResource(R.string.edit_group_name_placeholder),
                     enabled = uiState.isAdmin,
+                    supportingText = stringResource(
+                        R.string.group_name_character_count,
+                        uiState.name.length,
+                        UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH,
+                    ),
                 )
             }
 
@@ -339,45 +370,22 @@ private fun EditGroupContent(
                 Text(
                     text = stringResource(
                         R.string.edit_group_goal_value,
-                        "%,d".format(uiState.dailyPerPersonTarget),
+                        "%,d".format(uiState.weeklyTarget),
                     ),
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.accentPrimary,
                 )
-                // The derived group total, so the admin still sees the number
-                // the leaderboard is measured against. Secondary on purpose:
-                // it is the consequence of the choice, not the choice.
+                Spacer(Modifier.height(Spacing.x3))
+                WeeklyGoalPicker(
+                    selectedGoal = uiState.weeklyTarget,
+                    onGoalSelected = viewModel::onWeeklyTargetChange,
+                    enabled = uiState.isAdmin,
+                )
+                Spacer(Modifier.height(Spacing.x3))
                 Text(
-                    text = pluralStringResource(
-                        R.plurals.edit_group_goal_total,
-                        uiState.maxMemberCap,
-                        "%,d".format(
-                            StepGoal.weeklyTotalFor(
-                                uiState.dailyPerPersonTarget,
-                                uiState.maxMemberCap,
-                            )
-                        ),
-                        uiState.maxMemberCap,
-                    ),
+                    text = stringResource(R.string.edit_group_goal_organizer_only),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textTertiary,
-                )
-                Slider(
-                    value = uiState.dailyPerPersonTarget.toFloat(),
-                    onValueChange = {
-                        // Rounded to the nearest step so the number reads as a
-                        // goal rather than a sensor reading.
-                        viewModel.onDailyPerPersonChange(
-                            (it / GoalStep).toInt() * GoalStep
-                        )
-                    },
-                    valueRange = GoalMin.toFloat()..GoalMax.toFloat(),
-                    enabled = uiState.isAdmin,
-                    colors = SliderDefaults.colors(
-                        thumbColor = colors.accentPrimary,
-                        activeTrackColor = colors.accentPrimary,
-                        inactiveTrackColor = colors.surface2,
-                    ),
                 )
             }
 
@@ -429,7 +437,9 @@ private fun EditGroupContent(
             EditCard {
                 CardHeading(
                     title = stringResource(R.string.create_group_week_start),
-                    subtitle = stringResource(R.string.edit_group_week_start_sub),
+                    subtitle = if (uiState.weekStartLocked)
+                        stringResource(R.string.edit_group_week_start_planned, uiState.group?.plannedWeekStart.orEmpty())
+                    else stringResource(R.string.edit_group_week_start_sub),
                 )
                 Spacer(Modifier.height(Spacing.x3))
                 Row(
@@ -451,7 +461,7 @@ private fun EditGroupContent(
                                             else colors.borderSubtle,
                                     shape = PillShape,
                                 )
-                                .clickable(enabled = uiState.isAdmin) {
+                                .clickable(enabled = uiState.isAdmin && !uiState.weekStartLocked) {
                                     viewModel.onWeekStartDayChange(day)
                                 }
                                 .padding(vertical = Spacing.x3),
@@ -470,36 +480,6 @@ private fun EditGroupContent(
                             )
                         }
                     }
-                }
-            }
-
-            // ── Members can edit the goal ────────────────────────────────
-            EditCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        CardHeading(
-                            title = stringResource(R.string.create_group_members_edit),
-                            subtitle = stringResource(R.string.edit_group_members_edit_sub),
-                        )
-                    }
-                    Spacer(Modifier.width(Spacing.x3))
-                    Switch(
-                        checked = uiState.canMembersEditTarget,
-                        onCheckedChange = viewModel::onMembersEditTargetChange,
-                        enabled = uiState.isAdmin,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = colors.accentPrimary,
-                            checkedBorderColor = colors.accentPrimary,
-                            uncheckedThumbColor = colors.textTertiary,
-                            uncheckedTrackColor = colors.surface2,
-                            uncheckedBorderColor = colors.borderDefault,
-                        ),
-                    )
                 }
             }
 
@@ -564,6 +544,43 @@ private fun EditGroupContent(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+
+            // ── Danger zone ───────────────────────────────────────────────
+            if (uiState.isAdmin) {
+                EditCard {
+                    CardHeading(
+                        title = stringResource(R.string.edit_group_delete),
+                        subtitle = stringResource(R.string.edit_group_delete_sub),
+                    )
+                    Spacer(Modifier.height(Spacing.x3))
+                    Button(
+                        onClick = onRequestDelete,
+                        enabled = !uiState.isOffline && !uiState.isDeleting,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = PillShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.statusDangerSubtle,
+                            contentColor = colors.statusDanger,
+                            disabledContainerColor = colors.surface2,
+                            disabledContentColor = colors.textTertiary,
+                        ),
+                    ) {
+                        if (uiState.isDeleting) {
+                            CircularProgressIndicator(
+                                color = colors.statusDanger,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.edit_group_delete_confirm),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
                         }
                     }
                 }
@@ -659,7 +676,3 @@ private fun EditCard(content: @Composable ColumnScope.() -> Unit) {
         content = content,
     )
 }
-
-private const val GoalMin = StepGoal.MIN_DAILY_PER_PERSON
-private const val GoalMax = StepGoal.MAX_DAILY_PER_PERSON
-private const val GoalStep = 500

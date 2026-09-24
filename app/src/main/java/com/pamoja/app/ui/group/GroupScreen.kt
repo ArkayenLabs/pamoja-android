@@ -3,12 +3,10 @@ package com.pamoja.app.ui.group
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import com.pamoja.app.ui.theme.DisplayFontFamily
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,11 +25,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
@@ -40,13 +41,15 @@ import coil.compose.AsyncImage
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -61,12 +64,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.data.local.health.HealthConnectReader
@@ -76,31 +83,31 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.ui.components.PamojaNotice
 import com.pamoja.app.ui.components.NoticeTone
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
-import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.ui.components.GroupDashboardSkeleton
+import com.pamoja.app.ui.components.GroupAccessBadge
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.formatSyncTime
 import com.pamoja.app.ui.components.PamojaEmptyState
 import com.pamoja.app.ui.components.PamojaErrorState
+import com.pamoja.app.ui.components.PamojaMark
 import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.PillShape
 import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.util.BillingIdentity
 import com.pamoja.app.util.InviteLink
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalAdjusters
 
 /**
  * Which range the leaderboard ranks by.
@@ -152,14 +159,20 @@ fun GroupScreen(
     onBack: (() -> Unit)? = null,
     onShareInvite: () -> Unit,
     onEditGroup: () -> Unit,
+    onOpenWeeklyReview: () -> Unit,
+    onSponsorGroup: () -> Unit,
+    onOpenNextWeekPlan: () -> Unit = onOpenWeeklyReview,
+    onOpenAdventure: () -> Unit = {},
+    dayOnePlanningEnabled: Boolean = com.pamoja.app.BuildConfig.DAY_ONE_PLANNING_ENABLED,
+    subscriptionSalesEnabled: Boolean = BillingIdentity.isSalesEnabled,
     viewModel: GroupViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
-    val uiState              by viewModel.uiState.collectAsState()
+    val uiState              by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState    = remember { SnackbarHostState() }
     val userPreferences      = viewModel.userPreferences
     val isHealthConnectGranted by userPreferences.isHealthConnectGranted
-        .collectAsState(initial = false)
+        .collectAsStateWithLifecycle(initialValue = false)
     val context = LocalContext.current
     val scope   = rememberCoroutineScope()
 
@@ -167,6 +180,29 @@ fun GroupScreen(
     // it changes nothing in the domain and touches no repository, it only picks
     // which of two numbers already in hand is the one being compared.
     var leaderboardRange by rememberSaveable { mutableStateOf(LeaderboardRange.Today) }
+    var confirmLeave by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(uiState.hasLeftGroup) {
+        if (uiState.hasLeftGroup) {
+            confirmLeave = false
+            onBack?.invoke()
+        }
+    }
+    if (confirmLeave) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { if (!uiState.isLeaving) confirmLeave = false },
+        title = { Text(stringResource(R.string.group_leave_title)) },
+        text = { Text(stringResource(R.string.group_leave_body)) },
+        confirmButton = {
+            TextButton(enabled = !uiState.isLeaving && !uiState.isOffline,
+                onClick = { viewModel.leaveGroup() }) {
+                Text(stringResource(if (uiState.isLeaving) R.string.group_leaving else R.string.group_leave_title))
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !uiState.isLeaving, onClick = { confirmLeave = false }) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
 
     // Re-ranked for the chosen range, not just re-labelled: the medal has to
     // mean the column it sits next to. Computed here rather than inside the
@@ -218,6 +254,15 @@ fun GroupScreen(
         }
     }
 
+    if (uiState.showGoalCelebration) {
+        GoalCelebrationDialog(
+            groupName = uiState.group?.name.orEmpty(),
+            steps = uiState.combinedWeeklySteps,
+            target = uiState.group?.weeklyTarget ?: 0,
+            onDismiss = viewModel::dismissGoalCelebration,
+        )
+    }
+
     // Health Connect access can be revoked from outside the app entirely, and
     // nothing tells us when it happens. Re-checking on every resume is the only
     // reliable signal, and it is cheap.
@@ -232,9 +277,9 @@ fun GroupScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val today      = LocalDate.now()
-    val endOfWeek  = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-    val daysLeft   = ChronoUnit.DAYS.between(today, endOfWeek).toInt() + 1
+    val daysLeft = uiState.group?.let {
+        WeekWindow.daysLeftIn(it.startDay, uiState.reportingDate ?: WeekWindow.todayFor(it))
+    } ?: DaysInWeek
 
     Box(
         modifier = Modifier
@@ -278,11 +323,14 @@ fun GroupScreen(
                         groupName   = uiState.group?.name ?: "",
                         memberCount = uiState.memberStepData.size,
                         isAdmin     = uiState.isAdmin,
+                        groupAccess = uiState.groupAccess,
+                        onPremiumDetails = onSponsorGroup,
                         isFull      = uiState.group?.let {
                             it.maxMemberCap > 0 && it.memberCount >= it.maxMemberCap
                         } ?: false,
                         startDay    = uiState.group?.startDay ?: WeekWindow.LEGACY_START_DAY,
                         onEditGroup = onEditGroup,
+                        onLeaveGroup = { confirmLeave = true },
                         onBack      = onBack,
                         onShare     = {
                             if (uiState.group?.inviteLinkActive == false) {
@@ -330,22 +378,61 @@ fun GroupScreen(
                     )
                 }
 
-                // ── What that means per person, per day ────────────────────
-                //
-                // Also withheld while offline. It reads the same pace as the
-                // badge and phrases it as advice, so a stale one tells people
-                // to walk further because their phone lost signal.
+                // ── What remains for the group ─────────────────────────────
+                // Also withheld while offline, because stale totals must not
+                // become fresh-looking coaching.
                 if (!uiState.isOffline) item {
                     GroupInsightCard(
                         combinedSteps = uiState.combinedWeeklySteps,
                         weeklyTarget  = uiState.group?.weeklyTarget?.toLong() ?: 70_000L,
                         daysLeft      = daysLeft,
-                        memberCount   = uiState.memberStepData.size,
                         modifier      = Modifier.padding(
                             horizontal = Spacing.x6,
                             vertical   = Spacing.x3,
                         ),
                     )
+                }
+
+                if (com.pamoja.app.BuildConfig.TOGETHER_TRAIL_ENABLED) item {
+                    Column(modifier = Modifier.padding(horizontal = Spacing.x6, vertical = Spacing.x3)
+                        .fillMaxWidth().clip(RoundedCornerShape(20.dp))
+                        .background(colors.surface1)
+                        .clickable(role = Role.Button, onClick = onOpenAdventure)
+                        .padding(Spacing.x5), verticalArrangement = Arrangement.spacedBy(Spacing.x2)) {
+                        Text(stringResource(R.string.adventure_title),
+                            style = MaterialTheme.typography.titleLarge, color = colors.textPrimary)
+                        Text(stringResource(R.string.adventure_promise),
+                            style = MaterialTheme.typography.bodyMedium, color = colors.textSecondary)
+                        Text(stringResource(R.string.trail_open_action),
+                            style = MaterialTheme.typography.labelLarge, color = colors.accentPrimary)
+                    }
+                }
+                item {
+                    if (dayOnePlanningEnabled) {
+                        GroupWeekActions(onOpenWeeklyReview, onOpenNextWeekPlan)
+                    } else WeeklyReviewEntryCard(
+                        onClick = onOpenWeeklyReview,
+                        modifier = Modifier.padding(
+                            horizontal = Spacing.x6,
+                            vertical = Spacing.x3,
+                        ),
+                    )
+                }
+
+                if (!dayOnePlanningEnabled && shouldShowSponsorshipEntry(
+                        subscriptionSalesEnabled = subscriptionSalesEnabled,
+                        groupAccess = uiState.groupAccess,
+                    )
+                ) {
+                    item {
+                        GroupSponsorshipEntryCard(
+                            onClick = onSponsorGroup,
+                            modifier = Modifier.padding(
+                                horizontal = Spacing.x6,
+                                vertical = Spacing.x3,
+                            ),
+                        )
+                    }
                 }
 
                 // Partial failure: the group and its members are here, the step
@@ -405,6 +492,8 @@ fun GroupScreen(
                         user          = memberData.user,
                         todaySteps    = memberData.todaySteps,
                         weeklySteps   = memberData.weeklySteps,
+                        todaySynced   = memberData.todaySynced,
+                        weekSynced    = memberData.weekSynced,
                         range         = leaderboardRange,
                         isCurrentUser = memberData.user.userId == uiState.currentUserId,
                         compact       = rankedMembers.size > CompactLeaderboardFrom,
@@ -491,6 +580,301 @@ fun GroupScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier  = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+@Composable
+private fun GoalCelebrationDialog(
+    groupName: String,
+    steps: Long,
+    target: Int,
+    onDismiss: () -> Unit,
+) {
+    val colors = LocalPamojaColors.current
+    val confettiProgress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        confettiProgress.snapTo(0f)
+        confettiProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(1_800, easing = FastOutSlowInEasing),
+        )
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(colors.surfaceApp, colors.statusSuccessSubtle, colors.surfaceApp)
+                    )
+                )
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+        ) {
+            val confettiColors = listOf(
+                colors.accentPrimary,
+                colors.accentAmber,
+                colors.accentTeal,
+                colors.statusSuccess,
+                colors.textPrimary,
+            )
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                repeat(42) { index ->
+                    val lane = ((index * 37) % 101) / 100f
+                    val delay = ((index * 19) % 37) / 100f
+                    val travel = ((confettiProgress.value - delay) / (1f - delay))
+                        .coerceIn(0f, 1f)
+                    val x = size.width * lane
+                    val y = -36f + travel * (size.height + 72f)
+                    val pieceWidth = if (index % 3 == 0) 13f else 9f
+                    val pieceHeight = if (index % 4 == 0) 24f else 16f
+                    rotate(index * 29f + travel * 240f, pivot = androidx.compose.ui.geometry.Offset(x, y)) {
+                        drawRoundRect(
+                            color = confettiColors[index % confettiColors.size],
+                            topLeft = androidx.compose.ui.geometry.Offset(
+                                x - pieceWidth / 2f,
+                                y - pieceHeight / 2f,
+                            ),
+                            size = androidx.compose.ui.geometry.Size(pieceWidth, pieceHeight),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f, 4f),
+                            alpha = if (travel < 0.92f) 0.95f else (1f - travel) / 0.08f,
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.x6),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(132.dp)
+                        .clip(CircleShape)
+                        .background(colors.surface1.copy(alpha = 0.92f))
+                        .border(2.dp, colors.statusSuccess, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PamojaMark(size = 82.dp)
+                }
+                Spacer(Modifier.height(Spacing.x6))
+                Text(
+                    text = stringResource(R.string.group_celebration_title),
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(Spacing.x2))
+                Text(
+                    text = groupName,
+                    color = colors.statusSuccess,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(Spacing.x5))
+                Text(
+                    text = "%,d".format(steps),
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Black,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.group_celebration_progress,
+                        "%,d".format(target),
+                    ),
+                    color = colors.textTertiary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(Spacing.x5))
+                Text(
+                    text = stringResource(R.string.group_celebration_body),
+                    color = colors.textSecondary,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.x6, vertical = Spacing.x5)
+                    .height(56.dp),
+                shape = PillShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.statusSuccess,
+                    contentColor = colors.textInverse,
+                ),
+            ) {
+                Text(
+                    text = stringResource(R.string.group_celebration_confirm),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+    }
+}
+
+/** A product-value entry point, not an upgrade prompt. */
+@Composable
+private fun WeeklyReviewEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.lg)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(Spacing.x4),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(PamojaRadii.md))
+                .background(colors.accentTealSubtle),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.Clock),
+                contentDescription = null,
+                tint = colors.accentTeal,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.weekly_review_entry_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = stringResource(R.string.weekly_review_entry_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        }
+        Icon(
+            painter = painterResource(PamojaIcons.ChevronRight),
+            contentDescription = null,
+            tint = colors.textTertiary,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+@Composable
+private fun GroupWeekActions(onReview: () -> Unit, onPlan: () -> Unit) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.lg)
+    Column(modifier = Modifier.padding(horizontal = Spacing.x6, vertical = Spacing.x3)
+        .fillMaxWidth().clip(shape).background(colors.surface1)
+        .border(1.dp, colors.borderSubtle, shape)) {
+        listOf(Triple(PamojaIcons.Clock, R.string.weekly_review_title, onReview),
+            Triple(PamojaIcons.ArrowRight, R.string.plan_next_week_title, onPlan)).forEachIndexed { index, action ->
+            if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
+            Row(modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = action.third)
+                .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.x3)) {
+                Icon(painterResource(action.first), contentDescription = null,
+                    tint = colors.accentPrimary, modifier = Modifier.size(20.dp))
+                Text(stringResource(action.second), style = MaterialTheme.typography.titleSmall,
+                    color = colors.textPrimary, modifier = Modifier.weight(1f))
+                Icon(painterResource(PamojaIcons.ChevronRight), contentDescription = null,
+                    tint = colors.textTertiary, modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Shows checkout only when both the release switch and server-backed access
+ * state make it safe. An active Preview already includes the paid experience,
+ * while Loading and Unavailable must fail closed rather than guessing.
+ */
+internal fun shouldShowSponsorshipEntry(
+    subscriptionSalesEnabled: Boolean,
+    groupAccess: com.pamoja.app.domain.model.GroupAccessState,
+): Boolean = subscriptionSalesEnabled && when (groupAccess) {
+    com.pamoja.app.domain.model.GroupAccessState.Free,
+    is com.pamoja.app.domain.model.GroupAccessState.PreviewExpired -> true
+    com.pamoja.app.domain.model.GroupAccessState.Loading,
+    is com.pamoja.app.domain.model.GroupAccessState.Premium,
+    is com.pamoja.app.domain.model.GroupAccessState.Preview,
+    is com.pamoja.app.domain.model.GroupAccessState.Unavailable -> false
+}
+
+/** The deliberate bridge from experienced group value to the store paywall. */
+@Composable
+internal fun GroupSponsorshipEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalPamojaColors.current
+    val shape = RoundedCornerShape(PamojaRadii.lg)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.accentPrimarySubtle)
+            .border(1.dp, colors.accentPrimary, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(Spacing.x4),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(PamojaRadii.md))
+                .background(colors.surface1),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.Star),
+                contentDescription = null,
+                tint = colors.accentPrimary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.group_sponsor_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = stringResource(R.string.group_sponsor_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        }
+        Icon(
+            painter = painterResource(PamojaIcons.ChevronRight),
+            contentDescription = null,
+            tint = colors.accentPrimary,
+            modifier = Modifier.size(18.dp),
         )
     }
 }
@@ -601,89 +985,109 @@ fun GroupTopBar(
     memberCount: Int,
     onShare: () -> Unit,
     isAdmin: Boolean,
+    groupAccess: com.pamoja.app.domain.model.GroupAccessState,
     isFull: Boolean,
     startDay: DayOfWeek,
     onEditGroup: () -> Unit,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    onLeaveGroup: (() -> Unit)? = null,
+    onPremiumDetails: () -> Unit = {},
 ) {
     val colors = LocalPamojaColors.current
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = Spacing.x2, vertical = Spacing.x2),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(bottom = Spacing.x3),
     ) {
-        // Back button
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter            = painterResource(PamojaIcons.ArrowLeft),
-                    contentDescription = stringResource(R.string.group_back_desc),
-                    tint               = colors.textSecondary,
-                    modifier           = Modifier.size(20.dp)
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.x2),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        painter = painterResource(PamojaIcons.ArrowLeft),
+                        contentDescription = stringResource(R.string.group_back_desc),
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.width(48.dp))
             }
-        } else {
-            Spacer(modifier = Modifier.width(Spacing.x4))
+            Spacer(modifier = Modifier.weight(1f))
+
+            // A full group has no invite action, but it also does not need a
+            // prominent "Full" badge competing with the group's identity.
+            if (!isFull) {
+                IconButton(onClick = onShare) {
+                    Icon(
+                        painter = painterResource(PamojaIcons.Share),
+                        contentDescription = stringResource(R.string.group_share_desc),
+                        tint = colors.accentPrimary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            if (!isAdmin && onLeaveGroup != null) {
+                TextButton(onClick = onLeaveGroup) {
+                    Text(stringResource(R.string.group_leave_title))
+                }
+            }
+            if (isAdmin) {
+                TextButton(
+                    onClick = onEditGroup,
+                    modifier = Modifier.height(48.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.group_edit_action),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.textPrimary,
+                    )
+                }
+            }
         }
 
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.padding(horizontal = Spacing.x6),
+            verticalArrangement = Arrangement.spacedBy(Spacing.x2),
+        ) {
             Text(
-                text     = groupName,
-                style    = MaterialTheme.typography.headlineSmall,
-                color    = colors.textPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                // The repository value is the complete label. The UI never
+                // appends a category word such as "Walkers" to a group name.
+                text = groupName,
+                style = MaterialTheme.typography.headlineMedium,
+                color = colors.textPrimary,
             )
             if (memberCount > 0) {
-                Text(
-                    text  = stringResource(
-                        R.string.group_header_subtitle,
-                        pluralStringResource(R.plurals.member_count, memberCount, memberCount),
-                        weekWindowLabel(startDay),
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.textTertiary
-                )
-            }
-        }
-
-        // Share invite link, available to everyone (members can also invite
-        // friends). A full group shows a chip instead: the control is not
-        // disabled and silent, it says why it is gone.
-        if (isFull) {
-            Text(
-                text = stringResource(R.string.group_full_chip),
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.textTertiary,
-                modifier = Modifier
-                    .clip(PillShape)
-                    .background(colors.surface2)
-                    .padding(horizontal = Spacing.x3, vertical = Spacing.x1),
-            )
-            Spacer(modifier = Modifier.width(Spacing.x2))
-        } else {
-            IconButton(onClick = onShare) {
-                Icon(
-                    painter            = painterResource(PamojaIcons.Share),
-                    contentDescription = stringResource(R.string.group_share_desc),
-                    tint               = colors.accentPrimary,
-                    modifier           = Modifier.size(20.dp)
-                )
-            }
-        }
-
-        // Settings, admin only. Hidden rather than disabled for everyone else,
-        // since a control that is always refused is worse than no control.
-        if (isAdmin) {
-            IconButton(onClick = onEditGroup) {
-                Icon(
-                    painter            = painterResource(PamojaIcons.Settings),
-                    contentDescription = stringResource(R.string.group_edit_action),
-                    tint               = colors.textSecondary,
-                    modifier           = Modifier.size(20.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.x2),
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.group_header_subtitle,
+                            pluralStringResource(
+                                R.plurals.member_count,
+                                memberCount,
+                                memberCount,
+                            ),
+                            weekWindowLabel(startDay),
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textTertiary,
+                    )
+                    GroupAccessBadge(
+                        access = groupAccess,
+                        showContainer = false,
+                        modifier = Modifier.clickable(role = Role.Button, onClick = onPremiumDetails)
+                            .padding(vertical = Spacing.x3),
+                    )
+                }
             }
         }
     }
@@ -937,11 +1341,11 @@ private fun PaceBadge(progress: Float, daysLeft: Int) {
 }
 
 /**
- * The one line that turns the ring into an instruction.
+ * The one line that turns the ring into a group instruction.
  *
- * A weekly group total is not actionable; what a person can act on is how far
- * they personally have to walk tomorrow. That is the remainder split by the days
- * still left and the people still walking.
+ * It names the remaining shared total without dividing it into equal personal
+ * quotas. People with different ages, mobility and schedules can contribute
+ * differently while still understanding exactly what the group needs.
  *
  * Rendered as one sentence with the number emphasised rather than as a stat and
  * a caption, because it is meant to read as a sentence. The number is located in
@@ -953,88 +1357,66 @@ private fun GroupInsightCard(
     combinedSteps: Long,
     weeklyTarget: Long,
     daysLeft: Int,
-    memberCount: Int,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalPamojaColors.current
 
-    // Nobody to divide by yet. The members are still loading, and "Infinity
-    // steps a day each" is not a thing to show anyone.
-    if (memberCount < 1) return
-
-    val progress = if (weeklyTarget > 0) {
-        (combinedSteps.toFloat() / weeklyTarget.toFloat()).coerceIn(0f, 1f)
-    } else 0f
-    val pace = paceOf(progress, daysLeft)
     val remaining = (weeklyTarget - combinedSteps).coerceAtLeast(0L)
-
-    // Rounded up: rounding down would print a daily figure that does not
-    // actually reach the target by Sunday.
-    val perPersonPerDay = if (remaining == 0L) 0L else {
-        val divisor = daysLeft.coerceAtLeast(1).toLong() * memberCount
-        (remaining + divisor - 1) / divisor
+    val complete = remaining == 0L
+    val dailyPace = if (!complete && daysLeft > 0) {
+        (remaining + daysLeft - 1L) / daysLeft
+    } else {
+        remaining
     }
-
-    val tint = if (pace == Pace.Behind) colors.accentAmber else colors.accentTeal
-    val tone = if (pace == Pace.Behind) colors.accentAmberSubtle else colors.accentTealSubtle
-
-    // The rung above "behind". The arithmetic keeps producing a number long
-    // after the goal stops being reachable, and printing "26,417 steps a day
-    // each" to a group that is 20% of the way through its week reads as
-    // mockery rather than advice. Past what a person could actually walk, the
-    // honest move is to stop quoting a figure at all and say so.
-    //
-    // The bound is StepGoal.MAX_DAILY_PER_PERSON rather than a number invented
-    // here, because that constant already encodes "the top of what a walking
-    // group sustains". A goal nobody could have set is a goal nobody can hit.
-    val isUnreachable = perPersonPerDay > StepGoal.MAX_DAILY_PER_PERSON
-
-    val number = "%,d".format(perPersonPerDay)
-    val sentence = when {
-        pace == Pace.Complete -> stringResource(R.string.group_insight_complete)
-        pace == Pace.OnTrack  -> stringResource(R.string.group_insight_on_track, number)
-        isUnreachable         -> stringResource(R.string.group_insight_unreachable)
-        else                  -> stringResource(R.string.group_insight_behind, number)
-    }
-
-    val styled = remember(sentence, number, pace, isUnreachable, colors) {
-        buildAnnotatedString {
-            append(sentence)
-            val start = sentence.indexOf(number)
-            if (pace != Pace.Complete && !isUnreachable && start >= 0) {
-                addStyle(
-                    SpanStyle(
-                        fontFamily = DisplayFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary,
-                    ),
-                    start,
-                    start + number.length,
-                )
-            }
-        }
-    }
+    val tint = if (complete) colors.accentTeal else colors.accentAmber
+    val tone = if (complete) colors.accentTealSubtle else colors.accentAmberSubtle
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(PamojaRadii.lg))
-            .background(tone)
-            .padding(horizontal = Spacing.x4, vertical = Spacing.x3),
+            .background(colors.surface1)
+            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.lg))
+            .padding(Spacing.x4),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
     ) {
-        Icon(
-            painter = painterResource(PamojaIcons.TrendingUp),
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(
-            text = styled,
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.textSecondary,
-        )
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(tone),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(
+                    if (complete) PamojaIcons.Check else PamojaIcons.TrendingUp,
+                ),
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = if (complete) {
+                    stringResource(R.string.group_pace_complete_title)
+                } else {
+                    stringResource(R.string.group_pace_daily_title, "%,d".format(dailyPace))
+                },
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = if (complete) {
+                    stringResource(R.string.group_pace_complete_body)
+                } else {
+                    stringResource(R.string.group_pace_daily_body, "%,d".format(weeklyTarget))
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+        }
     }
 }
 
@@ -1137,11 +1519,13 @@ fun LeaderboardRow(
      * looking for. Only the spacing and the avatar shrink.
      */
     compact: Boolean = false,
+    todaySynced: Boolean = true,
+    weekSynced: Boolean = true,
 ) {
     val colors = LocalPamojaColors.current
     // Compact never applies to first place: it is the one row the design
     // deliberately raises above the rest, at any group size.
-    val isFirst = rank == 1
+    val isFirst = rank == 1 && (if (range == LeaderboardRange.Today) todaySynced else weekSynced)
 
     // Base surface + optional tint overlay + border, all theme-aware.
     val tintOverlay = when {
@@ -1291,9 +1675,11 @@ fun LeaderboardRow(
                 // The range not currently being ranked by, so both numbers stay
                 // visible and switching the toggle never hides information.
                 text  = if (range == LeaderboardRange.Today) {
-                    stringResource(R.string.group_steps_this_week, "%,d".format(weeklySteps))
+                    if (weekSynced) stringResource(R.string.group_steps_this_week, "%,d".format(weeklySteps))
+                    else stringResource(R.string.group_week_not_synced)
                 } else {
-                    stringResource(R.string.group_steps_today, "%,d".format(todaySteps))
+                    if (todaySynced) stringResource(R.string.group_steps_today, "%,d".format(todaySteps))
+                    else stringResource(R.string.group_today_not_synced)
                 },
                 style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary)
             )
@@ -1303,7 +1689,7 @@ fun LeaderboardRow(
         // medals are based on, so it follows the toggle.
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text  = "%,d".format(
+                text  = if (!(if (range == LeaderboardRange.Today) todaySynced else weekSynced)) "—" else "%,d".format(
                     if (range == LeaderboardRange.Today) todaySteps else weeklySteps
                 ),
                 style = MaterialTheme.typography.labelMedium.copy(

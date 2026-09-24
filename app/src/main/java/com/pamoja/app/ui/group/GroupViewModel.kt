@@ -9,6 +9,7 @@ import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.GroupAccessState
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
@@ -17,15 +18,20 @@ import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.GetMembershipUseCase
 import com.pamoja.app.domain.usecase.GetStepsForUserUseCase
+import com.pamoja.app.domain.usecase.ObserveGroupAccessUseCase
 import com.pamoja.app.domain.usecase.SyncTodayStepsUseCase
 import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -34,18 +40,31 @@ import javax.inject.Inject
 data class MemberStepData(
     val user: User,
     val todaySteps: Long,
-    val weeklySteps: Long
+    val weeklySteps: Long,
+    val todaySynced: Boolean = true,
+    val weekSynced: Boolean = true,
 )
 
 data class GroupUiState(
+    val isLeaving: Boolean = false,
+    val hasLeftGroup: Boolean = false,
     val isLoading: Boolean = true,
     val group: Group? = null,
     val membership: Membership? = null,
     val currentUserId: String = "",
     val memberStepData: List<MemberStepData> = emptyList(),
     val combinedWeeklySteps: Long = 0L,
+    val reportingDate: LocalDate? = null,
     val isAdmin: Boolean = false,
     val isOffline: Boolean = false,
+    /**
+     * Server-confirmed group-level paid access.
+     *
+     * Kept explicit even before the first paid gate is exposed: a future gate
+     * must render Loading or Unavailable rather than briefly showing paid
+     * content from a stale device cache. Only Premium may unlock a capability.
+     */
+    val groupAccess: GroupAccessState = GroupAccessState.Loading,
     /**
      * When steps last reached this phone, as epoch millis. Zero means never.
      *
@@ -82,6 +101,9 @@ data class GroupUiState(
     /** The group is gone, or we are no longer allowed to see it. Terminal. */
     val isGroupUnavailable: Boolean = false,
 
+    /** One-time, account-scoped celebration for this group's completed week. */
+    val showGoalCelebration: Boolean = false,
+
     /** True once the member list has arrived at least once. */
     val hasLoadedMembers: Boolean = false,
 ) {
@@ -91,6 +113,7 @@ data class GroupUiState(
     val showNoStepsYet: Boolean
         get() = hasLoadedMembers &&
             memberStepData.isNotEmpty() &&
+            memberStepData.all { it.weekSynced } &&
             combinedWeeklySteps == 0L &&
             stepsError == null
 
@@ -110,6 +133,8 @@ class GroupViewModel @Inject constructor(
     private val analyticsManager: AnalyticsManager,
     private val syncTodayStepsUseCase: SyncTodayStepsUseCase,
     private val connectivityObserver: ConnectivityObserver,
+    private val observeGroupAccessUseCase: ObserveGroupAccessUseCase,
+    private val leaveGroupUseCase: com.pamoja.app.domain.usecase.LeaveGroupUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GroupUiState())
@@ -118,8 +143,14 @@ class GroupViewModel @Inject constructor(
     /** Prevents duplicate weekly_goal_reached events during a single screen session. */
     private var weeklyGoalLoggedThisSession = false
 
+    /** Event key last checked against DataStore during this screen session. */
+    private var checkedCelebrationKey: String? = null
+
     /** Guards against duplicate loadGroup calls launching multiple observers. */
     private var observeJob: Job? = null
+
+    /** Independent so a membership/access refresh never duplicates the roster listener. */
+    private var accessJob: Job? = null
 
     private var currentGroupId: String? = null
 
@@ -142,6 +173,7 @@ class GroupViewModel @Inject constructor(
     fun loadGroup(groupId: String) {
         currentGroupId = groupId
         viewModelScope.launch {
+            accessJob?.cancel()
             // Clears the previous attempt's errors without discarding connectivity
             // or anything else already resolved.
             _uiState.value = _uiState.value.copy(
@@ -149,6 +181,7 @@ class GroupViewModel @Inject constructor(
                 fatalError = null,
                 stepsError = null,
                 isGroupUnavailable = false,
+                groupAccess = GroupAccessState.Loading,
             )
 
             val currentUser = getCurrentUserUseCase()
@@ -168,7 +201,16 @@ class GroupViewModel @Inject constructor(
             // leaderboard renders from Firestore regardless.
             viewModelScope.launch { syncTodayStepsUseCase(currentUser.userId) }
 
-            val group = getGroupUseCase(groupId).getOrElse { error ->
+            // Group and membership are independent Firestore documents. Starting
+            // both together removes one full network round trip from opening a
+            // group on a cold cache.
+            val groupDeferred = async { getGroupUseCase(groupId) }
+            val membershipDeferred = async {
+                getMembershipUseCase(currentUser.userId, groupId)
+            }
+
+            val group = groupDeferred.await().getOrElse { error ->
+                membershipDeferred.cancel()
                 val appError = error.toAppError()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -178,7 +220,11 @@ class GroupViewModel @Inject constructor(
                 return@launch
             }
 
-            val membership = getMembershipUseCase(currentUser.userId, groupId).getOrNull()
+            val membership = membershipDeferred.await()
+                .getOrNull()
+                ?.takeIf { resolved ->
+                    resolved.userId == currentUser.userId && resolved.groupId == groupId
+                }
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -191,7 +237,21 @@ class GroupViewModel @Inject constructor(
             userPreferences.saveActiveGroupId(groupId)
             analyticsManager.logGroupScreenViewed(groupId)
 
-            observeMembersAndSteps(groupId, group)
+            if (membership == null) {
+                _uiState.value = _uiState.value.copy(groupAccess = GroupAccessState.Free)
+            } else {
+                observeGroupAccess(groupId, currentUser.userId)
+            }
+            observeMembersAndSteps(groupId)
+        }
+    }
+
+    private fun observeGroupAccess(groupId: String, userId: String) {
+        accessJob?.cancel()
+        accessJob = viewModelScope.launch {
+            observeGroupAccessUseCase(groupId, userId).collect { access ->
+                _uiState.value = _uiState.value.copy(groupAccess = access)
+            }
         }
     }
 
@@ -245,7 +305,7 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    private fun observeMembersAndSteps(groupId: String, group: Group) {
+    private fun observeMembersAndSteps(groupId: String) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             // One flow, not two chained ones. The step figures now travel on the
@@ -257,7 +317,19 @@ class GroupViewModel @Inject constructor(
             // It also removes the "names but no numbers" partial state: there is
             // no longer a separate read that can fail on its own. Either the
             // memberships arrive or they do not.
-            getGroupMembershipsUseCase(groupId)
+            // A local tick advances date labels even when no member syncs.
+            // Group changes arrive through one listener, including a scheduled
+            // target activation; the tick makes no network request.
+            val calendarTicks = flow {
+                emit(Unit)
+                while (true) {
+                    _uiState.subscriptionCount.first { it > 0 }
+                    delay(60_000L)
+                    emit(Unit)
+                }
+            }
+            combine(getGroupUseCase.observe(groupId), getGroupMembershipsUseCase(groupId),
+                calendarTicks) { group, memberships, _ -> group to memberships }
                 .catch { error ->
                     val appError = error.toAppError()
                     _uiState.value = _uiState.value.copy(
@@ -266,9 +338,10 @@ class GroupViewModel @Inject constructor(
                         isGroupUnavailable = appError.isGroupGone(),
                     )
                 }
-                .collect { memberships ->
+                .collect { (group, memberships) ->
                     val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-                    val thisWeek = WeekWindow.startOf(group.startDay)
+                    val reportingDate = WeekWindow.todayFor(group)
+                    val thisWeek = WeekWindow.startOf(group.startDay, reportingDate)
 
                     val memberStepData = memberships.map { membership ->
                         MemberStepData(
@@ -286,6 +359,8 @@ class GroupViewModel @Inject constructor(
                                 .takeIf { membership.todayDate == today } ?: 0L,
                             weeklySteps = membership.weeklySteps
                                 .takeIf { membership.weekStart == thisWeek } ?: 0L,
+                            todaySynced = membership.todayDate == today,
+                            weekSynced = membership.weekStart == thisWeek,
                         )
                     }.sortedByDescending { it.todaySteps }
 
@@ -294,8 +369,11 @@ class GroupViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         hasLoadedMembers = true,
+                        group = group,
+                        isAdmin = group.adminId == _uiState.value.currentUserId,
                         memberStepData = memberStepData,
                         combinedWeeklySteps = combinedWeekly,
+                        reportingDate = reportingDate,
                         stepsError = null,
                     )
 
@@ -307,8 +385,46 @@ class GroupViewModel @Inject constructor(
                             groupId, group.weeklyTarget
                         )
                     }
+
+                    if (combinedWeekly >= group.weeklyTarget) {
+                        val celebrationKey = "$groupId:$thisWeek"
+                        if (checkedCelebrationKey != celebrationKey) {
+                            checkedCelebrationKey = celebrationKey
+                            val shouldCelebrate = userPreferences.consumeWeeklyGoalCelebration(
+                                userId = _uiState.value.currentUserId,
+                                groupId = groupId,
+                                weekStart = thisWeek,
+                            )
+                            if (shouldCelebrate) {
+                                _uiState.value = _uiState.value.copy(showGoalCelebration = true)
+                            }
+                        }
+                    }
                 }
         }
+    }
+
+    fun leaveGroup() {
+        val state = _uiState.value
+        val group = state.group ?: return
+        if (state.isAdmin || state.isLeaving || state.isOffline) return
+        _uiState.value = state.copy(isLeaving = true)
+        viewModelScope.launch {
+            leaveGroupUseCase(group).fold(
+                onSuccess = {
+                    observeJob?.cancel()
+                    accessJob?.cancel()
+                    _uiState.value = _uiState.value.copy(isLeaving = false, hasLeftGroup = true)
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(isLeaving = false, actionError = error.toAppError())
+                },
+            )
+        }
+    }
+
+    fun dismissGoalCelebration() {
+        _uiState.value = _uiState.value.copy(showGoalCelebration = false)
     }
 
     fun updateWeeklyTarget(target: Int) {

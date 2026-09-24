@@ -2,14 +2,12 @@
 <resources>
 
     <!--
-      Fixes the defect CLAUDE.md and BACKLOG.md both recorded: Theme.Pamoja had
-      no night variant, so every dark-mode user saw a plain white flash for one
-      frame on every cold start, before Compose ever got a chance to draw the
-      real dark theme. android:Theme.Material.NoActionBar is Material's own
-      dark base, so the window background is dark from the very first frame
-      instead of catching up a frame later.
+      MainActivity extends AppCompatActivity so every resolved Theme.Pamoja
+      variant must also descend from AppCompat. Using the platform Material
+      theme here crashed every dark-mode launch during AppCompatActivity's
+      onCreate before Compose could draw anything.
     -->
-    <style name="Theme.Pamoja" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.Pamoja" parent="Theme.AppCompat.DayNight.NoActionBar" />
 
     <!--
       Same reasoning as values/themes.xml. Reuses the identical icon PNG the

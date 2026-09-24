@@ -56,3 +56,43 @@ graphify-out/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# Preserved source baseline and local implementation evidence
+.source-baseline-20260912/
+functions*/node_modules/
+functions*/lib/
+planning/
+/app/google-services.json
+
+# Local verification captures and UI automation output
+.codex-tmp/
+
+# Store-listing and submission working material
+play-listing/
+.devpost-hackathon-state.json
+devpost-*.md
+JUDGE-TESTING.md
+NEXT-WEEK-TOGETHER-SPEC.md
+PAMOJA-PRODUCT-AND-MONETIZATION.md
+PRODUCT-ROADMAP-AND-JUDGE-ACCESS.md
+RELEASE-AND-NEXT-FEATURES.md
+REVENUECAT-AND-PLAY-SETUP.md
+
+# One-off Firebase deployment configurations
+firebase.*-deploy.json
+firebase.release-fixes.json
+
+# Release artifacts and symbol files
+*.apk
+*.aab
+mapping.txt
+native-debug-symbols.zip
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.mobileprovision

@@ -1,0 +1,6 @@
+<resources>
+    <string name="planning_calendar_label">Group calendar · %1$s</string>
+    <string name="planning_details_action">How planning works</string>
+    <string name="planning_details_body">A saved goal starts automatically next week. Your response helps the organizer decide whether to change it; responses do not automatically change the goal or stop step sharing.</string>
+    <string name="planning_response_explanation">Let your organizer know. Responses do not change the goal automatically.</string>
+</resources>

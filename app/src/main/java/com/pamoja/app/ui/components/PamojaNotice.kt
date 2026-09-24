@@ -110,7 +110,8 @@ fun PamojaNotice(
             if (onDismiss != null) {
                 IconButton(
                     onClick = onDismiss,
-                    modifier = Modifier.size(24.dp),
+                    // Visual icon stays quiet; its touch target does not.
+                    modifier = Modifier.size(48.dp),
                 ) {
                     Icon(
                         painter = painterResource(PamojaIcons.Close),

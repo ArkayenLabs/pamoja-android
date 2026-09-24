@@ -1,0 +1,11 @@
+<resources>
+    <string name="trail_open_action">Explore the trail →</string>
+    <string name="premium_trail_title">One adventure. All of you.</string>
+    <string name="premium_trail_body">Walk toward five illustrated chapters on The Together Trail. Set your own weekly commitment, take a rest week and celebrate finishing together. One subscription covers your group.</string>
+    <string name="trail_share">Share our finish</string>
+    <string name="trail_share_privacy">Shares the trail and completed goal. No names or individual step counts.</string>
+    <string name="trail_share_failed">Could not prepare the card. Please try again.</string>
+    <string name="trail_share_goal">%1$s steps, together</string>
+    <string name="trail_share_caption">We finished The Together Trail with Pamoja.</string>
+    <string name="trail_share_footer">Small walks. One shared finish.</string>
+</resources>

@@ -55,6 +55,12 @@ sealed class AppError(
     class Conflict(detail: String, cause: Throwable? = null) :
         AppError(detail, cause)
 
+    enum class PlanningReason { NotEnabled, OrganizerSetup, PremiumRequired, ExistingPlan, RefreshRequired }
+    class Planning(val reason: PlanningReason, cause: Throwable? = null) :
+        AppError("Planning unavailable: $reason", cause) {
+        override val isRetryable get() = reason == PlanningReason.RefreshRequired
+    }
+
     /** No signed-in user, or the token is no longer valid. */
     class SessionExpired(detail: String = "Session expired", cause: Throwable? = null) :
         AppError(detail, cause)
@@ -89,15 +95,43 @@ sealed class AppError(
         AppError("Validation failed: $field")
 
     /**
-     * The device has no account for the sign-in method being attempted.
+     * A known business result from assigning subscription capacity to a group.
      *
-     * Its own case because the user can fix it in a minute and nothing else
-     * can: retrying will fail identically forever. Folded into [Unknown] it
-     * produced "that did not work", which is the least useful thing to say to
-     * someone who simply has no Google account on their phone.
+     * [reason] is safe for UI decisions; [technicalMessage] is never shown to
+     * the user. Keeping this typed prevents the paywall from parsing a backend
+     * English sentence to distinguish a missing purchase from a group conflict.
      */
-    class NoProviderAccount(detail: String = "No account for this provider", cause: Throwable? = null) :
-        AppError(detail, cause)
+    class Sponsorship(
+        val reason: SponsorshipFailure,
+        detail: String = "Sponsorship failed: $reason",
+        cause: Throwable? = null,
+    ) : AppError(detail, cause) {
+        override val isRetryable: Boolean
+            get() = reason == SponsorshipFailure.NoActiveSubscription ||
+                reason == SponsorshipFailure.AssignmentChanged
+    }
+
+    /** A known Google Play / RevenueCat outcome with product-specific recovery. */
+    class Billing(
+        val reason: BillingFailure,
+        detail: String = "Billing outcome: $reason",
+        cause: Throwable? = null,
+    ) : AppError(detail, cause)
+
+    /**
+     * A device sign-in provider could not open or return a credential.
+     *
+     * This deliberately does not claim that an account is missing. Credential
+     * Manager can report the same condition when accounts need
+     * reauthentication, Play services is unavailable, or provider settings
+     * suppress a passive sign-in prompt.
+     */
+    class ProviderUnavailable(
+        detail: String = "Authentication provider unavailable",
+        cause: Throwable? = null,
+    ) : AppError(detail, cause) {
+        override val isRetryable get() = true
+    }
 
     /** Anything unrecognised. Always worth reporting. */
     class Unknown(detail: String = "Unexpected error", cause: Throwable? = null) :

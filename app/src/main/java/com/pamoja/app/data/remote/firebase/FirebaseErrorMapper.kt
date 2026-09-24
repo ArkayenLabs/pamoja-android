@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.pamoja.app.domain.error.AppError
 import java.io.IOException
 
@@ -71,6 +72,32 @@ fun Throwable.toFirebaseAppError(): AppError = when (this) {
             AppError.Conflict(message ?: "Transaction aborted", this)
 
         else -> AppError.Unknown(message ?: "Firestore error: $code", this)
+    }
+
+    is FirebaseFunctionsException -> when (code) {
+        FirebaseFunctionsException.Code.PERMISSION_DENIED ->
+            AppError.PermissionDenied(message ?: "Function permission denied", this)
+
+        FirebaseFunctionsException.Code.NOT_FOUND ->
+            AppError.NotFound(message ?: "Resource not found", this)
+
+        FirebaseFunctionsException.Code.UNAUTHENTICATED ->
+            AppError.SessionExpired(message ?: "Not authenticated", this)
+
+        FirebaseFunctionsException.Code.ALREADY_EXISTS,
+        FirebaseFunctionsException.Code.FAILED_PRECONDITION,
+        FirebaseFunctionsException.Code.ABORTED ->
+            AppError.Conflict(message ?: "Request conflicted with current state", this)
+
+        FirebaseFunctionsException.Code.DEADLINE_EXCEEDED,
+        FirebaseFunctionsException.Code.UNAVAILABLE,
+        FirebaseFunctionsException.Code.CANCELLED ->
+            AppError.Network(message ?: "Function request failed", this)
+
+        FirebaseFunctionsException.Code.RESOURCE_EXHAUSTED ->
+            AppError.RateLimited(message ?: "Request limit reached", this)
+
+        else -> AppError.Unknown(message ?: "Function error: $code", this)
     }
 
     // ── Auth ────────────────────────────────────────────────────────────────

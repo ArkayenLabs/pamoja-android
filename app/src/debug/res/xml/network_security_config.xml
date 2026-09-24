@@ -2,8 +2,8 @@
 <!--
   Debug only. Never merged into release.
 
-  The emulator-backed integration tests talk to the Firebase Auth and Firestore
-  emulators over plaintext HTTP, which targetSdk 28+ blocks by default. Scoped
+  The emulator-backed integration tests talk to the Firebase Auth, Firestore
+  and Functions emulators over plaintext HTTP, which targetSdk 28+ blocks by default. Scoped
   to the loopback hosts instead of enabling cleartext wholesale: 10.0.2.2 is the
   host machine as seen from inside an Android emulator.
 -->

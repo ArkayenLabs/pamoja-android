@@ -21,6 +21,7 @@ enum class ValidationField {
     PhoneMalformed,
     OtpIncomplete,
     GroupNameMissing,
+    GroupNameDuplicate,
     WeeklyTargetInvalid,
     MemberCapTooSmall,
     InviteCodeMissing,

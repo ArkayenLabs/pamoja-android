@@ -1,7 +1,11 @@
 package com.pamoja.app.ui.settings
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -12,22 +16,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -37,7 +44,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -62,8 +69,10 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
+import com.pamoja.app.BuildConfig
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.domain.model.UnitConverter
 import com.pamoja.app.domain.model.UnitSystem
@@ -72,6 +81,8 @@ import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaConfirmDialog
 import com.pamoja.app.ui.components.PamojaDestructiveConfirmDialog
+import com.pamoja.app.ui.components.PamojaBottomBar
+import com.pamoja.app.ui.components.PamojaMainTab
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.profile.ProfileAvatar
@@ -79,11 +90,15 @@ import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.ui.theme.PamojaRadii
 import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.widgets.GroupProgressWidgetProvider
+import com.pamoja.app.widgets.TodayStepsWidgetProvider
+import com.pamoja.app.widgets.WalkHookWidgetProvider
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit,
+    onToday: () -> Unit,
+    onGroups: () -> Unit,
     onSignedOut: () -> Unit,
     onEditProfile: () -> Unit,
     onNotificationSettings: () -> Unit,
@@ -101,14 +116,54 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = LocalActivity.current
+    val backgroundPermissionLauncher = rememberLauncherForActivityResult(
+        androidx.health.connect.client.PermissionController.createRequestPermissionResultContract(),
+    ) { viewModel.onBackgroundPermissionResult() }
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showLogoutConfirmDialog by remember { mutableStateOf(false) }
+    var showWidgetPicker by remember { mutableStateOf(false) }
+    var showLanguagePicker by remember { mutableStateOf(false) }
+    val selectedLanguage = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    val languages = listOf(
+        "" to stringResource(R.string.settings_language_system),
+        "en-US" to "English (US)",
+        "en-GB" to "English (UK)",
+        "es" to "Español",
+        "hi" to "हिन्दी",
+    )
+    if (showLanguagePicker) {
+        AlertDialog(
+            onDismissRequest = { showLanguagePicker = false },
+            title = { Text(stringResource(R.string.settings_language)) },
+            text = {
+                Column {
+                    languages.forEach { (tag, label) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .clickable {
+                                    showLanguagePicker = false
+                                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+                                }.padding(vertical = Spacing.x2),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            androidx.compose.material3.RadioButton(
+                                selected = selectedLanguage == tag,
+                                onClick = null,
+                            )
+                            Text(label, modifier = Modifier.padding(start = Spacing.x2))
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
@@ -245,6 +300,62 @@ fun SettingsScreen(
         )
     }
 
+    if (showWidgetPicker) {
+        val unavailable = stringResource(R.string.settings_widgets_unavailable)
+        AlertDialog(
+            onDismissRequest = { showWidgetPicker = false },
+            containerColor = colors.surface3,
+            shape = RoundedCornerShape(PamojaRadii.xl),
+            title = {
+                Text(
+                    text = stringResource(R.string.settings_widgets_picker_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.textPrimary,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.x2)) {
+                    WidgetChoice(
+                        title = stringResource(R.string.widget_today_name),
+                        subtitle = stringResource(R.string.settings_widgets_today_subtitle),
+                        onClick = {
+                            showWidgetPicker = false
+                            if (!requestWidgetPin(context, TodayStepsWidgetProvider::class.java)) {
+                                scope.launch { snackbarHostState.showSnackbar(unavailable) }
+                            }
+                        },
+                    )
+                    WidgetChoice(
+                        title = stringResource(R.string.widget_group_name),
+                        subtitle = stringResource(R.string.settings_widgets_group_subtitle),
+                        onClick = {
+                            showWidgetPicker = false
+                            if (!requestWidgetPin(context, GroupProgressWidgetProvider::class.java)) {
+                                scope.launch { snackbarHostState.showSnackbar(unavailable) }
+                            }
+                        },
+                    )
+                    WidgetChoice(
+                        title = stringResource(R.string.widget_hook_name),
+                        subtitle = stringResource(R.string.settings_widgets_hook_subtitle),
+                        onClick = {
+                            showWidgetPicker = false
+                            if (!requestWidgetPin(context, WalkHookWidgetProvider::class.java)) {
+                                scope.launch { snackbarHostState.showSnackbar(unavailable) }
+                            }
+                        },
+                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showWidgetPicker = false }) {
+                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
+                }
+            },
+        )
+    }
+
     // Firebase refuses to delete an account on a stale session. Sessions here
     // last indefinitely, so this is the normal path rather than an edge case.
     uiState.reauthRequired?.let { method ->
@@ -356,39 +467,40 @@ fun SettingsScreen(
 
     Scaffold(
         containerColor = colors.surfaceApp,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        contentWindowInsets = WindowInsets.systemBars.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Top,
+        ),
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .padding(innerPadding),
         ) {
-            // Header Top Bar
-            Row(
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 110.dp),
+            ) {
+            // The You tab is a profile hub. It owns identity and preferences,
+            // so the main tabs no longer repeat a profile shortcut elsewhere.
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // No statusBarsPadding() here. The Column above already
-                    // applies the Scaffold's innerPadding, which carries the
-                    // status bar inset because enableEdgeToEdge() is on, so
-                    // adding it again inset the header twice and left an
-                    // obvious gap above the back button.
-                    .padding(horizontal = Spacing.x2, vertical = Spacing.x2),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = Spacing.x6)
+                    .padding(top = Spacing.x4, bottom = Spacing.x2),
             ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = stringResource(R.string.settings_back_desc),
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(Spacing.x2))
                 Text(
                     text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.headlineMedium,
                     color = colors.textPrimary
+                )
+                Spacer(modifier = Modifier.height(Spacing.x1))
+                Text(
+                    text = stringResource(R.string.settings_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textSecondary,
                 )
             }
 
@@ -405,36 +517,30 @@ fun SettingsScreen(
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.height(Spacing.x4))
-
-                // ─── Section: Profile ────────────────────────────────────────
-                SectionLabel(stringResource(R.string.settings_section_profile), color = colors.textTertiary)
+                Spacer(modifier = Modifier.height(Spacing.x3))
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = Spacing.x6)
                         .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                        .padding(Spacing.x4),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.x4)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(colors.accentPrimarySubtle, colors.surface2)
+                            )
+                        )
+                        .border(1.dp, colors.borderStrong, RoundedCornerShape(PamojaRadii.xl))
+                        .clickable(onClick = onEditProfile)
+                        .padding(Spacing.x5),
                 ) {
-                    // Profile header. The whole row is the target, not just the
-                    // pencil, because a 18dp icon is well under the 48dp minimum
-                    // and the row is what reads as tappable.
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(PamojaRadii.sm))
-                            .clickable(onClick = onEditProfile)
-                            .padding(vertical = Spacing.x1),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         ProfileAvatar(
                             name = uiState.userName.takeIf { it.isNotBlank() }
                                 ?: stringResource(R.string.settings_name_fallback),
-                            size = 48.dp,
+                            size = 64.dp,
                             photoUrl = uiState.photoUrl,
                         )
 
@@ -444,7 +550,7 @@ fun SettingsScreen(
                             Text(
                                 text = uiState.userName.takeIf { it.isNotBlank() }
                                     ?: stringResource(R.string.settings_name_fallback),
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.titleLarge,
                                 color = colors.textPrimary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -465,14 +571,21 @@ fun SettingsScreen(
                             )
                         }
 
-                        Icon(
-                            painter = painterResource(PamojaIcons.Edit),
-                            contentDescription = stringResource(R.string.settings_open_profile),
-                            tint = colors.accentPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(colors.accentPrimary),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(PamojaIcons.Edit),
+                                contentDescription = stringResource(R.string.settings_open_profile),
+                                tint = colors.textOnBrand,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     }
-
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
@@ -515,7 +628,11 @@ fun SettingsScreen(
                                 context.startActivity(
                                     Intent(
                                         Intent.ACTION_VIEW,
-                                        "https://play.google.com/store/account/subscriptions".toUri(),
+                                        (
+                                            "https://play.google.com/store/account/subscriptions" +
+                                                "?sku=pamoja_circle_v1" +
+                                                "&package=com.arkayenlabs.pamoja"
+                                            ).toUri(),
                                     )
                                 )
                             }
@@ -556,6 +673,12 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.settings_notifications_sub),
                         onClick = onNotificationSettings,
                     )
+                    SettingsRow(
+                        icon = PamojaIcons.Smartphone,
+                        title = stringResource(R.string.settings_widgets_title),
+                        subtitle = stringResource(R.string.settings_widgets_subtitle),
+                        onClick = { showWidgetPicker = true },
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
@@ -592,6 +715,25 @@ fun SettingsScreen(
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.x6))
+
+                if (uiState.healthStatus == HealthStatus.Connected && uiState.backgroundReadSupported) {
+                    SettingsRow(
+                        icon = PamojaIcons.Footprints,
+                        title = stringResource(R.string.settings_background_steps_title),
+                        subtitle = stringResource(if (uiState.backgroundReadGranted)
+                            R.string.settings_background_steps_on else R.string.settings_background_steps_off),
+                        onClick = {
+                            if (uiState.backgroundReadGranted) {
+                                runCatching { context.startActivity(Intent(HEALTH_CONNECT_SETTINGS_ACTION)) }
+                            } else {
+                                backgroundPermissionLauncher.launch(
+                                    com.pamoja.app.data.local.health.HealthConnectReader.BACKGROUND_PERMISSIONS,
+                                )
+                            }
+                        },
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.x6))
+                }
 
                 // ─── Section: Support & your data ────────────────────────────
                 SectionLabel(stringResource(R.string.settings_section_support), color = colors.textTertiary)
@@ -667,6 +809,13 @@ fun SettingsScreen(
                         .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
                 ) {
                     SettingsRow(
+                        icon = PamojaIcons.Info,
+                        title = stringResource(R.string.settings_language),
+                        subtitle = languages.firstOrNull { it.first == selectedLanguage }?.second
+                            ?: stringResource(R.string.settings_language_system),
+                        onClick = { showLanguagePicker = true },
+                    )
+                    SettingsRow(
                         icon = PamojaIcons.ShieldCheck,
                         title = stringResource(R.string.settings_privacy_title),
                         subtitle = stringResource(R.string.settings_privacy_subtitle),
@@ -684,12 +833,14 @@ fun SettingsScreen(
                             context.startActivity(intent)
                         }
                     )
-                    SettingsRow(
-                        icon = PamojaIcons.Info,
-                        title = stringResource(R.string.settings_licenses_title),
-                        subtitle = stringResource(R.string.settings_licenses_subtitle),
-                        onClick = onLicenses,
-                    )
+                    if (BuildConfig.DEBUG) {
+                        SettingsRow(
+                            icon = PamojaIcons.Info,
+                            title = stringResource(R.string.settings_licenses_title),
+                            subtitle = stringResource(R.string.settings_licenses_subtitle),
+                            onClick = onLicenses,
+                        )
+                    }
                     SettingsRow(
                         icon = PamojaIcons.Star,
                         title = stringResource(R.string.settings_rate_title),
@@ -767,14 +918,63 @@ fun SettingsScreen(
                     )
                 }
 
-                Spacer(
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .height(Spacing.x8)
-                )
+                Spacer(modifier = Modifier.height(Spacing.x8))
             }
         }
+
+            PamojaBottomBar(
+                selected = PamojaMainTab.You,
+                onToday = onToday,
+                onGroups = onGroups,
+                onYou = {},
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
     }
+}
+
+@Composable
+private fun WidgetChoice(title: String, subtitle: String, onClick: () -> Unit) {
+    val colors = LocalPamojaColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(PamojaRadii.md))
+            .background(colors.surface1)
+            .clickable(onClick = onClick)
+            .padding(Spacing.x3),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(PamojaIcons.Smartphone),
+            contentDescription = null,
+            tint = colors.accentPrimary,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(Spacing.x3))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.labelLarge, color = colors.textPrimary)
+            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
+        }
+        Icon(
+            painter = painterResource(PamojaIcons.ChevronRight),
+            contentDescription = null,
+            tint = colors.textTertiary,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+private fun requestWidgetPin(
+    context: android.content.Context,
+    provider: Class<out android.appwidget.AppWidgetProvider>,
+): Boolean {
+    val manager = AppWidgetManager.getInstance(context)
+    return manager.isRequestPinAppWidgetSupported && manager.requestPinAppWidget(
+        ComponentName(context, provider),
+        null,
+        null,
+    )
 }
 
 @Composable

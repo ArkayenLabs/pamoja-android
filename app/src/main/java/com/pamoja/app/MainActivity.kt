@@ -2,7 +2,7 @@ package com.pamoja.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
@@ -46,18 +46,21 @@ private sealed interface LaunchTarget {
  *  - The Firebase SDK persists the auth token across app restarts and DataStore
  *    clears, so auth.currentUser is authoritative for "is this person signed in".
  *
+ *  - DataStore hasSeenIntro remembers the two product-only first-run screens.
+ *    It survives sign-out because returning users should go straight to auth.
+ *
  *  - DataStore isOnboarded answers a different question, "have they filled in a
- *    profile". Both are needed because sign-in and profile setup are separate
- *    steps: someone can authenticate and then kill the app before naming
- *    themselves.
+ *    profile". Someone can authenticate and then kill the app before naming
+ *    themselves, so the Firebase session alone is not enough.
  *
  *  Decision tree at launch:
- *    1. currentUser == null                -> Welcome, then the sign-in gate
- *    2. currentUser != null, not onboarded -> ProfileSetup, finish what was started
- *    3. currentUser != null, onboarded     -> Home
+ *    1. signed out, intro unseen           -> Product intro screen 1
+ *    2. signed out, intro seen             -> Authentication choices
+ *    3. signed in, not onboarded           -> ProfileSetup, finish what was started
+ *    4. signed in, onboarded               -> Home
  */
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var userPreferences: UserPreferences
     @Inject lateinit var firebaseAuth: FirebaseAuth
@@ -118,7 +121,11 @@ class MainActivity : ComponentActivity() {
                 val startDestination by produceState<String?>(initialValue = null) {
                     val user = firebaseAuth.currentUser
                     value = when {
-                        user == null -> Screen.Welcome.route
+                        user == null && !userPreferences.hasSeenIntro.first() -> {
+                            Screen.IntroOne.route
+                        }
+
+                        user == null -> Screen.AuthGraph.route
 
                         userPreferences.isOnboarded.first() -> {
                             // Rehydrate in case DataStore was cleared but the
@@ -137,7 +144,21 @@ class MainActivity : ComponentActivity() {
 
                 val target by launchTarget.collectAsState()
 
-                LaunchedEffect(target) {
+                startDestination?.let { destination ->
+                    PamojaNavGraph(
+                        navController = navController,
+                        startDestination = destination
+                    )
+                }
+
+                // A cold-start link is parsed before setContent. Do not consume
+                // it until the NavHost above exists: navigating while
+                // startDestination is still null races the graph setup, which
+                // used to make the tap appear to fail and leave the saved invite
+                // to surface only on the next manual app launch.
+                LaunchedEffect(target, startDestination) {
+                    if (startDestination == null) return@LaunchedEffect
+
                     when (val t = target) {
                         null -> Unit
 
@@ -153,31 +174,29 @@ class MainActivity : ComponentActivity() {
                         }
 
                         is LaunchTarget.Invite -> {
-                            // Persisted so the invite survives sign-in and
-                            // profile setup for someone who does not have an
-                            // account yet.
-                            userPreferences.savePendingInviteCode(t.code)
+                            val canOpenNow = firebaseAuth.currentUser != null &&
+                                userPreferences.isOnboarded.first()
 
-                            // Opens the preview rather than joining. A link used
-                            // to join silently, so the first thing anyone learned
-                            // about a group was that they were already in it.
-                            if (firebaseAuth.currentUser != null) {
+                            if (canOpenNow) {
+                                // A live, ready session needs no deferred copy.
+                                // Avoiding the write also prevents Home from
+                                // observing the same code and opening a duplicate
+                                // preview alongside this direct navigation.
+                                userPreferences.clearPendingInviteCode()
                                 navController.navigate(
                                     Screen.JoinPreview.createRoute(t.code)
                                 ) {
                                     launchSingleTop = true
                                 }
+                            } else {
+                                // Survives product intro, sign-in and profile
+                                // setup. Home consumes it once the account can
+                                // resolve and join a group safely.
+                                userPreferences.savePendingInviteCode(t.code)
                             }
                             launchTarget.value = null
                         }
                     }
-                }
-
-                startDestination?.let { destination ->
-                    PamojaNavGraph(
-                        navController = navController,
-                        startDestination = destination
-                    )
                 }
             }
         }

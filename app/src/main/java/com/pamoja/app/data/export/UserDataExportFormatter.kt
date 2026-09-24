@@ -78,6 +78,34 @@ class UserDataExportFormatter @Inject constructor() {
             }
         )
 
+        root.put(
+            "push_registrations",
+            JSONArray().apply {
+                export.pushRegistrations.forEach { registration ->
+                    put(
+                        JSONObject().apply {
+                            put("installation_id", registration.installationId)
+                            put("platform", registration.platform)
+                            put("app_version", registration.appVersion)
+                            registration.updatedAt?.let { put("updated_at", isoUtc(it)) }
+                        }
+                    )
+                }
+            }
+        )
+
+        root.put("adventures", JSONArray().apply {
+            export.adventures.forEach { record ->
+                put(JSONObject().apply {
+                    put("group_id", record.groupId)
+                    put("adventure_id", record.adventureId)
+                    put("kind", record.kind)
+                    record.segmentId?.let { put("segment_id", it) }
+                    put("record", JSONObject(record.fields))
+                })
+            }
+        })
+
         // Indented, because a person opening this file should be able to read
         // it. Machine readability is not the only requirement.
         return root.toString(2)
@@ -90,6 +118,6 @@ class UserDataExportFormatter @Inject constructor() {
 
     private companion object {
         /** Bump when the shape changes, so an old file stays interpretable. */
-        const val FORMAT_VERSION = 1
+        const val FORMAT_VERSION = 3
     }
 }

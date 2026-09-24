@@ -42,7 +42,8 @@ import com.pamoja.app.ui.theme.Spacing
  * group, any steps, or a reason to say yes.
  *
  * So this asks first. "Not now" costs nothing and leaves the one system prompt
- * unspent for a moment when the value is obvious. Only "Turn on" spends it.
+ * unspent for a moment when the value is obvious. Only "Allow notifications"
+ * spends it.
  *
  * Framed around what actually arrives rather than around permission: nobody
  * wants notifications, they want to know their group hit the goal.

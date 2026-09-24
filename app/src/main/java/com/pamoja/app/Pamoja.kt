@@ -8,6 +8,7 @@ import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.pamoja.app.util.BillingIdentity
+import com.pamoja.app.notifications.FcmRegistrationManager
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -16,6 +17,9 @@ class PamojaApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var fcmRegistrationManager: FcmRegistrationManager
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -32,10 +36,14 @@ class PamojaApp : Application(), Configuration.Provider {
 
         initializeAppCheck()
 
-        // A no-op until an API key exists, which needs the Play merchant chain.
-        // Called here rather than lazily so that the moment a key is added, the
-        // SDK is live on the next launch with nothing else to remember.
-        BillingIdentity.configure(this)
+        // Re-registers a returning signed-in installation and follows auth
+        // changes. The MessagingService handles refresh callbacks while this
+        // listener covers the common case where FCM registered before sign-in.
+        fcmRegistrationManager.start()
+
+        // RevenueCat is configured by the auth listener below, after a Firebase
+        // UID is known. Pamoja has no anonymous purchase flow, so creating an
+        // anonymous RevenueCat customer first would only complicate identity.
         trackBillingIdentity()
     }
 
@@ -59,7 +67,7 @@ class PamojaApp : Application(), Configuration.Provider {
         FirebaseAuth.getInstance().addAuthStateListener { auth ->
             val user = auth.currentUser
             if (user != null) {
-                BillingIdentity.onSignedIn(user.uid)
+                BillingIdentity.onSignedIn(this, user.uid)
             } else {
                 BillingIdentity.onSignedOut()
             }

@@ -1,4 +1,6 @@
 import java.util.Properties
+import java.io.File
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -13,7 +15,9 @@ plugins {
 }
 
 // ── Load signing credentials from keystore.properties (never committed to Git) ──
-val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystorePropertiesFile = rootProject.file(
+    providers.gradleProperty("pamojaSigningProperties").orNull ?: "keystore.properties",
+)
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) load(keystorePropertiesFile.inputStream())
 }
@@ -31,12 +35,24 @@ val keystoreProperties = Properties().apply {
 // This is RevenueCat's *public* key, which is designed to ship inside the APK.
 // It is kept out of Git anyway, because a key in source is a key that gets
 // copied into the wrong project and is awkward to rotate.
-val localPropertiesFile = rootProject.file("local.properties")
+val localPropertiesFile = rootProject.file(
+    providers.gradleProperty("pamojaBillingProperties").orNull ?: "local.properties",
+)
 val localProperties = Properties().apply {
     if (localPropertiesFile.exists()) load(localPropertiesFile.inputStream())
 }
 val revenueCatApiKey: String =
     (localProperties["revenueCatApiKey"] as String?)?.trim().orEmpty()
+val subscriptionSalesEnabled: Boolean =
+    (localProperties["subscriptionSalesEnabled"] as String?)
+        ?.trim()
+        ?.equals("true", ignoreCase = true)
+        ?: false
+val circlePreviewEnabled: Boolean =
+    (localProperties["circlePreviewEnabled"] as String?)
+        ?.trim()
+        ?.equals("true", ignoreCase = true)
+        ?: false
 
 android {
     namespace = "com.pamoja.app"
@@ -49,16 +65,41 @@ android {
         // Closed testing and the first upload have consumed earlier codes, and
         // Play refuses an upload that reuses one. Raise this again if the
         // Console says the code is taken; it only ever goes up.
-        versionCode = 3
+        versionCode = providers.gradleProperty("pamojaVersionCode").orNull?.let {
+            requireNotNull(it.toIntOrNull()?.takeIf { code -> code > 7 }) {
+                "pamojaVersionCode must be an integer above 7, verified unused in Play Console"
+            }
+        } ?: 7
 
         // Three-part on purpose. The Settings screen used to print a hardcoded
         // "1.0.0" next to a versionName of "1.0", so the two disagreed; that
         // screen now reads BuildConfig.VERSION_NAME, and this is the value it
         // shows.
-        versionName = "1.0.0"
+        versionName = providers.gradleProperty("pamojaVersionName").orNull ?: "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
+        buildConfigField("boolean", "TOGETHER_TRAIL_ENABLED",
+            (providers.gradleProperty("togetherTrailEnabled").orNull == "true").toString())
+        // Enable only after compatible planning rules and finalizer are deployed.
+        buildConfigField(
+            "boolean", "DAY_ONE_PLANNING_ENABLED",
+            (providers.gradleProperty("dayOnePlanningEnabled").orNull == "true").toString(),
+        )
+        // Independent from the SDK key on purpose. A key is configuration; it
+        // is not permission to expose products or accept real purchases.
+        buildConfigField(
+            "boolean",
+            "SUBSCRIPTION_SALES_ENABLED",
+            subscriptionSalesEnabled.toString(),
+        )
+        // Coordinated rollout guard. Keep false until the weekly finalizer and
+        // preview-aware Firestore rules are both live and verified.
+        buildConfigField(
+            "boolean",
+            "CIRCLE_PREVIEW_ENABLED",
+            circlePreviewEnabled.toString(),
+        )
     }
 
     // Only created when keystore.properties is present. Without this guard the
@@ -69,7 +110,11 @@ android {
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("release") {
-                storeFile     = file(keystoreProperties["storeFile"] as String)
+                // Relative paths in an external signing file retain the original
+                // app project's base directory, rather than this worktree's.
+                val configuredStore = File(keystoreProperties["storeFile"] as String)
+                storeFile = if (configuredStore.isAbsolute) configuredStore else
+                    File(keystorePropertiesFile.parentFile.resolve("app"), configuredStore.path)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias      = keystoreProperties["keyAlias"] as String
                 keyPassword   = keystoreProperties["keyPassword"] as String
@@ -94,25 +139,37 @@ android {
             // Debug keeps minify off for faster builds and readable stack traces
             isMinifyEnabled = false
         }
+        create("preview") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".preview"
+            matchingFallbacks += "debug"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
     }
+    // All four picker choices must be available even when installed in another language.
+    bundle { language { enableSplit = false } }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
 }
 
 dependencies {
+    implementation("androidx.appcompat:appcompat:1.7.1")
     // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
 
     // Compose
@@ -140,6 +197,7 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.functions)
 
     // Health Connect
     implementation(libs.health.connect)
@@ -183,6 +241,7 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -196,3 +255,6 @@ dependencies {
 kapt {
     correctErrorTypes = true
 }
+
+// Offline device preview has no Firebase project or network access.
+tasks.matching { it.name == "processPreviewGoogleServices" }.configureEach { enabled = false }

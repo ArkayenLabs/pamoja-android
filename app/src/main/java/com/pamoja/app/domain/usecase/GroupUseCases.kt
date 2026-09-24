@@ -4,13 +4,16 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.model.PamojaGroupId
 import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import java.time.DayOfWeek
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 
@@ -26,42 +29,49 @@ class CreateGroupUseCase @Inject constructor(
     suspend operator fun invoke(
         name: String,
         adminId: String,
-        dailyPerPersonTarget: Int,
+        weeklyTarget: Int,
         maxMemberCap: Int,
-        canMembersEditTarget: Boolean,
         weekStartDay: DayOfWeek = WeekWindow.localeDefault(),
     ): Result<Group> {
-        if (name.isBlank()) return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
+        val cleanedName = cleanGroupName(name)
+        if (cleanedName.isBlank()) {
+            return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
+        }
+        if (cleanedName.length > UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH) {
+            return Result.failure(AppError.Validation(ValidationField.GroupNameTooLong))
+        }
         if (adminId.isBlank()) return Result.failure(AppError.SessionExpired())
-        if (dailyPerPersonTarget < StepGoal.MIN_DAILY_PER_PERSON ||
-            dailyPerPersonTarget > StepGoal.MAX_DAILY_PER_PERSON
-        ) {
+        if (!StepGoal.isSelectableWeeklyTotal(weeklyTarget)) {
             return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
         }
         if (maxMemberCap < 2) return Result.failure(AppError.Validation(ValidationField.MemberCapTooSmall))
 
-        // Sized on the cap the admin just chose, not on the single member the
-        // group has this second.
-        //
-        // Deriving from memberCount here would set a brand new group's first
-        // week to one person's worth of steps, and the first week is the one
-        // that decides whether anybody comes back. Members join over the first
-        // day or two, so the cap is the better estimate of who this goal is
-        // for. The rollover then corrects it to whoever actually turned up.
-        val weeklyTarget = StepGoal.weeklyTotalFor(dailyPerPersonTarget, maxMemberCap)
+        val ownedGroups = runCatching {
+            groupRepository.getUserGroups(adminId).firstOrNull().orEmpty()
+        }.getOrElse { return Result.failure(it) }
+        val alreadyOwned = ownedGroups.any { group ->
+                group.adminId == adminId &&
+                    normalizeGroupName(group.name) == normalizeGroupName(cleanedName)
+            }
+        if (alreadyOwned) {
+            return Result.failure(AppError.Validation(ValidationField.GroupNameDuplicate))
+        }
 
         val groupId = UUID.randomUUID().toString()
         val inviteLink = "pamoja://join/$groupId"
 
         val group = Group(
             groupId = groupId,
-            name = name,
+            name = cleanedName,
             adminId = adminId,
             weeklyTarget = weeklyTarget,
-            dailyPerPersonTarget = dailyPerPersonTarget,
+            // Retired field. Zero marks every new group as a shared-total group.
+            dailyPerPersonTarget = 0,
             maxMemberCap = maxMemberCap,
             memberCount = 1,  // Admin is the first member
-            canMembersEditTarget = canMembersEditTarget,
+            // The official goal is organizer-controlled. The field remains in
+            // storage for backward compatibility with older app versions.
+            canMembersEditTarget = false,
             inviteLink = inviteLink,
             inviteLinkActive = true,
             createdAt = System.currentTimeMillis(),
@@ -74,6 +84,8 @@ class CreateGroupUseCase @Inject constructor(
 class GetGroupUseCase @Inject constructor(
     private val groupRepository: GroupRepository
 ) {
+    fun observe(groupId: String): Flow<Group> = groupRepository.observeGroup(groupId)
+
     suspend operator fun invoke(groupId: String): Result<Group> {
         if (groupId.isBlank()) return Result.failure(AppError.Validation(ValidationField.InviteCodeMissing))
         return groupRepository.getGroup(groupId)
@@ -190,6 +202,7 @@ class PublishMyWeeklyStepsUseCase @Inject constructor(
         startDay: DayOfWeek,
         todaySteps: Long,
         todayDate: String,
+        reportingDate: java.time.LocalDate = java.time.LocalDate.now(),
     ): Result<Unit> {
         if (groupId.isBlank() || userId.isBlank()) return Result.success(Unit)
         return groupRepository.publishMyWeeklySteps(
@@ -198,7 +211,7 @@ class PublishMyWeeklyStepsUseCase @Inject constructor(
             steps = steps.coerceIn(0L, MAX_PUBLISHABLE_WEEKLY_STEPS),
             // The group's week, not the device's, so members in different
             // locales stamp the same marker for the same week.
-            weekStart = WeekWindow.startOf(startDay),
+            weekStart = WeekWindow.startOf(startDay, reportingDate),
             todaySteps = todaySteps.coerceIn(0L, MAX_PUBLISHABLE_DAILY_STEPS),
             todayDate = todayDate,
         )
@@ -232,6 +245,7 @@ class PublishGroupWeeklyTotalUseCase @Inject constructor(
         groupId: String,
         weeklySteps: Long,
         startDay: DayOfWeek,
+        reportingDate: java.time.LocalDate = java.time.LocalDate.now(),
     ): Result<Unit> {
         if (groupId.isBlank()) return Result.success(Unit)
         return groupRepository.publishWeeklyTotal(
@@ -240,7 +254,7 @@ class PublishGroupWeeklyTotalUseCase @Inject constructor(
             // Stamped with the group's own week, so isCurrent compares like
             // with like. Stamping the device's would mark the cache stale for
             // every member whose locale differs from the group's setting.
-            weekStart = WeekWindow.startOf(startDay),
+            weekStart = WeekWindow.startOf(startDay, reportingDate),
         )
     }
 }
@@ -264,9 +278,8 @@ class UpdateGroupSettingsUseCase @Inject constructor(
         group: Group,
         editorId: String,
         name: String,
-        dailyPerPersonTarget: Int,
+        weeklyTarget: Int,
         maxMemberCap: Int,
-        canMembersEditTarget: Boolean,
         weekStartDay: DayOfWeek,
     ): Result<Unit> {
         // Checked here as well as in the security rules. The rules are what
@@ -276,16 +289,25 @@ class UpdateGroupSettingsUseCase @Inject constructor(
             return Result.failure(AppError.PermissionDenied())
         }
 
-        val trimmed = name.trim()
+        val trimmed = cleanGroupName(name)
         if (trimmed.isBlank()) {
             return Result.failure(AppError.Validation(ValidationField.GroupNameMissing))
         }
         if (trimmed.length > MAX_GROUP_NAME_LENGTH) {
             return Result.failure(AppError.Validation(ValidationField.GroupNameTooLong))
         }
-        if (dailyPerPersonTarget < StepGoal.MIN_DAILY_PER_PERSON ||
-            dailyPerPersonTarget > StepGoal.MAX_DAILY_PER_PERSON
-        ) {
+        val ownedGroups = runCatching {
+            groupRepository.getUserGroups(editorId).firstOrNull().orEmpty()
+        }.getOrElse { return Result.failure(it) }
+        val duplicate = ownedGroups.any { other ->
+                other.groupId != group.groupId &&
+                    other.adminId == editorId &&
+                    normalizeGroupName(other.name) == normalizeGroupName(trimmed)
+            }
+        if (duplicate) {
+            return Result.failure(AppError.Validation(ValidationField.GroupNameDuplicate))
+        }
+        if (!StepGoal.isSelectableWeeklyTotal(weeklyTarget)) {
             return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
         }
         if (maxMemberCap < MIN_MEMBER_CAP || maxMemberCap > MAX_MEMBER_CAP) {
@@ -299,17 +321,14 @@ class UpdateGroupSettingsUseCase @Inject constructor(
             )
         }
 
-        // Sized on the cap being saved, matching how creation sizes it, so
-        // editing the cap and editing the goal stay consistent with each other.
-        val weeklyTarget = StepGoal.weeklyTotalFor(dailyPerPersonTarget, maxMemberCap)
-
         return groupRepository.updateGroupSettings(
             groupId = group.groupId,
             name = trimmed,
             weeklyTarget = weeklyTarget,
-            dailyPerPersonTarget = dailyPerPersonTarget,
             maxMemberCap = maxMemberCap,
-            canMembersEditTarget = canMembersEditTarget,
+            // Retire the old all-members edit permission on every organizer
+            // save. A group promise must not be movable by any member.
+            canMembersEditTarget = false,
             weekStartDay = weekStartDay.name,
         )
     }
@@ -317,7 +336,7 @@ class UpdateGroupSettingsUseCase @Inject constructor(
     companion object {
         const val MIN_MEMBER_CAP = 2
         const val MAX_MEMBER_CAP = 20
-        const val MAX_GROUP_NAME_LENGTH = 100
+        const val MAX_GROUP_NAME_LENGTH = 40
     }
 }
 
@@ -329,6 +348,17 @@ class UpdateGroupSettingsUseCase @Inject constructor(
  * and quietly treating "remove me" as "hand over and leave" from a member list
  * would be a surprising amount to infer from one tap.
  */
+class LeaveGroupUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+) {
+    suspend operator fun invoke(group: Group): Result<Unit> {
+        val user = getCurrentUserUseCase() ?: return Result.failure(AppError.SessionExpired())
+        if (group.adminId == user.userId) return Result.failure(AppError.PermissionDenied())
+        return groupRepository.removeMember(group.groupId, user.userId)
+    }
+}
+
 class RemoveGroupMemberUseCase @Inject constructor(
     private val groupRepository: GroupRepository,
 ) {
@@ -347,6 +377,27 @@ class RemoveGroupMemberUseCase @Inject constructor(
             return Result.failure(AppError.Validation(ValidationField.DisplayNameMissing))
         }
         return groupRepository.removeMember(group.groupId, memberId)
+    }
+}
+
+/** Keeps visually identical names identical across case and repeated spaces. */
+private fun cleanGroupName(name: String): String = name.trim().replace(Regex("\\s+"), " ")
+
+private fun normalizeGroupName(name: String): String =
+    cleanGroupName(name).lowercase(Locale.ROOT)
+
+/** Permanently deletes a group after verifying the current admin locally. */
+class DeleteGroupUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    suspend operator fun invoke(group: Group, editorId: String): Result<Unit> {
+        if (group.adminId != editorId) {
+            return Result.failure(AppError.PermissionDenied())
+        }
+        if (!PamojaGroupId.isValid(group.groupId)) {
+            return Result.failure(AppError.NotFound("Invalid group identifier"))
+        }
+        return groupRepository.deleteGroup(group.groupId)
     }
 }
 
@@ -425,16 +476,15 @@ class UpdateWeeklyTargetUseCase @Inject constructor(
         userId: String,
         group: Group
     ): Result<Unit> {
-        if (target <= 0) return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
+        if (!StepGoal.isSelectableWeeklyTotal(target)) {
+            return Result.failure(AppError.Validation(ValidationField.WeeklyTargetInvalid))
+        }
 
-        val membership = groupRepository.getMembership(userId, groupId).getOrElse {
+        groupRepository.getMembership(userId, groupId).getOrElse {
             return Result.failure(it)
         }
 
-        val isAdmin = group.adminId == userId
-        val canEdit = group.canMembersEditTarget
-
-        if (!isAdmin && !canEdit) {
+        if (group.adminId != userId) {
             return Result.failure(AppError.Validation(ValidationField.NotAllowedToEditTarget))
         }
 

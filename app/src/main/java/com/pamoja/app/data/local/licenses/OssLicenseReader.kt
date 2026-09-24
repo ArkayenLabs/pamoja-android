@@ -64,10 +64,12 @@ class OssLicenseReader @Inject constructor(
             .openRawResource(R.raw.third_party_licenses)
             .use { it.readBytes() }
 
-        context.resources
+        val generated = context.resources
             .openRawResource(R.raw.third_party_license_metadata)
             .use { it.bufferedReader().readLines() }
             .mapNotNull { parseEntry(it, blob) }
+
+        (generated + MANUAL_ASSET_LICENSES)
             // Several dependencies can declare the same name, and repeating it
             // in the list tells the reader nothing.
             .distinctBy { it.name }
@@ -98,6 +100,42 @@ class OssLicenseReader @Inject constructor(
         return OssLicense(
             name = name,
             body = String(blob, offset, length, Charsets.UTF_8).trim(),
+        )
+    }
+
+    private companion object {
+        /**
+         * The Gradle plugin sees binary dependencies, not vector artwork copied
+         * into res/drawable. Keep asset licences here so the in-app disclosure
+         * remains complete when a curated icon is not delivered as a library.
+         */
+        val MANUAL_ASSET_LICENSES = listOf(
+            OssLicense(
+                name = "Phosphor Icons",
+                body = """
+                    MIT License
+
+                    Copyright (c) 2023 Phosphor Icons
+
+                    Permission is hereby granted, free of charge, to any person obtaining a copy
+                    of this software and associated documentation files (the "Software"), to deal
+                    in the Software without restriction, including without limitation the rights
+                    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                    copies of the Software, and to permit persons to whom the Software is
+                    furnished to do so, subject to the following conditions:
+
+                    The above copyright notice and this permission notice shall be included in all
+                    copies or substantial portions of the Software.
+
+                    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+                    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+                    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+                    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+                    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+                    SOFTWARE.
+                """.trimIndent(),
+            )
         )
     }
 }

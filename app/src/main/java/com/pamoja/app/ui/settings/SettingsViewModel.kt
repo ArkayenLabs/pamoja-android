@@ -24,7 +24,10 @@ import com.pamoja.app.domain.usecase.ReauthenticateWithGoogleUseCase
 import com.pamoja.app.domain.usecase.ReauthenticateWithPhoneUseCase
 import com.pamoja.app.domain.usecase.SignOutUseCase
 import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
+import com.pamoja.app.domain.repository.PhoneVerification
+import com.pamoja.app.domain.repository.PhoneVerificationPurpose
 import com.pamoja.app.util.WorkManagerScheduler
+import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,6 +99,8 @@ data class SettingsUiState(
      */
     val exportJson: String? = null,
     val healthStatus: HealthStatus = HealthStatus.Connected,
+    val backgroundReadSupported: Boolean = false,
+    val backgroundReadGranted: Boolean = false,
     /** Epoch millis of the last successful sync, 0 when it has never happened. */
     val lastSyncTime: Long = 0L,
     val isSyncing: Boolean = false,
@@ -133,6 +138,7 @@ class SettingsViewModel @Inject constructor(
     private val workManagerScheduler: WorkManagerScheduler,
     private val exportUserDataUseCase: ExportUserDataUseCase,
     private val exportFormatter: UserDataExportFormatter,
+    private val widgetUpdater: PamojaWidgetUpdater,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -178,12 +184,22 @@ class SettingsViewModel @Inject constructor(
                 healthConnectReader.hasPermission() -> HealthStatus.Connected
                 else -> HealthStatus.NotConnected
             }
-            _uiState.value = _uiState.value.copy(healthStatus = status)
+            _uiState.value = _uiState.value.copy(
+                healthStatus = status,
+                backgroundReadSupported = healthConnectReader.supportsBackgroundRead(),
+                backgroundReadGranted = healthConnectReader.hasBackgroundPermission(),
+            )
         }
     }
 
     fun syncNow() {
         workManagerScheduler.syncNow()
+    }
+
+    fun onBackgroundPermissionResult() {
+        refreshHealthStatus()
+        workManagerScheduler.scheduleStepSync()
+        workManagerScheduler.syncSoon()
     }
 
     /**
@@ -310,6 +326,7 @@ class SettingsViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     userPreferences.clearAll()
+                    widgetUpdater.clear()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isSignedOut = true
@@ -332,6 +349,7 @@ class SettingsViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     userPreferences.clearAll()
+                    widgetUpdater.clear()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isSignedOut = true
@@ -440,13 +458,29 @@ class SettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            startPhoneVerificationUseCase(phoneNumber, activity).fold(
+            startPhoneVerificationUseCase(
+                phoneNumber,
+                activity,
+                PhoneVerificationPurpose.Reauthenticate,
+            ).fold(
                 onSuccess = { verification ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        reauthPhoneNumber = phoneNumber,
-                        reauthVerificationId = verification.verificationId,
-                    )
+                    when (verification) {
+                        is PhoneVerification.CodeSent -> {
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                reauthPhoneNumber = phoneNumber,
+                                reauthVerificationId = verification.verificationId,
+                            )
+                        }
+                        is PhoneVerification.Completed -> {
+                            _uiState.value = _uiState.value.copy(
+                                reauthRequired = null,
+                                reauthVerificationId = null,
+                                reauthPhoneNumber = null,
+                            )
+                            deleteAccount(justReauthenticated = true)
+                        }
+                    }
                 },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(

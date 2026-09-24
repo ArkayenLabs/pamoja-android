@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -26,7 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +65,7 @@ fun ActivityScreen(
     viewModel: ActivityViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showClearConfirm by remember { mutableStateOf(false) }
 
     // Opening the list is what marks it seen.
@@ -98,20 +97,21 @@ fun ActivityScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.x4, vertical = Spacing.x2),
+                    .padding(horizontal = Spacing.x5, vertical = Spacing.x4),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onBack) {
                     Icon(
                         painter = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = stringResource(R.string.common_back),
+                        contentDescription = stringResource(R.string.activity_back_desc),
                         tint = colors.textSecondary,
                         modifier = Modifier.size(20.dp),
                     )
                 }
+                Spacer(modifier = Modifier.width(Spacing.x1))
                 Text(
                     text = stringResource(R.string.activity_title),
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = colors.textPrimary,
                     modifier = Modifier.weight(1f),
                 )
@@ -158,13 +158,7 @@ fun ActivityScreen(
                         )
                     }
 
-                    item {
-                        Spacer(
-                            modifier = Modifier
-                                .navigationBarsPadding()
-                                .height(Spacing.x8)
-                        )
-                    }
+                    item { Spacer(modifier = Modifier.height(Spacing.x8)) }
                 }
             }
         }

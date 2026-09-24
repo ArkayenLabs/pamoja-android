@@ -1,4 +1,29 @@
 <resources>
+    <string name="premium_history_title">See your progress together</string>
+    <string name="premium_history_body">Full weekly history and trends for everyone in the group. Steps and leaderboards stay free.</string>
+    <string name="premium_move_named_body">Move your subscription from %1$s to %2$s? The previous group will lose access provided by this subscription. No new purchase is needed.</string>
+    <string name="premium_purchase_named_body">Your previous subscription supported %1$s. After Google Play confirms your purchase, %2$s will be the group it supports.</string>
+    <string name="premium_continue_checkout">Continue to checkout</string>
+    <string name="planning_unavailable_title">Planning is not ready yet</string>
+    <string name="planning_not_enabled_body">Planning is not available for this group yet. You can still review completed weeks. Another purchase will not enable it.</string>
+    <string name="planning_organizer_setup_body">The group organizer needs to open planning first to set the shared calendar. Then everyone can join the plan.</string>
+    <string name="planning_existing_plan_body">Your saved plan is still in progress. The new planning calendar will be available after it finishes.</string>
+    <string name="planning_refresh_body">The week or goal has changed. Reopen planning to load the latest details.</string>
+    <string name="premium_group_active">This group has Premium</string>
+    <string name="premium_group_active_body">Everyone in this group shares the benefits. No additional subscription is needed.</string>
+    <string name="premium_subscription_found">Your subscription is ready</string>
+    <string name="premium_apply_existing_body">Apply your existing subscription to this group without another purchase.</string>
+    <string name="premium_apply_existing">Apply Premium to this group</string>
+    <string name="premium_previous_group">Premium currently covers %1$s.</string>
+    <string name="premium_previous_group_inactive">Your previous Premium group was %1$s. Subscribe again to cover this group.</string>
+    <string name="premium_choose_group_title">No Premium musical chairs</string>
+    <string name="premium_choose_group_body">Move Premium here, or keep both groups moving with a multi-group plan.</string>
+    <string name="premium_keep_both_action">Keep both groups Premium</string>
+    <string name="premium_more_groups_unavailable_title">Multi-group plans are being connected</string>
+    <string name="premium_more_groups_unavailable_body">Your current group stays Premium. You can move it here now, or try again after the additional plan appears in Google Play.</string>
+    <string name="premium_another_group">another group</string>
+    <string name="premium_manage_play">Manage subscription in Google Play</string>
+    <string name="premium_refresh_status">Refresh subscription status</string>
     <!--
       Naming: <area>_<element>. Areas match the ui/ package names, so a string
       is findable from the screen it appears on and vice versa.
@@ -24,12 +49,12 @@
     <string name="crop_failed">That image could not be opened. Try another one.</string>
 
     <!-- ── Editing an existing group, admin only ───────────────────────── -->
-    <string name="edit_group_title">Edit group</string>
+    <string name="edit_group_title">Manage group</string>
     <string name="edit_group_name_label">Group name</string>
     <string name="edit_group_name_placeholder">Family, work, running club</string>
-    <string name="edit_group_goal">Daily goal per person</string>
-    <string name="edit_group_goal_sub">What each member aims for per day. The group total scales with how many of you there are.</string>
-    <string name="edit_group_goal_value">%1$s steps a day each</string>
+    <string name="edit_group_goal">Weekly group goal</string>
+    <string name="edit_group_goal_sub">One shared total for everyone. Contributions can be completely different.</string>
+    <string name="edit_group_goal_value">%1$s steps together each week</string>
     <string name="edit_group_cap">Group size</string>
     <string name="edit_group_cap_sub">How many people can be in this group at once.</string>
     <!-- A count followed by a noun, so a plural. Reuses member_count rather
@@ -37,7 +62,7 @@
     <!-- Explains why the slider will not go lower, rather than letting it feel broken. -->
     <string name="edit_group_cap_floor">Cannot go below %1$d, the number of people already here. Remove someone first.</string>
     <string name="edit_group_week_start_sub">Changing this reshapes the current week for everyone in the group.</string>
-    <string name="edit_group_members_edit_sub">Let members change the weekly goal, not just you.</string>
+    <string name="edit_group_goal_organizer_only">Only the organizer can change the group’s goal.</string>
     <string name="edit_group_members">Members</string>
     <string name="edit_group_members_sub">Removing someone takes them out of this group. Their step history is not deleted.</string>
     <string name="edit_group_member_admin">Admin</string>
@@ -64,7 +89,16 @@
     <string name="edit_group_photo_remove">Remove</string>
     <string name="edit_group_save">Save changes</string>
     <string name="edit_group_not_admin">Only the group admin can change these settings.</string>
-    <string name="group_edit_action">Edit group</string>
+    <string name="edit_group_delete">Delete group</string>
+    <string name="edit_group_delete_sub">Permanently close this group for everyone.</string>
+    <string name="edit_group_delete_title">Delete this group?</string>
+    <string name="edit_group_delete_body">Type “%1$s” to confirm. This cannot be undone.</string>
+    <string name="edit_group_delete_members">Every member will lose access to the group.</string>
+    <string name="edit_group_delete_history">The group’s weekly review history will be erased.</string>
+    <string name="edit_group_delete_permanent">The invite link and group photo will stop working.</string>
+    <string name="edit_group_delete_type_name">Type the group name</string>
+    <string name="edit_group_delete_confirm">Delete group</string>
+    <string name="group_edit_action">Manage</string>
 
     <!-- Photo privacy. Default off, and the copy names the real consequence
          rather than saying something vague about visibility. -->
@@ -72,7 +106,7 @@
     <string name="profile_show_photo_sub">Off by default. When off, your photo is never sent to anyone else in your groups, and they see your initials instead.</string>
 
     <string name="validation_member_cap_below_count">That is fewer people than the group already has. Remove someone first, or pick a higher number.</string>
-    <string name="validation_group_name_too_long">That group name is too long. Keep it under 100 characters.</string>
+    <string name="validation_group_name_too_long">That group name is too long. Use 40 characters or fewer.</string>
     <string name="common_continue">Continue</string>
     <string name="common_back">Back</string>
     <string name="common_not_now">Not now</string>
@@ -110,11 +144,12 @@
     <string name="validation_email_missing">Enter your email address</string>
     <string name="validation_email_malformed">That email address does not look right</string>
     <string name="validation_password_missing">Enter your password</string>
-    <string name="validation_password_too_short">Use at least 6 characters</string>
+    <string name="validation_password_too_short">Use at least 8 characters</string>
     <string name="validation_phone_country_code">Include the country code, for example +91</string>
     <string name="validation_phone_malformed">That phone number does not look right</string>
     <string name="validation_otp_incomplete">Enter the 6 digit code</string>
     <string name="validation_group_name_missing">Give the group a name</string>
+    <string name="validation_group_name_duplicate">You already manage a group with that name</string>
     <string name="validation_weekly_target">Pick a weekly target above zero</string>
     <string name="validation_member_cap">A group needs room for at least 2 people</string>
     <string name="validation_invite_missing">Enter an invite link or code</string>
@@ -139,8 +174,8 @@
     <string name="auth_error_sms_title">Could not send the code</string>
     <string name="auth_error_sms_body">Try again, or sign in with Google or email instead.</string>
     <string name="auth_error_phone_invalid">That number does not look right. Check the digits after the dial code.</string>
-    <string name="auth_error_no_google_account_title">No Google account on this phone</string>
-    <string name="auth_error_no_google_account_body">Add one in your phone\'s settings, or continue with phone or email instead.</string>
+    <string name="auth_error_google_unavailable_title">Google sign-in could not open</string>
+    <string name="auth_error_google_unavailable_body">Try again. If it keeps happening, update Google Play services or use phone or email.</string>
     <string name="auth_error_generic_title">That did not work</string>
     <string name="auth_error_generic_body">Try again, or use another sign-in method.</string>
     <string name="error_unknown_title">Something went wrong</string>
@@ -159,20 +194,38 @@
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
     <string name="welcome_get_started">Get started</string>
-    <string name="welcome_tagline">Walk further, together.</string>
+    <string name="onboarding_step_count">%1$d of %2$d</string>
+    <string name="welcome_eyebrow">Small groups. One weekly goal.</string>
+    <string name="welcome_title">Move more. Together.</string>
+    <string name="welcome_tagline">Pool every step with people who make the week worth showing up for.</string>
+    <string name="welcome_live_group">Family walkers</string>
+    <string name="welcome_shared_goal">Shared goal</string>
+    <string name="welcome_demo_steps">48,320</string>
+    <string name="welcome_demo_target">of 70,000 steps together</string>
+    <string name="welcome_people_moving">4 people moving</string>
+    <string name="welcome_steps_remaining">21,680 steps to go this week</string>
     <string name="welcome_feature_steps">Step tracking</string>
     <string name="welcome_feature_goals">Group goals</string>
     <string name="welcome_feature_leaderboard">Leaderboard</string>
     <string name="welcome_have_account">Already have an account? Sign in</string>
+    <string name="intro_one_tagline">Walk further, together.</string>
+    <string name="intro_feature_steps_body">Counted quietly from your phone</string>
+    <string name="intro_feature_goals_body">One weekly target, pooled together</string>
+    <string name="intro_feature_leaderboard_body">Friendly, private, just your circle</string>
+    <string name="intro_two_title">One goal. Every step counts.</string>
+    <string name="intro_two_body">Create a private group, invite your people and build one weekly total together.</string>
+    <string name="intro_two_fair_title">Made for different abilities</string>
+    <string name="intro_two_fair_body">Everyone contributes what they can. The goal belongs to the group.</string>
 
     <!-- ── Auth landing ───────────────────────────────────────────────── -->
-    <string name="auth_landing_title">Keep your groups safe</string>
-    <string name="auth_landing_subtitle">Sign in so your groups and step history follow you to a new phone.</string>
-    <string name="auth_failed_title">That did not work</string>
+    <string name="auth_landing_title">Welcome back</string>
+    <string name="auth_landing_subtitle">Sign in to keep walking with your groups.</string>
     <string name="auth_continue_google">Continue with Google</string>
     <string name="auth_opening_google">Opening Google…</string>
     <string name="auth_continue_phone">Continue with phone</string>
-    <string name="auth_continue_email">Continue with email</string>
+    <string name="auth_or_continue">OR CONTINUE WITH</string>
+    <string name="auth_new_here">New to Pamoja?</string>
+    <string name="auth_create_account">Create account</string>
     <!-- The two link labels are substituted in, so translators can move them
          within the sentence and the links follow. -->
     <string name="auth_legal_line">By continuing you agree to our %1$s and %2$s.</string>
@@ -187,6 +240,8 @@
     <string name="phone_too_short">That number looks too short for %1$s. Check the digits after the dial code.</string>
     <string name="phone_too_long">That number looks too long for %1$s. Check the digits after the dial code.</string>
     <string name="phone_send_code">Send code</string>
+    <string name="phone_requesting_code">Requesting code…</string>
+    <string name="phone_security_check">Verifying this device. A secure browser check may briefly open before the code is sent.</string>
     <string name="phone_select_country">Select country</string>
     <string name="phone_search_country">Country or dial code</string>
     <string name="phone_label_country">Country</string>
@@ -205,33 +260,23 @@
     <string name="otp_resend_in">Resend in 0:%1$02d</string>
     <string name="otp_send_new">Send a new code</string>
     <string name="otp_verify">Verify</string>
-    <string name="otp_autofill_hint">If your phone offers to fill the code, tapping it fills every box at once.</string>
 
     <!-- ── Email auth ─────────────────────────────────────────────────── -->
-    <string name="email_signup_title">Sign up with email</string>
-    <string name="email_signin_title">Welcome back</string>
-    <string name="email_signup_subtitle">One account keeps your groups and history safe.</string>
-    <string name="email_signin_subtitle">Sign in to pick up where you left off.</string>
+    <string name="email_signup_title">Create your account</string>
     <string name="email_label">Email</string>
     <string name="email_placeholder">you@example.com</string>
-    <string name="email_supporting">Used to sign in and to reset your password. Never shown to your group.</string>
     <string name="email_required">Enter your email address</string>
     <string name="email_invalid">That email address does not look right</string>
     <string name="password_label">Password</string>
     <string name="password_placeholder_new">At least 8 characters</string>
     <string name="password_placeholder_existing">Your password</string>
     <string name="password_too_short">Use at least 8 characters</string>
-    <string name="password_strength_short">Too short</string>
-    <string name="password_strength_ok">Getting there</string>
-    <string name="password_strength_good">Good password</string>
-    <string name="password_strength_strong">Strong password</string>
-    <string name="password_needs_length">%1$s. Use at least 8 characters.</string>
-    <string name="password_needs_symbol">%1$s. Add a number or symbol to strengthen it.</string>
+    <string name="password_confirm_label">Confirm password</string>
+    <string name="password_confirm_placeholder">Type your password again</string>
+    <string name="password_mismatch">The passwords do not match</string>
     <string name="email_forgot">Forgot password?</string>
     <string name="email_create_account">Create account</string>
     <string name="email_have_account">Already have an account?</string>
-    <string name="email_new_here">New to Pamoja?</string>
-    <string name="email_create_one">Create one</string>
 
     <!-- ── Forgot password ────────────────────────────────────────────── -->
     <string name="reset_title">Reset your password</string>
@@ -239,14 +284,20 @@
     <string name="reset_send">Send reset link</string>
     <string name="reset_sent_title">Check your inbox</string>
     <string name="reset_sent_body">We sent a reset link to %1$s.</string>
-    <string name="reset_nothing_title">Nothing after a minute?</string>
-    <string name="reset_nothing_body">Check your spam folder, or send it again below.</string>
+    <string name="reset_nothing_title">Can’t find the email?</string>
+    <string name="reset_nothing_body">Check your spam folder and confirm the email address. You can resend the link below.</string>
     <string name="reset_resend">Resend</string>
     <string name="reset_back_to_signin">Back to sign in</string>
 
     <!-- ── Profile setup ──────────────────────────────────────────────── -->
-    <string name="profile_title">Set up your profile</string>
-    <string name="profile_subtitle">Your group sees your name. Everything else is optional.</string>
+    <string name="profile_eyebrow">Make it yours</string>
+    <string name="profile_title">How should your group know you?</string>
+    <string name="profile_subtitle">This name is visible to people in your groups.</string>
+    <string name="profile_preview_label">Your group will see</string>
+    <string name="profile_preview_name">Your name</string>
+    <string name="profile_preview_body">This is how teammates recognize you.</string>
+    <string name="profile_privacy_title">Private by default</string>
+    <string name="profile_privacy_body">Pamoja does not need your age, height or weight to count steps.</string>
     <string name="profile_name_label">Name</string>
     <string name="profile_name_placeholder">What should we call you?</string>
     <string name="profile_name_required">Your group needs something to call you</string>
@@ -271,7 +322,6 @@
     <!-- ── Home ───────────────────────────────────────────────────────── -->
     <string name="home_your_groups">YOUR GROUPS</string>
     <string name="home_join_title">Join a group</string>
-    <string name="home_greeting_fallback">there</string>
     <string name="home_join_body">Paste the invite link shared by your group admin.</string>
     <string name="home_join_placeholder">Paste the invite link</string>
     <string name="home_join_scan">Or scan their QR code</string>
@@ -282,23 +332,17 @@
          can arrive at all. Says what is wrong before it says what to do. -->
     <string name="home_health_needed_title">Your steps are not being counted</string>
     <string name="home_health_needed_body">Pamoja reads your step count from Health Connect, and does not have permission yet. Until it does, your groups will show no progress.</string>
+    <string name="home_health_permission_denied">Health Connect permission was not granted. Your steps will stay at 0 until you connect it.</string>
     <string name="home_health_needed_action">Connect</string>
-    <string name="home_join_cta">Join a group via invite link</string>
+    <string name="home_pending_invite_title">Continue your group invite?</string>
+    <string name="home_pending_invite_body">You opened this invitation earlier. Review the group before deciding whether to join.</string>
+    <string name="home_pending_invite_action">Review invitation</string>
     <string name="home_settings_desc">Settings</string>
     <string name="home_open_group_desc">Open group</string>
     <string name="home_empty_title">No groups yet</string>
     <string name="home_empty_body">Create a group and invite your people, or join one with an invite link.</string>
     <string name="home_join_short">Join</string>
     <string name="home_new_group">New group</string>
-    <string name="home_good_morning">Good morning</string>
-    <string name="home_good_afternoon">Good afternoon</string>
-    <string name="home_good_evening">Good evening</string>
-    <!-- Rotating encouragement under the greeting. Keep these short and warm. -->
-    <string name="home_tagline_1">Every step counts. Let\'s go!</string>
-    <string name="home_tagline_2">Your group is counting on you.</string>
-    <string name="home_tagline_3">Walk together, grow together.</string>
-    <string name="home_tagline_4">Today\'s a great day to move.</string>
-    <string name="home_tagline_5">Small steps. Big impact.</string>
 
     <!-- ── Create group ───────────────────────────────────────────────── -->
     <string name="create_group_title">Create your group</string>
@@ -306,30 +350,41 @@
     <string name="create_group_name_label">Group name</string>
     <string name="create_group_name_placeholder">e.g. Morning Walkers</string>
     <string name="create_group_name_required">Give the group a name</string>
-    <string name="create_group_name_too_long">That is a little long, keep it under 50</string>
-    <string name="create_group_weekly_goal">Daily goal per person</string>
+    <string name="create_group_name_too_long">Use 40 characters or fewer</string>
+    <string name="group_name_character_count">%1$d/%2$d characters</string>
+    <string name="create_group_weekly_goal">Weekly group goal</string>
+    <string name="create_group_goal_hint">Choose a starting total for the whole group. It stays fixed when people join or leave.</string>
     <string name="create_group_max_members">Max members</string>
-    <string name="create_group_members_edit">Members can edit goal</string>
-    <!-- A group setting, not a personal one, and the copy says so. The whole
-         product is a shared weekly total, so members cannot each pick. -->
+    <!-- A group setting, not a personal one. The official goal is organizer-controlled. -->
     <string name="create_group_week_start">Week starts on</string>
     <string name="create_group_week_start_sub">Applies to everyone in this group, so the weekly total means the same thing for all of you.</string>
     <string name="create_group_week_start_monday">Monday</string>
     <string name="create_group_week_start_sunday">Sunday</string>
-    <string name="create_group_members_edit_sub">Allow others to change the step target</string>
+    <string name="weekly_goal_custom">Custom</string>
+    <string name="weekly_goal_custom_title">Set a custom group goal</string>
+    <string name="weekly_goal_custom_body">Enter one weekly total for the whole group. This never becomes an individual quota.</string>
+    <string name="weekly_goal_custom_label">Weekly group total</string>
+    <string name="weekly_goal_custom_placeholder">e.g. 300000</string>
+    <string name="weekly_goal_custom_helper">From 10,000 to 2,800,000 steps.</string>
+    <string name="weekly_goal_custom_error">Enter a total from 10,000 to 2,800,000.</string>
+    <string name="weekly_goal_custom_use">Use this goal</string>
     <string name="create_group_creating">Creating…</string>
     <string name="create_group_submit">Create group</string>
     <string name="create_group_offline_title">You are offline</string>
     <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you are back.</string>
     <string name="create_group_failed_title">Could not create the group</string>
+    <string name="join_shared_goal_title">One goal, shared</string>
+    <string name="join_shared_goal_body">Everyone’s steps pool together. There is no individual target to miss.</string>
 
     <!-- ── Health Connect ─────────────────────────────────────────────── -->
     <string name="hc_icon_desc">Step tracking</string>
-    <string name="hc_title">Track your steps</string>
+    <string name="hc_eyebrow">One secure connection</string>
+    <string name="hc_title">Connect your steps</string>
     <string name="hc_body_unavailable">Health Connect is not available on this device. Step tracking won\'t be available.</string>
     <string name="hc_body_denied">Without this permission, your steps will show as 0 to your group. You can enable it later in Health Connect settings.</string>
-    <string name="hc_body_granted">You\'re all set! Pamoja will sync your steps via Health Connect, no battery drain, no background tracking.</string>
-    <string name="hc_body_default">Pamoja uses Health Connect to count your steps. Your data stays private and is only shared with your group members.</string>
+    <string name="hc_body_granted">Your daily step count is connected to Pamoja.</string>
+    <string name="hc_body_default">Let Health Connect add your daily step count to your group progress.</string>
+    <string name="hc_steps_only">Step count only. No location, route, heart rate or sleep.</string>
     <string name="hc_access_header">WHAT PAMOJA ACCESSES</string>
     <string name="hc_access_steps_title">Daily step count</string>
     <string name="hc_access_steps_sub">Read from Health Connect, battery friendly</string>
@@ -342,18 +397,24 @@
     <string name="hc_open_settings">Open Settings</string>
     <string name="hc_skip">Skip for now</string>
     <string name="hc_connected">Steps connected</string>
-    <string name="hc_connect">Connect Health Connect</string>
+    <string name="hc_connect">Connect steps</string>
+    <string name="hc_flow_phone">Your phone</string>
+    <string name="hc_flow_health_connect">Health Connect</string>
+    <string name="hc_flow_pamoja">Your group</string>
+    <string name="hc_flow_title">Only your step count makes the trip</string>
+    <string name="hc_flow_body">No route, location, heart rate or sleep data. You stay in control in Android settings.</string>
 
     <!-- ── Invite ─────────────────────────────────────────────────────── -->
     <string name="invite_created_desc">Group created</string>
     <string name="invite_created_title">Group created!</string>
+    <string name="invite_title_prefix">Invite people to </string>
     <string name="invite_subtitle">Invite your people. This link stays active until all %1$d spots are filled.</string>
     <string name="invite_link_copied">Link copied</string>
     <string name="invite_copy_desc">Copy link</string>
     <string name="invite_share_chooser">Share invite link</string>
     <string name="invite_share">Share invite</string>
     <string name="invite_go_to_group">Go to my group</string>
-    <string name="invite_qr_hint">Standing next to them? Let them scan this.</string>
+    <string name="invite_qr_hint">Scan, join, start moving together.</string>
     <string name="invite_group_label">Invite people to</string>
     <string name="invite_details_failed_title">Could not load the group details</string>
     <string name="invite_details_failed_body">The link below still works. Share it now, or retry to see the group.</string>
@@ -380,6 +441,82 @@
     <string name="group_invite_inactive">This group\'s invite link is no longer active.</string>
     <string name="group_health_permission_needed">Step tracking needs permission in Health Connect.</string>
     <string name="group_health_unavailable">Health Connect is not available on this device.</string>
+    <string name="weekly_review_entry_title">Weekly review</string>
+    <string name="weekly_review_entry_body">See what your group has built, week by week.</string>
+    <string name="weekly_review_title">Weekly review</string>
+    <string name="weekly_review_group_since">%1$s · since %2$s</string>
+    <string name="weekly_review_unavailable_title">This review is no longer available</string>
+    <string name="weekly_review_unavailable_body">The group may have been deleted, or you may no longer be a member.</string>
+    <string name="weekly_review_empty_title">Your first review comes after this week</string>
+    <string name="weekly_review_empty_body">Keep walking together. When the week closes, the result will stay here instead of disappearing.</string>
+    <string name="weekly_review_preview_pending_title">Your Circle Preview starts after an active week</string>
+    <string name="weekly_review_preview_pending_body">When at least two members record steps in the same completed week, everyone in this group gets 14 days of Weekly Review.</string>
+    <string name="weekly_review_preview_active_title">Circle Preview</string>
+    <string name="weekly_review_preview_active_body">Everyone in this group can use Weekly Review until %1$s.</string>
+    <string name="weekly_review_preview_ended_title">Your Circle Preview has ended</string>
+    <string name="weekly_review_preview_ended_body">Your group, members, and current-week progress are still here. Weekly Review will reopen with Pamoja Premium.</string>
+    <string name="weekly_review_hit">HIT</string>
+    <string name="weekly_review_missed">MISSED</string>
+    <string name="weekly_review_best_week">Best week: %1$s steps</string>
+    <string name="weekly_review_week_of">Week of %1$s</string>
+    <string name="weekly_review_row_hit">%1$s · Goal hit</string>
+    <string name="weekly_review_row_missed">%1$s · Goal missed</string>
+    <string name="weekly_review_percent">%1$d%%</string>
+    <string name="weekly_review_percent_overflow">999%+</string>
+    <string name="weekly_review_total_of_target">%1$s OF %2$s</string>
+    <string name="weekly_review_top_contributors">Top contributors: %1$s</string>
+    <string name="weekly_review_group_created">GROUP CREATED %1$s. NOTHING BEFORE THIS</string>
+    <string name="weekly_review_continue_hit_title">Keep the rhythm going</string>
+    <string name="weekly_review_continue_hit_body">This week’s shared goal is %1$s steps. Your group is already together. Keep going.</string>
+    <string name="weekly_review_continue_missed_title">A fresh week starts here</string>
+    <string name="weekly_review_continue_missed_body">Last week is complete. This week’s %1$s-step goal is a clean start for everyone.</string>
+    <string name="weekly_review_continue_action">Continue this week</string>
+    <string name="weekly_review_current_week">Current week</string>
+    <string name="weekly_review_preview_until">Circle Preview available until %1$s</string>
+    <string name="weekly_review_last_week">LAST WEEK</string>
+    <string name="weekly_review_goal_reached_short">GOAL REACHED</string>
+    <string name="weekly_review_goal_missed_short">GOAL MISSED</string>
+    <string name="weekly_review_steps">GROUP STEPS</string>
+    <string name="weekly_review_goal_progress">%1$s of %2$s goal</string>
+    <string name="weekly_review_more_than_previous">%1$s more steps than the previous week</string>
+    <string name="weekly_review_less_than_previous">%1$s fewer steps than the previous week</string>
+    <string name="weekly_review_same_as_previous">Same total as the previous week</string>
+    <string name="weekly_review_recent_progress">Recent progress</string>
+    <string name="weekly_review_best_short">Best %1$s</string>
+    <string name="weekly_review_earlier_weeks">Earlier weeks</string>
+    <string name="weekly_review_chart_bar_description">Week of %1$s, %2$s steps. Tap for details.</string>
+    <string name="weekly_review_chart_tooltip">%1$s steps</string>
+    <string name="plan_next_week_title">Plan next week</string>
+    <string name="planning_access_unavailable">Could not verify group access. Retry to check again.</string>
+    <string name="planning_current_goal_basis">Based on your current group goal. Completed weeks will appear in Weekly Review.</string>
+    <string name="planning_selected_target">Next week: %1$s steps</string>
+    <string name="planning_gentler_minimum">Your goal is already at the minimum. Choose Repeat or Custom.</string>
+    <string name="planning_gentler_explanation">80% of the current goal, rounded to the nearest 10,000 steps.</string>
+    <string name="planning_current_week_unchanged">Starts next week. This week stays unchanged.</string>
+    <string name="planning_saved_current_basis">Based on the group goal of %1$s steps when saved. This week stays unchanged.</string>
+    <string name="planning_premium_details">Premium details</string>
+    <string name="next_week_together_title">Next week together</string>
+    <string name="next_week_together_body">A shared goal for the week ahead.</string>
+    <string name="next_week_together_premium_body">Planning is included with Premium. Your current goal and Weekly Review stay unchanged.</string>
+    <string name="next_week_together_unlock">Unlock with Premium</string>
+    <string name="next_week_together_waiting">Your organizer is preparing the next shared goal.</string>
+    <string name="next_week_together_organizer_prompt">Set the group’s next week</string>
+    <string name="next_week_together_repeat">Repeat</string>
+    <string name="next_week_together_gentler">Gentler</string>
+    <string name="next_week_together_custom">Custom</string>
+    <string name="next_week_together_schedule">Schedule next week</string>
+    <string name="next_week_together_scheduled">%1$s steps · starts %2$s</string>
+    <string name="next_week_together_basis">Based on last week: %1$s of %2$s steps. Nothing changes until the new week starts.</string>
+    <string name="next_week_together_change">Change plan</string>
+    <string name="next_week_together_poll_prompt">How does next week look?</string>
+    <string name="next_week_together_response_in">I’m in</string>
+    <string name="next_week_together_response_gentler">Prefer gentler</string>
+    <string name="next_week_together_response_resting">Resting next week</string>
+    <string name="next_week_together_counts">In: %1$d · Gentler: %2$d · Resting: %3$d</string>
+    <plurals name="weekly_review_active_members">
+        <item quantity="one">%1$d active</item>
+        <item quantity="other">%1$d active</item>
+    </plurals>
     <string name="group_back_desc">Back</string>
     <string name="group_share_desc">Share invite link</string>
     <string name="group_of_target">of %1$s</string>
@@ -437,10 +574,11 @@
     <string name="settings_reauth_phone_body">For your safety we text a code to the number on this account before deleting it. Nothing has been deleted yet.</string>
     <string name="settings_reauth_code_body">Enter the code we sent to %1$s. Nothing has been deleted yet.</string>
     <string name="settings_version">Pamoja v%1$s</string>
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">You</string>
+    <string name="settings_subtitle">Your profile, preferences and privacy</string>
     <string name="settings_back_desc">Back</string>
     <string name="settings_section_profile">PROFILE</string>
-    <string name="settings_section_information">INFORMATION</string>
+    <string name="settings_section_information">PRIVACY AND ABOUT</string>
     <string name="settings_name_fallback">Guest User</string>
     <string name="settings_rate_title">Rate Us</string>
     <string name="settings_rate_subtitle">Support us by sharing your feedback</string>
@@ -475,7 +613,7 @@
     <string name="settings_open_profile">Edit your profile</string>
 
     <!-- ── Preferences ────────────────────────────────────────────────── -->
-    <string name="settings_section_preferences">PREFERENCES</string>
+    <string name="settings_section_preferences">APP EXPERIENCE</string>
     <string name="settings_theme_label">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
@@ -486,7 +624,7 @@
     <string name="settings_units_sub">How your height and weight are shown. Steps are counted the same either way.</string>
 
     <!-- ── Support and your data ──────────────────────────────────────── -->
-    <string name="settings_section_support">SUPPORT AND YOUR DATA</string>
+    <string name="settings_section_support">HELP AND YOUR DATA</string>
     <string name="settings_support_title">Contact support</string>
     <string name="settings_support_subtitle">Ask a question, or report a problem</string>
     <string name="settings_support_subject">Pamoja support request</string>
@@ -503,7 +641,7 @@
     <string name="settings_theme_fixed_sub">Stays this way whatever your phone does</string>
 
     <!-- ── Health section in Settings ─────────────────────────────────── -->
-    <string name="settings_section_health">HEALTH</string>
+    <string name="settings_section_health">HEALTH CONNECT</string>
     <string name="settings_health_connected">Steps are syncing</string>
     <string name="settings_health_connected_sub">Pamoja reads your daily step count from Health Connect.</string>
     <string name="settings_health_not_connected">Steps are not syncing</string>
@@ -527,13 +665,13 @@
     <string name="settings_notifications_sub">What we send, and when we stay quiet</string>
     <!-- Shown before the system dialog. Framed around what arrives, because
          nobody wants notifications, they want to know the group hit its goal. -->
-    <string name="notif_primer_title">Know when it matters</string>
-    <string name="notif_primer_body">Pamoja only speaks up when your group does something worth hearing about.</string>
+    <string name="notif_primer_title">Stay updated</string>
+    <string name="notif_primer_body">Turn on notifications to see group updates even when Pamoja is closed.</string>
     <string name="notif_primer_goal">Your group hits its weekly goal</string>
     <string name="notif_primer_joined">Someone joins your group</string>
     <string name="notif_primer_overtaken">A teammate passes you on the leaderboard</string>
-    <string name="notif_primer_control">You choose which of these arrive, and set quiet hours, in Settings. You can change it any time.</string>
-    <string name="notif_primer_allow">Turn on</string>
+    <string name="notif_primer_control">Choose which updates you receive and set quiet hours in Settings.</string>
+    <string name="notif_primer_allow">Allow notifications</string>
 
     <string name="notif_blocked_title">Notifications are turned off</string>
     <string name="notif_blocked_body">Android is blocking everything from Pamoja, so nothing below can reach you until you allow them.</string>
@@ -544,6 +682,8 @@
     <!-- Says where the control really is. Android owns channel importance and
          will not let an app write it, so these rows report and hand over. -->
     <string name="notif_types_hint">These are your Android notification settings. Tap one to change it.</string>
+    <string name="notif_status_on">On</string>
+    <string name="notif_status_off">Off</string>
     <string name="notif_achievement_title">Goals and achievements</string>
     <string name="notif_achievement_sub">Your group hit its weekly goal, streaks, milestones</string>
     <string name="notif_group_title">Group activity</string>
@@ -559,7 +699,7 @@
     <string name="notif_quiet_all_day">This covers the whole day, so nothing would ever arrive.</string>
 
     <!-- ── Account, the sign-in methods attached to this account ──────── -->
-    <string name="settings_section_account">ACCOUNT</string>
+    <string name="settings_section_account">ACCOUNT AND SECURITY</string>
     <string name="settings_account_title">Sign-in methods</string>
     <string name="settings_account_none">No sign-in method connected</string>
     <string name="settings_account_one">%1$s only. Add a second way in.</string>
@@ -620,48 +760,96 @@
     <string name="account_password_changed">Password changed</string>
 
     <!-- ── Open source licences ───────────────────────────────────────── -->
-    <string name="settings_licenses_title">Open source licences</string>
+    <string name="settings_licenses_title">Open source licenses</string>
     <string name="settings_licenses_subtitle">The software Pamoja is built on</string>
-    <string name="licenses_title">Open source licences</string>
-    <string name="licenses_link_body">This component\'s licence is published here.</string>
-    <string name="licenses_open_link">Open licence</string>
+    <string name="licenses_title">Open source licenses</string>
+    <string name="licenses_link_body">This component\'s license is published here.</string>
+    <string name="licenses_open_link">Open license</string>
     <!-- Reachable on a debug build, where the Gradle plugin has no dependency
          list to generate from. -->
-    <string name="licenses_empty_title">Licences are not in this build</string>
+    <string name="licenses_empty_title">Licenses are not in this build</string>
     <string name="licenses_empty_body">They are generated for release builds. Install a release build to read them.</string>
 
     <!-- ── Paywall ────────────────────────────────────────────────────── -->
     <string name="paywall_close">Close</string>
     <string name="paywall_title">Pamoja Premium</string>
     <string name="paywall_subtitle">One of you subscribes. Everyone in the group gets it.</string>
+    <string name="paywall_sponsoring_label">SPONSORING</string>
+    <string name="paywall_sponsoring_body">Premium will apply to this group.</string>
     <string name="paywall_benefit_group">Covers your whole group</string>
     <string name="paywall_benefit_group_sub">One member subscribes and every member gets Premium, however many of you there are</string>
     <string name="paywall_benefit_history">Your full history</string>
     <string name="paywall_benefit_history_sub">Every week you have walked, plus a weekly recap</string>
-    <string name="paywall_benefit_stats">Charts, trends and records</string>
-    <string name="paywall_benefit_stats_sub">See how this week compares, and beat your best</string>
+    <string name="paywall_benefit_stats">Weekly trends and records</string>
+    <string name="paywall_benefit_stats_sub">Compare completed weeks and see your group’s best</string>
+    <string name="paywall_benefit_compact_title">Review and plan together</string>
+    <string name="paywall_benefit_compact_body">Full week history, trends and a shared plan for next week. Steps and leaderboards stay free.</string>
     <!-- Reassurance, and literally true: paywalling tracking would break the
          groups free members are already in. -->
     <string name="paywall_free_forever">Creating groups, inviting people, group size, step tracking and your leaderboard stay free forever, on every plan.</string>
+    <string name="group_sponsor_title">Sponsor this group</string>
+    <string name="group_sponsor_body">One person subscribes. Everyone in this group gets Pamoja Premium.</string>
+    <string name="group_access_premium">Premium</string>
+    <string name="group_access_preview">Preview</string>
     <string name="paywall_plan_annual">Yearly</string>
     <string name="paywall_plan_monthly">Monthly</string>
     <string name="paywall_period_year">year</string>
     <string name="paywall_period_month">month</string>
+    <string name="paywall_per_year">per year</string>
+    <string name="paywall_per_month">per month</string>
     <string name="paywall_disclosure">%1$s per %2$s. Renews automatically until you cancel.</string>
+    <string name="paywall_disclosure_trial">Free for %1$s, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</string>
     <string name="paywall_start_trial">Start free trial</string>
     <string name="paywall_subscribe">Subscribe</string>
     <string name="paywall_cancel_anytime">Cancel any time in Google Play.</string>
     <string name="paywall_restore">Restore purchases</string>
     <string name="paywall_restoring">Checking…</string>
     <string name="paywall_failed_title">That did not go through</string>
+    <string name="paywall_verifying_title">Payment received</string>
+    <string name="paywall_verifying_body">Confirming Premium for %1$s. Keep this screen open for a moment.</string>
+    <string name="paywall_verifying_button">Verifying access…</string>
+    <string name="paywall_verify_retry">Verify access</string>
+    <string name="paywall_move_action">Move Premium here</string>
+    <string name="paywall_move_title">Move Premium to this group?</string>
+    <string name="paywall_move_body">%1$s will get Premium. The group currently using this subscription will return to Free.</string>
+    <string name="paywall_move_confirm">Move Premium</string>
+    <string name="paywall_verify_failed_title">Your payment is safe</string>
+    <string name="paywall_verify_failed_body">Google Play completed, but Pamoja has not confirmed Premium for %1$s yet. You will not be charged again. Try verifying access.</string>
+    <string name="paywall_unassigned_title">Premium needs another group</string>
+    <string name="paywall_unassigned_body">Google Play may have completed your purchase, but Premium was not assigned to %1$s because the group changed or is already covered. Close this screen, open another group, and use Restore purchases.</string>
+    <string name="billing_cancelled_title">Purchase canceled</string>
+    <string name="billing_cancelled_body">Nothing was charged.</string>
+    <string name="billing_pending_title">Payment is pending</string>
+    <string name="billing_pending_body">Google Play has not completed the payment yet. Premium will not start until it does.</string>
+    <string name="billing_not_allowed_title">Purchase is not available</string>
+    <string name="billing_not_allowed_body">Google Play cannot make this purchase with the current account or device.</string>
+    <string name="billing_unavailable_title">This plan is unavailable</string>
+    <string name="billing_unavailable_body">The selected plan cannot be purchased right now. Refresh the plans and try again.</string>
+    <string name="billing_owned_title">You may already own this</string>
+    <string name="billing_owned_body">Use Restore purchases to check the current Google Play account.</string>
+    <string name="billing_nothing_to_restore_title">No active purchase found</string>
+    <string name="billing_nothing_to_restore_body">Google Play did not return an active Pamoja subscription for this account.</string>
     <string name="paywall_unavailable_title">Premium is not on sale yet</string>
     <string name="paywall_unavailable_body">Nothing has been charged. Everything free keeps working exactly as it does now.</string>
+    <string name="sponsorship_error_group_required_title">Choose a group first</string>
+    <string name="sponsorship_error_group_required_body">Open Premium from the group you want to support. Nothing has been charged.</string>
+    <string name="sponsorship_error_group_unavailable_title">This group is not available</string>
+    <string name="sponsorship_error_group_unavailable_body">It may have been removed or changed since you opened it. Nothing has been charged.</string>
+    <string name="sponsorship_error_member_title">You are no longer in this group</string>
+    <string name="sponsorship_error_member_body">Only a current member can sponsor this group. Nothing has been charged.</string>
+    <string name="sponsorship_error_subscription_title">No active subscription was found</string>
+    <string name="sponsorship_error_subscription_body">Nothing has been assigned to a group. Check your Google Play account or restore your purchase.</string>
+    <string name="sponsorship_error_assigned_title">Your Premium is supporting another group</string>
+    <string name="sponsorship_error_assigned_body">Your current plan has no open group spots. Your existing groups have not been changed.</string>
+    <string name="sponsorship_error_already_title">This group already has Premium</string>
+    <string name="sponsorship_error_already_body">Another subscription already covers this group. If your Google Play purchase completed, you can use it for another group or manage it in Google Play.</string>
 
     <!-- ── Activity centre ────────────────────────────────────────────── -->
-    <string name="activity_title">Activity</string>
-    <string name="activity_open_desc">Activity, what you may have missed</string>
+    <string name="activity_title">Updates</string>
+    <string name="activity_back_desc">Back</string>
+    <string name="activity_open_desc">Updates you may have missed</string>
     <string name="activity_clear">Clear</string>
-    <string name="activity_clear_title">Clear your activity?</string>
+    <string name="activity_clear_title">Clear your updates?</string>
     <string name="activity_clear_body">This removes the list on this phone. Your groups, steps and history are not affected.</string>
     <string name="activity_clear_confirm">Clear</string>
     <string name="activity_empty_title">Nothing yet</string>
@@ -681,25 +869,26 @@
     </plurals>
     <!-- Never one in practice, but a count followed by a noun is exactly the
          shape that produced "1 members" on the group dashboard. -->
-    <!-- Trial length comes from the store, so it is genuinely variable. -->
-    <plurals name="paywall_disclosure_trial">
-        <item quantity="one">Free for %1$d day, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</item>
-        <item quantity="other">Free for %1$d days, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</item>
+    <!-- Trial length and unit come from Play; do not approximate months as days. -->
+    <plurals name="paywall_trial_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="paywall_trial_weeks">
+        <item quantity="one">%1$d week</item>
+        <item quantity="other">%1$d weeks</item>
+    </plurals>
+    <plurals name="paywall_trial_months">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
+    <plurals name="paywall_trial_years">
+        <item quantity="one">%1$d year</item>
+        <item quantity="other">%1$d years</item>
     </plurals>
     <plurals name="licenses_subtitle">
         <item quantity="one">Pamoja is built on %1$d open source component. Thank you to whoever wrote it.</item>
         <item quantity="other">Pamoja is built on %1$d open source components. Thank you to everyone who wrote them.</item>
-    </plurals>
-    <!-- Translates a weekly group total into what it asks of one person on one
-         day, which is the only form of the number anyone can act on. The cap
-         starts at 2 so "one" never renders today, but the noun follows a count. -->
-    <plurals name="edit_group_goal_total">
-        <item quantity="one">%1$s steps a week for %2$d member.</item>
-        <item quantity="other">%1$s steps a week for %2$d members.</item>
-    </plurals>
-    <plurals name="create_group_goal_hint">
-        <item quantity="one">That is %1$s steps a week with %2$d person.</item>
-        <item quantity="other">That is %1$s steps a week with %2$d people.</item>
     </plurals>
     <!-- Auth top-bar step markers, rendered uppercase. They name the flow, not
          the screen, so someone deep in a sign-up knows what they are doing. -->
@@ -720,18 +909,20 @@
     <!-- Pace badge. Falling short is never phrased as failure: this product's
          copy rule is that it does not shame, and a walking group missing its
          own target is the most ordinary thing in the world. -->
-    <!-- The per-person daily ask. The design's version uses an em dash; this
-         does not, because no user-facing string in this app does. -->
-    <string name="group_insight_complete">Goal met. Everything from here is a bonus.</string>
-    <string name="group_insight_on_track">%1$s steps a day each from here, and you are ahead of pace.</string>
-    <string name="group_insight_behind">%1$s steps a day each from here and you are there.</string>
-    <!-- The rung above "behind": the arithmetic still produces a number, but it
-         is one nobody can walk, and printing it reads as mockery. Shows no
-         figure at all, on purpose. -->
-    <string name="group_insight_unreachable">The full goal is out of reach this week. Every step still counts, and next week starts fresh.</string>
+    <string name="group_insight_complete">Goal met. You did it together, and everything from here is a bonus.</string>
+    <string name="group_insight_on_track">%1$s group steps left, and you are ahead of pace.</string>
+    <string name="group_insight_behind">%1$s group steps to go. Every contribution can be different, and every step helps.</string>
+    <string name="group_pace_daily_title">%1$s steps a day</string>
+    <string name="group_pace_daily_body">The group pace needed to reach %1$s this week.</string>
+    <string name="group_pace_complete_title">Weekly goal reached</string>
+    <string name="group_pace_complete_body">Keep building your group total until the week ends.</string>
     <string name="group_pace_complete">Goal met</string>
     <string name="group_pace_on_track">On track</string>
     <string name="group_pace_keep_going">Keep going</string>
+    <string name="group_celebration_title">Look what you did together.</string>
+    <string name="group_celebration_progress">of %1$s steps together</string>
+    <string name="group_celebration_body">The goal is yours. Anything from here is a victory lap.</string>
+    <string name="group_celebration_confirm">Take the victory lap</string>
     <!-- Was a hardcoded "$daysLeft days left" in GroupScreen, which rendered
          "1 days left" on the last day of every week. -->
     <plurals name="group_days_left">
@@ -743,4 +934,83 @@
         <item quantity="one">member</item>
         <item quantity="other">members</item>
     </plurals>
+
+    <!-- Main app shell and personal dashboard. -->
+    <string name="nav_today">Today</string>
+    <string name="nav_groups">Groups</string>
+    <string name="nav_you">You</string>
+
+    <!-- Home-screen widgets -->
+    <string name="widget_today_name">Pamoja · Today</string>
+    <string name="widget_group_name">Pamoja · Group pulse</string>
+    <string name="widget_hook_name">Pamoja · Move now</string>
+    <string name="widget_today_description">Your steps today and a quick reason to move.</string>
+    <string name="widget_group_description">See the steps left toward one shared goal. Tap to open that group.</string>
+    <string name="widget_hook_description">A timely reason to get up and move.</string>
+    <string name="widget_today_label">STEPS TODAY</string>
+    <string name="widget_together_label">YOUR GROUP PULSE</string>
+    <string name="widget_steps">steps</string>
+    <string name="widget_open_to_sync">Tap to refresh your progress</string>
+    <string name="widget_first_step_hook">A little fresh air. A few more steps.</string>
+    <string name="widget_small_walk_hook">Got five minutes for a walk?</string>
+    <string name="widget_moving_hook">Small walks. Shared progress.</string>
+    <string name="widget_hook_keep_going">Make your next break a walk.</string>
+    <string name="widget_hook_day_moving">You made room for movement.</string>
+    <string name="widget_invite_hook">Your people are one invite away.</string>
+    <string name="widget_goal_met_hook">Goal met. Everything else is bonus.</string>
+    <string name="widget_last_day_hook">%1$s left. Today is the day.</string>
+    <string name="widget_week_total">%1$s steps this week</string>
+    <string name="widget_group_total">%1$s of %2$s steps</string>
+    <string name="widget_no_group_title">Walk together</string>
+    <string name="widget_no_group_body">Create or join a group in Pamoja</string>
+    <string name="widget_open_pamoja">Tap to open Pamoja</string>
+    <string name="widget_groups_active">groups moving</string>
+    <string name="widget_cta">OPEN</string>
+    <string name="settings_widgets_title">Home screen widgets</string>
+    <string name="settings_widgets_subtitle">Add Today’s Rhythm, Group Pulse or Move Now</string>
+    <string name="settings_widgets_picker_title">Choose a Pamoja widget</string>
+    <string name="settings_widgets_today_subtitle">Today’s steps and a timely nudge</string>
+    <string name="settings_widgets_group_subtitle">Steps left toward one shared goal</string>
+    <string name="settings_widgets_hook_subtitle">A compact reason to get moving</string>
+    <string name="settings_widgets_unavailable">Add it from your phone’s widget picker.</string>
+    <plurals name="widget_group_members_days">
+        <item quantity="one">%1$d members · last day</item>
+        <item quantity="other">%1$d members · %2$d days left</item>
+    </plurals>
+    <string name="groups_title">Groups</string>
+    <string name="groups_subtitle">Walk with your people, wherever they are.</string>
+    <string name="dashboard_this_week">This week</string>
+    <string name="dashboard_your_week">YOUR WEEK</string>
+    <string name="dashboard_steps_this_week">steps this week</string>
+    <string name="dashboard_today">TODAY</string>
+    <string name="dashboard_steps">steps</string>
+    <string name="dashboard_week_momentum">You are building momentum</string>
+    <string name="dashboard_week_start">Your week starts with one step</string>
+    <string name="dashboard_synced_at">Synced %1$s</string>
+    <string name="dashboard_not_synced">Waiting to sync</string>
+    <string name="dashboard_health_needed_body">Connect Health Connect to see your personal week and count your contribution to every group.</string>
+    <string name="dashboard_health_compact_title">Steps aren’t connected</string>
+    <string name="dashboard_health_compact_body">Connect to show your week and count group progress.</string>
+    <string name="dashboard_group_progress">GROUP PROGRESS</string>
+    <string name="dashboard_all_groups">All groups (%1$d)</string>
+    <string name="dashboard_see_group">See group</string>
+    <string name="dashboard_no_group_title">Walking is better together</string>
+    <string name="dashboard_no_group_body">Create a private group for your people, or join one from an invite.</string>
+    <string name="dashboard_open_groups">Open groups</string>
+    <string name="planning_time_zone">Week begins at midnight in %1$s. A saved goal normally activates within five minutes.</string>
+    <string name="planning_summary_saved">Saved goal: %1$,d steps for the week starting %2$s (%3$s). This plan stays saved when Premium ends. Premium is needed to change it.</string>
+    <string name="planning_summary_applied">The saved goal of %1$,d steps was applied for the week starting %2$s (%3$s).</string>
+    <string name="planning_summary_missed">The saved goal of %1$,d steps for %2$s (%3$s) could not be applied during that week. It has not changed a later week.</string>
+    <string name="edit_group_week_start_planned">Your saved plan starts %1$s. The week-start day stays fixed until that plan has been applied.</string>
+    <string name="group_leave_title">Leave group</string>
+    <string name="group_leave_body">You will lose access to this group. Your personal step records stay in your account. You can join again with an active invite.</string>
+    <string name="group_leaving">Leaving…</string>
+    <string name="group_week_not_synced">Not synced this week</string>
+    <string name="group_today_not_synced">Not synced today</string>
+    <string name="settings_background_steps_title">Keep my group progress updated</string>
+    <string name="settings_background_steps_off">Allow step syncing while Pamoja is closed. Optional; you can still sync when you open the app.</string>
+    <string name="settings_background_steps_on">Background access is on. Android controls sync timing. Tap to manage access in Health Connect.</string>
+    <string name="sponsorship_assignment_changed_title">Premium assignment changed</string>
+    <string name="sponsorship_assignment_changed_body">Refresh to see which group your subscription supports, then confirm where you want to use it. You will not be charged again.</string>
+    <string name="planning_premium_required_body">This group needs active Premium to set up or save a new plan. Check Premium details from the group screen. Any plan already saved will still take effect.</string>
 </resources>

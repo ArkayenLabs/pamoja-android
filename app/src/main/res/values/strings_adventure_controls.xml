@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trail_start">Start our adventure</string>
+    <string name="trail_sponsor">View group Premium</string>
+    <string name="trail_wait_organizer">Your organizer can start the adventure. Everyone in the group is covered.</string>
+    <string name="trail_sync">Sync my contribution</string>
+    <string name="trail_join">Sync and join</string>
+    <string name="trail_pause">Pause my contribution</string>
+    <string name="trail_pause_body">New steps will stop contributing. Earned steps stay. Joining again starts from a fresh sync.</string>
+    <string name="trail_confirm">Confirm</string>
+    <string name="trail_cancel">Cancel</string>
+    <string name="trail_finish">Save our completion keepsake</string>
+    <string name="trail_progress">%1$s of %2$s shared steps</string>
+    <string name="trail_week">Week of %1$s · %2$s</string>
+    <string name="trail_commitment">My planned steps next week</string>
+    <string name="trail_save_commitment">Save my commitment</string>
+    <string name="trail_rest">Rest next week</string>
+    <string name="trail_rest_body">Rest sets your plan to zero for next week. Incidental steps still contribute unless you pause. Nobody else’s commitment increases.</string>
+    <string name="trail_pace">At your chosen pace: about %1$s weeks remaining</string>
+    <string name="trail_no_pace">A pace estimate will appear when participating members have set a plan and the combined plan is above zero.</string>
+    <string name="trail_locked">Unlocks at %1$s shared steps</string>
+    <string name="trail_error">We could not confirm the latest adventure state. Check your connection and refresh before trying again.</string>
+    <string name="trail_health_error">A fresh step reading is needed. Connect Health Connect and allow step access, then try again once steps are available.</string>
+    <string name="trail_device_error">Another phone is contributing for your account. Pause contribution first, then join again on this phone.</string>
+    <string name="trail_disabled">This adventure is not available for this group yet.</string>
+    <string name="trail_stale">The plan changed. Refresh to see the current week and commitment before saving again.</string>
+    <string name="trail_access_error">This account no longer has access to the group.</string>
+    <string name="trail_last_sync">Last successful sync: %1$s</string>
+    <string name="trail_refresh">Refresh</string>
+    <string name="trail_back">Back</string>
+    <string name="trail_connect">Connect steps</string>
+    <string name="trail_start_body">The shared adventure target is fixed once started. Your existing weekly group goal does not change.</string>
+    <string name="trail_saved_commitment">Your saved commitment: %1$s steps</string>
+    <string name="trail_target_range">Choose between %1$s and %2$s shared steps.</string>
+    <string name="trail_commitment_range">Choose between %1$s and %2$s steps for your week.</string>
+</resources>

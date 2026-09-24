@@ -4,7 +4,8 @@ package com.pamoja.app.domain.model
  * Everything Pamoja holds about one person, gathered for export.
  *
  * The counterpart to account deletion, and the same list of places: the user
- * document, every membership, and every step entry. If a collection is ever
+ * document, every membership, every step entry, and the server-owned push
+ * registrations associated with the account. If a collection is ever
  * added to one of those two, it belongs in the other on the same day, or the
  * app is either failing to erase something or failing to disclose it.
  *
@@ -17,6 +18,8 @@ data class UserDataExport(
     val memberships: List<Membership>,
     val groups: List<Group>,
     val steps: List<StepEntry>,
+    val pushRegistrations: List<PushRegistration>,
     /** Epoch millis the export was produced. */
     val exportedAt: Long,
+    val adventures: List<AdventureExportRecord> = emptyList(),
 )

@@ -5,9 +5,7 @@ data class GroupDto(
     val name: String = "",
     val adminId: String = "",
     val weeklyTarget: Int = 70000,
-    // Zero on every group written before the goal became a per-person figure.
-    // Group.hasLegacyGoal keys off exactly that, so the default must stay 0
-    // here even though the domain default is 8,000.
+    // Retired compatibility field. New shared-total groups always write zero.
     val dailyPerPersonTarget: Int = 0,
     val maxMemberCap: Int = 10,
     val memberCount: Int = 0,
@@ -21,7 +19,9 @@ data class GroupDto(
     val weeklySteps: Long = 0L,
     val weekStart: String = "",
     val weekStartDay: String = "",
-    val photoUrl: String = ""
+    val photoUrl: String = "",
+    val planningTimeZone: String = "",
+    val plannedWeekStart: String = "",
 ) {
     fun toDomain() = com.pamoja.app.domain.model.Group(
         groupId = groupId,
@@ -38,7 +38,9 @@ data class GroupDto(
         weeklySteps = weeklySteps,
         weekStart = weekStart,
         weekStartDay = weekStartDay,
-        photoUrl = photoUrl
+        photoUrl = photoUrl,
+        planningTimeZone = planningTimeZone,
+        plannedWeekStart = plannedWeekStart,
     )
 
     companion object {
@@ -57,7 +59,9 @@ data class GroupDto(
             weeklySteps = group.weeklySteps,
             weekStart = group.weekStart,
             weekStartDay = group.weekStartDay,
-            photoUrl = group.photoUrl
+            photoUrl = group.photoUrl,
+            planningTimeZone = group.planningTimeZone,
+            plannedWeekStart = group.plannedWeekStart,
         )
     }
 }

@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 interface GroupRepository {
     suspend fun createGroup(group: Group): Result<Group>
     suspend fun getGroup(groupId: String): Result<Group>
+    fun observeGroup(groupId: String): Flow<Group> = kotlinx.coroutines.flow.flow {
+        emit(getGroup(groupId).getOrThrow())
+    }
     suspend fun updateGroup(group: Group): Result<Unit>
     suspend fun getGroupByInviteLink(inviteLink: String): Result<Group>
     suspend fun joinGroup(groupId: String, userId: String): Result<Unit>
@@ -64,7 +67,6 @@ interface GroupRepository {
         groupId: String,
         name: String,
         weeklyTarget: Int,
-        dailyPerPersonTarget: Int,
         maxMemberCap: Int,
         canMembersEditTarget: Boolean,
         weekStartDay: String,
@@ -78,6 +80,9 @@ interface GroupRepository {
      * the cap stops meaning anything.
      */
     suspend fun removeMember(groupId: String, userId: String): Result<Unit>
+
+    /** Permanently removes an admin-owned group and all group-scoped records. */
+    suspend fun deleteGroup(groupId: String): Result<Unit>
 
     /** Points the group at an already-uploaded photo, or clears it when blank. */
     suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit>

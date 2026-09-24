@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.annotation.StringRes
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.error.BillingFailure
+import com.pamoja.app.domain.error.SponsorshipFailure
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.error.toAppError
 
@@ -94,9 +96,79 @@ fun Throwable.toErrorCopy(): ErrorCopy = when (val error = toAppError()) {
         body = error.field.messageRes(),
     )
 
-    is AppError.NoProviderAccount -> ErrorCopy(
-        title = R.string.auth_error_no_google_account_title,
-        body = R.string.auth_error_no_google_account_body,
+    is AppError.Planning -> ErrorCopy(
+        title = R.string.planning_unavailable_title,
+        body = when (error.reason) {
+            AppError.PlanningReason.NotEnabled -> R.string.planning_not_enabled_body
+            AppError.PlanningReason.OrganizerSetup -> R.string.planning_organizer_setup_body
+            AppError.PlanningReason.PremiumRequired -> R.string.planning_premium_required_body
+            AppError.PlanningReason.ExistingPlan -> R.string.planning_existing_plan_body
+            AppError.PlanningReason.RefreshRequired -> R.string.planning_refresh_body
+        },
+    )
+
+    is AppError.Sponsorship -> when (error.reason) {
+        SponsorshipFailure.InvalidGroup -> ErrorCopy(
+            title = R.string.sponsorship_error_group_required_title,
+            body = R.string.sponsorship_error_group_required_body,
+        )
+        SponsorshipFailure.GroupUnavailable -> ErrorCopy(
+            title = R.string.sponsorship_error_group_unavailable_title,
+            body = R.string.sponsorship_error_group_unavailable_body,
+        )
+        SponsorshipFailure.NotCurrentMember -> ErrorCopy(
+            title = R.string.sponsorship_error_member_title,
+            body = R.string.sponsorship_error_member_body,
+        )
+        SponsorshipFailure.NoActiveSubscription -> ErrorCopy(
+            title = R.string.sponsorship_error_subscription_title,
+            body = R.string.sponsorship_error_subscription_body,
+        )
+        SponsorshipFailure.SubscriptionAssignedElsewhere -> ErrorCopy(
+            title = R.string.sponsorship_error_assigned_title,
+            body = R.string.sponsorship_error_assigned_body,
+        )
+        SponsorshipFailure.AssignmentChanged -> ErrorCopy(
+            title = R.string.sponsorship_assignment_changed_title,
+            body = R.string.sponsorship_assignment_changed_body,
+        )
+        SponsorshipFailure.GroupAlreadySponsored -> ErrorCopy(
+            title = R.string.sponsorship_error_already_title,
+            body = R.string.sponsorship_error_already_body,
+        )
+    }
+
+    is AppError.Billing -> when (error.reason) {
+        BillingFailure.UserCancelled -> ErrorCopy(
+            title = R.string.billing_cancelled_title,
+            body = R.string.billing_cancelled_body,
+        )
+        BillingFailure.PaymentPending -> ErrorCopy(
+            title = R.string.billing_pending_title,
+            body = R.string.billing_pending_body,
+        )
+        BillingFailure.PurchaseNotAllowed -> ErrorCopy(
+            title = R.string.billing_not_allowed_title,
+            body = R.string.billing_not_allowed_body,
+        )
+        BillingFailure.ProductUnavailable -> ErrorCopy(
+            title = R.string.billing_unavailable_title,
+            body = R.string.billing_unavailable_body,
+        )
+        BillingFailure.AlreadyOwned -> ErrorCopy(
+            title = R.string.billing_owned_title,
+            body = R.string.billing_owned_body,
+        )
+        BillingFailure.NothingToRestore -> ErrorCopy(
+            title = R.string.billing_nothing_to_restore_title,
+            body = R.string.billing_nothing_to_restore_body,
+        )
+    }
+
+    is AppError.ProviderUnavailable -> ErrorCopy(
+        title = R.string.auth_error_google_unavailable_title,
+        body = R.string.auth_error_google_unavailable_body,
+        retryLabel = R.string.common_try_again,
     )
 
     is AppError.Unknown -> ErrorCopy(
@@ -121,8 +193,8 @@ fun Throwable.toSnackbarMessage(context: Context): String {
             context.getString(copy.title),
             copy.body(context),
         )
+        }
     }
-}
 
 /**
  * The sentence for each validation failure.
@@ -142,6 +214,7 @@ fun ValidationField.messageRes(): Int = when (this) {
     ValidationField.PhoneMalformed -> R.string.validation_phone_malformed
     ValidationField.OtpIncomplete -> R.string.validation_otp_incomplete
     ValidationField.GroupNameMissing -> R.string.validation_group_name_missing
+    ValidationField.GroupNameDuplicate -> R.string.validation_group_name_duplicate
     ValidationField.WeeklyTargetInvalid -> R.string.validation_weekly_target
     ValidationField.MemberCapTooSmall -> R.string.validation_member_cap
     ValidationField.MemberCapBelowMemberCount -> R.string.validation_member_cap_below_count

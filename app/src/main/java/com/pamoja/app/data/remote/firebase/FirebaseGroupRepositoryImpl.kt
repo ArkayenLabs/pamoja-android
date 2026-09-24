@@ -4,6 +4,8 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.functions.FirebaseFunctions
 import com.pamoja.app.data.remote.model.GroupDto
 import com.pamoja.app.data.remote.model.MembershipDto
 import com.pamoja.app.data.remote.model.UserDto
@@ -18,11 +20,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class FirebaseGroupRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance("asia-south1"),
 ) : GroupRepository {
 
     private val groupsCollection = firestore.collection("groups")
@@ -79,6 +83,18 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
             Result.failure(e.toFirebaseAppError())
         }
     }
+
+    override fun observeGroup(groupId: String): Flow<Group> = callbackFlow {
+        val listener = groupsCollection.document(groupId).addSnapshotListener { snapshot, error ->
+            if (error != null) close(error.toFirebaseAppError())
+            else {
+                val group = snapshot?.toObject(GroupDto::class.java)?.toDomain()
+                if (group == null) close(AppError.NotFound("Group document missing"))
+                else trySend(group)
+            }
+        }
+        awaitClose { listener.remove() }
+    }.distinctUntilChanged()
 
     override suspend fun getGroup(groupId: String): Result<Group> {
         return try {
@@ -376,7 +392,24 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
     }
 
     override fun getUserGroups(userId: String): Flow<List<Group>> = callbackFlow {
-        val listener = membershipsCollection
+        val stateLock = Any()
+        var orderedGroupIds = emptyList<String>()
+        val resolvedGroupIds = mutableSetOf<String>()
+        val groupsById = mutableMapOf<String, Group>()
+        val groupListeners = mutableMapOf<String, ListenerRegistration>()
+
+        /**
+         * Keeps the previous screen content visible while a newly joined group
+         * resolves. Emitting a partial list would briefly make an existing card
+         * disappear, and emitting an empty list before the first group snapshot
+         * would flash Home's empty state over cached content.
+         */
+        fun emitWhenReadyLocked() {
+            if (!resolvedGroupIds.containsAll(orderedGroupIds)) return
+            trySend(orderedGroupIds.mapNotNull(groupsById::get))
+        }
+
+        val membershipListener = membershipsCollection
             .whereEqualTo("userId", userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -385,31 +418,70 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 }
                 if (snapshot == null) return@addSnapshotListener
 
-                val groupIds = snapshot.documents.mapNotNull {
+                val nextGroupIds = snapshot.documents.mapNotNull {
                     it.toObject(MembershipDto::class.java)?.groupId
-                }
+                }.distinct()
 
-                if (groupIds.isEmpty()) {
-                    trySend(emptyList())
-                    return@addSnapshotListener
-                }
+                synchronized(stateLock) {
+                    val nextIds = nextGroupIds.toSet()
+                    val removedIds = groupListeners.keys - nextIds
+                    removedIds.forEach { groupId ->
+                        groupListeners.remove(groupId)?.remove()
+                        groupsById.remove(groupId)
+                        resolvedGroupIds.remove(groupId)
+                    }
 
-                val tasks = groupIds.map { groupId ->
-                    groupsCollection.document(groupId).get()
+                    orderedGroupIds = nextGroupIds
+
+                    val addedIds = nextGroupIds.filterNot(groupListeners::containsKey)
+                    addedIds.forEach { groupId ->
+                        groupListeners[groupId] = groupsCollection.document(groupId)
+                            .addSnapshotListener { groupSnapshot, groupError ->
+                                if (groupError != null) {
+                                    close(groupError)
+                                    return@addSnapshotListener
+                                }
+
+                                synchronized(stateLock) {
+                                    // A membership removal can race the final
+                                    // callback from the listener it just removed.
+                                    if (groupId !in orderedGroupIds) return@synchronized
+
+                                    val group = groupSnapshot
+                                        ?.takeIf(DocumentSnapshot::exists)
+                                        ?.toObject(GroupDto::class.java)
+                                        ?.toDomain()
+
+                                    if (group == null) {
+                                        groupsById.remove(groupId)
+                                    } else {
+                                        groupsById[groupId] = group
+                                    }
+                                    resolvedGroupIds += groupId
+                                    emitWhenReadyLocked()
+                                }
+                            }
+                    }
+
+                    if (nextGroupIds.isEmpty()) {
+                        trySend(emptyList())
+                    } else {
+                        // Covers pure removals and membership snapshots whose
+                        // group set did not change. Added groups emit only after
+                        // their own first cached/server snapshot resolves.
+                        emitWhenReadyLocked()
+                    }
                 }
-                Tasks.whenAllSuccess<DocumentSnapshot>(tasks)
-                    .addOnSuccessListener { snapshots ->
-                        val groups = snapshots.mapNotNull {
-                            it.toObject(GroupDto::class.java)?.toDomain()
-                        }
-                        trySend(groups)
-                    }
-                    .addOnFailureListener { e ->
-                        close(e)
-                    }
             }
-        awaitClose { listener.remove() }
-    }
+
+        awaitClose {
+            membershipListener.remove()
+            synchronized(stateLock) {
+                groupListeners.values.forEach(ListenerRegistration::remove)
+                groupListeners.clear()
+            }
+        }
+    }.distinctUntilChanged()
 
     override suspend fun updateMemberCap(groupId: String, cap: Int): Result<Unit> {
         return try {
@@ -437,7 +509,6 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         groupId: String,
         name: String,
         weeklyTarget: Int,
-        dailyPerPersonTarget: Int,
         maxMemberCap: Int,
         canMembersEditTarget: Boolean,
         weekStartDay: String,
@@ -452,7 +523,9 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                     mapOf(
                         "name" to name,
                         "weeklyTarget" to weeklyTarget,
-                        "dailyPerPersonTarget" to dailyPerPersonTarget,
+                        // Clears metadata from the retired per-person model
+                        // without changing an older group's chosen total.
+                        "dailyPerPersonTarget" to 0,
                         "maxMemberCap" to maxMemberCap,
                         "canMembersEditTarget" to canMembersEditTarget,
                         "weekStartDay" to weekStartDay,
@@ -503,6 +576,20 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun deleteGroup(groupId: String): Result<Unit> {
+        return try {
+            functions
+                .getHttpsCallable(DELETE_GROUP_FUNCTION)
+                .call(mapOf("groupId" to groupId))
+                .await()
+            Result.success(Unit)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
     override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> {
         return try {
             groupsCollection.document(groupId)
@@ -547,5 +634,9 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e.toFirebaseAppError())
         }
+    }
+
+    private companion object {
+        const val DELETE_GROUP_FUNCTION = "deleteGroup"
     }
 }

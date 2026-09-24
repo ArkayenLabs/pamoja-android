@@ -14,8 +14,8 @@ small by design, the week is a fixed window every member agrees on, and the
 screens are written so that the person contributing least is not the person the
 interface points at.
 
-This repository is the Android client. It is pre-release and has not yet been
-published to Google Play.
+This repository contains the production Android client and its Firebase backend
+services. Pamoja is distributed through Google Play.
 
 ## Features
 
@@ -39,6 +39,31 @@ published to Google Play.
   per-member leaderboard showing today and the week so far
 - Offline states that say when a figure was last known to be true, rather than
   presenting a stale number as current
+
+**Weekly planning and review**
+
+- Review completed weeks with group totals, individual contributions, and goal outcomes
+- Schedule the next shared goal without changing the current week
+- Let members commit, request a gentler target, or take a rest week
+- Apply scheduled goals automatically in the group's fixed planning timezone
+
+**Together Trails**
+
+- Turn a group's real step history into a shared visual journey
+- Recover recent progress safely when a trail starts, without counting steps twice
+- Keep an auditable progress ledger and generate shareable completion records
+
+**Premium**
+
+- Share Premium benefits with every member of a sponsored group
+- Sponsor more than one group through independent subscriptions
+- Restore purchases and reconcile access through RevenueCat and Firebase
+
+**International experience**
+
+- English (United States), English (United Kingdom), Spanish, and Hindi
+- Light and dark themes, responsive layouts, and accessible system navigation
+- Home-screen widgets for personal steps, group progress, and walking prompts
 
 **Account and data**
 
@@ -90,19 +115,19 @@ Firestore snapshot listeners.
 
 | Area | Choice |
 |---|---|
-| Language | Kotlin 2.0.21 |
+| Language | Kotlin 2.2.21 |
 | UI | Jetpack Compose, Material 3 |
 | Architecture | Clean Architecture with MVVM |
-| Dependency injection | Hilt 2.56.1 |
+| Dependency injection | Hilt 2.58 |
 | Auth | Firebase Auth (Google, phone, email) |
 | Database | Cloud Firestore |
 | Health data | Health Connect 1.1.0-rc01 |
 | Background work | WorkManager with Hilt worker injection |
 | Local storage | DataStore Preferences |
-| Billing | RevenueCat 10.16.2, integrated but not yet active |
+| Billing | RevenueCat 10.16.2 |
 | Crash and analytics | Firebase Crashlytics, Firebase Analytics |
 | Integrity | Firebase App Check with Play Integrity |
-| Type | Bricolage Grotesque, Plus Jakarta Sans, IBM Plex Mono, via Google Fonts |
+| Typography | Outfit |
 | Min SDK | 26 (Android 8.0) |
 | Compile and target SDK | 36 |
 
@@ -129,8 +154,14 @@ app/src/main/java/com/pamoja/app/
     theme/                 Design tokens, light and dark
     components/            Shared composables
     <feature>/             One package per feature, screen plus ViewModel
-  worker/                  StepSyncWorker
+  notifications/           Firebase messaging and notification parsing
+  widgets/                 Home-screen widgets
+  worker/                  Step and trail synchronization
 ```
+
+The backend is split by responsibility across `functions/`, `functions-weekly/`,
+and `functions-notifications/`. Each package has its own tests and deployment
+configuration.
 
 Firestore security rules and indexes live at the repository root in
 `firestore.rules` and `firestore.indexes.json`. Cloud Storage rules are in
@@ -144,6 +175,10 @@ Firestore security rules and indexes live at the repository root in
 | `groups` | `{groupId}` | Group settings, member count, cached weekly total. |
 | `memberships` | `{userId}_{groupId}` | Who is in which group, with the display name, photo, and step totals the leaderboard reads. |
 | `steps` | `{userId}_{date}` | One row per person per day. Readable only by its owner. |
+| `groupWeeks` | Generated week ID | Weekly summaries used by review and planning. |
+| `nextWeekPlans` | `{groupId}` | Scheduled goal and member commitments for the next week. |
+| `groupAccess` | `{groupId}` | Server-authoritative Premium access for a sponsored group. |
+| `adventures` | Generated ID | Together Trail state, progress ledger, and completion data. |
 
 Some fields are denormalised onto the membership document on purpose. A member's
 display name, photo, and step totals are copied there so that rendering a
@@ -243,9 +278,9 @@ Lint runs clean of errors:
 
 ## Status
 
-Pre-release. The app builds in debug and release, the test suites pass, and the
-Firestore rules are deployed. It has not been published to Google Play, and
-in-app purchases are integrated but not yet enabled.
+Production. The Android app is published through Google Play, subscriptions are
+managed through RevenueCat, and the Firebase rules and backend services support
+group access, weekly planning, notifications, and Together Trails.
 
 ## License
 

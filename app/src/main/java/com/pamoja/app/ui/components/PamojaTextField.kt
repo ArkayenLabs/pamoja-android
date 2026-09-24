@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,7 @@ fun PamojaTextField(
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Next,
+    onImeAction: (() -> Unit)? = null,
     isPassword: Boolean = false,
     enabled: Boolean = true,
     supportingText: String? = null,
@@ -121,6 +123,10 @@ fun PamojaTextField(
                 keyboardType = keyboardType,
                 imeAction = imeAction,
             ),
+            keyboardActions = KeyboardActions(
+                onDone = { onImeAction?.invoke() },
+                onGo = { onImeAction?.invoke() },
+            ),
             visualTransformation = when {
                 !isPassword || revealed -> VisualTransformation.None
                 else -> PasswordVisualTransformation()
@@ -134,8 +140,10 @@ fun PamojaTextField(
                         modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
-                            painter = painterResource(
-                                if (revealed) PamojaIcons.EyeOff else PamojaIcons.Eye
+                        painter = painterResource(
+                                // The icon now shows the current state: crossed
+                                // eye while obscured, open eye while visible.
+                                if (revealed) PamojaIcons.Eye else PamojaIcons.EyeOff
                             ),
                             contentDescription = stringResource(
                                 if (revealed) R.string.common_hide_password

@@ -9,6 +9,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pamoja.app.ui.theme.LocalPamojaColors
 import com.pamoja.app.ui.theme.Spacing
@@ -28,14 +31,20 @@ fun OnboardingProgressBar(
     val colors = LocalPamojaColors.current
 
     Row(
-        modifier = modifier,
+        modifier = modifier.semantics {
+            progressBarRangeInfo = ProgressBarRangeInfo(
+                current = currentStep.toFloat(),
+                range = 0f..totalSteps.toFloat(),
+                steps = totalSteps,
+            )
+        },
         horizontalArrangement = Arrangement.spacedBy(Spacing.x2),
     ) {
         repeat(totalSteps) { index ->
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(3.dp)
+                    .height(4.dp)
                     .clip(CircleShape)
                     .background(
                         if (index < currentStep) colors.accentPrimary else colors.borderStrong

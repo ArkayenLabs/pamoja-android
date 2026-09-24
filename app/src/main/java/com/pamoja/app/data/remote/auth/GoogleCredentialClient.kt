@@ -8,7 +8,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.pamoja.app.R
@@ -51,13 +51,14 @@ class GoogleCredentialClient @Inject constructor(
     }
 
     suspend fun getIdToken(activity: Activity): Result<String> = credentialCatching {
-        val option = GetGoogleIdOption.Builder()
-            .setServerClientId(context.getString(R.string.default_web_client_id))
-            // False so every Google account on the device is offered, not only
-            // ones that have used Pamoja before. This is a first sign-in gate,
-            // so filtering to authorized accounts would show an empty sheet.
-            .setFilterByAuthorizedAccounts(false)
-            .setAutoSelectEnabled(false)
+        // This method is called by Pamoja's visible "Continue with Google"
+        // button, so it must use Google's button flow. GetGoogleIdOption is for
+        // the passive Credential Manager bottom sheet and can return
+        // NoCredentialException even when accounts exist but need
+        // reauthentication or sign-in prompts are disabled.
+        val option = GetSignInWithGoogleOption.Builder(
+            serverClientId = context.getString(R.string.default_web_client_id),
+        )
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -69,11 +70,14 @@ class GoogleCredentialClient @Inject constructor(
         } catch (e: GetCredentialCancellationException) {
             throw Cancelled()
         } catch (e: NoCredentialException) {
-            // Typed, not a message. The old code threw a plain Exception whose
-            // helpful text was then correctly discarded by the error pipeline,
-            // so the one failure the user could actually fix arrived as
-            // "that did not work".
-            throw AppError.NoProviderAccount(cause = e)
+            // This does not prove that the phone has no Google account. It can
+            // also mean Play services or the provider could not open the
+            // account flow, so never tell a multi-account user to add one.
+            FirebaseCrashlytics.getInstance().recordException(e)
+            throw AppError.ProviderUnavailable(
+                detail = "Google credential provider returned no credential",
+                cause = e,
+            )
         } catch (e: GetCredentialException) {
             // Everything else here is a configuration or Play Services problem
             // that the user cannot act on and we cannot diagnose from the

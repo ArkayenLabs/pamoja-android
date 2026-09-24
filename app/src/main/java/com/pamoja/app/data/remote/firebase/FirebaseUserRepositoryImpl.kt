@@ -6,14 +6,17 @@ import com.pamoja.app.data.remote.model.MembershipDto
 import com.pamoja.app.data.remote.model.StepEntryDto
 import com.pamoja.app.data.remote.model.UserDto
 import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.domain.model.PushRegistration
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.UserDataExport
 import com.pamoja.app.domain.repository.UserRepository
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 class FirebaseUserRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val adventureExporter: FirebaseAdventureExporter,
 ) : UserRepository {
 
     private val usersCollection = firestore.collection("users")
@@ -108,17 +111,6 @@ class FirebaseUserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveDeviceToken(userId: String, token: String): Result<Unit> {
-        return try {
-            usersCollection.document(userId)
-                .update("deviceToken", token)
-                .await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e.toFirebaseAppError())
-        }
-    }
-
     /**
      * Order matters throughout.
      *
@@ -175,15 +167,36 @@ class FirebaseUserRepositoryImpl @Inject constructor(
                 .mapNotNull { it.toObject(StepEntryDto::class.java)?.toDomain() }
                 .sortedBy { it.date }
 
+            // The rules permit this owner-scoped query but no direct client
+            // writes. Registration changes still go through App Check-protected
+            // callable functions.
+            val pushRegistrations = firestore.collection("pushRegistrations")
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                .documents
+                .map { document ->
+                    PushRegistration(
+                        installationId = document.id,
+                        platform = document.getString("platform").orEmpty(),
+                        appVersion = document.getString("appVersion").orEmpty(),
+                        updatedAt = document.getTimestamp("updatedAt")?.toDate()?.time,
+                    )
+                }
+
             Result.success(
                 UserDataExport(
                     user = user,
                     memberships = memberships,
                     groups = groups,
                     steps = steps,
+                    pushRegistrations = pushRegistrations,
+                    adventures = adventureExporter.export(userId, memberships.map { it.groupId }),
                     exportedAt = System.currentTimeMillis(),
                 )
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             Result.failure(e.toFirebaseAppError())
         }

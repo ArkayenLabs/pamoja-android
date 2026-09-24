@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -30,7 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +64,7 @@ fun OtpScreen(
     onBack: () -> Unit,
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // LocalActivity rather than casting LocalContext, which throws when the
     // context is wrapped rather than being the Activity itself.
     val activity = LocalActivity.current
@@ -92,6 +93,7 @@ fun OtpScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .padding(horizontal = Spacing.x6)
@@ -219,34 +221,6 @@ fun OtpScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.x5))
-
-            // Autofill is the fastest path through this screen and the least
-            // discoverable: the suggestion appears above the keyboard and is
-            // easy to read as an advert. Saying it once here costs a line and
-            // saves six taps.
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(PamojaRadii.lg))
-                    .background(colors.surface2)
-                    .padding(horizontal = Spacing.x4, vertical = Spacing.x3),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
-                verticalAlignment = Alignment.Top,
-            ) {
-                Icon(
-                    painter = painterResource(PamojaIcons.Smartphone),
-                    contentDescription = null,
-                    tint = colors.textSecondary,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text(
-                    text = stringResource(R.string.otp_autofill_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-            }
-
             Spacer(modifier = Modifier.height(Spacing.x6))
 
             Button(
@@ -273,14 +247,6 @@ fun OtpScreen(
                     Text(text = stringResource(R.string.otp_verify), style = MaterialTheme.typography.labelLarge)
                 }
             }
-
-            Spacer(modifier = Modifier.height(Spacing.x4))
-
-            Text(
-                text = stringResource(R.string.otp_autofill_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textTertiary,
-            )
 
             Spacer(modifier = Modifier.height(Spacing.x10))
         }

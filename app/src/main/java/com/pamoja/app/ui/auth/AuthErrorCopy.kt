@@ -46,11 +46,10 @@ fun Throwable.toAuthErrorCopy(): ErrorCopy = when (toAppError()) {
         body = R.string.auth_error_offline_body,
     )
 
-    // No Retry. There is no Google account to find and pressing the button
-    // again will fail identically; the fix is in the phone's settings.
-    is AppError.NoProviderAccount -> ErrorCopy(
-        title = R.string.auth_error_no_google_account_title,
-        body = R.string.auth_error_no_google_account_body,
+    is AppError.ProviderUnavailable -> ErrorCopy(
+        title = R.string.auth_error_google_unavailable_title,
+        body = R.string.auth_error_google_unavailable_body,
+        retryLabel = R.string.common_try_again,
     )
 
     // Validation names the exact rule that failed, so it keeps its own specific

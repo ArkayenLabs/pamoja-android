@@ -14,15 +14,21 @@ data class AuthMethods(
     val phoneNumber: String? = null,
 )
 
-/**
- * Result of starting a phone verification. The verification ID has to be held
- * between sending the code and the user typing it in.
- */
-data class PhoneVerification(
-    val verificationId: String,
-    /** Set when Play Integrity auto-retrieved the code and no OTP entry is needed. */
-    val autoVerified: Boolean = false,
-)
+/** What Firebase should do if it verifies the phone before manual OTP entry. */
+enum class PhoneVerificationPurpose { SignIn, Link, Reauthenticate }
+
+/** Result of starting a phone verification. */
+sealed interface PhoneVerification {
+    /** Hold this ID until the user enters the code from the SMS. */
+    data class CodeSent(val verificationId: String) : PhoneVerification
+
+    /**
+     * Firebase verified the phone immediately and completed [purpose] without
+     * manual OTP entry. [user] is present for sign-in and linking; a successful
+     * reauthentication keeps the already signed-in user.
+     */
+    data class Completed(val user: User? = null) : PhoneVerification
+}
 
 interface AuthRepository {
 
@@ -100,6 +106,7 @@ interface AuthRepository {
     suspend fun startPhoneVerification(
         phoneNumber: String,
         activity: Any,
+        purpose: PhoneVerificationPurpose,
     ): Result<PhoneVerification>
 
     suspend fun verifyPhoneCode(verificationId: String, code: String): Result<User>

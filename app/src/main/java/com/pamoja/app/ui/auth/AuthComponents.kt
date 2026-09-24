@@ -103,6 +103,7 @@ fun AuthLegalLine(modifier: Modifier = Modifier) {
         text = annotated,
         style = MaterialTheme.typography.bodySmall,
         color = colors.textTertiary,
+        textAlign = TextAlign.Center,
         modifier = modifier,
     )
 }

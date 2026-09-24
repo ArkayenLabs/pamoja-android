@@ -40,7 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +61,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
+import com.pamoja.app.domain.model.PasswordPolicy
 import com.pamoja.app.ui.auth.Country
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
@@ -97,7 +98,7 @@ fun AccountScreen(
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     // LocalActivity rather than casting LocalContext, which throws when the
@@ -349,7 +350,6 @@ fun AccountScreen(
         )
     }
 }
-
 @Composable
 private fun SectionLabel(text: String) {
     val colors = LocalPamojaColors.current
@@ -632,7 +632,7 @@ private fun AddEmailDialog(
     // Same rule the field shows and the button asks, so a password the field
     // flags cannot still be submitted.
     val passwordErrorFor: (String) -> String? = { input ->
-        if (input.length < MIN_NEW_PASSWORD) passwordTooShort else null
+        if (PasswordPolicy.isAccepted(input)) null else passwordTooShort
     }
 
     AccountDialog(
@@ -683,7 +683,7 @@ private fun ChangePasswordDialog(
 
     val passwordTooShort = stringResource(R.string.password_too_short)
     val newPasswordErrorFor: (String) -> String? = { input ->
-        if (input.length < MIN_NEW_PASSWORD) passwordTooShort else null
+        if (PasswordPolicy.isAccepted(input)) null else passwordTooShort
     }
 
     AccountDialog(
@@ -977,11 +977,3 @@ private fun Throwable.accountErrorBody(flow: AccountFlow): String {
 
     return specialised?.let { stringResource(it) } ?: authErrorBody()
 }
-
-/**
- * What a new password must clear, matching the sign-up screen.
- *
- * The use case enforces a lower floor, since that is the rule Firebase itself
- * imposes; this is the stricter thing the UI asks for.
- */
-private const val MIN_NEW_PASSWORD = 8

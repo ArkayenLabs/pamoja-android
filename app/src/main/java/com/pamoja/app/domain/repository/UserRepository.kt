@@ -7,11 +7,11 @@ interface UserRepository {
     suspend fun createUser(user: User): Result<Unit>
     suspend fun getUser(userId: String): Result<User>
     suspend fun updateUser(user: User): Result<Unit>
-    suspend fun saveDeviceToken(userId: String, token: String): Result<Unit>
 
     /**
-     * Erases everything this user owns: the profile document, every membership,
-     * and every step entry.
+     * Erases client-owned data: the profile document, every membership, and
+     * every step entry. Deleting the profile also triggers the trusted backend
+     * cleanup for server-owned push registrations.
      *
      * Must run BEFORE the Firebase Auth account is deleted. Once the account is
      * gone `request.auth` is null and the security rules reject these writes,
@@ -22,9 +22,8 @@ interface UserRepository {
     /**
      * Gathers everything held about this user, for export.
      *
-     * Reads the same three places [deleteAllUserData] destroys. Keep the two in
-     * step: a collection added to one and forgotten in the other means the app
-     * either fails to erase data or fails to disclose it.
+     * Includes the server-owned push registrations that profile deletion asks
+     * the backend to erase. Keep export and deletion coverage in step.
      */
     suspend fun exportUserData(userId: String): Result<UserDataExport>
 }

@@ -7,6 +7,10 @@ import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.data.remote.auth.GoogleCredentialClient
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
+import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.repository.PhoneVerification
+import com.pamoja.app.domain.repository.PhoneVerificationPurpose
+import com.pamoja.app.domain.usecase.CreateUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
 import com.pamoja.app.domain.usecase.SendPasswordResetUseCase
 import com.pamoja.app.domain.usecase.SignInUseCase
@@ -74,6 +78,7 @@ class AuthViewModel @Inject constructor(
     private val signInUseCase: SignInUseCase,
     private val sendPasswordResetUseCase: SendPasswordResetUseCase,
     private val getUserUseCase: GetUserUseCase,
+    private val createUserUseCase: CreateUserUseCase,
     private val googleCredentialClient: GoogleCredentialClient,
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
@@ -100,7 +105,7 @@ class AuthViewModel @Inject constructor(
             }
 
             signInWithGoogleUseCase(token).fold(
-                onSuccess = { onAuthenticated(it.userId) },
+                onSuccess = { onAuthenticated(it) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
@@ -136,14 +141,36 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = state.copy(busyWith = AuthMethod.Phone, error = null, otpFailure = null)
 
-            startPhoneVerificationUseCase(state.e164, activity).fold(
+            startPhoneVerificationUseCase(
+                state.e164,
+                activity,
+                PhoneVerificationPurpose.SignIn,
+            ).fold(
                 onSuccess = { verification ->
-                    _uiState.value = _uiState.value.copy(
-                        busyWith = null,
-                        verificationId = verification.verificationId,
-                        codeSent = true,
-                    )
-                    startResendCountdown()
+                    when (verification) {
+                        is PhoneVerification.CodeSent -> {
+                            _uiState.value = _uiState.value.copy(
+                                busyWith = null,
+                                verificationId = verification.verificationId,
+                                codeSent = true,
+                            )
+                            startResendCountdown()
+                        }
+
+                        is PhoneVerification.Completed -> {
+                            val user = verification.user
+                            if (user == null) {
+                                _uiState.value = _uiState.value.copy(
+                                    busyWith = null,
+                                    error = AppError.Unknown(
+                                        "Automatic phone sign in returned no user"
+                                    ),
+                                )
+                            } else {
+                                onAuthenticated(user)
+                            }
+                        }
+                    }
                 },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
@@ -165,7 +192,7 @@ class AuthViewModel @Inject constructor(
             )
 
             verifyPhoneCodeUseCase(verificationId, code).fold(
-                onSuccess = { onAuthenticated(it.userId) },
+                onSuccess = { onAuthenticated(it) },
                 onFailure = { e ->
                     val appError = e.toAppError()
                     val failure = appError.toOtpFailure()
@@ -213,11 +240,14 @@ class AuthViewModel @Inject constructor(
 
     // ── Email ───────────────────────────────────────────────────────────────
 
-    fun signUpWithEmail(email: String, password: String) {
+    fun signUpWithEmail(name: String, email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(busyWith = AuthMethod.Email, error = null)
             signUpUseCase(email, password).fold(
-                onSuccess = { onAuthenticated(it.userId) },
+                // Email/password authentication has no provider profile. Carry
+                // the name from the same account-creation form so a successful
+                // sign-up does not lead to a second, disconnected form.
+                onSuccess = { onAuthenticated(it.copy(name = name.trim())) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
@@ -232,7 +262,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(busyWith = AuthMethod.Email, error = null)
             signInUseCase(email, password).fold(
-                onSuccess = { onAuthenticated(it.userId) },
+                onSuccess = { onAuthenticated(it) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         busyWith = null,
@@ -270,19 +300,65 @@ class AuthViewModel @Inject constructor(
      * existing means this is a returning account, for example on a replacement
      * phone, and sending them back through profile setup would be nonsense.
      */
-    private suspend fun onAuthenticated(userId: String) {
+    private suspend fun onAuthenticated(authenticatedUser: User) {
+        val userId = authenticatedUser.userId
         userPreferences.saveUserId(userId)
 
-        val existing = getUserUseCase(userId).getOrNull()
-        val destination = if (existing != null && existing.name.isNotBlank()) {
+        val existingResult = getUserUseCase(userId)
+        val existing = existingResult.getOrNull()
+        if (existing != null && existing.name.isNotBlank()) {
             userPreferences.saveUserName(existing.name)
             userPreferences.setOnboarded(true)
-            AuthDestination.Home
-        } else {
-            AuthDestination.ProfileSetup
+            _uiState.value = _uiState.value.copy(
+                busyWith = null,
+                destination = AuthDestination.Home,
+            )
+            return
         }
 
-        _uiState.value = _uiState.value.copy(busyWith = null, destination = destination)
+        // A network or rules failure is not evidence that the profile is
+        // missing. Treating every failed read as a new user could overwrite a
+        // returning person's profile with provider data.
+        val readError = existingResult.exceptionOrNull()?.toAppError()
+        if (readError != null && readError !is AppError.NotFound) {
+            _uiState.value = _uiState.value.copy(busyWith = null, error = readError)
+            return
+        }
+
+        // Google provides a verified display name. Email sign-up carries the
+        // name collected on the same form. Phone provides neither, so only that
+        // path (and the rare provider account with no name) needs the small
+        // profile screen.
+        val proposedName = authenticatedUser.name.trim().take(50).trim()
+        if (proposedName.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                busyWith = null,
+                destination = AuthDestination.ProfileSetup,
+            )
+            return
+        }
+
+        val profile = authenticatedUser.copy(name = proposedName)
+        // Keep the provider/form name locally before the remote write. If the
+        // write fails after Firebase has already created the account, the user
+        // can finish from ProfileSetup instead of retrying sign-up and seeing
+        // an "account already exists" error.
+        userPreferences.saveUserName(proposedName)
+        createUserUseCase(profile).fold(
+            onSuccess = {
+                userPreferences.setOnboarded(true)
+                _uiState.value = _uiState.value.copy(
+                    busyWith = null,
+                    destination = AuthDestination.Home,
+                )
+            },
+            onFailure = {
+                _uiState.value = _uiState.value.copy(
+                    busyWith = null,
+                    destination = AuthDestination.ProfileSetup,
+                )
+            },
+        )
     }
 
     fun clearDestination() {

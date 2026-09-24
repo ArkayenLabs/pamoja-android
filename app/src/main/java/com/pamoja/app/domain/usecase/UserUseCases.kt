@@ -37,21 +37,12 @@ class UpdateUserUseCase @Inject constructor(
     }
 }
 
-class SaveDeviceTokenUseCase @Inject constructor(
-    private val userRepository: UserRepository
-) {
-    suspend operator fun invoke(userId: String, token: String): Result<Unit> {
-        if (userId.isBlank()) return Result.failure(AppError.SessionExpired())
-        if (token.isBlank()) return Result.failure(AppError.Unknown("Blank FCM token"))
-        return userRepository.saveDeviceToken(userId, token)
-    }
-}
 /**
  * Everything Pamoja holds about the signed-in user, for export.
  *
  * The counterpart to deleting an account. Both read the same three places, and
- * a collection added to one without the other means the app either fails to
- * erase data or fails to disclose it.
+ * It also includes server-owned push registrations, which are erased by the
+ * trusted profile-deletion trigger rather than by the mobile client.
  */
 class ExportUserDataUseCase @Inject constructor(
     private val userRepository: UserRepository,

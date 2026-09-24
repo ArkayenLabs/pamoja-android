@@ -7,7 +7,6 @@ data class User(
     val age: Int? = null,
     val height: Float? = null,
     val weight: Float? = null,
-    val deviceToken: String? = null,
     /**
      * Whether this person's photo may be shown to other members of their groups.
      *

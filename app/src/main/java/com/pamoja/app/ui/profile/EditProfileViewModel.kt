@@ -270,8 +270,8 @@ class EditProfileViewModel @Inject constructor(
                 UnitSystem.Imperial -> state.weight.toIntOrNull()?.let { UnitConverter.poundsToKg(it) }
             }
 
-            // copy, so photoUrl and deviceToken survive a write that does not
-            // mention them.
+            // copy, so photoUrl and the photo-sharing choice survive a write
+            // that does not mention them.
             val updated = base.copy(
                 name = state.name.trim(),
                 age = state.age.toIntOrNull(),

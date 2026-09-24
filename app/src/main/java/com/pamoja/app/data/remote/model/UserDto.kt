@@ -7,7 +7,6 @@ data class UserDto(
     val age: Int? = null,
     val height: Float? = null,
     val weight: Float? = null,
-    val deviceToken: String? = null,
     /** See User.showPhotoInGroups. Defaults false, which is the private choice. */
     val showPhotoInGroups: Boolean = false,
 ) {
@@ -18,7 +17,6 @@ data class UserDto(
         age = age,
         height = height,
         weight = weight,
-        deviceToken = deviceToken,
         showPhotoInGroups = showPhotoInGroups,
     )
 
@@ -30,7 +28,6 @@ data class UserDto(
             age = user.age,
             height = user.height,
             weight = user.weight,
-            deviceToken = user.deviceToken,
             showPhotoInGroups = user.showPhotoInGroups,
         )
     }

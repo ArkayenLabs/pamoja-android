@@ -39,7 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +66,7 @@ fun PhoneEntryScreen(
     onCodeSent: () -> Unit,
 ) {
     val colors = LocalPamojaColors.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // LocalActivity rather than casting LocalContext, which throws when the
     // context is wrapped rather than being the Activity itself.
     val activity = LocalActivity.current
@@ -114,6 +114,7 @@ fun PhoneEntryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .padding(horizontal = Spacing.x6)
@@ -279,9 +280,23 @@ fun PhoneEntryScreen(
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp),
                     )
+                    Spacer(modifier = Modifier.width(Spacing.x2))
+                    Text(
+                        text = stringResource(R.string.phone_requesting_code),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
                 } else {
                     Text(text = stringResource(R.string.phone_send_code), style = MaterialTheme.typography.labelLarge)
                 }
+            }
+
+            if (uiState.busyWith == AuthMethod.Phone) {
+                Spacer(modifier = Modifier.height(Spacing.x3))
+                Text(
+                    text = stringResource(R.string.phone_security_check),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                )
             }
 
             Spacer(modifier = Modifier.height(Spacing.x10))

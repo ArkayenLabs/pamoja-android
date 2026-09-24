@@ -16,6 +16,8 @@ import com.pamoja.app.domain.usecase.LinkEmailUseCase
 import com.pamoja.app.domain.usecase.LinkGoogleUseCase
 import com.pamoja.app.domain.usecase.LinkPhoneUseCase
 import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
+import com.pamoja.app.domain.repository.PhoneVerification
+import com.pamoja.app.domain.repository.PhoneVerificationPurpose
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -191,13 +193,24 @@ class AccountViewModel @Inject constructor(
         viewModelScope.launch {
             startWork(AccountFlow.AddPhone)
 
-            startPhoneVerificationUseCase(e164, activity).fold(
+            startPhoneVerificationUseCase(
+                e164,
+                activity,
+                PhoneVerificationPurpose.Link,
+            ).fold(
                 onSuccess = { verification ->
-                    _uiState.value = _uiState.value.copy(
-                        busyWith = null,
-                        verificationId = verification.verificationId,
-                        pendingPhoneNumber = e164,
-                    )
+                    when (verification) {
+                        is PhoneVerification.CodeSent -> {
+                            _uiState.value = _uiState.value.copy(
+                                busyWith = null,
+                                verificationId = verification.verificationId,
+                                pendingPhoneNumber = e164,
+                            )
+                        }
+                        is PhoneVerification.Completed -> {
+                            succeed(R.string.account_phone_added)
+                        }
+                    }
                 },
                 onFailure = { fail(AccountFlow.AddPhone, it) },
             )

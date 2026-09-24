@@ -3,6 +3,7 @@ package com.pamoja.app.domain.usecase
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.PasswordPolicy
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.UserRepository
@@ -17,7 +18,7 @@ class SignUpUseCase @Inject constructor(
         if (!trimmed.looksLikeEmail()) {
             return Result.failure(AppError.Validation(ValidationField.EmailMalformed))
         }
-        if (password.length < 6) {
+        if (!PasswordPolicy.isAccepted(password)) {
             return Result.failure(AppError.Validation(ValidationField.PasswordTooShort))
         }
         return authRepository.signUpWithEmail(trimmed, password)
@@ -67,6 +68,7 @@ class StartPhoneVerificationUseCase @Inject constructor(
     suspend operator fun invoke(
         phoneNumber: String,
         activity: Any,
+        purpose: com.pamoja.app.domain.repository.PhoneVerificationPurpose,
     ): Result<com.pamoja.app.domain.repository.PhoneVerification> {
         val trimmed = phoneNumber.replace(" ", "").replace("-", "")
         if (!trimmed.startsWith("+")) {
@@ -76,7 +78,7 @@ class StartPhoneVerificationUseCase @Inject constructor(
         if (digits.length !in 8..15 || !digits.all { it.isDigit() }) {
             return Result.failure(AppError.Validation(ValidationField.PhoneMalformed))
         }
-        return authRepository.startPhoneVerification(trimmed, activity)
+        return authRepository.startPhoneVerification(trimmed, activity, purpose)
     }
 }
 
@@ -207,9 +209,7 @@ class LinkEmailUseCase @Inject constructor(
         if (!trimmed.looksLikeEmail()) {
             return Result.failure(AppError.Validation(ValidationField.EmailMalformed))
         }
-        // Same floor as signing up, so a password that could not have created an
-        // account cannot be attached to one either.
-        if (password.length < 6) {
+        if (!PasswordPolicy.isAccepted(password)) {
             return Result.failure(AppError.Validation(ValidationField.PasswordTooShort))
         }
         return authRepository.linkEmail(trimmed, password)
@@ -246,7 +246,7 @@ class ChangePasswordUseCase @Inject constructor(
         if (currentPassword.isBlank()) {
             return Result.failure(AppError.Validation(ValidationField.PasswordMissing))
         }
-        if (newPassword.length < 6) {
+        if (!PasswordPolicy.isAccepted(newPassword)) {
             return Result.failure(AppError.Validation(ValidationField.PasswordTooShort))
         }
 

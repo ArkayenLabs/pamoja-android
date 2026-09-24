@@ -4,6 +4,7 @@ import android.app.Activity
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
@@ -12,12 +13,14 @@ import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.PhoneVerification
+import com.pamoja.app.domain.repository.PhoneVerificationPurpose
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Firebase implementation of authentication.
@@ -53,7 +56,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     // ── Session ─────────────────────────────────────────────────────────────
 
     override suspend fun getCurrentUser(): User? =
-        auth.currentUser?.let { User(userId = it.uid) }
+        auth.currentUser?.toDomainUser()
 
     override suspend fun isUserLoggedIn(): Boolean = auth.currentUser != null
 
@@ -121,13 +124,13 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     override suspend fun signUpWithEmail(email: String, password: String): Result<User> =
         authCatching {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
-            User(userId = result.user?.uid ?: error("Sign up failed"))
+            result.user?.toDomainUser() ?: error("Sign up failed")
         }
 
     override suspend fun signInWithEmail(email: String, password: String): Result<User> =
         authCatching {
             val result = auth.signInWithEmailAndPassword(email, password).await()
-            User(userId = result.user?.uid ?: error("Sign in failed"))
+            result.user?.toDomainUser() ?: error("Sign in failed")
         }
 
     override suspend fun sendPasswordReset(email: String): Result<Unit> = authCatching {
@@ -144,7 +147,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     override suspend fun signInWithGoogle(idToken: String): Result<User> = authCatching {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val result = auth.signInWithCredential(credential).await()
-        User(userId = result.user?.uid ?: error("Google sign in failed"))
+        result.user?.toDomainUser() ?: error("Google sign in failed")
     }
 
     // ── Phone ───────────────────────────────────────────────────────────────
@@ -152,35 +155,53 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
     override suspend fun startPhoneVerification(
         phoneNumber: String,
         activity: Any,
+        purpose: PhoneVerificationPurpose,
     ): Result<PhoneVerification> = authCatching {
         val hostActivity = activity as? Activity
             ?: error("Phone verification needs an Activity")
 
         suspendCancellableCoroutine { cont ->
+            var automaticCompletionStarted = false
             val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                    // Play Integrity auto-retrieved the SMS. No OTP screen needed.
-                    if (cont.isActive) {
-                        cont.resume(
-                            PhoneVerification(
-                                verificationId = credential.smsCode.orEmpty(),
-                                autoVerified = true,
-                            )
-                        )
-                    }
+                    if (!cont.isActive) return
+
+                    // Instant verification can arrive before onCodeSent and may
+                    // not contain an SMS code or verification ID. Passing the
+                    // smsCode as an ID produced a guaranteed-broken OTP screen.
+                    // Complete the requested auth operation with Firebase's
+                    // credential directly instead.
+                    automaticCompletionStarted = true
+                    completeAutomaticPhoneVerification(
+                        credential = credential,
+                        purpose = purpose,
+                        onSuccess = { user ->
+                            if (cont.isActive) {
+                                cont.resume(PhoneVerification.Completed(user))
+                            }
+                        },
+                        onFailure = { error ->
+                            if (cont.isActive) cont.resumeWithException(error)
+                        },
+                    )
                 }
 
                 override fun onVerificationFailed(e: com.google.firebase.FirebaseException) {
-                    if (cont.isActive) cont.cancel(e)
+                    // A Firebase rejection is a completed operation with an
+                    // error, not coroutine cancellation. Cancelling here made
+                    // authCatching correctly rethrow CancellationException,
+                    // which skipped the ViewModel failure branch and could
+                    // leave the phone screen busy forever.
+                    if (cont.isActive) cont.resumeWithException(e)
                 }
 
                 override fun onCodeSent(
                     verificationId: String,
                     token: PhoneAuthProvider.ForceResendingToken,
                 ) {
-                    if (cont.isActive) {
-                        cont.resume(PhoneVerification(verificationId = verificationId))
+                    if (cont.isActive && !automaticCompletionStarted) {
+                        cont.resume(PhoneVerification.CodeSent(verificationId))
                     }
                 }
             }
@@ -196,11 +217,54 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun completeAutomaticPhoneVerification(
+        credential: PhoneAuthCredential,
+        purpose: PhoneVerificationPurpose,
+        onSuccess: (User?) -> Unit,
+        onFailure: (Throwable) -> Unit,
+    ) {
+        when (purpose) {
+            PhoneVerificationPurpose.SignIn -> {
+                auth.signInWithCredential(credential)
+                    .addOnSuccessListener { result ->
+                        val user = result.user
+                            ?: return@addOnSuccessListener onFailure(
+                                IllegalStateException("Phone sign in returned no user")
+                            )
+                        onSuccess(user.toDomainUser())
+                    }
+                    .addOnFailureListener(onFailure)
+            }
+
+            PhoneVerificationPurpose.Link -> {
+                val currentUser = auth.currentUser
+                    ?: return onFailure(IllegalStateException("No signed in user"))
+                currentUser.linkWithCredential(credential)
+                    .addOnSuccessListener { result ->
+                        val user = result.user
+                            ?: return@addOnSuccessListener onFailure(
+                                IllegalStateException("Phone link returned no user")
+                            )
+                        onSuccess(user.toDomainUser())
+                    }
+                    .addOnFailureListener(onFailure)
+            }
+
+            PhoneVerificationPurpose.Reauthenticate -> {
+                val currentUser = auth.currentUser
+                    ?: return onFailure(IllegalStateException("No signed in user"))
+                currentUser.reauthenticate(credential)
+                    .addOnSuccessListener { onSuccess(null) }
+                    .addOnFailureListener(onFailure)
+            }
+        }
+    }
+
     override suspend fun verifyPhoneCode(verificationId: String, code: String): Result<User> =
         authCatching {
             val credential = PhoneAuthProvider.getCredential(verificationId, code)
             val result = auth.signInWithCredential(credential).await()
-            User(userId = result.user?.uid ?: error("Phone sign in failed"))
+            result.user?.toDomainUser() ?: error("Phone sign in failed")
         }
 
     // ── Explicit linking, from Settings ─────────────────────────────────────
@@ -210,14 +274,14 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         val user = auth.currentUser ?: error("No signed in user")
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val result = user.linkWithCredential(credential).await()
-        User(userId = result.user?.uid ?: error("Link failed"))
+        result.user?.toDomainUser() ?: error("Link failed")
     }
 
     override suspend fun linkEmail(email: String, password: String): Result<User> = authCatching {
         val user = auth.currentUser ?: error("No signed in user")
         val credential = EmailAuthProvider.getCredential(email, password)
         val result = user.linkWithCredential(credential).await()
-        User(userId = result.user?.uid ?: error("Link failed"))
+        result.user?.toDomainUser() ?: error("Link failed")
     }
 
     override suspend fun linkPhone(verificationId: String, code: String): Result<User> =
@@ -225,7 +289,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
             val user = auth.currentUser ?: error("No signed in user")
             val credential = PhoneAuthProvider.getCredential(verificationId, code)
             val result = user.linkWithCredential(credential).await()
-            User(userId = result.user?.uid ?: error("Link failed"))
+            result.user?.toDomainUser() ?: error("Link failed")
         }
 
     private companion object {
@@ -233,3 +297,10 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
         const val RECENT_LOGIN_WINDOW_MS = 4 * 60 * 1000L
     }
 }
+
+/** Keep identity Firebase already verified instead of asking for it again. */
+private fun FirebaseUser.toDomainUser(): User = User(
+    userId = uid,
+    name = displayName.orEmpty().trim(),
+    photoUrl = photoUrl?.toString(),
+)

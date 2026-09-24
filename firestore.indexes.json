@@ -1,6 +1,15 @@
 {
   "indexes": [
     {
+      "collectionGroup": "nextWeekPlans",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "schemaVersion", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "appliesAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "steps",
       "queryScope": "COLLECTION",
       "fields": [

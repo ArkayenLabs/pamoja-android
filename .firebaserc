@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "pamoja-android-1ac6d"
-  }
+  },
+  "targets": {},
+  "etags": {
+    "pamoja-android-1ac6d": {
+      "extensionInstances": {}
+    }
+  },
+  "dataconnectEmulatorConfig": {}
 }

@@ -3,19 +3,13 @@ rules_version = '2';
 // ============================================================================
 // PAMOJA. FIRESTORE SECURITY RULES
 // ============================================================================
-// ⚠️  DEPLOY THIS IMMEDIATELY. It replaces `allow read, write: if true`, which
-//     left the entire database open to the unauthenticated public internet.
-//
-// This version is INTENTIONALLY compatible with the app's CURRENT code, it
-// requires no refactor and will not break the running closed test. It closes
-// the critical hole (anonymous public access) and pins every write to its
-// owner.
-//
-// Phase 2 hardening (after the code refactors) is documented at the bottom.
-//
-// Deploy:
-//     firebase deploy --only firestore:rules
-// or paste into Firebase Console → Firestore → Rules → Publish.
+// IMPORTANT: this is the FINAL Circle Preview rule set. Do not deploy it over
+// an installed paid-history build by itself. The safe pre-launch sequence is:
+// (1) deploy a temporary compatibility rule that adds groupPreviews reads but
+// keeps completed weeks member-readable, (2) deploy the weekly finalizer,
+// (3) distribute and verify the preview-enabled APK, then (4) deploy this final
+// gate after every closed tester has updated. A public app would additionally
+// need an enforced minimum supported version before tightening this boundary.
 //
 // ---------------------------------------------------------------------------
 // Data model:
@@ -23,6 +17,11 @@ rules_version = '2';
 //   groups/{groupId}                groupId == UUID v4
 //   memberships/{userId}_{groupId}  fields: userId, groupId, role, canEditTarget, joinedAt
 //   steps/{userId}_{date}           fields: userId, date, steps
+//   groupAccess/{groupId}            server-owned paid feature lease
+//   groupPreviews/{groupId}          server-owned one-time Circle Preview
+//   pushRegistrations/{fid}          server-owned FCM installation mapping
+//   groups/{groupId}/weeks/{date}    server-finalized completed-week history
+//   groups/{groupId}/nextWeekPlans/{date} group Premium planning
 // ============================================================================
 
 service cloud.firestore {
@@ -41,6 +40,49 @@ service cloud.firestore {
     function isGroupAdmin(groupId) {
       return isSignedIn()
         && get(/databases/$(database)/documents/groups/$(groupId)).data.adminId == request.auth.uid;
+    }
+
+    function isGroupMember(groupId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/groups/$(groupId))
+        && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId));
+    }
+
+    function hasValidPaidGroupAccess(groupId) {
+      let accessPath = /databases/$(database)/documents/groupAccess/$(groupId);
+      return exists(accessPath)
+        && get(accessPath).data.get('isPremium', false) == true
+        && get(accessPath).data.get('featureSet', []).hasAny(['circle_v1'])
+        && get(accessPath).data.get('leaseValidUntil', null) is timestamp
+        && request.time < get(accessPath).data.leaseValidUntil;
+    }
+
+    function hasValidCirclePreview(groupId) {
+      let previewPath = /databases/$(database)/documents/groupPreviews/$(groupId);
+      return exists(previewPath)
+        && get(previewPath).data.get('schemaVersion', 0) == 1
+        && get(previewPath).data.get('groupId', '') == groupId
+        && get(previewPath).data.get('featureSet', []).hasAny(['circle_v1'])
+        && get(previewPath).data.get('startedAt', null) is timestamp
+        && get(previewPath).data.get('validUntil', null) is timestamp
+        && get(previewPath).data.startedAt <= request.time
+        && get(previewPath).data.validUntil
+          <= get(previewPath).data.startedAt + duration.value(14, 'd')
+        && request.time < get(previewPath).data.validUntil;
+    }
+
+    function hasCircleAccess(groupId) {
+      return hasValidPaidGroupAccess(groupId) || hasValidCirclePreview(groupId);
+    }
+
+    function isIsoDateOrBlank(value) {
+      return value is string
+        && (value == '' || value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
+    }
+
+    function isIsoDate(value) {
+      return value is string
+        && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
     }
 
     // A photoUrl is rendered by Coil on every other member's device, so an
@@ -88,7 +130,7 @@ service cloud.firestore {
       allow create, update: if isSelf(userId)
                             && request.resource.data.name is string
                             && request.resource.data.name.size() > 0
-                            && request.resource.data.name.size() <= 100;
+                            && request.resource.data.name.size() <= 40;
 
       allow delete: if isSelf(userId);
     }
@@ -112,19 +154,23 @@ service cloud.firestore {
                     && request.resource.data.memberCount == 1
                     && request.resource.data.maxMemberCap >= 2
                     && request.resource.data.maxMemberCap <= 20
-                    && request.resource.data.weeklyTarget > 0
-                    // 2,800,000 is StepGoal.MAX_WEEKLY_TOTAL: the largest group
-                    // the product allows (20) at the highest per-person figure
-                    // (20,000) for seven days. Keep the two in step.
-                    //
-                    // It was 1,000,000, which was not merely conservative: the
-                    // recommended default at the premium member cap is
-                    // 20 x 8,000 x 7 = 1,120,000, so the old ceiling refused the
-                    // default. GroupGoalRulesEmulatorTest pins both halves.
+                    // A goal is one pooled weekly promise for the whole group.
+                    // Presets are only UI shortcuts; a family may deliberately
+                    // choose a custom total such as 300K.
+                    && request.resource.data.weeklyTarget is int
+                    && request.resource.data.weeklyTarget >= 10000
                     && request.resource.data.weeklyTarget <= 2800000
+                    // This field remains in stored documents only so older app
+                    // versions can be migrated safely. New groups must retire it.
+                    && request.resource.data.get('dailyPerPersonTarget', 0) == 0
+                    // Organizer-controlled. Older documents may carry true,
+                    // but new clients never create that ambiguous permission.
+                    && request.resource.data.get('canMembersEditTarget', false) == false
+                    && request.resource.data.get('planningTimeZone', '') == ''
+                    && request.resource.data.get('plannedWeekStart', '') == ''
                     && request.resource.data.name is string
                     && request.resource.data.name.size() > 0
-                    && request.resource.data.name.size() <= 100
+                    && request.resource.data.name.size() <= 40
                     // Case B validates photoUrl and Case E bounds the step
                     // cache; create validated neither, so everything an admin
                     // was stopped from doing later could simply be baked in at
@@ -138,10 +184,14 @@ service cloud.firestore {
                     && request.resource.data.get('weeklySteps', 0) is int
                     && request.resource.data.get('weeklySteps', 0) >= 0
                     && request.resource.data.get('weeklySteps', 0) <= 42000000
-                    && request.resource.data.get('weekStart', '') is string
-                    && request.resource.data.get('weekStart', '').size() <= 32;
+                    && isIsoDateOrBlank(request.resource.data.get('weekStart', ''));
 
       allow update: if
+        // A server-side group deletion marks the parent before removing its
+        // children. No join, settings edit or step-cache write may race that
+        // cleanup and recreate group-scoped data behind it.
+        resource.data.get('deletionPending', false) == false
+        &&
         // --- Case A: a JOIN. A signed-in user adds exactly themselves.
         //
         //     Pinned to exactly +1 since 2026-08-18. It used to permit ANY
@@ -202,30 +252,18 @@ service cloud.firestore {
           && request.resource.data.maxMemberCap >= 2
           && request.resource.data.maxMemberCap <= 20
           && request.resource.data.maxMemberCap >= resource.data.memberCount
-          && request.resource.data.weeklyTarget > 0
+          && request.resource.data.weeklyTarget is int
+          && request.resource.data.weeklyTarget >= 10000
           && request.resource.data.weeklyTarget <= 2800000
+          && request.resource.data.get('dailyPerPersonTarget', 0) == 0
+          && request.resource.data.get('canMembersEditTarget', false) == false
           && request.resource.data.name is string
           && request.resource.data.name.size() > 0
-          && request.resource.data.name.size() <= 100
-        )
-        ||
-        // --- Case C: a member edits the weekly target, but only where the
-        //     admin enabled it for this group.
-        //
-        //     Membership is checked explicitly, for the reason Case E already
-        //     spells out: `allow get` on groups hands a group document to ANY
-        //     signed-in user, because the invite preview needs that. Until
-        //     2026-08-25 this clause tested only isSignedIn(), so anyone
-        //     holding a forwarded invite link could rewrite the weekly goal of
-        //     a group they had never joined. The comment said "a member"; the
-        //     condition did not. Proven on the emulator, not inferred.
-        (
-          isSignedIn()
-          && resource.data.canMembersEditTarget == true
-          && onlyChanged(['weeklyTarget'])
-          && request.resource.data.weeklyTarget > 0
-          && request.resource.data.weeklyTarget <= 2800000
-          && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
+          && request.resource.data.name.size() <= 40
+          // Keep an already-saved boundary stable until the promise is applied.
+          && (request.resource.data.get('weekStartDay', '') == resource.data.get('weekStartDay', '')
+            || !exists(/databases/$(database)/documents/groups/$(groupId)/planningSummary/current)
+            || get(/databases/$(database)/documents/groups/$(groupId)/planningSummary/current).data.status != 'scheduled')
         )
         ||
         // --- Case D: LEAVING. The count comes down by exactly one and the
@@ -294,7 +332,7 @@ service cloud.firestore {
           && request.resource.data.weeklySteps is int
           && request.resource.data.weeklySteps >= 0
           && request.resource.data.weeklySteps <= 42000000
-          && request.resource.data.weekStart is string
+          && isIsoDate(request.resource.data.weekStart)
           && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
         )
         ||
@@ -322,6 +360,139 @@ service cloud.firestore {
         );
 
       allow delete: if isGroupAdmin(groupId);
+    }
+
+    // A completed week is the first Circle depth feature. It remains an
+    // immutable server-owned record and is readable only while this current
+    // member's group has a live server-owned Preview or paid lease. The basic
+    // current-week progress and leaderboard remain free in their existing
+    // documents. Checking membership also protects orphaned subcollections
+    // after the parent group is deleted (Firestore does not cascade deletion).
+    match /groups/{groupId}/weeks/{weekStart} {
+      allow get, list: if isGroupMember(groupId) && hasCircleAccess(groupId);
+      allow create, update, delete: if false;
+    }
+
+    // Next Week Together is group-scoped paid coordination. Preview can read
+    // history but cannot read or write plans. Only the organiser chooses the
+    // shared target; each member can change only their own small availability
+    // response. The server is solely responsible for marking a plan applied.
+    // A saved goal is still a promise after a lease ends. This projection has
+    // no historical totals, creator identity or member response counts.
+    match /groups/{groupId}/planningSummary/{summaryId} {
+      allow get: if summaryId == 'current' && isGroupMember(groupId);
+      allow list, create, update, delete: if false;
+    }
+
+    match /groups/{groupId}/nextWeekPlans/{planWeekStart} {
+      function validPlanningBasis() {
+        let d = request.resource.data;
+        // New planning is admitted by the callable's server clock. Once a
+        // group opts in, an older app cannot overwrite its shared promise.
+        return !exists(/databases/$(database)/documents/groupPlanning/$(groupId))
+          && d.schemaVersion == 1
+            && isIsoDate(d.sourceWeekStart)
+            && d.basisTotalSteps is int
+            && d.basisTotalSteps >= 0 && d.basisTotalSteps <= 42000000;
+      }
+      function responseWindowOpen() {
+        let plan = get(/databases/$(database)/documents/groups/$(groupId)/nextWeekPlans/$(planWeekStart)).data;
+        return plan.status == 'scheduled' &&
+          (plan.schemaVersion == 1 || (plan.schemaVersion == 2 && request.time < plan.appliesAt));
+      }
+      allow get, list: if isGroupMember(groupId) && hasValidPaidGroupAccess(groupId);
+
+      allow create: if isGroupAdmin(groupId)
+        && hasValidPaidGroupAccess(groupId)
+        && request.resource.data.keys().hasOnly([
+          'schemaVersion', 'groupId', 'weekStart', 'targetSteps', 'choice',
+          'sourceWeekStart', 'basisTotalSteps', 'basisTargetSteps', 'status',
+          'createdBy', 'createdAt', 'updatedAt', 'inCount',
+          'preferGentlerCount', 'restingCount'
+        ])
+        && validPlanningBasis()
+        && request.resource.data.groupId == groupId
+        && request.resource.data.weekStart == planWeekStart
+        && isIsoDate(planWeekStart)
+        && request.resource.data.targetSteps is int
+        && request.resource.data.targetSteps >= 10000
+        && request.resource.data.targetSteps <= 2800000
+        && request.resource.data.choice in ['repeat', 'gentler', 'custom']
+        && request.resource.data.basisTargetSteps is int
+        && request.resource.data.basisTargetSteps >= 0
+        && request.resource.data.basisTargetSteps <= 2800000
+        && request.resource.data.status == 'scheduled'
+        && request.resource.data.inCount == 0
+        && request.resource.data.preferGentlerCount == 0
+        && request.resource.data.restingCount == 0
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isGroupAdmin(groupId)
+        && hasValidPaidGroupAccess(groupId)
+        && resource.data.status == 'scheduled'
+        && onlyChanged([
+          'targetSteps', 'choice', 'sourceWeekStart', 'basisTotalSteps',
+          'basisTargetSteps', 'updatedAt', 'schemaVersion'
+        ])
+        && validPlanningBasis()
+        && request.resource.data.schemaVersion >= resource.data.schemaVersion
+        && request.resource.data.groupId == groupId
+        && request.resource.data.weekStart == planWeekStart
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status == 'scheduled'
+        && request.resource.data.targetSteps is int
+        && request.resource.data.targetSteps >= 10000
+        && request.resource.data.targetSteps <= 2800000
+        && request.resource.data.choice in ['repeat', 'gentler', 'custom']
+        && request.resource.data.basisTargetSteps is int
+        && request.resource.data.basisTargetSteps >= 0
+        && request.resource.data.basisTargetSteps <= 2800000
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+
+      match /responses/{userId} {
+        // Availability answers are private. Everyone sees only server-maintained
+        // aggregate counts on the plan; a member can read back their own answer.
+        allow get: if isSelf(userId)
+          && isGroupMember(groupId)
+          && hasValidPaidGroupAccess(groupId);
+        allow list: if false;
+
+        allow create: if isSelf(userId)
+          && isGroupMember(groupId)
+          && hasValidPaidGroupAccess(groupId)
+          && responseWindowOpen()
+          && request.resource.data.keys().hasOnly([
+            'schemaVersion', 'groupId', 'weekStart', 'userId', 'response',
+            'createdAt', 'updatedAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.groupId == groupId
+          && request.resource.data.weekStart == planWeekStart
+          && request.resource.data.userId == userId
+          && request.resource.data.response in ['in', 'prefer_gentler', 'resting']
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+
+        allow update: if isSelf(userId)
+          && isGroupMember(groupId)
+          && hasValidPaidGroupAccess(groupId)
+          && responseWindowOpen()
+          && onlyChanged(['response', 'updatedAt'])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.groupId == groupId
+          && request.resource.data.weekStart == planWeekStart
+          && request.resource.data.userId == userId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.response in ['in', 'prefer_gentler', 'resting']
+          && request.resource.data.updatedAt == request.time;
+
+        allow delete: if false;
+      }
     }
 
     // ------------------------------------------------------------ memberships
@@ -427,6 +598,8 @@ service cloud.firestore {
                     && request.resource.data.get('todaySteps', 0) is int
                     && request.resource.data.get('todaySteps', 0) >= 0
                     && request.resource.data.get('todaySteps', 0) <= 300000
+                    && isIsoDateOrBlank(request.resource.data.get('weekStart', ''))
+                    && isIsoDateOrBlank(request.resource.data.get('todayDate', ''))
                     && request.resource.data.get('joinedAt', 0) is int
                     && request.resource.data.get('joinedAt', 0) >=
                          get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
@@ -491,8 +664,8 @@ service cloud.firestore {
                     && request.resource.data.get('todaySteps', 0) is int
                     && request.resource.data.get('todaySteps', 0) >= 0
                     && request.resource.data.get('todaySteps', 0) <= 300000
-                    && request.resource.data.get('weekStart', '') is string
-                    && request.resource.data.get('todayDate', '') is string;
+                    && isIsoDateOrBlank(request.resource.data.get('weekStart', ''))
+                    && isIsoDateOrBlank(request.resource.data.get('todayDate', ''));
 
       // Remove yourself, or the group admin may remove anyone.
       allow delete: if isSignedIn()
@@ -500,6 +673,57 @@ service cloud.firestore {
                          resource.data.userId == request.auth.uid
                          || isGroupAdmin(resource.data.groupId)
                        );
+    }
+
+    // --------------------------------------------------------- paid access
+
+    // This is the only group-level billing projection the app may read. It
+    // contains no payer identity, receipt, product or RevenueCat metadata.
+    // Access is inherited by every current group member and cannot be forged by
+    // any client, including the group admin or the payer.
+    match /groupAccess/{groupId} {
+      allow get: if isGroupMember(groupId);
+      allow list, create, update, delete: if false;
+    }
+
+    // One group-owned, one-time product Preview. It contains only feature and
+    // timing metadata, never payer or member identity. The weekly-history
+    // function creates it after the first week with two active members; no
+    // client can start it later or reset its clock.
+    match /groupPreviews/{groupId} {
+      allow get: if isGroupMember(groupId);
+      allow list, create, update, delete: if false;
+    }
+
+    // A payer may see their own minimal billing projection. Canonical customer,
+    // receipt and sponsor records remain server-only below.
+    match /billingViews/{userId} {
+      allow get: if isSelf(userId);
+      allow list, create, update, delete: if false;
+    }
+
+    // The Admin SDK in Cloud Functions bypasses Firestore rules. No mobile or
+    // web client can read or write these canonical billing collections.
+    match /billingAccounts/{userId} {
+      allow read, write: if false;
+    }
+
+    match /groupBilling/{groupId} {
+      allow read, write: if false;
+    }
+
+    match /revenueCatEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // The callable Functions backend owns every write to delivery credentials.
+    // An owner-scoped read exists solely so Download my data can disclose the
+    // identifiers held for this account. Firestore will permit a list only when
+    // the query constrains userId to request.auth.uid, so this is not enumerable.
+    match /pushRegistrations/{installationId} {
+      allow get, list: if isSignedIn()
+                       && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
     }
 
     // ------------------------------------------------------------------ steps

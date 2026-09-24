@@ -1,0 +1,22 @@
+{
+  "name": "pamoja-functions-weekly",
+  "version": "1.0.0",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test \"lib/*.test.js\"",
+    "test:security": "npm run build && node --test security-boundaries.test.cjs"
+  },
+  "dependencies": {
+    "firebase-admin": "14.3.0",
+    "firebase-functions": "7.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "7.0.2"
+  }
+}

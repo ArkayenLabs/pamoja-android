@@ -6,12 +6,41 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "functions": [
+    {
+      "source": "functions-weekly",
+      "codebase": "weekly-history",
+      "runtime": "nodejs22",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    },
+    {
+      "source": "functions",
+      "codebase": "billing",
+      "runtime": "nodejs22",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    },
+    {
+      "source": "functions-notifications",
+      "codebase": "notifications",
+      "runtime": "nodejs22",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
   "emulators": {
     "auth": {
       "port": 9099
     },
     "firestore": {
       "port": 8080
+    },
+    "functions": {
+      "port": 5001
     },
     "ui": {
       "enabled": false

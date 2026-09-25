@@ -1652,6 +1652,7 @@ fun LeaderboardRow(
                         MaterialTheme.typography.bodyLarge.copy(color = colors.textPrimary)
                     else
                         MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
+                    modifier = Modifier.weight(1f, fill = false),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1666,7 +1667,8 @@ fun LeaderboardRow(
                         Text(
                             text  = stringResource(R.string.group_you),
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                            color = colors.accentPrimary
+                            color = colors.accentPrimary,
+                            maxLines = 1,
                         )
                     }
                 }

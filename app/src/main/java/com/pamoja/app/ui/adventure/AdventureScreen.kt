@@ -64,13 +64,15 @@ fun AdventureScreen(onBack: () -> Unit, onPremium: () -> Unit, onConnect: () -> 
     var chapter by rememberSaveable { mutableStateOf<Int?>(null) }
     val colors = LocalPamojaColors.current
     val trailCardColor = if (colors.isDark) colors.surface2 else colors.surface1
+    val showPremiumPreview = state.entry == null && state.adventure == null && state.error == "feature_disabled"
     CompositionLocalProvider(LocalContentColor provides colors.textPrimary) {
         LazyColumn(Modifier.fillMaxSize().background(colors.surfaceApp).safeDrawingPadding(),
             contentPadding = PaddingValues(Spacing.x6), verticalArrangement = Arrangement.spacedBy(Spacing.x4)) {
         item { TextButton(onClick = onBack) { Text(stringResource(R.string.trail_back)) } }
         item { Text(stringResource(R.string.adventure_title), style = MaterialTheme.typography.headlineLarge) }
         if (state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-        state.error?.let { error -> item { AdventureError(error, viewModel::refresh, onConnect, !state.busy) } }
+        if (showPremiumPreview) item { AdventurePremiumPreview(onPremium) }
+        else state.error?.let { error -> item { AdventureError(error, viewModel::refresh, onConnect, !state.busy) } }
         if (state.entry != null && state.adventure == null) item {
             AdventurePreview(state, viewModel::start, onPremium)
         }
@@ -100,7 +102,11 @@ fun AdventureScreen(onBack: () -> Unit, onPremium: () -> Unit, onConnect: () -> 
                 }
             }
         }
-            item { TextButton(onClick = viewModel::refresh, enabled = !state.busy) { Text(stringResource(R.string.trail_refresh)) } }
+            if (!showPremiumPreview && state.error == null && state.entry != null) item {
+                TextButton(onClick = viewModel::refresh, enabled = !state.busy) {
+                    Text(stringResource(R.string.trail_refresh))
+                }
+            }
         }
     }
     chapter?.takeIf { it < (state.adventure?.chapters ?: 0) }?.let { index ->
@@ -110,6 +116,30 @@ fun AdventureScreen(onBack: () -> Unit, onPremium: () -> Unit, onConnect: () -> 
                 item { Text(stringResource(chapterStories[index])) }
                 item { Text(stringResource(chapterReflections[index]), style = MaterialTheme.typography.titleMedium) }
             } }, confirmButton = { TextButton(onClick = { chapter = null }) { Text(stringResource(R.string.trail_back)) } })
+    }
+}
+
+@Composable
+private fun AdventurePremiumPreview(onPremium: () -> Unit) {
+    val colors = LocalPamojaColors.current
+    val trailCardColor = if (colors.isDark) colors.surface2 else colors.surface1
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = trailCardColor, contentColor = colors.textPrimary)
+    ) {
+        Column(
+            modifier = Modifier.padding(Spacing.x5),
+            verticalArrangement = Arrangement.spacedBy(Spacing.x4)
+        ) {
+            Text(stringResource(R.string.premium_trail_title), style = MaterialTheme.typography.titleLarge)
+            TrailArtwork(0)
+            Text(stringResource(R.string.adventure_intro), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.adventure_included), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.adventure_access_body), color = colors.textSecondary)
+            Button(onClick = onPremium, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.trail_sponsor))
+            }
+        }
     }
 }
 

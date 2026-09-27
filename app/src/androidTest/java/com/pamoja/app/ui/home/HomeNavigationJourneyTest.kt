@@ -206,7 +206,8 @@ class HomeNavigationJourneyTest {
         compose.waitUntil(timeoutMillis = 15_000) {
             compose.onAllNodesWithText("Journey walkers").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithContentDescription("Settings").performClick()
+        // The settings tab is labelled "You" since the navigation redesign.
+        compose.onNodeWithContentDescription("You").performClick()
         compose.waitUntil(timeoutMillis = 15_000) {
             compose.onAllNodesWithText("Notifications").fetchSemanticsNodes().isNotEmpty()
         }

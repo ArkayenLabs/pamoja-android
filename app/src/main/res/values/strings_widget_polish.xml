@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="widget_view_progress">See progress →</string>
     <string name="widget_open_group">Open group →</string>
     <string name="widget_steps_left">steps to go</string>

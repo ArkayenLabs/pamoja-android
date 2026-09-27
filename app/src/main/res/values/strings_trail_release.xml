@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="trail_open_action">Explore the trail →</string>
     <string name="premium_trail_title">One adventure. All of you.</string>
     <string name="premium_trail_body">Walk toward five illustrated chapters on The Together Trail. Set your own weekly commitment, take a rest week and celebrate finishing together. One subscription covers your group.</string>

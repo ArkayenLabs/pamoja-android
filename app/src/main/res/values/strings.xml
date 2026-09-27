@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="premium_history_title">See your progress together</string>
     <string name="premium_history_body">Full weekly history and trends for everyone in the group. Steps and leaderboards stay free.</string>
     <string name="premium_move_named_body">Move your subscription from %1$s to %2$s? The previous group will lose access provided by this subscription. No new purchase is needed.</string>

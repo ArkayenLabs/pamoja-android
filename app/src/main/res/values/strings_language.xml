@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="settings_language">App language</string>
     <string name="settings_language_system">Use device language</string>
 </resources>

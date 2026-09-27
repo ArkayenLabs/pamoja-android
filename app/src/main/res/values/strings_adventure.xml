@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generated from planning/2026-09-17/TOGETHER-TRAIL-CONTENT.json. Translation review pending. -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="adventure_title" formatted="false">The Together Trail</string>
     <string name="adventure_promise" formatted="false">Your everyday walks. One shared adventure.</string>
     <string name="adventure_intro" formatted="false">Discover five places together. Walk at your own pace, wherever you are.</string>

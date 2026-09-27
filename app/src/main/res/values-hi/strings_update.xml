@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_required_title">अपडेट करने का समय</string>
+    <string name="update_required_body">Pamoja का यह वर्शन अब काम नहीं करता। अपने समूह के साथ चलते रहने के लिए अपडेट करें।</string>
+    <string name="update_required_action">अपडेट करें</string>
+</resources>

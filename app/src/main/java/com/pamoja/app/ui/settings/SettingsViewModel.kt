@@ -11,7 +11,6 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.data.export.UserDataExportFormatter
 import com.pamoja.app.domain.model.ThemePreference
-import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.usecase.DeleteAccountUseCase
@@ -74,20 +73,10 @@ data class SettingsUiState(
     val messageArg: Int? = null,
     val userName: String = "",
     val userId: String = "",
-    /**
-     * Shown as a one-line summary in the profile header.
-     *
-     * Collected during onboarding and, until the profile editor existed,
-     * displayed nowhere at all.
-     */
-    val age: Int? = null,
-    val height: Float? = null,
-    val weight: Float? = null,
     val photoUrl: String? = null,
     /** Which sign-in methods are attached, summarised on the Account row. */
     val authMethods: AuthMethods = AuthMethods(),
     val theme: ThemePreference = ThemePreference.System,
-    val unitSystem: UnitSystem = UnitSystem.Metric,
     /** True while the export is being gathered from Firestore. */
     val isExporting: Boolean = false,
     /**
@@ -154,11 +143,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            userPreferences.unitSystem.collect { system ->
-                _uiState.value = _uiState.value.copy(unitSystem = system)
-            }
-        }
-        viewModelScope.launch {
             userPreferences.lastSyncTime.collect { time ->
                 _uiState.value = _uiState.value.copy(lastSyncTime = time)
             }
@@ -209,10 +193,6 @@ class SettingsViewModel @Inject constructor(
      */
     fun setTheme(preference: ThemePreference) {
         viewModelScope.launch { userPreferences.saveThemePreference(preference) }
-    }
-
-    fun setUnitSystem(system: UnitSystem) {
-        viewModelScope.launch { userPreferences.saveUnitSystem(system) }
     }
 
     /**
@@ -303,9 +283,6 @@ class SettingsViewModel @Inject constructor(
                             isLoading = false,
                             userId = user.userId,
                             userName = user.name,
-                            age = user.age,
-                            height = user.height,
-                            weight = user.weight,
                             photoUrl = user.photoUrl
                         )
                     },

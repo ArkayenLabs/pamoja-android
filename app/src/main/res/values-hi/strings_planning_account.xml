@@ -107,6 +107,5 @@
     <string name="profile_edit_photo_add">फ़ोटो जोड़ें</string>
     <string name="profile_edit_photo_change">फ़ोटो बदलें</string>
     <string name="profile_edit_photo_uploading">अपलोड हो रहा है…</string>
-    <string name="profile_detail_age">%1$d वर्ष</string>
     <plurals name="weekly_review_active_members"><item quantity="one">%1$d सक्रिय</item><item quantity="other">%1$d सक्रिय</item></plurals>
 </resources>

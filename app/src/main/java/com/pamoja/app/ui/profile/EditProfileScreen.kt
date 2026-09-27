@@ -53,11 +53,9 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
-import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.ui.components.NoticeTone
 import com.pamoja.app.ui.components.OfflineBanner
 import com.pamoja.app.ui.components.PamojaErrorState
@@ -73,10 +71,9 @@ import com.pamoja.app.ui.theme.Spacing
 /**
  * The profile editor that never existed.
  *
- * `ProfileSetupScreen` collects these same four fields during onboarding and is
- * then unreachable, so until now a typo in your name or a mistyped height was
- * permanent. Deliberately shares its validation rules with that screen: a value
- * that onboarding would have rejected should not become acceptable later.
+ * `ProfileSetupScreen` is onboarding-only and unreachable afterwards, so until
+ * this screen a typo in your name was permanent. It edits the name and photo
+ * only; age, height and weight are no longer collected anywhere.
  */
 @Composable
 fun EditProfileScreen(
@@ -94,15 +91,6 @@ fun EditProfileScreen(
     // Hoisted: the validate lambdas run on focus change, outside composable scope.
     val nameRequired = stringResource(R.string.profile_name_required)
     val nameTooLong = stringResource(R.string.profile_name_too_long)
-    val ageField = stringResource(R.string.profile_field_age)
-    val heightField = stringResource(R.string.profile_field_height)
-    val weightField = stringResource(R.string.profile_field_weight)
-    val ageNaN = stringResource(R.string.profile_number_invalid, ageField)
-    val ageRange = stringResource(R.string.profile_number_range, ageField)
-    val heightNaN = stringResource(R.string.profile_number_invalid, heightField)
-    val heightRange = stringResource(R.string.profile_number_range, heightField)
-    val weightNaN = stringResource(R.string.profile_number_invalid, weightField)
-    val weightRange = stringResource(R.string.profile_number_range, weightField)
     val savedMessage = stringResource(R.string.profile_edit_saved)
 
     // Picking no longer uploads directly. The picked image goes to the cropper
@@ -121,28 +109,10 @@ fun EditProfileScreen(
             else -> null
         }
     }
-    val isImperial = uiState.unitSystem == UnitSystem.Imperial
 
-    // The same human bounds expressed in whichever units are on screen, so the
-    // rule does not tighten or loosen just because the display changed.
-    val ageErrorFor: (String) -> String? = { it.validOptionalNumber(13..120, ageNaN, ageRange) }
-    val heightErrorFor: (String) -> String? = { input ->
-        val range = if (isImperial) 1..8 else 50..250
-        input.validOptionalNumber(range, heightNaN, heightRange)
-    }
-    val heightInchesErrorFor: (String) -> String? = { input ->
-        input.validOptionalNumber(0..11, heightNaN, heightRange)
-    }
-    val weightErrorFor: (String) -> String? = { input ->
-        val range = if (isImperial) 44..660 else 20..300
-        input.validOptionalNumber(range, weightNaN, weightRange)
-    }
-
+    // Age, height and weight are no longer asked for: nothing in the app used
+    // them. Values already stored are left alone by save, not cleared here.
     val firstError = nameErrorFor(uiState.name)
-        ?: ageErrorFor(uiState.age)
-        ?: heightErrorFor(uiState.height)
-        ?: (if (isImperial) heightInchesErrorFor(uiState.heightInches) else null)
-        ?: weightErrorFor(uiState.weight)
 
     // Saving returns to where you came from.
     //
@@ -370,63 +340,6 @@ fun EditProfileScreen(
                         validate = nameErrorFor,
                     )
 
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
-                    ) {
-                        PamojaTextField(
-                            value = uiState.age,
-                            onValueChange = viewModel::onAgeChange,
-                            label = stringResource(R.string.profile_age_label),
-                            placeholder = stringResource(R.string.profile_optional_placeholder),
-                            keyboardType = KeyboardType.Number,
-                            modifier = Modifier.weight(1f),
-                            enabled = !uiState.isSaving,
-                            validate = ageErrorFor,
-                        )
-                        PamojaTextField(
-                            value = uiState.height,
-                            onValueChange = viewModel::onHeightChange,
-                            label = stringResource(
-                                if (isImperial) R.string.profile_height_label_ft
-                                else R.string.profile_height_label
-                            ),
-                            placeholder = stringResource(R.string.profile_optional_placeholder),
-                            keyboardType = KeyboardType.Number,
-                            modifier = Modifier.weight(1f),
-                            enabled = !uiState.isSaving,
-                            validate = heightErrorFor,
-                        )
-                        // Imperial height is two numbers. Nobody states a height
-                        // in inches alone, so a single field would be unusable.
-                        if (isImperial) {
-                            PamojaTextField(
-                                value = uiState.heightInches,
-                                onValueChange = viewModel::onHeightInchesChange,
-                                label = stringResource(R.string.profile_height_label_in),
-                                placeholder = stringResource(R.string.profile_optional_placeholder),
-                                keyboardType = KeyboardType.Number,
-                                modifier = Modifier.weight(1f),
-                                enabled = !uiState.isSaving,
-                                validate = heightInchesErrorFor,
-                            )
-                        }
-                        PamojaTextField(
-                            value = uiState.weight,
-                            onValueChange = viewModel::onWeightChange,
-                            label = stringResource(
-                                if (isImperial) R.string.profile_weight_label_lb
-                                else R.string.profile_weight_label
-                            ),
-                            placeholder = stringResource(R.string.profile_optional_placeholder),
-                            keyboardType = KeyboardType.Number,
-                            modifier = Modifier.weight(1f),
-                            enabled = !uiState.isSaving,
-                            validate = weightErrorFor,
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(Spacing.x6))
 
@@ -581,20 +494,4 @@ private fun EditProfileSkeleton() {
             }
         }
     }
-}
-
-/**
- * Optional numeric field check, same rule as onboarding.
- *
- * Blank passes, because these fields are genuinely optional and clearing one is
- * a legitimate edit rather than a mistake.
- */
-private fun String.validOptionalNumber(
-    range: IntRange,
-    notANumber: String,
-    outOfRange: String,
-): String? {
-    if (isBlank()) return null
-    val value = toIntOrNull() ?: return notANumber
-    return if (value in range) null else outOfRange
 }

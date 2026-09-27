@@ -1,20 +1,10 @@
 <resources>
-    <string name="profile_detail_height">%1$d सेमी</string>
-    <string name="profile_detail_weight">%1$d किग्रा</string>
-    <string name="profile_detail_height_imperial">%1$d फ़ीट %2$d इंच</string>
-    <string name="profile_detail_weight_imperial">%1$d पाउंड</string>
-    <string name="profile_detail_separator"> · </string>
-    <string name="profile_details_empty">अपनी जानकारी जोड़ें</string>
     <string name="settings_open_profile">अपनी प्रोफ़ाइल बदलें</string>
     <string name="settings_section_preferences">ऐप का अनुभव</string>
     <string name="settings_theme_label">दिखावट</string>
     <string name="settings_theme_system">सिस्टम</string>
     <string name="settings_theme_light">हल्का</string>
     <string name="settings_theme_dark">गहरा</string>
-    <string name="settings_units_label">इकाइयाँ</string>
-    <string name="settings_units_metric">मीट्रिक</string>
-    <string name="settings_units_imperial">इम्पीरियल</string>
-    <string name="settings_units_sub">आपकी लंबाई और वज़न कैसे दिखें। कदम दोनों में समान गिने जाते हैं।</string>
     <string name="settings_section_support">सहायता और आपका डेटा</string>
     <string name="settings_support_title">सहायता से संपर्क करें</string>
     <string name="settings_support_subtitle">सवाल पूछें या समस्या बताएँ</string>

@@ -74,8 +74,6 @@ import androidx.compose.ui.res.stringResource
 import com.pamoja.app.R
 import com.pamoja.app.BuildConfig
 import com.pamoja.app.domain.model.ThemePreference
-import com.pamoja.app.domain.model.UnitConverter
-import com.pamoja.app.domain.model.UnitSystem
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
@@ -555,20 +553,6 @@ fun SettingsScreen(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                // Shows the details the app already holds. They
-                                // were collected at onboarding and then never
-                                // displayed anywhere, which is hard to justify.
-                                text = profileSummary(
-                                    uiState.age,
-                                    uiState.height,
-                                    uiState.weight,
-                                    uiState.unitSystem,
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.textSecondary,
-                            )
                         }
 
                         Box(
@@ -648,13 +632,6 @@ fun SettingsScreen(
                 ThemeSelector(
                     selected = uiState.theme,
                     onSelect = viewModel::setTheme,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                UnitSelector(
-                    selected = uiState.unitSystem,
-                    onSelect = viewModel::setUnitSystem,
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.x3))
@@ -1043,51 +1020,6 @@ private fun SettingsRow(
 }
 
 /**
- * The one-line summary under the name in the profile header.
- *
- * Falls back to an invitation rather than an empty line, since a blank subtitle
- * under a tappable row gives no reason to tap it.
- */
-@Composable
-private fun profileSummary(
-    age: Int?,
-    height: Float?,
-    weight: Float?,
-    units: UnitSystem,
-): String {
-    val parts = buildList {
-        age?.let { add(stringResource(R.string.profile_detail_age, it)) }
-        height?.let { cm ->
-            add(
-                when (units) {
-                    UnitSystem.Metric -> stringResource(R.string.profile_detail_height, cm.toInt())
-                    UnitSystem.Imperial -> {
-                        val (feet, inches) = UnitConverter.cmToFeetInches(cm)
-                        stringResource(R.string.profile_detail_height_imperial, feet, inches)
-                    }
-                }
-            )
-        }
-        weight?.let { kg ->
-            add(
-                when (units) {
-                    UnitSystem.Metric -> stringResource(R.string.profile_detail_weight, kg.toInt())
-                    UnitSystem.Imperial -> stringResource(
-                        R.string.profile_detail_weight_imperial,
-                        UnitConverter.kgToPounds(kg),
-                    )
-                }
-            )
-        }
-    }
-    return if (parts.isEmpty()) {
-        stringResource(R.string.profile_details_empty)
-    } else {
-        parts.joinToString(stringResource(R.string.profile_detail_separator))
-    }
-}
-
-/**
  * The one-line summary on the Account row.
  *
  * Written to be read at a glance from Settings: an account with a single method
@@ -1116,82 +1048,6 @@ private const val SUPPORT_EMAIL = "support@arkayenlabs.com"
 
 /** Suggested name in the save dialog. The user can change it. */
 private const val EXPORT_FILE_NAME = "pamoja-my-data.json"
-
-/**
- * Metric or imperial, as a segmented control matching the theme selector.
- *
- * Display only. Height and weight are stored in centimetres and kilograms
- * whatever this says, because a stored number whose meaning depends on a
- * setting held elsewhere is a number that changes when the setting does.
- */
-@Composable
-private fun UnitSelector(
-    selected: UnitSystem,
-    onSelect: (UnitSystem) -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-    val shape = RoundedCornerShape(PamojaRadii.md)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.x6)
-            .clip(shape)
-            .background(colors.surface1)
-            .border(1.dp, colors.borderSubtle, shape)
-            .padding(Spacing.x4),
-    ) {
-        Text(
-            text = stringResource(R.string.settings_units_label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.textPrimary,
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(PamojaRadii.sm))
-                .background(colors.surfaceSunken)
-                .padding(Spacing.x1),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.x1),
-        ) {
-            UnitSystem.entries.forEach { option ->
-                val isSelected = option == selected
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(PamojaRadii.sm))
-                        .background(if (isSelected) colors.accentPrimary else Color.Transparent)
-                        .clickable { onSelect(option) }
-                        .padding(vertical = Spacing.x3),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(option.labelRes()),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isSelected) colors.textOnBrand else colors.textSecondary,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        Text(
-            text = stringResource(R.string.settings_units_sub),
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.textTertiary,
-        )
-    }
-}
-
-@StringRes
-private fun UnitSystem.labelRes(): Int = when (this) {
-    UnitSystem.Metric -> R.string.settings_units_metric
-    UnitSystem.Imperial -> R.string.settings_units_imperial
-}
 
 /**
  * System / Light / Dark, as a segmented control.

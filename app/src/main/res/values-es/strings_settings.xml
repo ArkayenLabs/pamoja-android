@@ -1,20 +1,10 @@
 <resources>
-    <string name="profile_detail_height">%1$d cm</string>
-    <string name="profile_detail_weight">%1$d kg</string>
-    <string name="profile_detail_height_imperial">%1$d pies %2$d pulg.</string>
-    <string name="profile_detail_weight_imperial">%1$d lb</string>
-    <string name="profile_detail_separator"> · </string>
-    <string name="profile_details_empty">Añade tus datos</string>
     <string name="settings_open_profile">Editar tu perfil</string>
     <string name="settings_section_preferences">EXPERIENCIA DE LA APP</string>
     <string name="settings_theme_label">Apariencia</string>
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Oscuro</string>
-    <string name="settings_units_label">Unidades</string>
-    <string name="settings_units_metric">Métricas</string>
-    <string name="settings_units_imperial">Imperiales</string>
-    <string name="settings_units_sub">Cómo se muestran tu altura y peso. Los pasos se cuentan igual.</string>
     <string name="settings_section_support">AYUDA Y TUS DATOS</string>
     <string name="settings_support_title">Contactar con soporte</string>
     <string name="settings_support_subtitle">Haz una pregunta o informa de un problema</string>

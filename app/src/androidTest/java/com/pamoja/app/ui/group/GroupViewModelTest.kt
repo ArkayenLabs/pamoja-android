@@ -1,5 +1,6 @@
 package com.pamoja.app.ui.group
 
+import androidx.lifecycle.viewModelScope
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pamoja.app.data.local.connectivity.ConnectivityObserver
@@ -32,13 +33,16 @@ import com.pamoja.app.domain.usecase.GetStepsForUserUseCase
 import com.pamoja.app.domain.usecase.ObserveGroupAccessUseCase
 import com.pamoja.app.domain.usecase.SyncTodayStepsUseCase
 import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -149,8 +153,16 @@ class GroupViewModelTest {
         auth.currentUser = User(userId = meId, name = "Me")
     }
 
+    /** Every ViewModel a test made, so teardown can stop them. */
+    private val created = mutableListOf<GroupViewModel>()
+
     @After
-    fun tearDown() {
+    fun tearDown() = runBlocking {
+        // Stopped before Main is reset. A test ends as soon as its state
+        // arrives, but a collector may still be finishing a DataStore write, and
+        // resuming it on Main while resetMain swaps Main throws "Dispatchers.Main
+        // is used concurrently with setting it" in whichever test it lands.
+        created.forEach { it.viewModelScope.coroutineContext.job.cancelAndJoin() }
         Dispatchers.resetMain()
     }
 
@@ -171,7 +183,7 @@ class GroupViewModelTest {
             repository = groupAccess,
             clock = Clock.systemUTC(),
         ),
-    )
+    ).also { created += it }
 
     /**
      * Polls until the state satisfies [predicate], or fails saying what it was
@@ -475,6 +487,7 @@ class GroupViewModelTest {
     fun aSuccessfulTargetChangeIsReflectedInTheGroup() = runBlocking {
         val vm = viewModel()
         vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
         vm.awaitState("the group to load") { it.group != null }
 
         vm.updateWeeklyTarget(100_000)
@@ -495,6 +508,7 @@ class GroupViewModelTest {
 
         val vm = viewModel()
         vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
         vm.awaitState("the group to load") { it.group != null }
 
         vm.updateWeeklyTarget(100_000)
@@ -518,6 +532,7 @@ class GroupViewModelTest {
 
         val vm = viewModel()
         vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
         vm.awaitState("the group to load") { it.group != null }
 
         vm.updateWeeklyTarget(100_000)
@@ -534,11 +549,41 @@ class GroupViewModelTest {
     fun theAdminIsRecognisedAsSuch() = runBlocking {
         val vm = viewModel()
         vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
 
         val state = vm.awaitState("the group to load") { it.group != null }
 
         assertTrue(state.isAdmin)
         assertEquals(meId, state.currentUserId)
+    }
+
+    // ── Cache first ─────────────────────────────────────────────────────────
+
+    /**
+     * The group must render from its listeners alone. Opening a group used to
+     * wait on one-shot server reads first, which on a slow connection held the
+     * skeleton for seconds over data already cached on the phone.
+     */
+    @Test
+    fun theGroupRendersWhileTheMembershipReadIsStillPending() = runBlocking {
+        val gate = CompletableDeferred<Unit>()
+        groups.membershipGate = gate
+
+        val vm = viewModel()
+        vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me", weeklySteps = 12_000)))
+
+        val state = vm.awaitState("content before the membership read returns") {
+            it.hasContent
+        }
+        assertFalse(state.showSkeleton)
+        assertEquals(12_000L, state.combinedWeeklySteps)
+        // Paid access depends on that read, so it must still fail closed.
+        assertEquals(GroupAccessState.Loading, state.groupAccess)
+
+        gate.complete(Unit)
+        vm.awaitState("access to resolve") { it.groupAccess != GroupAccessState.Loading }
+        Unit
     }
 
     // ── Connectivity ────────────────────────────────────────────────────────
@@ -564,6 +609,7 @@ class GroupViewModelTest {
     fun refreshRaisesTheSpinnerAndPutsItBackDown() = runBlocking {
         val vm = viewModel()
         vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
         vm.awaitState("the group to load") { it.group != null }
 
         vm.refresh()
@@ -581,6 +627,7 @@ class GroupViewModelTest {
     fun aSecondPullWhileRefreshingIsIgnored() = runBlocking {
         val vm = viewModel()
         vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me")))
         vm.awaitState("the group to load") { it.group != null }
 
         groups.getGroupCalls = 0
@@ -659,8 +706,13 @@ class GroupViewModelTest {
         override fun getGroupMemberships(groupId: String): Flow<List<Membership>> =
             membershipsOverride ?: memberships
 
-        override suspend fun getMembership(userId: String, groupId: String): Result<Membership> =
-            membershipResult
+        /** Set to hold the one-shot membership read open, as a slow network would. */
+        var membershipGate: CompletableDeferred<Unit>? = null
+
+        override suspend fun getMembership(userId: String, groupId: String): Result<Membership> {
+            membershipGate?.await()
+            return membershipResult
+        }
 
         override suspend fun updateWeeklyTarget(groupId: String, target: Int): Result<Unit> =
             updateTargetResult.onSuccess { updatedTarget = target }

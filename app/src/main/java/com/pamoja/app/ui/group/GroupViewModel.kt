@@ -23,7 +23,6 @@ import com.pamoja.app.domain.usecase.SyncTodayStepsUseCase
 import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -201,48 +200,31 @@ class GroupViewModel @Inject constructor(
             // leaderboard renders from Firestore regardless.
             viewModelScope.launch { syncTodayStepsUseCase(currentUser.userId) }
 
-            // Group and membership are independent Firestore documents. Starting
-            // both together removes one full network round trip from opening a
-            // group on a cold cache.
-            val groupDeferred = async { getGroupUseCase(groupId) }
-            val membershipDeferred = async {
-                getMembershipUseCase(currentUser.userId, groupId)
-            }
+            // Listeners first, before any server read. A snapshot listener answers
+            // from the local cache at once, so a returning user sees their group
+            // without waiting on a round trip. This used to await a one-shot get()
+            // of the group and the membership first, which on a slow connection
+            // held the skeleton for seconds over data already on the phone. The
+            // group listener also reports a missing or forbidden group, so the
+            // one-shot group read is gone entirely.
+            _uiState.value = _uiState.value.copy(currentUserId = currentUser.userId)
+            observeMembersAndSteps(groupId)
 
-            val group = groupDeferred.await().getOrElse { error ->
-                membershipDeferred.cancel()
-                val appError = error.toAppError()
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    fatalError = appError,
-                    isGroupUnavailable = appError.isGroupGone(),
-                )
-                return@launch
-            }
-
-            val membership = membershipDeferred.await()
+            // Only paid access depends on this, and access fails closed (Loading)
+            // until it resolves, so it no longer holds up anything on screen.
+            val membership = getMembershipUseCase(currentUser.userId, groupId)
                 .getOrNull()
                 ?.takeIf { resolved ->
                     resolved.userId == currentUser.userId && resolved.groupId == groupId
                 }
 
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                group = group,
-                membership = membership,
-                currentUserId = currentUser.userId,
-                isAdmin = group.adminId == currentUser.userId,
-            )
-
-            userPreferences.saveActiveGroupId(groupId)
-            analyticsManager.logGroupScreenViewed(groupId)
+            _uiState.value = _uiState.value.copy(membership = membership)
 
             if (membership == null) {
                 _uiState.value = _uiState.value.copy(groupAccess = GroupAccessState.Free)
             } else {
                 observeGroupAccess(groupId, currentUser.userId)
             }
-            observeMembersAndSteps(groupId)
         }
     }
 
@@ -328,6 +310,8 @@ class GroupViewModel @Inject constructor(
                     emit(Unit)
                 }
             }
+            // Recorded once the group is known to exist, never for a dead link.
+            var groupConfirmed = false
             combine(getGroupUseCase.observe(groupId), getGroupMembershipsUseCase(groupId),
                 calendarTicks) { group, memberships, _ -> group to memberships }
                 .catch { error ->
@@ -376,6 +360,12 @@ class GroupViewModel @Inject constructor(
                         reportingDate = reportingDate,
                         stepsError = null,
                     )
+
+                    if (!groupConfirmed) {
+                        groupConfirmed = true
+                        userPreferences.saveActiveGroupId(groupId)
+                        analyticsManager.logGroupScreenViewed(groupId)
+                    }
 
                     if (combinedWeekly >= group.weeklyTarget &&
                         !weeklyGoalLoggedThisSession

@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pamoja.app.ui.theme.PamojaIcons
@@ -56,6 +57,7 @@ fun KitTextField(
     singleLine: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = Kit.colors
     val interaction = remember { MutableInteractionSource() }
@@ -75,6 +77,7 @@ fun KitTextField(
             singleLine = singleLine,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
+            visualTransformation = visualTransformation,
             interactionSource = interaction,
             textStyle = Kit.type.body.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = colors.ink),
             cursorBrush = SolidColor(colors.ink),

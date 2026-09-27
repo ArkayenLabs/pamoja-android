@@ -237,3 +237,36 @@ fun mutedContentColor(): Color {
         CardTone.Pop -> colors.onPop
     }
 }
+
+/**
+ * A message about the screen's state, e.g. offline or a failed save. Plain,
+ * not alarming: the icon and title carry it, and [danger] is for real failures.
+ */
+@Composable
+fun KitNotice(
+    title: String,
+    body: String,
+    modifier: Modifier = Modifier,
+    danger: Boolean = false,
+) {
+    val colors = Kit.colors
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(CardShape)
+            .background(colors.surface)
+            .padding(16.dp),
+    ) {
+        Icon(
+            painter = painterResource(com.pamoja.app.ui.theme.PamojaIcons.AlertCircle),
+            contentDescription = null,
+            tint = if (danger) colors.danger else colors.ink,
+            modifier = Modifier.size(20.dp),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = Kit.type.bodyStrong, color = if (danger) colors.danger else colors.ink)
+            Text(body, style = Kit.type.caption, color = colors.muted)
+        }
+    }
+}

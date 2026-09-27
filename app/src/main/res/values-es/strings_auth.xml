@@ -16,12 +16,9 @@
     <string name="auth_error_google_unavailable_body">Inténtalo de nuevo. Si vuelve a ocurrir, actualiza los Servicios de Google Play o usa teléfono o correo.</string>
     <string name="auth_error_generic_title">No funcionó</string>
     <string name="auth_error_generic_body">Inténtalo de nuevo o usa otro método para iniciar sesión.</string>
-    <string name="auth_landing_title">Inicia sesión en Pamoja</string>
-    <string name="auth_landing_subtitle">¿Primera vez aquí? Continúa con Google o con tu teléfono para empezar.</string>
     <string name="auth_continue_google">Continuar con Google</string>
     <string name="auth_opening_google">Abriendo Google…</string>
     <string name="auth_continue_phone">Continuar con teléfono</string>
-    <string name="auth_or_continue">O CONTINÚA CON</string>
     <string name="auth_new_here">¿Primera vez en Pamoja?</string>
     <string name="auth_create_account">Crear cuenta</string>
     <string name="auth_legal_line">Al continuar, aceptas nuestros %1$s y nuestra %2$s.</string>

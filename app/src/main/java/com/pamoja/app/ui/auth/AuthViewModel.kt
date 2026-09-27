@@ -10,7 +10,6 @@ import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.PhoneVerification
 import com.pamoja.app.domain.repository.PhoneVerificationPurpose
-import com.pamoja.app.domain.usecase.CreateUserUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
 import com.pamoja.app.domain.usecase.SendPasswordResetUseCase
 import com.pamoja.app.domain.usecase.SignInUseCase
@@ -78,7 +77,6 @@ class AuthViewModel @Inject constructor(
     private val signInUseCase: SignInUseCase,
     private val sendPasswordResetUseCase: SendPasswordResetUseCase,
     private val getUserUseCase: GetUserUseCase,
-    private val createUserUseCase: CreateUserUseCase,
     private val googleCredentialClient: GoogleCredentialClient,
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
@@ -325,39 +323,16 @@ class AuthViewModel @Inject constructor(
             return
         }
 
-        // Google provides a verified display name. Email sign-up carries the
-        // name collected on the same form. Phone provides neither, so only that
-        // path (and the rare provider account with no name) needs the small
-        // profile screen.
+        // Every new account goes through the name step, which also asks the
+        // 18+ question the Terms require (REBUILD_PLAN.md §6). Google's name,
+        // or the one typed on the email sign-up form, is kept locally first so
+        // that step opens prefilled. Phone provides none, so it opens empty.
+        // The profile is written there, once, by OnboardingViewModel.
         val proposedName = authenticatedUser.name.trim().take(50).trim()
-        if (proposedName.isBlank()) {
-            _uiState.value = _uiState.value.copy(
-                busyWith = null,
-                destination = AuthDestination.ProfileSetup,
-            )
-            return
-        }
-
-        val profile = authenticatedUser.copy(name = proposedName)
-        // Keep the provider/form name locally before the remote write. If the
-        // write fails after Firebase has already created the account, the user
-        // can finish from ProfileSetup instead of retrying sign-up and seeing
-        // an "account already exists" error.
-        userPreferences.saveUserName(proposedName)
-        createUserUseCase(profile).fold(
-            onSuccess = {
-                userPreferences.setOnboarded(true)
-                _uiState.value = _uiState.value.copy(
-                    busyWith = null,
-                    destination = AuthDestination.Home,
-                )
-            },
-            onFailure = {
-                _uiState.value = _uiState.value.copy(
-                    busyWith = null,
-                    destination = AuthDestination.ProfileSetup,
-                )
-            },
+        if (proposedName.isNotBlank()) userPreferences.saveUserName(proposedName)
+        _uiState.value = _uiState.value.copy(
+            busyWith = null,
+            destination = AuthDestination.ProfileSetup,
         )
     }
 

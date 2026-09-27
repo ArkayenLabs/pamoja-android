@@ -25,6 +25,11 @@ data class OnboardingUiState(
     val isSuccess: Boolean = false,
     val isOffline: Boolean = false,
     val suggestedName: String = "",
+    /**
+     * Read when the profile is saved. With an invite waiting, Home opens its
+     * preview; without one, the next step is starting a group.
+     */
+    val hasPendingInvite: Boolean = false,
 ) {
     /**
      * The profile write cannot be queued offline.
@@ -118,6 +123,7 @@ class OnboardingViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isSuccess = true,
+                        hasPendingInvite = userPreferences.pendingInvite.first() != null,
                     )
                     analyticsManager.logProfileCompleted()
                 },

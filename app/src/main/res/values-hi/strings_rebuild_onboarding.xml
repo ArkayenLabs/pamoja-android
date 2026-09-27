@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="start_headline">आपके लोग। एक साप्ताहिक लक्ष्य।</string>
+    <string name="start_body">कदम अपने आप गिने जाते हैं। कुछ भी दर्ज नहीं करना।</string>
+    <string name="start_chip">लगातार 6 हफ़्ते</string>
+    <string name="start_get_started">शुरू करें</string>
+    <string name="start_have_invite">मेरे पास आमंत्रण लिंक है</string>
+
+    <string name="enter_invite_title">अपना आमंत्रण लिंक पेस्ट करें</string>
+    <string name="enter_invite_body">साइन इन करने के बाद आप समूह में जुड़ जाएँगे।</string>
+    <string name="enter_invite_label">आमंत्रण लिंक</string>
+    <string name="enter_invite_invalid">यह लिंक सही नहीं लग रहा। जाँचकर फिर कोशिश करें।</string>
+
+    <string name="signin_title">एक टैप और आप अंदर</string>
+    <string name="signin_body">नए हों या लौट रहे हों, वही विकल्प चुनें।</string>
+    <string name="signin_continue_email">ईमेल से आगे बढ़ें</string>
+    <string name="email_signin_title">ईमेल से साइन इन करें</string>
+
+    <string name="name_step_title">आपका नाम</string>
+    <string name="name_step_body">आपका समूह इसे देखेगा।</string>
+    <string name="name_step_adult">मेरी उम्र 18 साल या उससे ज़्यादा है</string>
+
+    <string name="start_group_title">अपने समूह का नाम रखें</string>
+    <string name="start_group_body">लक्ष्य और आकार आप बाद में बदल सकते हैं।</string>
+
+    <string name="invite_step_title">अपने लोगों को आमंत्रित करें</string>
+</resources>

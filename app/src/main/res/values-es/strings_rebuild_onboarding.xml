@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="start_headline">Tu gente. Una meta semanal.</string>
+    <string name="start_body">Los pasos se cuentan solos. No hay nada que registrar.</string>
+    <string name="start_chip">6 semanas seguidas</string>
+    <string name="start_get_started">Empezar</string>
+    <string name="start_have_invite">Tengo un enlace de invitación</string>
+
+    <string name="enter_invite_title">Pega tu enlace de invitación</string>
+    <string name="enter_invite_body">Te unes al grupo después de iniciar sesión.</string>
+    <string name="enter_invite_label">Enlace de invitación</string>
+    <string name="enter_invite_invalid">Ese enlace no parece correcto. Revísalo e inténtalo de nuevo.</string>
+
+    <string name="signin_title">Un toque y listo</string>
+    <string name="signin_body">Si eres nuevo o vuelves, elige la misma opción.</string>
+    <string name="signin_continue_email">Continuar con correo</string>
+    <string name="email_signin_title">Inicia sesión con tu correo</string>
+
+    <string name="name_step_title">Tu nombre</string>
+    <string name="name_step_body">Tu grupo lo verá.</string>
+    <string name="name_step_adult">Tengo 18 años o más</string>
+
+    <string name="start_group_title">Ponle nombre a tu grupo</string>
+    <string name="start_group_body">Puedes cambiar la meta y el tamaño después.</string>
+
+    <string name="invite_step_title">Invita a tu gente</string>
+</resources>

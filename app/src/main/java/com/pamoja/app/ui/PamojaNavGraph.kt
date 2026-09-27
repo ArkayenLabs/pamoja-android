@@ -24,6 +24,7 @@ import com.pamoja.app.ui.auth.AuthDestination
 import com.pamoja.app.ui.auth.AuthLandingScreen
 import com.pamoja.app.ui.auth.AuthViewModel
 import com.pamoja.app.ui.auth.EmailAuthScreen
+import com.pamoja.app.ui.auth.EmailSignInScreen
 import com.pamoja.app.ui.auth.ForgotPasswordScreen
 import com.pamoja.app.ui.auth.OtpScreen
 import com.pamoja.app.ui.auth.PhoneEntryScreen
@@ -34,10 +35,10 @@ import com.pamoja.app.ui.weeklyreview.WeeklyReviewScreen
 import com.pamoja.app.ui.home.HomeScreen
 import com.pamoja.app.ui.home.GroupsScreen
 import com.pamoja.app.ui.invite.InviteScreen
+import com.pamoja.app.ui.onboarding.EnterInviteScreen
 import com.pamoja.app.ui.onboarding.HealthConnectScreen
-import com.pamoja.app.ui.onboarding.ProductIntroOneScreen
-import com.pamoja.app.ui.onboarding.ProductIntroTwoScreen
 import com.pamoja.app.ui.onboarding.ProfileSetupScreen
+import com.pamoja.app.ui.onboarding.StartScreen
 import com.pamoja.app.ui.theme.PamojaMotion
 
 /**
@@ -85,22 +86,25 @@ fun PamojaNavGraph(
         },
     ) {
 
-        // Product education stays separate from authentication. These screens
-        // explain what Pamoja does and ask for no identity or permission.
+        // The Start screen asks for nothing. An invite link pasted here is kept
+        // and picked up after sign-in, like a tapped one.
         composable(Screen.IntroOne.route) {
-            ProductIntroOneScreen(
-                onContinue = { navController.navigate(Screen.IntroTwo.route) },
+            StartScreen(
+                onGetStarted = {
+                    navController.navigate(Screen.AuthGraph.route) { launchSingleTop = true }
+                },
+                onHaveInvite = {
+                    navController.navigate(Screen.EnterInvite.route) { launchSingleTop = true }
+                },
             )
         }
 
-        composable(Screen.IntroTwo.route) {
-            ProductIntroTwoScreen(
-                onBack = { navController.popBackStack() },
+        composable(Screen.EnterInvite.route) {
+            EnterInviteScreen(
                 onContinue = {
-                    navController.navigate(Screen.AuthGraph.route) {
-                        launchSingleTop = true
-                    }
+                    navController.navigate(Screen.AuthGraph.route) { launchSingleTop = true }
                 },
+                onBack = { navController.popBackStack() },
             )
         }
 
@@ -116,31 +120,38 @@ fun PamojaNavGraph(
             composable(Screen.AuthLanding.route) { entry ->
                 val viewModel = authViewModel(entry, navController)
                 AuthRouting(viewModel, navController)
+                val cameFromStart = navController.previousBackStackEntry?.destination?.route in
+                    setOf(Screen.IntroOne.route, Screen.EnterInvite.route)
                 AuthLandingScreen(
                     viewModel = viewModel,
                     onChoosePhone = {
-                        navController.navigate(Screen.PhoneEntry.route) {
-                            launchSingleTop = true
-                        }
+                        navController.navigate(Screen.PhoneEntry.route) { launchSingleTop = true }
                     },
+                    onChooseEmail = {
+                        navController.navigate(Screen.EmailSignIn.route) { launchSingleTop = true }
+                    },
+                    onBack = if (cameFromStart) {
+                        { navController.popBackStack() }
+                    } else {
+                        null
+                    },
+                )
+            }
+
+            composable(Screen.EmailSignIn.route) { entry ->
+                val viewModel = authViewModel(entry, navController)
+                AuthRouting(viewModel, navController)
+                EmailSignInScreen(
+                    viewModel = viewModel,
                     onCreateAccount = {
-                        navController.navigate(Screen.EmailAuth.route) {
-                            launchSingleTop = true
-                        }
+                        navController.navigate(Screen.EmailAuth.route) { launchSingleTop = true }
                     },
                     onForgotPassword = { email ->
                         navController.navigate(Screen.ForgotPassword.createRoute(email)) {
                             launchSingleTop = true
                         }
                     },
-                    onBack = if (
-                        navController.previousBackStackEntry?.destination?.route ==
-                        Screen.IntroTwo.route
-                    ) {
-                        { navController.popBackStack() }
-                    } else {
-                        null
-                    },
+                    onBack = { navController.popBackStack() },
                 )
             }
 
@@ -192,9 +203,15 @@ fun PamojaNavGraph(
 
         composable(Screen.ProfileSetup.route) {
             ProfileSetupScreen(
-                onContinue = {
+                onContinue = { hasPendingInvite ->
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.ProfileSetup.route) { inclusive = true }
+                    }
+                    // Without an invite the next step is starting a group, on top
+                    // of Home so Back from the new group lands somewhere real.
+                    // With one, Home itself opens the invite preview.
+                    if (!hasPendingInvite) {
+                        navController.navigate(Screen.CreateGroup.route)
                     }
                 }
             )

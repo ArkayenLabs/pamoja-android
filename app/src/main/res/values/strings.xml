@@ -194,7 +194,6 @@
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
     <string name="welcome_get_started">Get started</string>
-    <string name="onboarding_step_count">%1$d of %2$d</string>
     <string name="welcome_eyebrow">Small groups. One weekly goal.</string>
     <string name="welcome_title">Move more. Together.</string>
     <string name="welcome_tagline">Pool every step with people who make the week worth showing up for.</string>
@@ -208,22 +207,11 @@
     <string name="welcome_feature_goals">Group goals</string>
     <string name="welcome_feature_leaderboard">Leaderboard</string>
     <string name="welcome_have_account">Already have an account? Sign in</string>
-    <string name="intro_one_tagline">Walk further, together.</string>
-    <string name="intro_feature_steps_body">Counted quietly from your phone</string>
-    <string name="intro_feature_goals_body">One weekly target, pooled together</string>
-    <string name="intro_feature_leaderboard_body">Friendly, private, just your circle</string>
-    <string name="intro_two_title">One goal. Every step counts.</string>
-    <string name="intro_two_body">Create a private group, invite your people and build one weekly total together.</string>
-    <string name="intro_two_fair_title">Made for different abilities</string>
-    <string name="intro_two_fair_body">Everyone contributes what they can. The goal belongs to the group.</string>
 
     <!-- ── Auth landing ───────────────────────────────────────────────── -->
-    <string name="auth_landing_title">Sign in to Pamoja</string>
-    <string name="auth_landing_subtitle">New here? Continue with Google or your phone to get started.</string>
     <string name="auth_continue_google">Continue with Google</string>
     <string name="auth_opening_google">Opening Google…</string>
     <string name="auth_continue_phone">Continue with phone</string>
-    <string name="auth_or_continue">OR CONTINUE WITH</string>
     <string name="auth_new_here">New to Pamoja?</string>
     <string name="auth_create_account">Create account</string>
     <!-- The two link labels are substituted in, so translators can move them
@@ -291,8 +279,6 @@
 
     <!-- ── Profile setup ──────────────────────────────────────────────── -->
     <string name="profile_eyebrow">Make it yours</string>
-    <string name="profile_title">How should your group know you?</string>
-    <string name="profile_subtitle">This name is visible to people in your groups.</string>
     <string name="profile_preview_label">Your group will see</string>
     <string name="profile_preview_name">Your name</string>
     <string name="profile_preview_body">This is how teammates recognize you.</string>
@@ -333,19 +319,13 @@
     <string name="home_new_group">New group</string>
 
     <!-- ── Create group ───────────────────────────────────────────────── -->
-    <string name="create_group_title">Create your group</string>
-    <string name="create_group_subtitle">You can edit these anytime as admin.</string>
     <string name="create_group_name_label">Group name</string>
     <string name="create_group_name_placeholder">e.g. Morning Walkers</string>
     <string name="create_group_name_required">Give the group a name</string>
     <string name="create_group_name_too_long">Use 40 characters or fewer</string>
     <string name="group_name_character_count">%1$d/%2$d characters</string>
-    <string name="create_group_weekly_goal">Weekly group goal</string>
-    <string name="create_group_goal_hint">Choose a starting total for the whole group. It stays fixed when people join or leave.</string>
-    <string name="create_group_max_members">Max members</string>
     <!-- A group setting, not a personal one. The official goal is organizer-controlled. -->
     <string name="create_group_week_start">Week starts on</string>
-    <string name="create_group_week_start_sub">Applies to everyone in this group, so the weekly total means the same thing for all of you.</string>
     <string name="create_group_week_start_monday">Monday</string>
     <string name="create_group_week_start_sunday">Sunday</string>
     <string name="weekly_goal_custom">Custom</string>
@@ -356,7 +336,6 @@
     <string name="weekly_goal_custom_helper">From 10,000 to 2,800,000 steps.</string>
     <string name="weekly_goal_custom_error">Enter a total from 10,000 to 2,800,000.</string>
     <string name="weekly_goal_custom_use">Use this goal</string>
-    <string name="create_group_creating">Creating…</string>
     <string name="create_group_submit">Create group</string>
     <string name="create_group_offline_title">You are offline</string>
     <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you are back.</string>
@@ -395,7 +374,6 @@
     <!-- ── Invite ─────────────────────────────────────────────────────── -->
     <string name="invite_created_desc">Group created</string>
     <string name="invite_created_title">Group created!</string>
-    <string name="invite_title_prefix">Invite people to </string>
     <string name="invite_subtitle">Invite your people. This link stays active until all %1$d spots are filled.</string>
     <string name="invite_link_copied">Link copied</string>
     <string name="invite_copy_desc">Copy link</string>

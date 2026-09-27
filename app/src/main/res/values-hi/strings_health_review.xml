@@ -33,7 +33,6 @@
     <string name="hc_flow_body">रास्ता, स्थान, हृदय गति या नींद का डेटा नहीं। Android की सेटिंग से नियंत्रण आपके पास रहता है।</string>
     <string name="invite_created_desc">समूह बन गया</string>
     <string name="invite_created_title">समूह बन गया!</string>
-    <string name="invite_title_prefix">आमंत्रित करें: </string>
     <string name="invite_subtitle">अपनों को बुलाएँ। सभी %1$d जगहें भरने तक लिंक सक्रिय रहेगा।</string>
     <string name="invite_link_copied">लिंक कॉपी हो गया</string>
     <string name="invite_copy_desc">लिंक कॉपी करें</string>

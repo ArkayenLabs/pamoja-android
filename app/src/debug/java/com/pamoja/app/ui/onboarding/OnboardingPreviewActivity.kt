@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.auth.AuthEntryContent
+import com.pamoja.app.ui.auth.EmailSignInContent
+import com.pamoja.app.ui.group.CreateGroupContent
 import com.pamoja.app.ui.theme.PamojaTheme
 
 /**
@@ -17,7 +19,7 @@ import com.pamoja.app.ui.theme.PamojaTheme
 class OnboardingPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 5)
+        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 7)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
 
         setContent {
@@ -25,36 +27,20 @@ class OnboardingPreviewActivity : ComponentActivity() {
                 themePreference = if (dark) ThemePreference.Dark else ThemePreference.Light,
             ) {
                 when (screen) {
-                    1 -> ProductIntroOneContent(onContinue = {})
-                    2 -> ProductIntroTwoContent(onBack = {}, onContinue = {})
-                    3 -> AuthEntryContent(
-                        busyWith = null,
-                        error = null,
-                        onEmailSignIn = { _, _ -> },
-                        onGoogle = {},
-                        onPhone = {},
-                        onCreateAccount = {},
-                        onForgotPassword = {},
-                        onBack = {},
+                    1 -> StartContent(onGetStarted = {}, onHaveInvite = {})
+                    2 -> EnterInviteContent(onSubmit = {}, onBack = {})
+                    3 -> AuthEntryContent(busyWith = null, error = null, onGoogle = {}, onPhone = {}, onEmail = {}, onBack = {})
+                    4 -> EmailSignInContent(
+                        busy = false, error = null, onSignIn = { _, _ -> },
+                        onCreateAccount = {}, onForgotPassword = {}, onBack = {},
                     )
-                    4 -> ProfileSetupContent(
-                        name = "",
-                        onNameChange = {},
-                        validateName = { value -> value.takeIf { it.isBlank() }?.let { "Enter your name" } },
-                        // Mirrors the untouched production screen: the field is
-                        // neutral, while Continue stays disabled until a valid
-                        // name is entered.
-                        nameError = "Enter your name",
-                        isLoading = false,
-                        isOffline = false,
-                        errorBody = null,
-                        onSubmit = {},
+                    5 -> ProfileSetupContent(
+                        name = "Ravi Sharma", onNameChange = {}, nameError = null,
+                        isAdult = false, onAdultChange = {},
+                        isLoading = false, isOffline = false, errorBody = null, onSubmit = {},
                     )
-                    else -> HealthConnectContent(
-                        permState = PermState.UNKNOWN,
-                        onPrimary = {},
-                        onSkip = {},
-                    )
+                    6 -> CreateGroupContent(isLoading = false, isOffline = false, errorBody = null, onCreate = {}, onBack = {})
+                    else -> HealthConnectContent(permState = PermState.UNKNOWN, onPrimary = {}, onSkip = {})
                 }
             }
         }

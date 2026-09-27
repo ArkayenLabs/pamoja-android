@@ -71,8 +71,13 @@ private const val PRIVACY_URL = "https://www.arkayenlabs.com/privacy/pamoja"
  * rephrase around them and the links still land in the right place.
  */
 @Composable
-fun AuthLegalLine(modifier: Modifier = Modifier) {
-    val colors = LocalPamojaColors.current
+fun AuthLegalLine(
+    modifier: Modifier = Modifier,
+    // Defaults are the current theme's; the rebuilt sign-in passes the kit's.
+    textColor: Color = LocalPamojaColors.current.textTertiary,
+    linkColor: Color = LocalPamojaColors.current.accentPrimary,
+    style: TextStyle = MaterialTheme.typography.bodySmall,
+) {
 
     val terms = stringResource(R.string.auth_legal_terms)
     val privacy = stringResource(R.string.auth_legal_privacy)
@@ -80,14 +85,14 @@ fun AuthLegalLine(modifier: Modifier = Modifier) {
 
     val linkStyles = TextLinkStyles(
         style = SpanStyle(
-            color = colors.accentPrimary,
+            color = linkColor,
             textDecoration = TextDecoration.Underline,
         ),
     )
 
     // Resolved outside, remembered on the resolved values, so switching
     // language rebuilds it rather than freezing the old sentence.
-    val annotated = remember(sentence, terms, privacy, colors.accentPrimary) {
+    val annotated = remember(sentence, terms, privacy, linkColor) {
         buildAnnotatedString {
             append(sentence)
             listOf(terms to TERMS_URL, privacy to PRIVACY_URL).forEach { (label, url) ->
@@ -101,8 +106,8 @@ fun AuthLegalLine(modifier: Modifier = Modifier) {
 
     Text(
         text = annotated,
-        style = MaterialTheme.typography.bodySmall,
-        color = colors.textTertiary,
+        style = style,
+        color = textColor,
         textAlign = TextAlign.Center,
         modifier = modifier,
     )

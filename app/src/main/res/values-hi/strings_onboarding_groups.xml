@@ -1,6 +1,5 @@
 <resources>
     <string name="welcome_get_started">शुरू करें</string>
-    <string name="onboarding_step_count">%2$d में से %1$d</string>
     <string name="welcome_eyebrow">छोटे समूह। एक साप्ताहिक लक्ष्य।</string>
     <string name="welcome_title">ज़्यादा चलें। साथ मिलकर।</string>
     <string name="welcome_tagline">उन लोगों के साथ हर कदम जोड़ें जो हर हफ़्ते साथ चलने की वजह बनते हैं।</string>
@@ -14,17 +13,7 @@
     <string name="welcome_feature_goals">समूह के लक्ष्य</string>
     <string name="welcome_feature_leaderboard">लीडरबोर्ड</string>
     <string name="welcome_have_account">पहले से खाता है? साइन इन करें</string>
-    <string name="intro_one_tagline">साथ मिलकर और दूर चलें।</string>
-    <string name="intro_feature_steps_body">आपके फ़ोन से अपने आप गिनती</string>
-    <string name="intro_feature_goals_body">मिलकर पूरा करने के लिए एक साप्ताहिक लक्ष्य</string>
-    <string name="intro_feature_leaderboard_body">दोस्ताना, निजी, सिर्फ़ आपका समूह</string>
-    <string name="intro_two_title">एक लक्ष्य। हर कदम मायने रखता है।</string>
-    <string name="intro_two_body">निजी समूह बनाएँ, अपनों को बुलाएँ और हर हफ़्ते कदम साथ जोड़ें।</string>
-    <string name="intro_two_fair_title">अलग-अलग क्षमताओं के लिए</string>
-    <string name="intro_two_fair_body">हर कोई जितना हो सके योगदान देता है। लक्ष्य पूरे समूह का है।</string>
     <string name="profile_eyebrow">अपनी पहचान बनाएँ</string>
-    <string name="profile_title">समूह आपको किस नाम से जाने?</string>
-    <string name="profile_subtitle">आपके समूहों के सदस्य यह नाम देखेंगे।</string>
     <string name="profile_preview_label">समूह को यह दिखेगा</string>
     <string name="profile_preview_name">आपका नाम</string>
     <string name="profile_preview_body">साथी आपको ऐसे पहचानेंगे।</string>
@@ -58,18 +47,12 @@
     <string name="home_empty_body">समूह बनाकर अपनों को बुलाएँ या आमंत्रण लिंक से शामिल हों।</string>
     <string name="home_join_short">जुड़ें</string>
     <string name="home_new_group">नया समूह</string>
-    <string name="create_group_title">अपना समूह बनाएँ</string>
-    <string name="create_group_subtitle">एडमिन के तौर पर आप इन्हें कभी भी बदल सकते हैं।</string>
     <string name="create_group_name_label">समूह का नाम</string>
     <string name="create_group_name_placeholder">जैसे, सुबह की सैर</string>
     <string name="create_group_name_required">समूह का नाम रखें</string>
     <string name="create_group_name_too_long">40 या उससे कम अक्षर इस्तेमाल करें</string>
     <string name="group_name_character_count">%1$d/%2$d अक्षर</string>
-    <string name="create_group_weekly_goal">समूह का साप्ताहिक लक्ष्य</string>
-    <string name="create_group_goal_hint">पूरे समूह का शुरुआती कुल चुनें। किसी के जुड़ने या जाने से यह नहीं बदलता।</string>
-    <string name="create_group_max_members">अधिकतम सदस्य</string>
     <string name="create_group_week_start">हफ़्ते का पहला दिन</string>
-    <string name="create_group_week_start_sub">यह पूरे समूह पर लागू होता है, ताकि सबके लिए साप्ताहिक कुल की अवधि एक हो।</string>
     <string name="create_group_week_start_monday">सोमवार</string>
     <string name="create_group_week_start_sunday">रविवार</string>
     <string name="weekly_goal_custom">अपना लक्ष्य</string>
@@ -80,6 +63,5 @@
     <string name="weekly_goal_custom_helper">10,000 से 28,00,000 कदम तक।</string>
     <string name="weekly_goal_custom_error">10,000 से 28,00,000 के बीच कुल लिखें।</string>
     <string name="weekly_goal_custom_use">यह लक्ष्य चुनें</string>
-    <string name="create_group_creating">बन रहा है…</string>
     <plurals name="group_pair_room"><item quantity="one">आप दोनों ने पूरे हफ़्ते योगदान दिया। %1$d और लोगों के लिए जगह है।</item><item quantity="other">आप दोनों ने पूरे हफ़्ते योगदान दिया। %1$d और लोगों के लिए जगह है।</item></plurals>
 </resources>

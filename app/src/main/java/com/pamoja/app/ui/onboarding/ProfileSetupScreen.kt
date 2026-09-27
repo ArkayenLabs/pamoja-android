@@ -1,77 +1,58 @@
 package com.pamoja.app.ui.onboarding
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.OfflineBanner
-import com.pamoja.app.ui.components.PamojaMark
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toErrorCopy
-import com.pamoja.app.ui.theme.LocalPamojaColors
-import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.ui.kit.CheckRow
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.PrimaryButton
 
 /**
- * The one conditional identity step.
+ * The name step every new account passes through (REBUILD_PLAN.md §6).
  *
- * Google and email sign-up already provide a name and never reach this screen.
- * It exists for a new phone account, or a provider account whose name is empty.
+ * Opens prefilled with the name Google or the email sign-up form provided;
+ * phone accounts start empty. It is also where the Terms' 18+ requirement is
+ * asked, which is why no new account skips it any more.
+ *
+ * [onContinue] is told whether an invite is waiting: with one, Home opens its
+ * preview; without, the next step is starting a group.
  */
 @Composable
 fun ProfileSetupScreen(
-    onContinue: () -> Unit,
+    onContinue: (hasPendingInvite: Boolean) -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var name by rememberSaveable { mutableStateOf("") }
+    var isAdult by rememberSaveable { mutableStateOf(false) }
 
     val nameRequired = stringResource(R.string.profile_name_required)
     val nameTooLong = stringResource(R.string.profile_name_too_long)
-    val nameErrorFor: (String) -> String? = { input ->
-        when {
-            input.isBlank() -> nameRequired
-            input.trim().length > 50 -> nameTooLong
-            else -> null
-        }
+    val nameError = when {
+        name.isBlank() -> nameRequired
+        name.trim().length > 50 -> nameTooLong
+        else -> null
     }
-    val nameError = nameErrorFor(name)
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             viewModel.clearSuccess()
-            onContinue()
+            onContinue(uiState.hasPendingInvite)
         }
     }
     LaunchedEffect(uiState.suggestedName) {
@@ -84,18 +65,14 @@ fun ProfileSetupScreen(
     ProfileSetupContent(
         name = name,
         onNameChange = { name = it },
-        validateName = nameErrorFor,
         nameError = nameError,
+        isAdult = isAdult,
+        onAdultChange = { isAdult = it },
         isLoading = uiState.isLoading,
         isOffline = uiState.isOffline,
         errorBody = uiState.error?.toErrorCopy()?.body(context),
         onSubmit = {
-            viewModel.createProfile(
-                name = name.trim(),
-                age = null,
-                height = null,
-                weight = null,
-            )
+            viewModel.createProfile(name = name.trim(), age = null, height = null, weight = null)
         },
     )
 }
@@ -105,105 +82,52 @@ fun ProfileSetupScreen(
 internal fun ProfileSetupContent(
     name: String,
     onNameChange: (String) -> Unit,
-    validateName: (String) -> String?,
     nameError: String?,
+    isAdult: Boolean,
+    onAdultChange: (Boolean) -> Unit,
     isLoading: Boolean,
     isOffline: Boolean,
     errorBody: String?,
     onSubmit: () -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
-            .statusBarsPadding(),
-    ) {
-        OfflineBanner(isOffline = isOffline)
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(horizontal = Spacing.x5),
-        ) {
-            Spacer(Modifier.height(Spacing.x5))
-            PamojaMark()
-
-            Spacer(Modifier.height(Spacing.x8))
-            Text(
-                text = stringResource(R.string.profile_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = colors.textPrimary,
-            )
-            Spacer(Modifier.height(Spacing.x2))
-            Text(
-                text = stringResource(R.string.profile_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-            )
-
-            Spacer(Modifier.height(Spacing.x7))
-            PamojaTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = stringResource(R.string.profile_name_label),
-                placeholder = stringResource(R.string.profile_name_placeholder),
-                enabled = !isLoading,
-                validate = validateName,
-            )
-
-            if (isOffline) {
-                Spacer(Modifier.height(Spacing.x4))
-                PamojaNotice(
-                    icon = PamojaIcons.AlertCircle,
-                    title = stringResource(R.string.profile_offline_title),
-                    body = stringResource(R.string.profile_offline_body),
-                    tone = NoticeTone.Warning,
-                )
-            } else if (errorBody != null) {
-                Spacer(Modifier.height(Spacing.x4))
-                PamojaNotice(
-                    icon = PamojaIcons.AlertCircle,
-                    title = stringResource(R.string.profile_failed_title),
-                    body = errorBody,
-                    tone = NoticeTone.Danger,
-                )
-            }
-
-            Spacer(Modifier.height(Spacing.x7))
-            Button(
+) = KitInAppTheme {
+    var touched by rememberSaveable { mutableStateOf(false) }
+    KitScreen(
+        bottom = {
+            PrimaryButton(
+                text = stringResource(R.string.common_continue),
                 onClick = onSubmit,
-                enabled = nameError == null && !isLoading && !isOffline,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = PillShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accentPrimary,
-                    contentColor = colors.textOnBrand,
-                    disabledContainerColor = colors.accentPrimarySubtle,
-                    disabledContentColor = colors.textTertiary,
-                ),
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        color = colors.textTertiary,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp),
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.common_continue),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(Spacing.x8))
+                enabled = nameError == null && isAdult && !isOffline,
+                loading = isLoading,
+            )
+        },
+    ) {
+        Text(stringResource(R.string.name_step_title), style = Kit.type.headline)
+        Text(stringResource(R.string.name_step_body), style = Kit.type.body, color = Kit.colors.muted)
+        KitTextField(
+            value = name,
+            onValueChange = {
+                touched = true
+                onNameChange(it)
+            },
+            label = stringResource(R.string.profile_name_label),
+            placeholder = stringResource(R.string.profile_name_placeholder),
+            // Only after typing: a prefilled or untouched field is not an error yet.
+            error = nameError.takeIf { touched },
+            enabled = !isLoading,
+        )
+        CheckRow(
+            checked = isAdult,
+            onCheckedChange = onAdultChange,
+            text = stringResource(R.string.name_step_adult),
+            enabled = !isLoading,
+        )
+        if (isOffline) {
+            KitNotice(
+                title = stringResource(R.string.profile_offline_title),
+                body = stringResource(R.string.profile_offline_body),
+            )
+        } else if (errorBody != null) {
+            KitNotice(title = stringResource(R.string.profile_failed_title), body = errorBody, danger = true)
         }
     }
 }

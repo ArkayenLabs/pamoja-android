@@ -1,158 +1,196 @@
 package com.pamoja.app.ui.onboarding
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.auth.AuthEntryContent
+import com.pamoja.app.ui.auth.EmailSignInContent
+import com.pamoja.app.ui.group.CreateGroupContent
 import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.util.InviteLink
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * The onboarding screens rebuilt on the Lilac kit (REBUILD_PLAN.md Phase 3),
+ * rendered inside PamojaTheme as they are in the app during the migration.
+ */
 @RunWith(AndroidJUnit4::class)
 class OnboardingScreenTest {
 
     @get:Rule
     val compose = createComposeRule()
 
+    private val groupId = "6413795d-42d0-4f2b-80df-f017a9d32817"
+
     @Test
-    fun firstIntroExplainsTheProductWithoutAskingForAnAccount() {
-        var continued = false
+    fun startAsksForNothingAndOffersBothWaysIn() {
+        var started = false
+        var invite = false
         compose.setContent {
             PamojaTheme(themePreference = ThemePreference.Light) {
-                ProductIntroOneContent(onContinue = { continued = true })
+                StartContent(onGetStarted = { started = true }, onHaveInvite = { invite = true })
             }
         }
 
-        compose.onNodeWithText("Pamoja").assertIsDisplayed()
-        compose.onNodeWithText("Walk further, together.").assertIsDisplayed()
-        compose.onNodeWithText("Step tracking").assertIsDisplayed()
-        compose.onNodeWithText("Group goals").assertIsDisplayed()
-        compose.onNodeWithText("Leaderboard").assertIsDisplayed()
+        compose.onNodeWithText("Your people. One weekly goal.").assertIsDisplayed()
         compose.onNodeWithText("Continue with Google").assertDoesNotExist()
-        compose.onNodeWithText("Continue")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.runOnIdle { assertTrue(continued) }
+        compose.onNodeWithText("Get started").assertHasClickAction().performClick()
+        compose.onNodeWithText("I have an invite link").assertHasClickAction().performClick()
+        compose.runOnIdle {
+            assertTrue(started)
+            assertTrue(invite)
+        }
     }
 
     @Test
-    fun secondIntroExplainsTheSharedGoalWithoutAskingForDetails() {
-        var continued = false
+    fun aPastedInviteLinkIsCheckedBeforeItIsKept() {
+        var submitted: String? = null
         compose.setContent {
             PamojaTheme(themePreference = ThemePreference.Light) {
-                ProductIntroTwoContent(onBack = {}, onContinue = { continued = true })
+                EnterInviteContent(onSubmit = { submitted = it }, onBack = {})
             }
         }
 
-        compose.onNodeWithText("One goal. Every step counts.").assertIsDisplayed()
-        compose.onNodeWithText("48,320").assertIsDisplayed()
-        compose.onNodeWithText("Made for different abilities")
-            .performScrollTo()
-            .assertIsDisplayed()
-        compose.onNodeWithText("Continue with Google").assertDoesNotExist()
-        compose.onNodeWithText("Continue")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.runOnIdle { assertTrue(continued) }
+        compose.onNode(hasSetTextAction()).performTextInput("not a link")
+        compose.onNodeWithText("Continue").performClick()
+        compose.onNodeWithText("That link doesn't look right. Check it and try again.").assertIsDisplayed()
+        compose.runOnIdle { assertNull(submitted) }
+
+        compose.onNode(hasSetTextAction()).performTextReplacement(" ${InviteLink.build(groupId)} ")
+        compose.onNodeWithText("Continue").performClick()
+        compose.runOnIdle { assertEquals(groupId, submitted) }
     }
 
     @Test
-    fun signInIsPrimaryAndEveryEntryActionIsWired() {
+    fun signInOffersTheSameThreeWaysToEveryone() {
         var google = false
         var phone = false
-        var created = false
-        var forgotEmail = ""
-        var signedInEmail = ""
-        var signedInPassword = ""
+        var email = false
         compose.setContent {
             PamojaTheme(themePreference = ThemePreference.Light) {
                 AuthEntryContent(
                     busyWith = null,
                     error = null,
-                    onEmailSignIn = { email, password ->
-                        signedInEmail = email
-                        signedInPassword = password
-                    },
                     onGoogle = { google = true },
                     onPhone = { phone = true },
-                    onCreateAccount = { created = true },
-                    onForgotPassword = { forgotEmail = it },
+                    onEmail = { email = true },
                 )
             }
         }
 
-        // Neutral on purpose: new users land here too, and used to be told
-        // "Welcome back".
-        compose.onNodeWithText("Sign in to Pamoja").assertIsDisplayed()
-        compose.onNodeWithText("Private by default").assertDoesNotExist()
-        compose.onNodeWithText("Continue with email").assertDoesNotExist()
-        compose.onAllNodes(hasSetTextAction())[0].performTextInput("walker@example.com")
-        compose.onAllNodes(hasSetTextAction())[1].performTextInput("Existing1!")
-        compose.onNodeWithText("Sign in")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.onNodeWithText("Forgot password?")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.onNodeWithText("Create account")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.onNodeWithText("Continue with Google")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.onNodeWithText("Continue with phone")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.onNodeWithText("Walk further, together.").assertDoesNotExist()
+        compose.onNodeWithText("One tap and you're in").assertIsDisplayed()
+        compose.onNodeWithText("Welcome back").assertDoesNotExist()
+        // Email and password live on their own screen now.
+        compose.onNode(hasSetTextAction()).assertDoesNotExist()
+        compose.onNodeWithText("Continue with Google").performClick()
+        compose.onNodeWithText("Continue with phone").performClick()
+        compose.onNodeWithText("Continue with email").performClick()
         compose.runOnIdle {
             assertTrue(google)
             assertTrue(phone)
-            assertTrue(created)
-            assertTrue(forgotEmail == "walker@example.com")
-            assertTrue(signedInEmail == "walker@example.com")
-            assertTrue(signedInPassword == "Existing1!")
+            assertTrue(email)
         }
     }
 
     @Test
-    fun profileAsksOnlyForTheIdentityTheProductNeeds() {
+    fun emailSignInWiresEveryAction() {
+        var signedIn: Pair<String, String>? = null
+        var forgotEmail: String? = null
+        var created = false
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Dark) {
-                ProfileSetupContent(
-                    name = "Asha",
-                    onNameChange = {},
-                    validateName = { if (it.isBlank()) "Enter your name" else null },
-                    nameError = null,
-                    isLoading = false,
-                    isOffline = false,
-                    errorBody = null,
-                    onSubmit = {},
+            PamojaTheme(themePreference = ThemePreference.Light) {
+                EmailSignInContent(
+                    busy = false,
+                    error = null,
+                    onSignIn = { e, p -> signedIn = e to p },
+                    onCreateAccount = { created = true },
+                    onForgotPassword = { forgotEmail = it },
+                    onBack = {},
                 )
             }
         }
 
-        compose.onNodeWithText("How should your group know you?").assertIsDisplayed()
-        compose.onNodeWithText("This name is visible to people in your groups.").assertIsDisplayed()
-        compose.onNodeWithText("Private by default").assertDoesNotExist()
+        compose.onNodeWithText("Sign in").assertIsNotEnabled()
+        compose.onAllNodes(hasSetTextAction())[0].performTextInput("walker@example.com")
+        compose.onAllNodes(hasSetTextAction())[1].performTextInput("Existing1!")
+        compose.onNodeWithText("Sign in").assertIsEnabled().performClick()
+        compose.onNodeWithText("Forgot password?").performClick()
+        compose.onNodeWithText("New to Pamoja? Create account").performClick()
+        compose.runOnIdle {
+            assertEquals("walker@example.com" to "Existing1!", signedIn)
+            assertEquals("walker@example.com", forgotEmail)
+            assertTrue(created)
+        }
+    }
+
+    /** The Terms require 18+, and this is the one step every new account takes. */
+    @Test
+    fun theNameStepWaitsForTheAgeConfirmation() {
+        var submitted = false
+        compose.setContent {
+            PamojaTheme(themePreference = ThemePreference.Dark) {
+                var adult by remember { mutableStateOf(false) }
+                ProfileSetupContent(
+                    name = "Asha",
+                    onNameChange = {},
+                    nameError = null,
+                    isAdult = adult,
+                    onAdultChange = { adult = it },
+                    isLoading = false,
+                    isOffline = false,
+                    errorBody = null,
+                    onSubmit = { submitted = true },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Your name").assertIsDisplayed()
         compose.onNodeWithText("Age").assertDoesNotExist()
-        compose.onNodeWithText("Height cm").assertDoesNotExist()
-        compose.onNodeWithText("Weight kg").assertDoesNotExist()
+        compose.onNodeWithText("Continue").assertIsNotEnabled()
+        compose.onNodeWithText("I'm 18 or older").performClick()
+        compose.onNodeWithText("Continue").assertIsEnabled().performClick()
+        compose.runOnIdle { assertTrue(submitted) }
+    }
+
+    @Test
+    fun startingAGroupAsksOnlyForItsName() {
+        var created: String? = null
+        compose.setContent {
+            PamojaTheme(themePreference = ThemePreference.Light) {
+                CreateGroupContent(
+                    isLoading = false,
+                    isOffline = false,
+                    errorBody = null,
+                    onCreate = { created = it },
+                    onBack = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Weekly group goal").assertDoesNotExist()
+        compose.onNodeWithText("Max members").assertDoesNotExist()
+        compose.onNodeWithText("Create group").assertIsNotEnabled()
+        compose.onNode(hasSetTextAction()).performTextInput("  Morning Walkers  ")
+        compose.onNodeWithText("Create group").assertIsEnabled().performClick()
+        compose.runOnIdle { assertEquals("Morning Walkers", created) }
     }
 
     @Test
@@ -171,14 +209,8 @@ class OnboardingScreenTest {
 
         compose.onNodeWithText("Connect your steps").assertIsDisplayed()
         compose.onNodeWithText("Step count only. No location, route, heart rate or sleep.").assertIsDisplayed()
-        compose.onNodeWithText("Connect steps")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
-        compose.onNodeWithText("Skip for now")
-            .performScrollTo()
-            .assertHasClickAction()
-            .performClick()
+        compose.onNodeWithText("Connect steps").assertHasClickAction().performClick()
+        compose.onNodeWithText("Skip for now").assertHasClickAction().performClick()
         compose.runOnIdle {
             assertTrue(requested)
             assertTrue(skipped)

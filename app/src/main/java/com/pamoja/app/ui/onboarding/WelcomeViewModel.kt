@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * State boundary for the two product-only introduction screens.
+ * State boundary for the Start screen and the invite-link entry behind it.
  *
  * The completion flag belongs to the installation rather than the account, so
  * it survives sign-out and returning users are not taught the product again.
@@ -44,6 +44,17 @@ class WelcomeViewModel @Inject constructor(
                 // double tap while the DataStore write is in flight.
                 completionStarted = false
             }
+        }
+    }
+
+    /**
+     * Keeps a pasted invite for after sign-in, the same way a tapped link is
+     * kept (MainActivity), so Home opens its preview once the account is ready.
+     */
+    fun continueWithInvite(code: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            userPreferences.savePendingInviteCode(code)
+            completeIntro(onComplete)
         }
     }
 }

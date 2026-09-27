@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Onboarding rebuilt on the Lilac kit (REBUILD_PLAN.md Phase 3). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <string name="start_headline">Your people. One weekly goal.</string>
+    <string name="start_body">Steps count on their own. Nothing to log.</string>
+    <string name="start_chip">6 weeks in a row</string>
+    <string name="start_get_started">Get started</string>
+    <string name="start_have_invite">I have an invite link</string>
+
+    <string name="enter_invite_title">Paste your invite link</string>
+    <string name="enter_invite_body">You join the group after you sign in.</string>
+    <string name="enter_invite_label">Invite link</string>
+    <string name="enter_invite_invalid">That link doesn\'t look right. Check it and try again.</string>
+
+    <string name="signin_title">One tap and you\'re in</string>
+    <string name="signin_body">New or coming back, pick the same option.</string>
+    <string name="signin_continue_email">Continue with email</string>
+    <string name="email_signin_title">Sign in with email</string>
+
+    <string name="name_step_title">Your name</string>
+    <string name="name_step_body">Your group sees this.</string>
+    <string name="name_step_adult">I\'m 18 or older</string>
+
+    <string name="start_group_title">Name your group</string>
+    <string name="start_group_body">You can change the goal and size later.</string>
+
+    <string name="invite_step_title">Invite your people</string>
+</resources>

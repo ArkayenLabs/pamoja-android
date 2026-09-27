@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,10 +66,12 @@ fun SecondaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     @DrawableRes icon: Int? = null,
+    /** False for brand marks that must keep their own colours, e.g. Google's G. */
+    tintIcon: Boolean = true,
 ) {
     KitButton(
         text = text, onClick = onClick, modifier = modifier, size = size,
-        enabled = enabled, loading = loading, icon = icon,
+        enabled = enabled, loading = loading, icon = icon, tintIcon = tintIcon,
         container = Kit.colors.button2, content = Kit.colors.ink,
         border = BorderStroke(1.5.dp, Kit.colors.button2Border),
         // 16sp at full width, as drawn on the sign-in options.
@@ -103,6 +106,7 @@ private fun KitButton(
     enabled: Boolean,
     loading: Boolean,
     @DrawableRes icon: Int?,
+    tintIcon: Boolean = true,
     container: Color,
     content: Color,
     border: BorderStroke?,
@@ -147,6 +151,7 @@ private fun KitButton(
                         Icon(
                             painter = painterResource(it),
                             contentDescription = null,
+                            tint = if (tintIcon) LocalContentColor.current else Color.Unspecified,
                             modifier = Modifier.size(18.dp),
                         )
                     }

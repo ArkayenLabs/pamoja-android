@@ -4,8 +4,10 @@ import android.net.Uri
 import com.pamoja.app.domain.model.PamojaGroupId
 
 sealed class Screen(val route: String) {
+    /** The Start screen (the route keeps its old name). */
     object IntroOne : Screen("intro/one")
-    object IntroTwo : Screen("intro/two")
+    /** Paste an invite link before signing in. */
+    object EnterInvite : Screen("enter_invite")
 
     /**
      * Wrapper around the sign-in screens. They share one AuthViewModel scoped to
@@ -17,6 +19,7 @@ sealed class Screen(val route: String) {
     object PhoneEntry : Screen("phone_entry")
     object Otp : Screen("otp")
     object EmailAuth : Screen("email_auth")
+    object EmailSignIn : Screen("email_sign_in")
     object ForgotPassword : Screen("forgot_password?email={email}") {
         fun createRoute(email: String) = "forgot_password?email=${Uri.encode(email)}"
     }

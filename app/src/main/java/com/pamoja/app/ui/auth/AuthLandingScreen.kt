@@ -1,64 +1,47 @@
 package com.pamoja.app.ui.auth
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.PamojaMark
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.components.PamojaTextField
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.QuietButton
+import com.pamoja.app.ui.kit.SecondaryButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
 
 /**
- * The returning-user entry point.
- *
- * Email and password are the primary path on the page. Google and phone are
- * alternatives, while creating an account is a separate, explicit decision.
+ * One screen for new and returning people alike (REBUILD_PLAN.md §6): the
+ * same three options either way, and AuthRouting decides afterwards whether
+ * this account needs a profile.
  */
 @Composable
 fun AuthLandingScreen(
     viewModel: AuthViewModel,
     onChoosePhone: () -> Unit,
-    onCreateAccount: () -> Unit,
-    onForgotPassword: (String) -> Unit,
+    onChooseEmail: () -> Unit,
     onBack: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -69,12 +52,9 @@ fun AuthLandingScreen(
     AuthEntryContent(
         busyWith = uiState.busyWith,
         error = uiState.error,
-        onEmailSignIn = viewModel::signInWithEmail,
         onGoogle = { activity?.let(viewModel::signInWithGoogle) },
         onPhone = onChoosePhone,
-        onCreateAccount = onCreateAccount,
-        onForgotPassword = onForgotPassword,
-        onClearError = viewModel::clearError,
+        onEmail = onChooseEmail,
         onBack = onBack,
     )
 }
@@ -84,74 +64,147 @@ fun AuthLandingScreen(
 internal fun AuthEntryContent(
     busyWith: AuthMethod?,
     error: AppError?,
-    onEmailSignIn: (String, String) -> Unit,
     onGoogle: () -> Unit,
     onPhone: () -> Unit,
+    onEmail: () -> Unit,
+    onBack: (() -> Unit)? = null,
+) = KitInAppTheme {
+    KitScreen(
+        top = if (onBack != null) {
+            {
+                TopRow(start = {
+                    CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+                })
+            }
+        } else {
+            null
+        },
+        bottom = {
+            AuthLegalLine(
+                modifier = Modifier.fillMaxWidth(),
+                textColor = Kit.colors.muted,
+                linkColor = Kit.colors.ink,
+                style = Kit.type.caption.copy(textAlign = TextAlign.Center),
+            )
+        },
+    ) {
+        Text(stringResource(R.string.signin_title), style = Kit.type.headline)
+        Text(stringResource(R.string.signin_body), style = Kit.type.body, color = Kit.colors.muted)
+
+        // Google's own mark in its own colours, on a neutral button: what its
+        // branding rules allow for a "Continue with Google" control.
+        SecondaryButton(
+            text = stringResource(
+                if (busyWith == AuthMethod.Google) R.string.auth_opening_google else R.string.auth_continue_google,
+            ),
+            onClick = onGoogle,
+            icon = PamojaIcons.Google,
+            tintIcon = false,
+            loading = busyWith == AuthMethod.Google,
+            enabled = busyWith == null,
+        )
+        SecondaryButton(
+            text = stringResource(R.string.auth_continue_phone),
+            onClick = onPhone,
+            icon = PamojaIcons.Smartphone,
+            enabled = busyWith == null,
+        )
+        SecondaryButton(
+            text = stringResource(R.string.signin_continue_email),
+            onClick = onEmail,
+            icon = PamojaIcons.Mail,
+            enabled = busyWith == null,
+        )
+
+        error?.let {
+            KitNotice(title = it.authErrorTitle(), body = it.authErrorBody(), danger = true)
+        }
+    }
+}
+
+/**
+ * Email and password for an existing account. Creating one is a separate,
+ * explicit step (EmailAuthScreen), as it was before the rebuild.
+ */
+@Composable
+fun EmailSignInScreen(
+    viewModel: AuthViewModel,
+    onCreateAccount: () -> Unit,
+    onForgotPassword: (String) -> Unit,
+    onBack: () -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.clearError() }
+
+    EmailSignInContent(
+        busy = uiState.busyWith == AuthMethod.Email,
+        error = uiState.error,
+        onSignIn = viewModel::signInWithEmail,
+        onCreateAccount = onCreateAccount,
+        onForgotPassword = onForgotPassword,
+        onClearError = viewModel::clearError,
+        onBack = onBack,
+    )
+}
+
+@Composable
+internal fun EmailSignInContent(
+    busy: Boolean,
+    error: AppError?,
+    onSignIn: (String, String) -> Unit,
     onCreateAccount: () -> Unit,
     onForgotPassword: (String) -> Unit,
     onClearError: () -> Unit = {},
-    onBack: (() -> Unit)? = null,
-) {
-    val colors = LocalPamojaColors.current
+    onBack: () -> Unit,
+) = KitInAppTheme {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var emailTouched by rememberSaveable { mutableStateOf(false) }
 
     val emailRequired = stringResource(R.string.email_required)
     val emailInvalid = stringResource(R.string.email_invalid)
-    val emailErrorFor: (String) -> String? = { input ->
-        when {
-            input.isBlank() -> emailRequired
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(input.trim()).matches() -> emailInvalid
-            else -> null
-        }
+    val emailError = when {
+        email.isBlank() -> emailRequired
+        !android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> emailInvalid
+        else -> null
     }
-    val canSignIn = emailErrorFor(email) == null && password.isNotBlank() && busyWith == null
+    val canSignIn = emailError == null && password.isNotBlank() && !busy
+    val signIn = { if (canSignIn) onSignIn(email.trim(), password) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .imePadding()
-            .padding(horizontal = Spacing.x6),
+    KitScreen(
+        top = {
+            TopRow(start = {
+                CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+            })
+        },
+        bottom = {
+            PrimaryButton(
+                text = stringResource(R.string.common_sign_in),
+                onClick = signIn,
+                enabled = canSignIn,
+                loading = busy,
+            )
+            QuietButton(
+                text = "${stringResource(R.string.auth_new_here)} ${stringResource(R.string.auth_create_account)}",
+                onClick = onCreateAccount,
+            )
+        },
     ) {
-        Spacer(Modifier.height(Spacing.x2))
-        onBack?.let {
-            AuthBackButton(onBack = it)
-            Spacer(Modifier.height(Spacing.x5))
-        }
-
-        PamojaMark(size = 52.dp)
-        Spacer(Modifier.height(Spacing.x4))
-        Text(
-            text = stringResource(R.string.auth_landing_title),
-            style = MaterialTheme.typography.headlineLarge,
-            color = colors.textPrimary,
-        )
-        Spacer(Modifier.height(Spacing.x2))
-        Text(
-            text = stringResource(R.string.auth_landing_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
-            color = colors.textSecondary,
-        )
-
-        Spacer(Modifier.height(Spacing.x6))
-        PamojaTextField(
+        Text(stringResource(R.string.email_signin_title), style = Kit.type.headline)
+        KitTextField(
             value = email,
             onValueChange = {
                 email = it
+                emailTouched = true
                 onClearError()
             },
             label = stringResource(R.string.email_label),
             placeholder = stringResource(R.string.email_placeholder),
-            keyboardType = KeyboardType.Email,
-            validate = emailErrorFor,
+            // Shown only once they have typed, so an empty form is not a wall of red.
+            error = emailError.takeIf { emailTouched && email.isNotEmpty() },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
-
-        Spacer(Modifier.height(Spacing.x4))
-        PamojaTextField(
+        KitTextField(
             value = password,
             onValueChange = {
                 password = it
@@ -159,125 +212,16 @@ internal fun AuthEntryContent(
             },
             label = stringResource(R.string.password_label),
             placeholder = stringResource(R.string.password_placeholder_existing),
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-            onImeAction = {
-                if (canSignIn) onEmailSignIn(email.trim(), password)
-            },
-            isPassword = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { signIn() }),
         )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = { onForgotPassword(email.trim()) }) {
-                Text(
-                    text = stringResource(R.string.email_forgot),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.accentPrimary,
-                )
-            }
-        }
-
-        error?.let { message ->
-            PamojaNotice(
-                icon = PamojaIcons.AlertCircle,
-                title = message.authErrorTitle(),
-                body = message.authErrorBody(),
-                tone = NoticeTone.Danger,
-            )
-            Spacer(Modifier.height(Spacing.x4))
-        }
-
-        Button(
-            onClick = { onEmailSignIn(email.trim(), password) },
-            enabled = canSignIn,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = PillShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.accentPrimary,
-                contentColor = colors.textOnBrand,
-                disabledContainerColor = colors.accentPrimarySubtle,
-                disabledContentColor = colors.textTertiary,
-            ),
-        ) {
-            if (busyWith == AuthMethod.Email) {
-                CircularProgressIndicator(
-                    color = colors.textOnBrand,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(20.dp),
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.common_sign_in),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(Spacing.x3))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.auth_new_here),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-            )
-            TextButton(onClick = onCreateAccount) {
-                Text(
-                    text = stringResource(R.string.auth_create_account),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.accentPrimary,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(Spacing.x3))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
-        ) {
-            HorizontalDivider(modifier = Modifier.weight(1f), color = colors.borderDefault)
-            Text(
-                text = stringResource(R.string.auth_or_continue),
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.textTertiary,
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f), color = colors.borderDefault)
-        }
-
-        Spacer(Modifier.height(Spacing.x4))
-        AuthMethodButton(
-            icon = PamojaIcons.Google,
-            label = stringResource(R.string.auth_continue_google),
-            loadingLabel = stringResource(R.string.auth_opening_google),
-            onClick = onGoogle,
-            isLoading = busyWith == AuthMethod.Google,
-            enabled = busyWith == null,
-            filled = false,
-            isGoogleMark = true,
+        QuietButton(
+            text = stringResource(R.string.email_forgot),
+            onClick = { onForgotPassword(email.trim()) },
         )
-
-        Spacer(Modifier.height(Spacing.x3))
-        AuthMethodButton(
-            icon = PamojaIcons.Smartphone,
-            label = stringResource(R.string.auth_continue_phone),
-            loadingLabel = stringResource(R.string.auth_continue_phone),
-            onClick = onPhone,
-            isLoading = false,
-            enabled = busyWith == null,
-            filled = false,
-        )
-
-        Spacer(Modifier.height(Spacing.x5))
-        AuthLegalLine(modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(Spacing.x6))
+        error?.let {
+            KitNotice(title = it.authErrorTitle(), body = it.authErrorBody(), danger = true)
+        }
     }
 }

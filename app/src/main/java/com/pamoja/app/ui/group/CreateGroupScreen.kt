@@ -1,112 +1,44 @@
 package com.pamoja.app.ui.group
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.StepGoal
-import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.OfflineBanner
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.components.PamojaTextField
-import com.pamoja.app.ui.components.rememberSingleClick
-import com.pamoja.app.ui.components.toErrorCopy
-import com.pamoja.app.ui.theme.Layout
-import com.pamoja.app.ui.theme.LocalPamojaColors
-import com.pamoja.app.ui.theme.PamojaElevation
-import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
 import com.pamoja.app.domain.model.WeekWindow
-import java.time.DayOfWeek
+import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
+import com.pamoja.app.ui.components.toErrorCopy
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.TopRow
+import com.pamoja.app.ui.theme.PamojaIcons
 
+/**
+ * Start a group with just a name (REBUILD_PLAN.md §4). The goal, member limit
+ * and week start take the defaults the old form started from, and the admin
+ * changes them later in group settings, when there is a group to judge by.
+ */
 @Composable
 fun CreateGroupScreen(
     onGroupCreated: (String) -> Unit,
     onBack: () -> Unit,
-    viewModel: CreateGroupViewModel = hiltViewModel()
+    viewModel: CreateGroupViewModel = hiltViewModel(),
 ) {
-    val colors = LocalPamojaColors.current
-    val uiState           by viewModel.uiState.collectAsStateWithLifecycle()
-
-    var groupName          by remember { mutableStateOf("") }
-    var weeklyTarget       by rememberSaveable {
-        mutableIntStateOf(StepGoal.DEFAULT_WEEKLY_TOTAL)
-    }
-    // Seeded from the device locale, which is right for most people and is what
-    // every comparable app defaults to. Monday across most of Europe and Asia,
-    // Sunday in the US, Canada and Japan.
-    var weekStartDay       by remember { mutableStateOf(WeekWindow.localeDefault()) }
-    var maxMembers         by remember { mutableFloatStateOf(10f) }
-
-    // Hoisted: validate runs outside composable scope.
-    val nameRequired = stringResource(R.string.create_group_name_required)
-    val nameTooLong = stringResource(R.string.create_group_name_too_long)
-
-    // One rule, two callers: the field checks it on blur, the button checks it
-    // every recomposition. Previously the button only asked isNotBlank(), so a
-    // name of pure spaces passed the gate and arrived at Firestore trimmed to "".
-    val nameErrorFor: (String) -> String? = { input ->
-        when {
-            input.isBlank() -> nameRequired
-            input.trim().length > UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH -> nameTooLong
-            else -> null
-        }
-    }
-    val nameError = nameErrorFor(groupName)
-
-    val memberCount      = maxMembers.toInt()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(uiState.createdGroupId) {
         uiState.createdGroupId?.let {
@@ -115,429 +47,83 @@ fun CreateGroupScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
+    CreateGroupContent(
+        isLoading = uiState.isLoading,
+        isOffline = uiState.isOffline,
+        errorBody = uiState.error?.toErrorCopy()?.body(context),
+        onCreate = { name ->
+            viewModel.createGroup(
+                name = name,
+                weeklyTarget = StepGoal.DEFAULT_WEEKLY_TOTAL,
+                maxMemberCap = DEFAULT_MEMBER_CAP,
+                // Monday across most of Europe and Asia, Sunday in the US,
+                // Canada and Japan: the device locale's own answer.
+                weekStartDay = WeekWindow.localeDefault(),
+            )
+        },
+        onBack = onBack,
+    )
+}
+
+/** Stateless rendering boundary used by visual and interaction tests. */
+@Composable
+internal fun CreateGroupContent(
+    isLoading: Boolean,
+    isOffline: Boolean,
+    errorBody: String?,
+    onCreate: (String) -> Unit,
+    onBack: () -> Unit,
+) = KitInAppTheme {
+    var name by rememberSaveable { mutableStateOf("") }
+    var touched by rememberSaveable { mutableStateOf(false) }
+    val max = UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH
+    // One rule for the field and the button: a name of only spaces must not
+    // reach Firestore trimmed to "".
+    val nameError = when {
+        name.isBlank() -> stringResource(R.string.create_group_name_required)
+        name.trim().length > max -> stringResource(R.string.create_group_name_too_long)
+        else -> null
+    }
+
+    KitScreen(
+        top = {
+            TopRow(start = {
+                CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+            })
+        },
+        bottom = {
+            PrimaryButton(
+                text = stringResource(R.string.create_group_submit),
+                onClick = { onCreate(name.trim()) },
+                enabled = nameError == null && !isOffline,
+                loading = isLoading,
+            )
+        },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            // Outside the scroll region, so the condition stays on screen rather
-            // than scrolling away while the user is still offline.
-            OfflineBanner(isOffline = uiState.isOffline)
-
-            Box(modifier = Modifier.fillMaxSize()) {
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = Layout.screenGutter)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Spacer(modifier = Modifier.height(Spacing.x2))
-
-                    // ── Back, a circular chip rather than an arrow and a word ──
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(colors.surface2)
-                            .clickable(onClick = onBack),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter            = painterResource(PamojaIcons.ArrowLeft),
-                            contentDescription = stringResource(R.string.common_back),
-                            tint               = colors.textPrimary,
-                            modifier           = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(Spacing.x4))
-
-                    Text(
-                        text  = stringResource(R.string.create_group_title),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = colors.textPrimary
-                    )
-                    Spacer(modifier = Modifier.height(Spacing.x2))
-                    Text(
-                        text  = stringResource(R.string.create_group_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(Spacing.x6))
-
-                    // ── Group name ─────────────────────────────────────────
-                    PamojaTextField(
-                        value         = groupName,
-                        onValueChange = {
-                            groupName = it.take(UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH)
-                        },
-                        label         = stringResource(R.string.create_group_name_label),
-                        placeholder   = stringResource(R.string.create_group_name_placeholder),
-                        enabled       = !uiState.isLoading,
-                        supportingText = stringResource(
-                            R.string.group_name_character_count,
-                            groupName.length,
-                            UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH,
-                        ),
-                        validate      = nameErrorFor,
-                    )
-
-                    Spacer(modifier = Modifier.height(Spacing.x5))
-
-                    // ── Weekly step goal ───────────────────────────────────
-                    SettingCard {
-                        CardHeader(
-                            label = stringResource(R.string.create_group_weekly_goal),
-                        ) {
-                            Text(
-                                text  = "%,d".format(weeklyTarget),
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontSize = MaterialTheme.typography.headlineMedium.fontSize,
-                                    fontWeight = FontWeight.Bold,
-                                ),
-                                color = colors.accentPrimary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(Spacing.x4))
-
-                        WeeklyGoalPicker(
-                            selectedGoal = weeklyTarget,
-                            onGoalSelected = { weeklyTarget = it },
-                        )
-
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-
-                        Text(
-                            text = stringResource(R.string.create_group_goal_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.textTertiary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-
-                    // ── Max members ────────────────────────────────────────
-                    SettingCard {
-                        CardHeader(
-                            label = stringResource(R.string.create_group_max_members),
-                        ) {
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                Text(
-                                    text  = "$memberCount",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = colors.textPrimary
-                                )
-                                Text(
-                                    text  = " / 20",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.textTertiary,
-                                    modifier = Modifier.padding(bottom = Spacing.x1)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(Spacing.x4))
-
-                        // Ink rather than the brand colour, per the design. Only
-                        // the goal is a brand-coloured decision; the cap is a
-                        // constraint, and colouring both flattens the hierarchy.
-                        PamojaSlider(
-                            value         = maxMembers,
-                            onValueChange = { maxMembers = it },
-                            valueRange    = 2f..20f,
-                            steps         = 17,
-                            accent        = colors.textPrimary,
-                        )
-
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("2",  style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
-                            Text("20", style = MaterialTheme.typography.labelSmall, color = colors.textTertiary)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-
-                    // ── Week start day ─────────────────────────────────────
-                    //
-                    // Set once, here, and applied to every member. It cannot be
-                    // a personal preference: the group total is a sum over one
-                    // window, so two members on different boundaries would see
-                    // different numbers for the same group.
-                    SettingCard(verticalPadding = Spacing.x4) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text  = stringResource(R.string.create_group_week_start),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colors.textPrimary
-                            )
-                            Spacer(modifier = Modifier.height(Spacing.x1))
-                            Text(
-                                text  = stringResource(R.string.create_group_week_start_sub),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.textSecondary
-                            )
-
-                            Spacer(modifier = Modifier.height(Spacing.x3))
-
-                            // Only the two days a real calendar starts on.
-                            // Offering all seven would be configurability nobody
-                            // asked for, and six of them would be surprising.
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.x2)
-                            ) {
-                                listOf(DayOfWeek.MONDAY, DayOfWeek.SUNDAY).forEach { day ->
-                                    val selected = weekStartDay == day
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(PillShape)
-                                            .background(
-                                                if (selected) colors.accentPrimarySubtle
-                                                else colors.surface2
-                                            )
-                                            .border(
-                                                width = 1.dp,
-                                                color = if (selected) colors.accentPrimary
-                                                        else colors.borderSubtle,
-                                                shape = PillShape
-                                            )
-                                            .clickable { weekStartDay = day }
-                                            .padding(vertical = Spacing.x3),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = stringResource(
-                                                if (day == DayOfWeek.MONDAY)
-                                                    R.string.create_group_week_start_monday
-                                                else
-                                                    R.string.create_group_week_start_sunday
-                                            ),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = if (selected) colors.accentPrimary
-                                                    else colors.textSecondary
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(Spacing.x5))
-
-                    // Both of these sit above the button they block, and both
-                    // persist. A snackbar used to carry the failure and then
-                    // vanish, leaving a form that had silently done nothing.
-                    if (uiState.isOffline) {
-                        PamojaNotice(
-                            icon  = PamojaIcons.AlertCircle,
-                            title = stringResource(R.string.create_group_offline_title),
-                            body  = stringResource(R.string.create_group_offline_body),
-                            tone  = NoticeTone.Warning,
-                        )
-                    } else if (uiState.error != null) {
-                        PamojaNotice(
-                            icon  = PamojaIcons.AlertCircle,
-                            title = stringResource(R.string.create_group_failed_title),
-                            body  = uiState.error!!.toErrorCopy().body(LocalContext.current),
-                            tone  = NoticeTone.Danger,
-                        )
-                    }
-
-                    // Why the button is dead. Only once they have actually typed
-                    // something, since nagging an untouched empty form is noise.
-                    if (groupName.isNotEmpty() && nameError != null) {
-                        Spacer(modifier = Modifier.height(Spacing.x2))
-                        Text(
-                            text  = nameError,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.statusDanger,
-                        )
-                    }
-
-                    // Clears the floating bar below, which overlaps this column.
-                    Spacer(modifier = Modifier.height(BarClearance))
-                }
-
-                // ── Floating action bar ────────────────────────────────────
-                // The submit control never scrolls away. Previously it sat at
-                // the bottom of the scroll region, so on a shorter phone the
-                // screen offered no visible way to finish and looked stuck.
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                0f to Color.Transparent,
-                                0.38f to colors.surfaceApp,
-                                1f to colors.surfaceApp,
-                            )
-                        )
-                        .padding(
-                            start = Layout.screenGutter,
-                            end = Layout.screenGutter,
-                            top = Spacing.x8,
-                            bottom = Spacing.x6,
-                        )
-                        .navigationBarsPadding()
-                ) {
-                    Button(
-                        // Two taps inside the recomposition gap would create two
-                        // groups, and there is no way to delete the unwanted one.
-                        onClick = rememberSingleClick {
-                            viewModel.createGroup(
-                                name                 = groupName.trim(),
-                                weeklyTarget = weeklyTarget,
-                                maxMemberCap         = memberCount,
-                                weekStartDay         = weekStartDay
-                            )
-                        },
-                        enabled  = nameError == null && uiState.canSubmit,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(Layout.buttonHeight),
-                        shape  = PillShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor         = colors.accentPrimary,
-                            contentColor           = colors.textOnBrand,
-                            disabledContainerColor = colors.accentPrimarySubtle,
-                            disabledContentColor   = colors.textTertiary
-                        )
-                    ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(
-                                modifier    = Modifier.size(18.dp),
-                                color       = colors.textOnBrand,
-                                strokeWidth = 2.dp,
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.x2))
-                        }
-                        Text(
-                            text  = stringResource(
-                                if (uiState.isLoading) R.string.create_group_creating
-                                else R.string.create_group_submit
-                            ),
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
-            }
+        Text(stringResource(R.string.start_group_title), style = Kit.type.headline)
+        Text(stringResource(R.string.start_group_body), style = Kit.type.body, color = Kit.colors.muted)
+        KitTextField(
+            value = name,
+            onValueChange = {
+                touched = true
+                name = it.take(max)
+            },
+            label = stringResource(R.string.create_group_name_label),
+            placeholder = stringResource(R.string.create_group_name_placeholder),
+            helper = stringResource(R.string.group_name_character_count, name.length, max),
+            error = nameError.takeIf { touched },
+            enabled = !isLoading,
+        )
+        if (isOffline) {
+            KitNotice(
+                title = stringResource(R.string.create_group_offline_title),
+                body = stringResource(R.string.create_group_offline_body),
+            )
+        } else if (errorBody != null) {
+            KitNotice(title = stringResource(R.string.create_group_failed_title), body = errorBody, danger = true)
         }
     }
 }
 
-/** Room the floating bar occupies, so scrolled content can clear it. */
-private val BarClearance = 132.dp
-
-/**
- * Card header: a mono, tracked-out caps label on the left, the value on the
- * right. The label is the design system's `.lbl`, which is what carries most of
- * the identity on an otherwise quiet screen.
- */
-@Composable
-private fun CardHeader(label: String, value: @Composable () -> Unit) {
-    val colors = LocalPamojaColors.current
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        Text(
-            text  = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.textSecondary,
-            modifier = Modifier.padding(bottom = Spacing.x1)
-        )
-        value()
-    }
-}
-
-/**
- * The design system's slider: an 8dp pill track and a 28dp thumb that is a
- * surface disc ringed in the accent, not a filled dot. Material's default thumb
- * is a filled lozenge and reads as a different control entirely.
- *
- * The track override is what needs the opt-in: an 8dp pill is not reachable
- * through SliderDefaults.colors(), only by supplying the track itself.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PamojaSlider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
-    accent: Color,
-) {
-    val colors = LocalPamojaColors.current
-    Slider(
-        value = value,
-        onValueChange = onValueChange,
-        valueRange = valueRange,
-        steps = steps,
-        colors = SliderDefaults.colors(
-            activeTrackColor   = accent,
-            inactiveTrackColor = colors.surface2,
-            activeTickColor    = Color.Transparent,
-            inactiveTickColor  = colors.borderDefault,
-        ),
-        thumb = {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .shadow(4.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(colors.surface1)
-                    .border(3.5.dp, accent, CircleShape)
-            )
-        },
-        track = { state ->
-            SliderDefaults.Track(
-                sliderState = state,
-                modifier = Modifier.height(8.dp),
-                colors = SliderDefaults.colors(
-                    activeTrackColor   = accent,
-                    inactiveTrackColor = colors.surface2,
-                    activeTickColor    = Color.Transparent,
-                    inactiveTickColor  = colors.borderDefault,
-                ),
-                thumbTrackGapSize = 0.dp,
-                drawStopIndicator = null,
-            )
-        },
-    )
-}
-
-// ─── Setting card container ────────────────────────────────────────────────────
-@Composable
-private fun SettingCard(
-    verticalPadding: androidx.compose.ui.unit.Dp = Spacing.x4,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-    val cardShape = RoundedCornerShape(PamojaRadii.xl)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(PamojaElevation.card, cardShape, spotColor = colors.overlay)
-            .clip(cardShape)
-            .background(colors.surface1)
-            .border(1.dp, colors.borderSubtle, cardShape)
-            .padding(horizontal = Spacing.x5, vertical = verticalPadding),
-        content = content
-    )
-}
+/** The member limit a new group starts with; the admin can raise it later. */
+private const val DEFAULT_MEMBER_CAP = 10

@@ -1,6 +1,5 @@
 <resources>
     <string name="welcome_get_started">Empezar</string>
-    <string name="onboarding_step_count">%1$d de %2$d</string>
     <string name="welcome_eyebrow">Grupos pequeños. Una meta semanal.</string>
     <string name="welcome_title">Muévete más. En compañía.</string>
     <string name="welcome_tagline">Suma cada paso con las personas que te animan a seguir cada semana.</string>
@@ -14,17 +13,7 @@
     <string name="welcome_feature_goals">Metas de grupo</string>
     <string name="welcome_feature_leaderboard">Clasificación</string>
     <string name="welcome_have_account">¿Ya tienes cuenta? Inicia sesión</string>
-    <string name="intro_one_tagline">Caminemos más lejos, juntos.</string>
-    <string name="intro_feature_steps_body">Tu teléfono los cuenta en segundo plano</string>
-    <string name="intro_feature_goals_body">Una meta semanal que se alcanza en grupo</string>
-    <string name="intro_feature_leaderboard_body">Amistosa, privada, solo tu grupo</string>
-    <string name="intro_two_title">Una meta. Cada paso cuenta.</string>
-    <string name="intro_two_body">Crea un grupo privado, invita a los tuyos y sumad pasos cada semana.</string>
-    <string name="intro_two_fair_title">Para distintas capacidades</string>
-    <string name="intro_two_fair_body">Cada persona aporta lo que puede. La meta es del grupo.</string>
     <string name="profile_eyebrow">A tu manera</string>
-    <string name="profile_title">¿Cómo te conocerá tu grupo?</string>
-    <string name="profile_subtitle">Las personas de tus grupos verán este nombre.</string>
     <string name="profile_preview_label">Tu grupo verá</string>
     <string name="profile_preview_name">Tu nombre</string>
     <string name="profile_preview_body">Así te reconocerán tus compañeros.</string>
@@ -58,18 +47,12 @@
     <string name="home_empty_body">Crea un grupo e invita a los tuyos, o únete con un enlace de invitación.</string>
     <string name="home_join_short">Unirse</string>
     <string name="home_new_group">Nuevo grupo</string>
-    <string name="create_group_title">Crea tu grupo</string>
-    <string name="create_group_subtitle">Como administrador, puedes cambiarlo cuando quieras.</string>
     <string name="create_group_name_label">Nombre del grupo</string>
     <string name="create_group_name_placeholder">p. ej., Paseos matutinos</string>
     <string name="create_group_name_required">Ponle un nombre al grupo</string>
     <string name="create_group_name_too_long">Usa 40 caracteres o menos</string>
     <string name="group_name_character_count">%1$d/%2$d caracteres</string>
-    <string name="create_group_weekly_goal">Meta semanal del grupo</string>
-    <string name="create_group_goal_hint">Elige un total inicial para el grupo. No cambia cuando alguien entra o sale.</string>
-    <string name="create_group_max_members">Máximo de miembros</string>
     <string name="create_group_week_start">La semana empieza el</string>
-    <string name="create_group_week_start_sub">Se aplica a todo el grupo para que el total semanal represente el mismo período para todos.</string>
     <string name="create_group_week_start_monday">Lunes</string>
     <string name="create_group_week_start_sunday">Domingo</string>
     <string name="weekly_goal_custom">Personalizada</string>
@@ -80,6 +63,5 @@
     <string name="weekly_goal_custom_helper">Entre 10.000 y 2.800.000 pasos.</string>
     <string name="weekly_goal_custom_error">Introduce un total entre 10.000 y 2.800.000.</string>
     <string name="weekly_goal_custom_use">Usar esta meta</string>
-    <string name="create_group_creating">Creando…</string>
     <plurals name="group_pair_room"><item quantity="one">Entre los dos habéis sumado toda la semana. Hay sitio para %1$d más.</item><item quantity="other">Entre los dos habéis sumado toda la semana. Hay sitio para %1$d más.</item></plurals>
 </resources>

@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.ui.kit.KitTheme
 import com.pamoja.app.ui.theme.PamojaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -13,8 +14,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The gate is built from MaterialTheme roles only, so the same code can ship
- * under the terracotta theme and the rebuild's kit.
+ * The gate must work under both themes: it ships in the rebuild (kit) and is
+ * meant to be carried to the 1.0 line (terracotta) unchanged.
  */
 @RunWith(AndroidJUnit4::class)
 class UpdateRequiredScreenTest {
@@ -36,5 +37,17 @@ class UpdateRequiredScreenTest {
         compose.onNodeWithText("Update").performClick()
 
         assertEquals(1, updates)
+    }
+
+    @Test
+    fun theGateRendersUnderTheKitTheme() {
+        compose.setContent {
+            KitTheme(dark = true) {
+                UpdateRequiredScreen(onUpdate = {})
+            }
+        }
+
+        compose.onNodeWithText("Time to update").assertIsDisplayed()
+        compose.onNodeWithText("Update").assertIsDisplayed()
     }
 }

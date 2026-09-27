@@ -10,5 +10,9 @@
             android:name=".ui.onboarding.OnboardingPreviewActivity"
             android:exported="true"
             android:theme="@style/Theme.Pamoja" />
+        <activity
+            android:name=".ui.kit.KitGalleryActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Pamoja" />
     </application>
 </manifest>

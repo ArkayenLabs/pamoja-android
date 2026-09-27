@@ -62,20 +62,21 @@ android {
         applicationId = "com.arkayenlabs.pamoja"
         minSdk = 26
         targetSdk = 36
-        // Closed testing and the first upload have consumed earlier codes, and
-        // Play refuses an upload that reuses one. Raise this again if the
-        // Console says the code is taken; it only ever goes up.
+        // Play refuses an upload that reuses a code. 15 ("1.0.12") was live in
+        // production on 2026-09-26, built with -P overrides, so the default
+        // starts above it. Raise this again if the Console says the code is
+        // taken; it only ever goes up.
         versionCode = providers.gradleProperty("pamojaVersionCode").orNull?.let {
-            requireNotNull(it.toIntOrNull()?.takeIf { code -> code > 7 }) {
-                "pamojaVersionCode must be an integer above 7, verified unused in Play Console"
+            requireNotNull(it.toIntOrNull()?.takeIf { code -> code > 15 }) {
+                "pamojaVersionCode must be an integer above 15, verified unused in Play Console"
             }
-        } ?: 7
+        } ?: 16
 
         // Three-part on purpose. The Settings screen used to print a hardcoded
         // "1.0.0" next to a versionName of "1.0", so the two disagreed; that
         // screen now reads BuildConfig.VERSION_NAME, and this is the value it
         // shows.
-        versionName = providers.gradleProperty("pamojaVersionName").orNull ?: "1.0.4"
+        versionName = providers.gradleProperty("pamojaVersionName").orNull ?: "1.0.13"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")

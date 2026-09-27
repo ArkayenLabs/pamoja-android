@@ -16,8 +16,8 @@
     <string name="auth_error_google_unavailable_body">फिर कोशिश करें। समस्या बनी रहे तो Google Play services अपडेट करें या फ़ोन या ईमेल इस्तेमाल करें।</string>
     <string name="auth_error_generic_title">यह काम नहीं हुआ</string>
     <string name="auth_error_generic_body">फिर कोशिश करें या साइन इन करने का दूसरा तरीका चुनें।</string>
-    <string name="auth_landing_title">फिर से स्वागत है</string>
-    <string name="auth_landing_subtitle">अपने समूहों के साथ चलते रहने के लिए साइन इन करें।</string>
+    <string name="auth_landing_title">Pamoja में साइन इन करें</string>
+    <string name="auth_landing_subtitle">पहली बार आए हैं? शुरू करने के लिए Google या अपने फ़ोन से आगे बढ़ें।</string>
     <string name="auth_continue_google">Google से आगे बढ़ें</string>
     <string name="auth_opening_google">Google खुल रहा है…</string>
     <string name="auth_continue_phone">फ़ोन से आगे बढ़ें</string>

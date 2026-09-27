@@ -92,7 +92,9 @@ class OnboardingScreenTest {
             }
         }
 
-        compose.onNodeWithText("Welcome back").assertIsDisplayed()
+        // Neutral on purpose: new users land here too, and used to be told
+        // "Welcome back".
+        compose.onNodeWithText("Sign in to Pamoja").assertIsDisplayed()
         compose.onNodeWithText("Private by default").assertDoesNotExist()
         compose.onNodeWithText("Continue with email").assertDoesNotExist()
         compose.onAllNodes(hasSetTextAction())[0].performTextInput("walker@example.com")

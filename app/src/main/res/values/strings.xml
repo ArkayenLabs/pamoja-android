@@ -218,8 +218,8 @@
     <string name="intro_two_fair_body">Everyone contributes what they can. The goal belongs to the group.</string>
 
     <!-- ── Auth landing ───────────────────────────────────────────────── -->
-    <string name="auth_landing_title">Welcome back</string>
-    <string name="auth_landing_subtitle">Sign in to keep walking with your groups.</string>
+    <string name="auth_landing_title">Sign in to Pamoja</string>
+    <string name="auth_landing_subtitle">New here? Continue with Google or your phone to get started.</string>
     <string name="auth_continue_google">Continue with Google</string>
     <string name="auth_opening_google">Opening Google…</string>
     <string name="auth_continue_phone">Continue with phone</string>

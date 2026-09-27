@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.core.net.toUri
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.repository.AvatarRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,7 +43,7 @@ class FirebaseAvatarRepositoryImpl @Inject constructor(
                 )
 
             val ref = avatarRef(userId)
-            ref.putBytes(bytes).await()
+            ref.putBytes(bytes, uploadMetadata).await()
             // The download URL carries a token, so it must be read back after
             // the upload rather than constructed from the path.
             ref.downloadUrl.await().toString()
@@ -67,7 +68,7 @@ class FirebaseAvatarRepositoryImpl @Inject constructor(
             )
 
         val ref = groupAvatarRef(groupId, uploaderId)
-        ref.putBytes(bytes).await()
+        ref.putBytes(bytes, uploadMetadata).await()
         ref.downloadUrl.await().toString()
     }
 
@@ -152,6 +153,21 @@ class FirebaseAvatarRepositoryImpl @Inject constructor(
     }
 
     private companion object {
+        /**
+         * Lets a phone keep a photo instead of asking the server again on every
+         * screen. Without a header Storage serves `max-age=0`, so each avatar
+         * cost a round trip before it appeared. A long lifetime is safe because
+         * each upload gets a new download token, so a changed photo arrives on
+         * a new URL. `private` keeps shared caches from storing a tokened URL.
+         *
+         * The content type is set here too because storage.rules requires
+         * image/jpeg, and passing metadata must not leave it to inference.
+         */
+        val uploadMetadata: StorageMetadata = StorageMetadata.Builder()
+            .setContentType("image/jpeg")
+            .setCacheControl("private, max-age=31536000")
+            .build()
+
         /** Generous for an 80dp circle, still tiny. Covers future larger uses. */
         const val TARGET_EDGE_PX = 512
 

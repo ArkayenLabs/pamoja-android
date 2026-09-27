@@ -3,6 +3,8 @@ package com.pamoja.app
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.auth.FirebaseAuth
@@ -13,7 +15,7 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class PamojaApp : Application(), Configuration.Provider {
+class PamojaApp : Application(), Configuration.Provider, ImageLoaderFactory {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -24,6 +26,20 @@ class PamojaApp : Application(), Configuration.Provider {
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
+            .build()
+
+    /**
+     * The one image loader every AsyncImage uses.
+     *
+     * Ignores HTTP cache headers so a photo already on disk shows at once.
+     * Photos uploaded before uploads set Cache-Control are served with
+     * `max-age=0`, and honouring that made every avatar wait on a server round
+     * trip, about a second each. Safe because a photo's URL changes whenever
+     * the photo does: each upload gets a new download token.
+     */
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this)
+            .respectCacheHeaders(false)
             .build()
 
     override fun onCreate() {

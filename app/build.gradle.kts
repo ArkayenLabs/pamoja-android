@@ -199,6 +199,7 @@ dependencies {
     debugImplementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.functions)
+    implementation(libs.firebase.config)
 
     // Health Connect
     implementation(libs.health.connect)

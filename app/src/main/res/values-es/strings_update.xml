@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_required_title">Hora de actualizar</string>
+    <string name="update_required_body">Esta versión de Pamoja ya no funciona. Actualízala para seguir caminando con tu grupo.</string>
+    <string name="update_required_action">Actualizar</string>
+</resources>

@@ -4,11 +4,17 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -22,6 +28,8 @@ import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.PamojaNavGraph
 import com.pamoja.app.ui.Screen
 import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.update.UpdateGateViewModel
+import com.pamoja.app.ui.update.UpdateRequiredScreen
 import com.pamoja.app.util.InviteLink
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.WorkManagerScheduler
@@ -65,6 +73,8 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var userPreferences: UserPreferences
     @Inject lateinit var firebaseAuth: FirebaseAuth
     @Inject lateinit var workManagerScheduler: WorkManagerScheduler
+
+    private val updateGate: UpdateGateViewModel by viewModels()
 
     /** Set by onCreate and onNewIntent, consumed once by the composition. */
     private val launchTarget = MutableStateFlow<LaunchTarget?>(null)
@@ -144,11 +154,22 @@ class MainActivity : AppCompatActivity() {
 
                 val target by launchTarget.collectAsState()
 
+                val updateRequired by updateGate.updateRequired.collectAsState()
+
                 startDestination?.let { destination ->
-                    PamojaNavGraph(
-                        navController = navController,
-                        startDestination = destination
-                    )
+                    // Kept composed under the update gate, only hidden from
+                    // TalkBack: the link handling below navigates this graph,
+                    // and navigating a NavController with no graph crashes.
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .then(if (updateRequired) Modifier.clearAndSetSemantics {} else Modifier),
+                    ) {
+                        PamojaNavGraph(
+                            navController = navController,
+                            startDestination = destination
+                        )
+                    }
                 }
 
                 // A cold-start link is parsed before setContent. Do not consume
@@ -198,8 +219,22 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+
+                if (updateRequired) {
+                    UpdateRequiredScreen(onUpdate = ::openStoreListing)
+                }
             }
         }
+    }
+
+    /** The Play listing, where a retired version's only way forward is. */
+    private fun openStoreListing() {
+        val market = Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri())
+        val web = Intent(
+            Intent.ACTION_VIEW,
+            "https://play.google.com/store/apps/details?id=$packageName".toUri(),
+        )
+        runCatching { startActivity(market) }.onFailure { runCatching { startActivity(web) } }
     }
 
     /**

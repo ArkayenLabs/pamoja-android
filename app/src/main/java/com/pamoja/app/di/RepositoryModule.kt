@@ -1,5 +1,6 @@
 package com.pamoja.app.di
 
+import com.pamoja.app.data.remote.firebase.FirebaseAppConfigRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseAuthRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseAvatarRepositoryImpl
 import com.pamoja.app.data.remote.firebase.FirebaseGroupRepositoryImpl
@@ -14,6 +15,7 @@ import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.GroupRepository
 import com.pamoja.app.domain.repository.GroupAccessRepository
+import com.pamoja.app.domain.repository.AppConfigRepository
 import com.pamoja.app.domain.repository.GroupSponsorshipRepository
 import com.pamoja.app.domain.repository.GroupWeekRepository
 import com.pamoja.app.domain.repository.NextWeekPlanRepository
@@ -29,6 +31,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindAppConfigRepository(
+        impl: FirebaseAppConfigRepositoryImpl
+    ): AppConfigRepository
     @Binds
     abstract fun bindAdventureRepository(
         implementation: com.pamoja.app.data.remote.firebase.FirebaseAdventureRepository,

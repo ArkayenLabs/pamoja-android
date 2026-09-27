@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown when this install is below the server's minimum supported version. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <string name="update_required_title">Time to update</string>
+    <string name="update_required_body">This version of Pamoja no longer works. Update to keep walking with your group.</string>
+    <string name="update_required_action">Update</string>
+</resources>

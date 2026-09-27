@@ -8,8 +8,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.pamoja.app.domain.model.ThemePreference
@@ -103,9 +101,10 @@ fun PamojaTheme(
 
     if (!view.isInEditMode) {
         SideEffect {
+            // No statusBarColor: enableEdgeToEdge() already makes the bar
+            // transparent, and the deprecated call is what Play Console
+            // flagged on 1.0.12 (REBUILD_PLAN.md §9b).
             val window = (view.context as Activity).window
-            @Suppress("DEPRECATION")
-            window.statusBarColor = Color.Transparent.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

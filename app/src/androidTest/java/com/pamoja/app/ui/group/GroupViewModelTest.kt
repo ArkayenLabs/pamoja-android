@@ -36,6 +36,7 @@ import com.pamoja.app.domain.usecase.UpdateWeeklyTargetUseCase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +60,7 @@ import java.time.DayOfWeek
 import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Executors
 
 /**
  * [GroupViewModel], the first test above the data layer in this project.
@@ -133,7 +135,16 @@ class GroupViewModelTest {
         // really does call dispatch, and Unconfined throws on any dispatch it
         // did not originate. It surfaces as DataStore's StateFlow resuming
         // across the main dispatcher, in whichever test happens to write first.
-        Dispatchers.setMain(Dispatchers.Default)
+        //
+        // One thread, like the real main thread, and not Dispatchers.Default,
+        // which this used until 2026-09-27. The ViewModel updates state with
+        // `value = value.copy(...)` from several collectors; on one thread those
+        // never interleave, on Default's pool they do, and a stale copy wiped
+        // fields another collector had just set. Seen as currentUserId="" and
+        // membership=null after loadGroup had set both, and as members that
+        // "never arrived". A test harness with more threads than production
+        // was reporting bugs production cannot have.
+        Dispatchers.setMain(main)
 
         // DataStore is one real file shared by every test in this process.
         UserPreferences(context).clearAll()
@@ -164,7 +175,12 @@ class GroupViewModelTest {
         // is used concurrently with setting it" in whichever test it lands.
         created.forEach { it.viewModelScope.coroutineContext.job.cancelAndJoin() }
         Dispatchers.resetMain()
+        main.close()
     }
+
+    /** Stands in for the main thread. See [setUp]. */
+    private val main = Executors.newSingleThreadExecutor { Thread(it, "test-main") }
+        .asCoroutineDispatcher()
 
     private fun viewModel() = GroupViewModel(
         getGroupUseCase = GetGroupUseCase(groups),

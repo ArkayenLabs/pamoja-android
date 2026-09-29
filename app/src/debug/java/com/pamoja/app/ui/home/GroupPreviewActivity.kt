@@ -10,6 +10,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.GroupAccess
 import com.pamoja.app.domain.model.GroupAccessState
@@ -56,6 +58,9 @@ import kotlinx.coroutines.launch
  * Lilac move: 13 create account, 14 reset password (sent), 15 phone entry,
  * 16 code entry with a wrong code, 17 updates, 18 licences, 19 notifications,
  * 20 edit profile, 21 account (Google only), 22 the invite preview.
+ *
+ * `--es caption "..."` draws the screen as a Play Store screenshot instead
+ * (see StoreShot).
  */
 class GroupPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,9 +68,14 @@ class GroupPreviewActivity : ComponentActivity() {
         enableEdgeToEdge()
         val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 22)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
+        val caption = intent.getStringExtra(EXTRA_CAPTION)
+        if (caption != null) {
+            WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+        }
 
         setContent {
             KitTheme(dark = dark) {
+                StoreShot(caption) {
                 when (screen) {
                     1 -> Home(home(), groupState())
                     2 -> Home(
@@ -250,6 +260,7 @@ class GroupPreviewActivity : ComponentActivity() {
                         ),
                     )
                 }
+                }
             }
         }
     }
@@ -407,6 +418,7 @@ class GroupPreviewActivity : ComponentActivity() {
     private companion object {
         const val EXTRA_SCREEN = "screen"
         const val EXTRA_DARK = "dark"
+        const val EXTRA_CAPTION = "caption"
         const val GROUP = "6413795d-42d0-4f2b-80df-f017a9d32817"
         const val ME = "me"
     }

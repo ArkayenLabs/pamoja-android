@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The brand's light-theme surface, #FAF5EF, matching what the mark sits
-         on inside the app (Welcome screen). Not Studio's default #FFFFFF. -->
-    <color name="ic_launcher_background">#FAF5EF</color>
+    <!-- Lilac ground (the kit's hero lilac), behind the ink and lime soles of
+         mipmap/ic_launcher_foreground_pamoja. The same in dark mode on purpose:
+         the ink sole would vanish on a dark ground, and the foreground is one
+         static PNG. Also the light splash background (themes.xml). -->
+    <color name="ic_launcher_background">#CFC6FF</color>
+
+    <!-- The dark splash: the kit's dark page, with the icon on a lilac disc. -->
+    <color name="splash_background_dark">#121026</color>
 </resources>

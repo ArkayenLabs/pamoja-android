@@ -10,18 +10,13 @@
     <style name="Theme.Pamoja" parent="Theme.AppCompat.DayNight.NoActionBar" />
 
     <!--
-      Same reasoning as values/themes.xml. Reuses the identical icon PNG the
-      light splash uses.
-
-      Known limitation, not fixed here: that PNG's soft shadow and gradient
-      highlight were tuned for the light #FAF5EF backdrop it sits on in the
-      launcher icon and in-app. Against #141110 the shadow all but disappears
-      and the highlight reads less crisply. Good enough to end the white flash,
-      which is the actual defect; a dark-tuned variant of the mark is a real
-      follow-up, not done in this pass.
+      Same reasoning as values/themes.xml, on the dark page. The icon PNG's ink
+      sole would vanish against it, so the icon sits on a lilac disc, which
+      makes it look like the launcher icon itself.
     -->
-    <style name="Theme.Pamoja.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+    <style name="Theme.Pamoja.Starting" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">@color/splash_background_dark</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground_pamoja</item>
         <item name="postSplashScreenTheme">@style/Theme.Pamoja</item>
     </style>

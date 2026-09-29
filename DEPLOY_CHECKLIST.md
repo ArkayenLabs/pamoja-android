@@ -1,0 +1,203 @@
+# Deploy checklist: end of the Shipaton freeze
+
+**Written 2026-09-29 against `rebuild` at `5da2755`, `release/1.0` at `db4593a`,
+`dev` at `4be3a80`.** Every claim below was checked against the code that day.
+If any of those branches has moved, re-check the "What changes" table first.
+
+Nothing here runs until the user says the freeze is over. Every step is run by
+the user (or on their explicit go-ahead), one at a time, in this order.
+
+---
+
+## What changes, and why the order matters
+
+| Piece | Changes from `dev` (what production runs) | Safe for 1.0.12? |
+|---|---|---|
+| `firestore.rules` | New `signals` subcollection; memberships accept `walkedDays` / `walkedWeekStart`; group create refuses streak/shield fields; `weeks/{streakThroughWeek}` becomes a free `get` | Yes. Old clients never write the new keys; the rules read them with defaults. 1.0.12 group writes are all field-level `update()`s (its whole-document `updateGroup` `set()` has no callers), so server-written streak fields survive them. |
+| `functions-notifications` (codebase `notifications`) | Adds `notifySignalCreated`, `eraseDepartedMemberSignals` | Yes. Both only act on `signals`, which only the new app creates. |
+| `functions-weekly` (codebase `weekly-history`) | Finalizer also computes the group streak and shields, writes them onto the group, marks `shielded` weeks | Yes. Old clients ignore unknown fields. |
+| `functions` (codebase `billing`) | **No change. Do not deploy.** | n/a |
+| `firestore.indexes.json`, `storage.rules`, `firebase.json` | **No change.** The new queries are single-collection equality filters, served by automatic indexes. | n/a |
+| TTL policy | New: collection group `signals`, field `expireAt` (stamped by `notifySignalCreated`, 14 days) | n/a |
+| `web/join-landing.html` | `intent://` button, Play fallback carrying `referrer=invite=<code>`, Lilac colours | Yes. 1.0.12 handles `pamoja://join` (its manifest declares it). |
+| App | `release/1.0` = 1.0.13 (version gate, Phase 1 fixes). `rebuild` = the Lilac app. | |
+
+**Hard order: rules, then functions, then the `rebuild` app.** A `rebuild` build
+against the old rules has its **entire** step publish refused (`onlyChanged`
+rejects `walkedDays`), so its users' figures would stop updating.
+
+**One-way door:** once any `rebuild` build is installed anywhere outside your
+own devices, the rules can never go back to `dev`'s version, for the same reason.
+Before that point, rolling rules back is safe.
+
+`release/1.0` (1.0.13) has **no backend dependency**. It can ship on day one,
+in parallel with the backend steps.
+
+---
+
+## 0. Before anything
+
+- [ ] The user has said the freeze is over.
+- [ ] `firebase use` prints `pamoja-android-1ac6d`.
+- [ ] Working tree clean on the branch you deploy from: `git status`.
+- [ ] Record the live baseline to compare against later (screenshot or note):
+      Crashlytics crash-free users for 1.0.12 (last 7 days), Play Console
+      version distribution, Firestore **Rules** monitor (Allow / Deny / Error
+      counts, Firestore > Usage).
+- [ ] Confirm the live rules are `dev`'s. Firebase console > Firestore > Rules
+      > history: the current release should match `git show dev:firestore.rules`.
+      If it does not, stop: something was deployed that git does not know about,
+      and the diff above is wrong.
+- [ ] Tag what production was built from, so it can always be rebuilt
+      (REBUILD_PLAN §2.2): `git tag v1.0.12-prod 4be3a80`, once the user
+      confirms `4be3a80` is what built 1.0.12 (§9.2 was never settled).
+
+## 1. Release A (recommended first): 1.0.13 from `release/1.0`
+
+Why first: the minimum-version gate only works on installs that have it. Every
+week 1.0.13 is not out is another week before old clients can be retired and
+Phase 8 can start. It needs nothing from the backend.
+
+- [ ] `git switch release/1.0`
+- [ ] **Match 1.0.12's flags.** 1.0.12 shipped with all four flags on (user,
+      2026-09-26), and none is set by default. Only `subscriptionSalesEnabled`
+      is in `local.properties` today. Add `circlePreviewEnabled=true` to
+      `local.properties`, then build:
+
+      ./gradlew bundleRelease -PtogetherTrailEnabled=true -PdayOnePlanningEnabled=true
+
+      Without these, 1.0.13 silently switches the Trail, planning and Circle
+      Preview off for every user who updates.
+- [ ] Version is 16 / "1.0.13" by default; confirm in the bundle
+      (`app/build/outputs/bundle/release/`) and that 16 is unused in Play Console.
+- [ ] Internal track, install on a real phone from Play, smoke test: sign in,
+      steps sync, group standings, Premium state shows.
+- [ ] Closed track, then production staged 5% > 20% > 100%, watching
+      Crashlytics against the baseline between steps.
+- [ ] Do **not** set Remote Config `min_supported_version_code` yet. Unset
+      means 0, nothing gated. Raising it is Phase 8, and only once its
+      replacement is at 100%.
+
+## 2. Firestore rules (from `rebuild`)
+
+- [ ] `git switch rebuild`
+- [ ] Emulator suite green on this exact commit (2026-09-29 on `5da2755`: 153,
+      1 skipped). Rerun only if the rules or the app changed since.
+- [ ] `firebase deploy --only firestore:rules`
+- [ ] Watch for 30 minutes: Rules monitor Deny/Error counts should stay at the
+      baseline. On a phone running 1.0.12: open the app, let steps sync, and
+      check your membership document's `weeklySteps` / `todaySteps` moved
+      (console > Firestore > `memberships/{uid}_{groupId}`).
+- **Rollback** (only safe before any `rebuild` build is out): console > Rules >
+  history > roll back to the previous release, or deploy from a `dev` worktree
+  (`git worktree add ../pamoja-dev dev`, then from there
+  `firebase deploy --only firestore:rules`).
+
+## 3. Functions, one codebase at a time
+
+- [ ] Tests: `npm --prefix functions-notifications test` and
+      `npm --prefix functions-weekly test` (2026-09-28: 8 and 46 passed).
+- [ ] `firebase deploy --only functions:notifications`
+- [ ] `firebase functions:list` shows `notifySignalCreated` and
+      `eraseDepartedMemberSignals` in `asia-south1`, and no function was
+      deleted (the CLI asks before deleting; answer **No** to any deletion).
+- [ ] `firebase deploy --only functions:weekly-history`
+- [ ] After the next week rollover of any group: `firebase functions:log
+      --only finalizeCompletedGroupWeek` shows no errors, and that group
+      document now has `streakWeeks` and `streakThroughWeek`.
+- **Rollback:** redeploy that codebase from `dev`
+  (`git worktree add ../pamoja-dev dev`, then from there
+  `firebase deploy --only functions:<codebase>`). Streak fields already written
+  are harmless to every client.
+
+## 4. TTL policy on signals
+
+- [ ] `gcloud firestore fields ttls update expireAt --collection-group=signals --enable-ttl --project=pamoja-android-1ac6d`
+- [ ] `gcloud firestore fields ttls list --project=pamoja-android-1ac6d`
+      shows it; state goes CREATING to ACTIVE (can take a while). TTL deletes
+      within about a day of `expireAt`, not on the minute; that is expected.
+
+## 5. Play subscription trial
+
+- [ ] Play Console > the Premium subscription > base plan > add a 7-day
+      free-trial offer (Phase 6 decision). Entitlement id `premium` and the
+      products stay as they are (REBUILD_PLAN §2.6).
+- [ ] RevenueCat picks up the offer on its own; the rebuilt paywall shows a
+      trial timeline only when the plan has one. Check with a license tester
+      on the internal track in step 7.
+
+## 6. Web join page
+
+Published by hand in the **website** repo; it is not on the auto-redeploy path
+(`.github/workflows/redeploy-website.yml` watches only the three legal pages).
+
+- [ ] Copy `web/join-landing.html` from `rebuild` into the website repo's join
+      route and deploy (Vercel).
+- [ ] `curl -s https://www.arkayenlabs.com/pamoja/join/test123 | grep -c "intent://"`
+      prints 1 or more.
+- [ ] On a phone with the app: the link opens the app. Without it: Play opens
+      with the referrer (Install Referrer end to end needs a real Play install
+      of the `rebuild` build, step 7).
+
+## 7. Release B: the `rebuild` app
+
+Only after steps 2 and 3 are live and watched.
+
+- [ ] Version: 17 or higher, above whatever step 1 used. Name is the user's call
+      (suggestion "1.1.0").
+- [ ] Flags on `rebuild`: only `subscriptionSalesEnabled` (local.properties) and
+      `togetherTrailEnabled` (-P) still do anything; `circlePreviewEnabled` and
+      `dayOnePlanningEnabled` are provided but read nowhere. Keep the Trail sync
+      on (`-PtogetherTrailEnabled=true`) so mixed groups' Trails still advance
+      for members on 1.0.x, until Phase 8.
+
+      ./gradlew bundleRelease -PpamojaVersionCode=17 -PpamojaVersionName=1.1.0 -PtogetherTrailEnabled=true
+
+- [ ] Launcher icon and splash are Lilac on `rebuild` (done 2026-09-29).
+      With the release, upload `design/store-listing/pamoja-icon-512.png` as
+      the Play Store icon (regenerate: `python tools/launcher_icon.py`), and
+      replace the store screenshots (`design/store-listing/0*.png` are the
+      terracotta app) and the feature graphic if it shows the old look.
+- [ ] Internal track, real phones, both themes:
+  - [ ] Sign in with Google (first tap works), phone, email.
+  - [ ] Two accounts in one group: cheer and nudge arrive as pushes; the
+        signal document gets `expireAt`; a second cheer the same day is refused.
+  - [ ] Day dots show after a sync; a 1.0.12 member in the same group still
+        syncs (mixed-version group).
+  - [ ] Invite link opens the preview; join works; a fresh install from the
+        link joins the group (Install Referrer).
+  - [ ] Paywall: license tester sees prices and the trial; purchase; restore.
+  - [ ] Widgets place and refresh; Nudge from the widget sends.
+- [ ] Closed track, then production staged 5% > 20% > 100%, checking between
+      steps: Crashlytics crash-free vs baseline, Rules monitor Deny/Error,
+      `notifySignalCreated` errors in the functions log.
+
+## Rollback triggers (decide now, not during)
+
+- Crash-free users more than 0.5 points below the 1.0.12 baseline: halt the
+  staged rollout (Play Console > Release > Halt). Users who already have it keep
+  it, so the fix ships as a higher versionCode; the backend stays as it is.
+- Rules Deny or Error count clearly above baseline after step 2: roll the rules
+  back (safe only before Release B is out).
+- Any function erroring on most invocations: redeploy that codebase from `dev`.
+- A 1.0.12 user's steps stop updating: that is the joint client/rules invariant
+  breaking. Roll back rules first, then investigate.
+
+## Afterwards
+
+- [ ] Update REBUILD_PLAN.md §0 and CLAUDE.md (deploy state, live version).
+- [ ] Push branches only when the user asks.
+- [ ] Phase 8 starts only when Play's version distribution shows old versions
+      gone and `min_supported_version_code` has been raised past them.
+
+## Not part of this deploy
+
+- **Pre-sign-in invite preview callable** (Phase 3): never built. The invite
+  preview works after sign-in; nothing to deploy.
+- **Pamoja-owned invite domain**: links stay on `www.arkayenlabs.com/pamoja/join`
+  until pamojaa.com is bought (three edits, REBUILD_PLAN Phase 3).
+- **Terms, Privacy, Play Data Safety** for dropping age/height/weight: Phase 8.
+  Check before Release B whether the privacy policy covers cheers and nudges
+  (who sent what to whom, kept 14 days).
+- `CODEX-CHECKLIST.md` has 92 unchecked items, many visibly stale (it lists
+  RevenueCat setup as open while sales are live). Not a gate for this deploy.

@@ -72,7 +72,7 @@ interface AnalyticsManager {
     /** User successfully joined a group. */
     fun logGroupJoined(groupId: String)
 
-    /** User opened the group detail screen. */
+    /** Home showed a group, once each time it is opened or switched to. */
     fun logGroupScreenViewed(groupId: String)
 
     /** Combined weekly steps crossed the group's weekly target (logged once per session). */

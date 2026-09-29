@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,6 +36,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -79,8 +81,6 @@ import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.components.PamojaConfirmDialog
 import com.pamoja.app.ui.components.PamojaDestructiveConfirmDialog
-import com.pamoja.app.ui.components.PamojaBottomBar
-import com.pamoja.app.ui.components.PamojaMainTab
 import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toSnackbarMessage
 import com.pamoja.app.ui.profile.ProfileAvatar
@@ -95,11 +95,12 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
-    onToday: () -> Unit,
-    onGroups: () -> Unit,
+    onBack: () -> Unit,
     onSignedOut: () -> Unit,
     onEditProfile: () -> Unit,
     onNotificationSettings: () -> Unit,
+    /** Past updates. Their bell used to be on the dashboard, which is gone. */
+    onActivity: () -> Unit,
     onAccount: () -> Unit,
     onLicenses: () -> Unit,
     /**
@@ -479,15 +480,25 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 110.dp),
+                    .navigationBarsPadding(),
             ) {
-            // The You tab is a profile hub. It owns identity and preferences,
-            // so the main tabs no longer repeat a profile shortcut elsewhere.
+            // Reached from the avatar on Home: identity and preferences.
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.padding(start = Spacing.x3, top = Spacing.x2),
+            ) {
+                Icon(
+                    painter = painterResource(PamojaIcons.ArrowLeft),
+                    contentDescription = stringResource(R.string.common_back),
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.x6)
-                    .padding(top = Spacing.x4, bottom = Spacing.x2),
+                    .padding(bottom = Spacing.x2),
             ) {
                 Text(
                     text = stringResource(R.string.settings_title),
@@ -649,6 +660,12 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_notifications_title),
                         subtitle = stringResource(R.string.settings_notifications_sub),
                         onClick = onNotificationSettings,
+                    )
+                    SettingsRow(
+                        icon = PamojaIcons.Clock,
+                        title = stringResource(R.string.activity_title),
+                        subtitle = stringResource(R.string.activity_open_desc),
+                        onClick = onActivity,
                     )
                     SettingsRow(
                         icon = PamojaIcons.Smartphone,
@@ -899,13 +916,6 @@ fun SettingsScreen(
             }
         }
 
-            PamojaBottomBar(
-                selected = PamojaMainTab.You,
-                onToday = onToday,
-                onGroups = onGroups,
-                onYou = {},
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
         }
     }
 }

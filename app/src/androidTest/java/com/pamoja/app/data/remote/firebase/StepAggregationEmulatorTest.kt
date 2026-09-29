@@ -128,8 +128,8 @@ class StepAggregationEmulatorTest {
 
         val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
 
-        groupsOf(alice).publishMyWeeklySteps(group.groupId, alice.uid, 7_500, monday, 1_200, "2026-08-19").getOrThrow()
-        groupsOf(bob).publishMyWeeklySteps(group.groupId, bob.uid, 2_500, monday, 800, "2026-08-19").getOrThrow()
+        groupsOf(alice).publishMyWeeklySteps(group.groupId, alice.uid, 7_500, monday, 1_200, "2026-08-19", 0).getOrThrow()
+        groupsOf(bob).publishMyWeeklySteps(group.groupId, bob.uid, 2_500, monday, 800, "2026-08-19", 0).getOrThrow()
 
         val memberships = groupsOf(alice).getGroupMemberships(group.groupId).first()
 
@@ -149,7 +149,7 @@ class StepAggregationEmulatorTest {
         groupsOf(silent).joinGroup(group.groupId, silent.uid).getOrThrow()
 
         val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
-        groupsOf(alice).publishMyWeeklySteps(group.groupId, alice.uid, 6_000, monday, 0, "").getOrThrow()
+        groupsOf(alice).publishMyWeeklySteps(group.groupId, alice.uid, 6_000, monday, 0, "", 0).getOrThrow()
 
         val memberships = groupsOf(alice).getGroupMemberships(group.groupId).first()
 
@@ -168,7 +168,7 @@ class StepAggregationEmulatorTest {
 
         val monday = WeekWindow.startOf(DayOfWeek.MONDAY, LocalDate.of(2026, 8, 19))
         val forged = groupsOf(bob)
-            .publishMyWeeklySteps(group.groupId, alice.uid, 999_999, monday, 0, "")
+            .publishMyWeeklySteps(group.groupId, alice.uid, 999_999, monday, 0, "", 0)
 
         assertTrue("Bob must not be able to write Alice's total, got $forged", forged.isFailure)
     }

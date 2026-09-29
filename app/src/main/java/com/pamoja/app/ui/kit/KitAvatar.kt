@@ -12,7 +12,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -34,7 +38,8 @@ import kotlin.math.absoluteValue
  * Priya should not share a colour. The fallback is drawn under the photo as
  * well, so a slow or failed load shows initials rather than a blank circle.
  *
- * [walked] adds the lime check used on today's faces.
+ * [walked] adds the lime check used on today's faces; [dimmed] greys out a
+ * face that has not walked yet today, so the row reads at a glance.
  */
 @Composable
 fun Avatar(
@@ -44,16 +49,22 @@ fun Avatar(
     size: Dp = 40.dp,
     seed: String = name,
     walked: Boolean = false,
+    dimmed: Boolean = false,
     contentDescription: String? = null,
 ) {
     val colors = Kit.colors
-    val background = colors.avatarBackgrounds[seed.hashCode().absoluteValue % colors.avatarBackgrounds.size]
+    val background = if (dimmed) {
+        DimmedBackground
+    } else {
+        colors.avatarBackgrounds[seed.hashCode().absoluteValue % colors.avatarBackgrounds.size]
+    }
 
     Box(modifier = modifier.size(size)) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(size)
+                .alpha(if (dimmed) DimmedAlpha else 1f)
                 .clip(CircleShape)
                 .background(background),
         ) {
@@ -72,6 +83,7 @@ fun Avatar(
                     model = photoUrl,
                     contentDescription = contentDescription,
                     contentScale = ContentScale.Crop,
+                    colorFilter = if (dimmed) Greyscale else null,
                     modifier = Modifier.size(size),
                 )
             }
@@ -98,6 +110,17 @@ fun Avatar(
         }
     }
 }
+
+private const val DimmedAlpha = 0.5f
+
+/**
+ * A neutral grey rather than a theme token: at half opacity it has to stay
+ * visible on both the white and the deep violet card. The dark track colour
+ * all but vanished there in the first screenshots.
+ */
+private val DimmedBackground = Color(0xFFDCDAE3)
+
+private val Greyscale = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
 
 /** "Priya" -> "P", "Ravi Sharma" -> "RS", "" -> "?". */
 internal fun initialsOf(name: String): String {

@@ -8,11 +8,13 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import java.time.Instant
+import java.time.Period
 import java.time.ZoneId
 import com.pamoja.app.domain.model.AdventureSourceWindow
 import com.pamoja.app.domain.model.AdventureStepObservation
@@ -122,6 +124,34 @@ open class HealthConnectReader @Inject constructor(
                 )
             )
             response[StepsRecord.COUNT_TOTAL] ?: 0L
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * One total per day with any steps, from [from] up to but not including
+     * [until], in one aggregate call. Days without data may be missing, which
+     * is fine for its one caller: [com.pamoja.app.domain.model.UsualSteps]
+     * ignores empty days anyway. Null without Health Connect or permission.
+     */
+    open suspend fun readDailySteps(from: LocalDate, until: LocalDate): List<Long>? {
+        return try {
+            if (!isAvailable()) return null
+            val client = HealthConnectClient.getOrCreate(context)
+            if (!client.permissionController.getGrantedPermissions()
+                    .containsAll(REQUIRED_PERMISSIONS)) return null
+
+            // Local date-times, which is what slicing by calendar day requires.
+            client.aggregateGroupByPeriod(
+                AggregateGroupByPeriodRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(from.atStartOfDay(), until.atStartOfDay()),
+                    timeRangeSlicer = Period.ofDays(1),
+                )
+            ).map { it.result[StepsRecord.COUNT_TOTAL] ?: 0L }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {

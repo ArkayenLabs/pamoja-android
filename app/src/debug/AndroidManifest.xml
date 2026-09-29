@@ -11,6 +11,10 @@
             android:exported="true"
             android:theme="@style/Theme.Pamoja" />
         <activity
+            android:name=".ui.home.GroupPreviewActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Pamoja" />
+        <activity
             android:name=".ui.kit.KitGalleryActivity"
             android:exported="true"
             android:theme="@style/Theme.Pamoja" />

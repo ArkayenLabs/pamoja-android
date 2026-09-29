@@ -35,8 +35,8 @@ services. Pamoja is distributed through Google Play.
   writes them, with no foreground service and no hardware sensor registration
 - A background sync scheduled through WorkManager, plus an opportunistic sync
   when the app is resumed
-- One shared weekly total per group, over a window every member shares, plus a
-  per-member leaderboard showing today and the week so far
+- One shared weekly total per group, over a window every member shares, plus
+  who has walked today and the week's standings
 - Offline states that say when a figure was last known to be true, rather than
   presenting a stale number as current
 
@@ -49,9 +49,8 @@ services. Pamoja is distributed through Google Play.
 
 **Together Trails**
 
-- Turn a group's real step history into a shared visual journey
-- Recover recent progress safely when a trail starts, without counting steps twice
-- Keep an auditable progress ledger and generate shareable completion records
+- Removed from the app in the Lilac rebuild. The backend stays until older app
+  versions are retired, since they still use it.
 
 **Premium**
 
@@ -127,7 +126,7 @@ Firestore snapshot listeners.
 | Billing | RevenueCat 10.16.2 |
 | Crash and analytics | Firebase Crashlytics, Firebase Analytics |
 | Integrity | Firebase App Check with Play Integrity |
-| Typography | Outfit |
+| Typography | Bricolage Grotesque, Plus Jakarta Sans, IBM Plex Mono (Google Fonts) |
 | Min SDK | 26 (Android 8.0) |
 | Compile and target SDK | 36 |
 

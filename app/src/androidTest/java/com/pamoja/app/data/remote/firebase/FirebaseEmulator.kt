@@ -140,10 +140,21 @@ object FirebaseEmulator {
         seedServerDocumentPath("$collection/$documentId", fields)
     }
 
+    /**
+     * Sets only [fields] on an existing document, as the server would, leaving
+     * every other field alone. [seedServerDocumentPath] replaces the whole
+     * document, which is wrong for a group the app created.
+     */
+    fun updateServerFields(documentPath: String, fields: Map<String, Any?>) {
+        val mask = fields.keys.joinToString("&") { "updateMask.fieldPaths=" + URLEncoder.encode(it, StandardCharsets.UTF_8.name()) }
+        seedServerDocumentPath(documentPath, fields, query = mask)
+    }
+
     /** Same server-owned seed path, including documents inside subcollections. */
     fun seedServerDocumentPath(
         documentPath: String,
         fields: Map<String, Any?>,
+        query: String = "",
     ) {
         val pathSegments = documentPath.split('/')
         require(pathSegments.size % 2 == 0) { "A Firestore document path needs an even segment count" }
@@ -153,7 +164,8 @@ object FirebaseEmulator {
         }
         val url =
             "http://$HOST:$FIRESTORE_PORT/v1/projects/$projectId/" +
-                "databases/(default)/documents/$encodedDocumentPath"
+                "databases/(default)/documents/$encodedDocumentPath" +
+                (if (query.isBlank()) "" else "?$query")
         val body = JSONObject().put(
             "fields",
             JSONObject().apply {

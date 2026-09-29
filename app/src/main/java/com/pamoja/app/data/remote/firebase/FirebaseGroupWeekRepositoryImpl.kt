@@ -41,6 +41,27 @@ class FirebaseGroupWeekRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun observeWeek(groupId: String, weekStart: String): Flow<GroupWeekSummary?> {
+        require(groupId.isNotBlank() && weekStart.isNotBlank()) { "groupId and weekStart must not be blank" }
+
+        return callbackFlow {
+            val listener = firestore
+                .collection("groups")
+                .document(groupId)
+                .collection("weeks")
+                .document(weekStart)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        close(error.toFirebaseAppError())
+                        return@addSnapshotListener
+                    }
+                    if (snapshot == null) return@addSnapshotListener
+                    trySend(snapshot.toObject(GroupWeekSummaryDto::class.java)?.toDomain())
+                }
+            awaitClose { listener.remove() }
+        }
+    }
+
     companion object {
         private const val MAX_COMPLETED_WEEKS = 52L
     }

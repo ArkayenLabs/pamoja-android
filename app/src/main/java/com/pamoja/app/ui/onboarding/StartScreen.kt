@@ -33,6 +33,7 @@ import com.pamoja.app.ui.kit.KitTextField
 import com.pamoja.app.ui.kit.PopChip
 import com.pamoja.app.ui.kit.PrimaryButton
 import com.pamoja.app.ui.kit.QuietButton
+import com.pamoja.app.ui.kit.SecondaryButton
 import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
@@ -124,8 +125,19 @@ fun EnterInviteScreen(
     )
 }
 
+/**
+ * Also the signed-in "Join with a link" screen, with its own [body] and a QR
+ * scan ([onScan]) for someone showing their invite in person. [scanError]
+ * explains a scan that did not produce an invite.
+ */
 @Composable
-internal fun EnterInviteContent(onSubmit: (String) -> Unit, onBack: () -> Unit) = KitInAppTheme {
+internal fun EnterInviteContent(
+    onSubmit: (String) -> Unit,
+    onBack: () -> Unit,
+    body: String = stringResource(R.string.enter_invite_body),
+    onScan: (() -> Unit)? = null,
+    scanError: String? = null,
+) = KitInAppTheme {
     var input by rememberSaveable { mutableStateOf("") }
     var showError by rememberSaveable { mutableStateOf(false) }
     val code = inviteCodeFrom(input)
@@ -142,7 +154,7 @@ internal fun EnterInviteContent(onSubmit: (String) -> Unit, onBack: () -> Unit) 
         },
     ) {
         Text(stringResource(R.string.enter_invite_title), style = Kit.type.headline)
-        Text(stringResource(R.string.enter_invite_body), style = Kit.type.body, color = Kit.colors.muted)
+        Text(body, style = Kit.type.body, color = Kit.colors.muted)
         KitTextField(
             value = input,
             onValueChange = {
@@ -151,10 +163,13 @@ internal fun EnterInviteContent(onSubmit: (String) -> Unit, onBack: () -> Unit) 
             },
             label = stringResource(R.string.enter_invite_label),
             placeholder = InviteLink.build("…"),
-            error = if (showError) stringResource(R.string.enter_invite_invalid) else null,
+            error = if (showError) stringResource(R.string.enter_invite_invalid) else scanError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
             keyboardActions = KeyboardActions(onGo = { submit() }),
         )
+        onScan?.let {
+            SecondaryButton(stringResource(R.string.join_link_scan), onClick = it, icon = PamojaIcons.QrCode)
+        }
     }
 }
 

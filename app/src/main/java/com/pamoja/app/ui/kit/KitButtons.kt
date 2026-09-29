@@ -34,6 +34,7 @@ enum class ButtonSize { Large, Small }
 
 /**
  * The screen's main action. Near-black in light mode, lilac in dark.
+ * [danger] makes it red, only for confirming something that cannot be undone.
  *
  * Heights are minimums, not fixed: at 200% font size the label wraps and the
  * button grows rather than clipping it.
@@ -47,11 +48,16 @@ fun PrimaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     @DrawableRes icon: Int? = null,
+    danger: Boolean = false,
 ) {
+    val colors = Kit.colors
     KitButton(
         text = text, onClick = onClick, modifier = modifier, size = size,
         enabled = enabled, loading = loading, icon = icon,
-        container = Kit.colors.button, content = Kit.colors.onButton, border = null,
+        container = if (danger) colors.danger else colors.button,
+        // The dark theme's danger is a light coral, which needs ink on it.
+        content = if (danger && !colors.isDark) Color.White else colors.onButton,
+        border = null,
         textStyle = if (size == ButtonSize.Large) Kit.type.button else Kit.type.buttonSmall,
     )
 }
@@ -165,6 +171,7 @@ private fun KitButton(
 /**
  * A 44dp round button with only an icon, e.g. Back or Group details.
  * [contentDescription] is required: an icon-only control needs a spoken name.
+ * On a white card or sheet pass a [container] that shows, e.g. iconBackground.
  */
 @Composable
 fun CircleIconButton(
@@ -172,13 +179,18 @@ fun CircleIconButton(
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    container: Color = Kit.colors.surface,
 ) {
     Surface(
         onClick = onClick,
+        enabled = enabled,
         shape = PillShape,
-        color = Kit.colors.surface,
+        color = container,
         contentColor = Kit.colors.ink,
-        modifier = modifier.size(44.dp),
+        modifier = modifier
+            .size(44.dp)
+            .alpha(if (enabled) 1f else 0.4f),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(

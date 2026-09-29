@@ -125,7 +125,7 @@ private fun KitGallery() {
         KitCard {
             CardHeader("This week", detail = "Mon to Sun")
             PersonRow(name = "Priya", photoUrl = null, detail = "Joined 2 Sep") {
-                DayDots(listOf(true, true, true, false, true, true, false), description = "Walked 5 of 7 days")
+                DayDots(listOf(true, true, false, true, false, false, false), description = "Walked 3 of 4 days so far", elapsed = 4)
             }
             PersonRow(name = "You", photoUrl = null, emphasised = true) {
                 Text("38,110", style = Kit.type.bodyStrong)

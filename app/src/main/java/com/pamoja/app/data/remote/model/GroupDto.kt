@@ -22,6 +22,14 @@ data class GroupDto(
     val photoUrl: String = "",
     val planningTimeZone: String = "",
     val plannedWeekStart: String = "",
+    // Server-owned (the weekly finalizer). Read here, never written: fromDomain
+    // leaves them at their defaults, which is what the create rule requires.
+    val streakWeeks: Int = 0,
+    val streakThroughWeek: String = "",
+    // Server-owned as well. Written at these defaults on create, which the
+    // rule allows; shieldsStarted, which the finalizer keys on, is never here.
+    val streakShields: Int = 0,
+    val lastShieldedWeek: String = "",
 ) {
     fun toDomain() = com.pamoja.app.domain.model.Group(
         groupId = groupId,
@@ -41,6 +49,10 @@ data class GroupDto(
         photoUrl = photoUrl,
         planningTimeZone = planningTimeZone,
         plannedWeekStart = plannedWeekStart,
+        streakWeeks = streakWeeks,
+        streakThroughWeek = streakThroughWeek,
+        streakShields = streakShields,
+        lastShieldedWeek = lastShieldedWeek,
     )
 
     companion object {

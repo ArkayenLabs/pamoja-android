@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_switch_group_action">समूह बदलें</string>
+    <string name="home_group_details_desc">समूह की जानकारी</string>
+    <string name="home_profile_desc">आपकी प्रोफ़ाइल और सेटिंग</string>
+    <string name="home_this_week">इस हफ़्ते</string>
+    <string name="home_goal_reached">लक्ष्य पूरा</string>
+    <string name="home_week_progress_desc">%2$s में से %1$s कदम</string>
+    <string name="home_pace_on_pace">%1$s · इस रफ़्तार से %2$s तक पूरा</string>
+    <string name="home_pace_finish_today">%1$s · इस रफ़्तार से आज पूरा</string>
+    <string name="home_pace_per_day">%1$s · पूरा करने के लिए रोज़ %2$s</string>
+    <string name="home_today">आज</string>
+    <plurals name="home_walked_count">
+        <item quantity="one">%2$d में से %1$d चले</item>
+        <item quantity="other">%2$d में से %1$d चले</item>
+    </plurals>
+    <string name="home_face_walked_desc">%1$s, आज चले</string>
+    <string name="home_face_not_walked_desc">%1$s, आज अभी नहीं चले</string>
+    <string name="home_you">आप</string>
+    <string name="home_you_today">आप आज</string>
+    <string name="home_your_usual">आपका आम दिन %1$s</string>
+    <string name="home_today_vs_usual_desc">आपके आम %2$s कदमों में से %1$s</string>
+    <string name="home_steps_title">आपके कदम</string>
+    <string name="home_connect_body">Health Connect जोड़ें ताकि आपके कदम समूह में गिने जाएँ।</string>
+    <string name="home_connect_action">जोड़ें</string>
+    <string name="home_week_range">%1$s से %2$s</string>
+    <string name="home_not_synced">सिंक नहीं हुआ</string>
+    <string name="home_invite_to">%1$s में बुलाएँ</string>
+    <string name="home_your_groups">आपके समूह</string>
+    <string name="home_group_summary">%1$s · %3$s में से %2$s</string>
+    <string name="home_current_group_desc">मौजूदा समूह</string>
+    <string name="home_start_new_group">नया समूह बनाएँ</string>
+    <string name="home_join_with_link">लिंक से जुड़ें</string>
+    <string name="home_empty_title">अभी कोई समूह नहीं</string>
+    <string name="home_empty_body">एक बनाएँ, या लिंक से जुड़ें।</string>
+    <string name="home_start_group">समूह बनाएँ</string>
+
+    <string name="join_link_body">किसी का भेजा हुआ लिंक यहाँ चिपकाएँ।</string>
+    <string name="join_link_scan">QR कोड स्कैन करें</string>
+
+    <string name="details_subtitle">%1$s · हफ़्ता %2$s से शुरू</string>
+    <string name="details_invite">बुलाएँ</string>
+    <string name="details_members_count">%2$d में से %1$d</string>
+    <string name="details_joined">%1$s को जुड़े</string>
+    <string name="details_member_options_desc">%1$s के विकल्प</string>
+    <string name="details_remove_member">समूह से हटाएँ</string>
+    <string name="details_settings_title">समूह सेटिंग</string>
+    <string name="details_goal">हफ़्ते का लक्ष्य</string>
+    <string name="details_goal_value">%1$s कदम</string>
+    <string name="details_member_limit">सदस्यों की सीमा</string>
+    <string name="details_week_starts">हफ़्ता शुरू</string>
+    <string name="details_photo_add">जोड़ें</string>
+    <string name="details_photo_choose">फ़ोटो चुनें</string>
+    <string name="details_photo_remove">फ़ोटो हटाएँ</string>
+    <string name="details_save">सेव करें</string>
+    <string name="details_fewer_desc">कम</string>
+    <string name="details_more_desc">ज़्यादा</string>
+    <string name="details_premium_title">समूह के लिए Premium</string>
+    <string name="details_premium_active">चालू</string>
+    <string name="details_premium_manage">Premium की जानकारी</string>
+    <string name="details_leave_confirm">छोड़ें</string>
+</resources>

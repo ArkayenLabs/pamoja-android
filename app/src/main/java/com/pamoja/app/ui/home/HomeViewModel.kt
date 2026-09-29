@@ -1,16 +1,18 @@
 package com.pamoja.app.ui.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.connectivity.ConnectivityObserver
-import com.pamoja.app.data.local.activity.ActivityLogStore
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.PamojaGroupId
 import com.pamoja.app.domain.model.StepEntry
+import com.pamoja.app.domain.model.UsualSteps
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetMyStepsForWeekUseCase
@@ -40,6 +42,7 @@ data class PersonalDay(
 data class HomeUiState(
     val isLoading: Boolean = true,
     val groups: List<Group> = emptyList(),
+    val userId: String = "",
     val userName: String = "",
     val userPhotoUrl: String? = null,
     /** The seven calendar days in Pamoja's stable Monday-to-Sunday personal week. */
@@ -58,14 +61,6 @@ data class HomeUiState(
      */
     val hasLoadedOnce: Boolean = false,
     /**
-     * Whether to explain notifications before the system dialog is spent.
-     *
-     * Held off until the user actually has a group, since every example the
-     * primer gives is about a group and asking someone with none is asking
-     * them to imagine why they would care.
-     */
-    val showNotificationPrimer: Boolean = false,
-    /**
      * Drives the pull-to-refresh spinner only.
      *
      * Separate from [isLoading], which swaps in a skeleton. A pull already has
@@ -73,8 +68,14 @@ data class HomeUiState(
      * the user is looking at to show them less.
      */
     val isRefreshing: Boolean = false,
-    /** Drives the dot on the activity bell. Zero hides it. */
-    val unreadActivityCount: Int = 0,
+    /**
+     * The group Home shows. Null until the stored choice has been read, and
+     * when the user has no group. Set before the group list arrives, so a
+     * returning user's group starts loading from cache straight away.
+     */
+    val selectedGroupId: String? = null,
+    /** This person's usual day from their recent history; null if too little. */
+    val usualSteps: Long? = null,
     /**
      * Health Connect is installed but not permitted, so no steps are arriving.
      *
@@ -89,6 +90,8 @@ data class HomeUiState(
     val needsHealthConnect: Boolean = false,
     /** When these totals last reached the phone. Zero means never. */
     val lastSyncedAt: Long = 0L,
+    /** Groups whose ended Premium preview was already offered; null until read. */
+    val previewEndSeen: Set<String>? = null,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty() || hasLoadedPersonalSteps
@@ -118,11 +121,18 @@ class HomeViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     private val analyticsManager: AnalyticsManager,
     private val connectivityObserver: ConnectivityObserver,
-    private val activityLog: ActivityLogStore,
     private val healthConnectReader: HealthConnectReader,
     private val workManagerScheduler: WorkManagerScheduler,
     private val widgetUpdater: PamojaWidgetUpdater,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    /** A group named by the route, e.g. after joining one or from a notification. */
+    private val routeGroupId: String? =
+        savedStateHandle.get<String>("groupId")?.takeIf(PamojaGroupId::isValid)
+
+    /** Groups found gone this session, so selection never lands on one again. */
+    private val goneGroupIds = mutableSetOf<String>()
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -154,7 +164,6 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeConnectivity()
-        observeUnreadActivity()
         observeUserName()
         loadHome()
     }
@@ -228,18 +237,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun observeUnreadActivity() {
-        viewModelScope.launch {
-            activityLog.unreadCount.collect { count ->
-                _uiState.value = _uiState.value.copy(unreadActivityCount = count)
-            }
-        }
-    }
-
     private fun observeConnectivity() {
         viewModelScope.launch {
             connectivityObserver.isOnline.collect { online ->
                 _uiState.value = _uiState.value.copy(isOffline = !online)
+            }
+        }
+        viewModelScope.launch {
+            userPreferences.previewEndSeenGroups.collect { seen ->
+                _uiState.value = _uiState.value.copy(previewEndSeen = seen)
             }
         }
         // Same source the group screen uses, so the two cannot claim different
@@ -262,6 +268,16 @@ class HomeViewModel @Inject constructor(
                     error = AppError.SessionExpired(),
                 )
                 return@launch
+            }
+
+            _uiState.value = _uiState.value.copy(userId = user.userId)
+
+            // Before the group list: the stored group can start loading from
+            // cache while the list is still on its way.
+            if (_uiState.value.selectedGroupId == null) {
+                val preferred = routeGroupId
+                    ?: userPreferences.activeGroupId.first()?.takeIf(PamojaGroupId::isValid)
+                preferred?.let(::select)
             }
 
             // Firestore remains the source of truth for the name visible inside
@@ -307,13 +323,10 @@ class HomeViewModel @Inject constructor(
                         !healthConnectReader.hasPermission()
                     _uiState.value = _uiState.value.copy(
                         groups = groups,
+                        selectedGroupId = chooseGroup(_uiState.value.selectedGroupId, groups, goneGroupIds),
                         hasLoadedOnce = true,
                         // A successful emission clears whatever failed before it.
                         error = null,
-                        // Only once there is a group to notify about, and only
-                        // if we have never explained it before.
-                        showNotificationPrimer = groups.isNotEmpty() &&
-                            !userPreferences.notificationPrimerShown.first(),
                         needsHealthConnect = needsHealthConnect,
                     )
                     publishWidgets()
@@ -321,23 +334,36 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /** From the group switcher. Remembered, so the app reopens on it. */
+    fun selectGroup(groupId: String) {
+        if (PamojaGroupId.isValid(groupId)) select(groupId)
+    }
+
     /**
-     * Marks the primer answered, whichever way it was answered.
-     *
-     * "Not now" is recorded exactly like "turn on", because the point is to ask
-     * once. Re-prompting someone who declined is how an app earns a permanent
-     * denial, and on Android 13+ that cannot be undone from inside the app.
+     * The shown group was deleted, or this person left or was removed. Moves
+     * to their next group, or to the no-group state if there is none.
      */
-    fun onNotificationPrimerAnswered() {
-        viewModelScope.launch {
-            userPreferences.setNotificationPrimerShown()
-            _uiState.value = _uiState.value.copy(showNotificationPrimer = false)
-        }
+    fun onSelectedGroupGone(groupId: String) {
+        goneGroupIds += groupId
+        if (_uiState.value.selectedGroupId != groupId) return
+        val next = chooseGroup(null, _uiState.value.groups, goneGroupIds)
+        _uiState.value = _uiState.value.copy(selectedGroupId = next)
+        next?.let { viewModelScope.launch { userPreferences.saveActiveGroupId(it) } }
+    }
+
+    private fun select(groupId: String) {
+        _uiState.value = _uiState.value.copy(selectedGroupId = groupId)
+        viewModelScope.launch { userPreferences.saveActiveGroupId(groupId) }
     }
 
     fun retry() {
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
         loadHome()
+    }
+
+    /** Answered either way, the end-of-preview offer is never shown again for [groupId]. */
+    fun onPreviewEndAnswered(groupId: String) {
+        viewModelScope.launch { userPreferences.markPreviewEndSeen(groupId) }
     }
 
     /**
@@ -387,8 +413,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Health Connect is the freshest source for today; Firestore fills history. */
+    /**
+     * Health Connect is the freshest source for today; Firestore fills history.
+     * The usual day is worked out from the same source, never asked for.
+     */
     private suspend fun refreshDeviceTodaySteps() {
+        val date = LocalDate.now()
+        healthConnectReader.readDailySteps(date.minusDays(USUAL_HISTORY_DAYS), date)?.let { days ->
+            _uiState.value = _uiState.value.copy(usualSteps = UsualSteps.of(days))
+        }
         val today = healthConnectReader.readTodaySteps() ?: return
         deviceTodaySteps = today
         publishPersonalDays(PERSONAL_WEEK_START_DAY)
@@ -431,5 +464,16 @@ class HomeViewModel @Inject constructor(
         /** Long enough that the gesture is acknowledged, short enough not to stall. */
         const val REFRESH_SPINNER_MIN_MS = 450L
         val PERSONAL_WEEK_START_DAY: DayOfWeek = DayOfWeek.MONDAY
+
+        /** Two weeks: enough for a median, recent enough to be this person now. */
+        const val USUAL_HISTORY_DAYS = 14L
     }
 }
+
+/**
+ * Which group Home shows. Keeps [current] unless it is known to be gone, even
+ * when it is missing from [groups]: a group joined a moment ago can reach the
+ * screen before the list catches up. Otherwise the first group still here.
+ */
+internal fun chooseGroup(current: String?, groups: List<Group>, gone: Set<String>): String? =
+    current?.takeIf { it !in gone } ?: groups.firstOrNull { it.groupId !in gone }?.groupId

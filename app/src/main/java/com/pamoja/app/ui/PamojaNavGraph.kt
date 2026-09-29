@@ -29,11 +29,11 @@ import com.pamoja.app.ui.auth.ForgotPasswordScreen
 import com.pamoja.app.ui.auth.OtpScreen
 import com.pamoja.app.ui.auth.PhoneEntryScreen
 import com.pamoja.app.ui.group.CreateGroupScreen
+import com.pamoja.app.ui.group.GroupDetailsScreen
 import com.pamoja.app.ui.join.JoinGroupScreen
-import com.pamoja.app.ui.group.GroupScreen
+import com.pamoja.app.ui.join.JoinWithLinkScreen
 import com.pamoja.app.ui.weeklyreview.WeeklyReviewScreen
 import com.pamoja.app.ui.home.HomeScreen
-import com.pamoja.app.ui.home.GroupsScreen
 import com.pamoja.app.ui.invite.InviteScreen
 import com.pamoja.app.ui.onboarding.EnterInviteScreen
 import com.pamoja.app.ui.onboarding.HealthConnectScreen
@@ -48,6 +48,12 @@ import com.pamoja.app.ui.theme.PamojaMotion
  */
 private const val KEY_PROFILE_SAVED = "profile_saved"
 
+/**
+ * Set on Home's entry by group details when this person left or deleted the
+ * group, so Home moves to their next group straight away.
+ */
+private const val KEY_GONE_GROUP = "gone_group"
+
 @Composable
 fun PamojaNavGraph(
     navController: NavHostController,
@@ -56,34 +62,10 @@ fun PamojaNavGraph(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        enterTransition = {
-            pamojaEnter(
-                from = initialState.destination.route,
-                to = targetState.destination.route,
-                returning = false,
-            )
-        },
-        exitTransition = {
-            pamojaExit(
-                from = initialState.destination.route,
-                to = targetState.destination.route,
-                returning = false,
-            )
-        },
-        popEnterTransition = {
-            pamojaEnter(
-                from = initialState.destination.route,
-                to = targetState.destination.route,
-                returning = true,
-            )
-        },
-        popExitTransition = {
-            pamojaExit(
-                from = initialState.destination.route,
-                to = targetState.destination.route,
-                returning = true,
-            )
-        },
+        enterTransition = { pamojaEnter(returning = false) },
+        exitTransition = { pamojaExit(returning = false) },
+        popEnterTransition = { pamojaEnter(returning = true) },
+        popExitTransition = { pamojaExit(returning = true) },
     ) {
 
         // The Start screen asks for nothing. An invite link pasted here is kept
@@ -204,7 +186,7 @@ fun PamojaNavGraph(
         composable(Screen.ProfileSetup.route) {
             ProfileSetupScreen(
                 onContinue = { hasPendingInvite ->
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Home.createRoute()) {
                         popUpTo(Screen.ProfileSetup.route) { inclusive = true }
                     }
                     // Without an invite the next step is starting a group, on top
@@ -222,12 +204,7 @@ fun PamojaNavGraph(
             arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
-            val leaveHealthConnect: () -> Unit = {
-                navController.navigate(Screen.Group.createRoute(groupId)) {
-                    popUpTo(Screen.HealthConnect.route) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
+            val leaveHealthConnect: () -> Unit = { navController.openGroupHome(groupId) }
 
             HealthConnectScreen(
                 onConnected = leaveHealthConnect,
@@ -236,51 +213,100 @@ fun PamojaNavGraph(
         }
 
         // ─── Main App ────────────────────────────────────────────────────────────
+        // One home: your group. Everything else is reached from it; no tabs.
 
-        composable(Screen.Home.route) {
+        composable(
+            route = Screen.Home.route,
+            arguments = listOf(
+                navArgument("groupId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            ),
+        ) { entry ->
+            val savedHandle = entry.savedStateHandle
+            val goneGroupId by savedHandle
+                .getStateFlow<String?>(KEY_GONE_GROUP, null)
+                .collectAsStateWithLifecycle()
+
             HomeScreen(
-                onGroupClick = { groupId ->
-                    navController.navigate(Screen.Group.createRoute(groupId))
+                goneGroupId = goneGroupId,
+                onGoneGroupHandled = { savedHandle[KEY_GONE_GROUP] = null },
+                onOpenDetails = { groupId ->
+                    navController.navigate(Screen.GroupDetails.createRoute(groupId)) { launchSingleTop = true }
                 },
-                onGroupsClick = { navController.navigateMainTab(Screen.Groups.route) },
-                onSettingsClick = { navController.navigateMainTab(Screen.Settings.route) },
+                onOpenSettings = {
+                    navController.navigate(Screen.Settings.route) { launchSingleTop = true }
+                },
+                onInvite = { groupId -> navController.navigate(Screen.Invite.createRoute(groupId)) },
+                onStartGroup = {
+                    navController.navigate(Screen.CreateGroup.route) { launchSingleTop = true }
+                },
+                onJoinWithLink = {
+                    navController.navigate(Screen.JoinWithLink.route) { launchSingleTop = true }
+                },
+                onOpenInvite = { code ->
+                    navController.navigate(Screen.JoinPreview.createRoute(code)) { launchSingleTop = true }
+                },
+                onOpenPaywall = { groupId -> navController.navigate(Screen.Paywall.createRoute(groupId)) },
                 onSessionExpired = {
                     navController.navigate(Screen.AuthGraph.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
-                onOpenInvite = { code ->
-                    navController.navigate(Screen.JoinPreview.createRoute(code))
-                },
-                onActivityClick = { navController.navigate(Screen.Activity.route) }
             )
         }
 
-        composable(Screen.Groups.route) {
-            GroupsScreen(
-                onGroupClick = { groupId ->
-                    navController.navigate(Screen.Group.createRoute(groupId))
-                },
-                onCreateGroup = { navController.navigate(Screen.CreateGroup.route) },
-                onTodayClick = { navController.navigateMainTab(Screen.Home.route) },
-                onSettingsClick = { navController.navigateMainTab(Screen.Settings.route) },
-                onSessionExpired = {
-                    navController.navigate(Screen.AuthGraph.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
+        composable(
+            route = Screen.GroupDetails.route,
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
+            GroupDetailsScreen(
+                onBack = { navController.popBackStack() },
+                onInvite = { id -> navController.navigate(Screen.Invite.createRoute(id)) },
+                onOpenWeeklyCard = { navController.navigate(Screen.WeeklyCard.createRoute(groupId)) },
+                onOpenReview = { navController.navigate(Screen.WeeklyReview.createRoute(groupId)) },
+                onOpenPaywall = { navController.navigate(Screen.Paywall.createRoute(groupId)) },
+                // Tells Home outright rather than waiting for a listener to
+                // notice, so it moves to another group the moment it shows.
+                onGone = {
+                    val home = runCatching { navController.getBackStackEntry(Screen.Home.route) }.getOrNull()
+                    if (home != null) {
+                        home.savedStateHandle[KEY_GONE_GROUP] = groupId
+                        navController.popBackStack(Screen.Home.route, inclusive = false)
+                    } else {
+                        navController.navigate(Screen.Home.createRoute()) {
+                            popUpTo(Screen.GroupDetails.route) { inclusive = true }
+                        }
                     }
                 },
+            )
+        }
+
+        composable(
+            route = Screen.WeeklyCard.route,
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
+        ) {
+            com.pamoja.app.ui.card.WeeklyCardScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.JoinWithLink.route) {
+            JoinWithLinkScreen(
                 onOpenInvite = { code ->
-                    navController.navigate(Screen.JoinPreview.createRoute(code))
+                    navController.navigate(Screen.JoinPreview.createRoute(code)) {
+                        popUpTo(Screen.JoinWithLink.route) { inclusive = true }
+                    }
                 },
+                onBack = { navController.popBackStack() },
             )
         }
 
         composable(Screen.Activity.route) {
             com.pamoja.app.ui.activity.ActivityScreen(
                 onBack = { navController.popBackStack() },
-                onOpenGroup = { groupId ->
-                    navController.navigate(Screen.Group.createRoute(groupId))
-                }
+                onOpenGroup = { groupId -> navController.openGroupHome(groupId) }
             )
         }
 
@@ -293,8 +319,7 @@ fun PamojaNavGraph(
             com.pamoja.app.ui.settings.SettingsScreen(
                 profileWasSaved = profileWasSaved,
                 onProfileSavedShown = { savedHandle[KEY_PROFILE_SAVED] = false },
-                onToday = { navController.navigateMainTab(Screen.Home.route) },
-                onGroups = { navController.navigateMainTab(Screen.Groups.route) },
+                onBack = { navController.popBackStack() },
                 onSignedOut = {
                     navController.navigate(Screen.AuthGraph.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -305,6 +330,9 @@ fun PamojaNavGraph(
                 },
                 onNotificationSettings = {
                     navController.navigate(Screen.NotificationSettings.route)
+                },
+                onActivity = {
+                    navController.navigate(Screen.Activity.route)
                 },
                 onAccount = {
                     navController.navigate(Screen.Account.route)
@@ -323,8 +351,7 @@ fun PamojaNavGraph(
             )
         }
 
-        // Reachable by route only. Nothing navigates here yet, by design: see
-        // Screen.Paywall.
+        // From group details and the weekly review; see Screen.Paywall.
         composable(
             route = Screen.Paywall.route,
             arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
@@ -371,7 +398,7 @@ fun PamojaNavGraph(
         composable(Screen.CreateGroup.route) {
             CreateGroupScreen(
                 onGroupCreated = { groupId ->
-                    navController.navigate(Screen.Invite.createRoute(groupId)) {
+                    navController.navigate(Screen.Invite.createRoute(groupId, created = true)) {
                         popUpTo(Screen.Home.route) { inclusive = false }
                     }
                 },
@@ -383,66 +410,29 @@ fun PamojaNavGraph(
 
         composable(
             route = Screen.Invite.route,
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("created") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            )
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
+            val created = backStackEntry.arguments?.getBoolean("created") ?: false
             InviteScreen(
                 groupId = groupId,
                 onGoToGroup = {
-                    navController.navigate(Screen.HealthConnect.createRoute(groupId)) {
-                        popUpTo(Screen.Home.route) { inclusive = false }
+                    if (created) {
+                        // A new group: step access comes next, then its home.
+                        navController.navigate(Screen.HealthConnect.createRoute(groupId)) {
+                            popUpTo(Screen.Home.route) { inclusive = false }
+                        }
+                    } else {
+                        navController.popBackStack()
                     }
                 },
                 onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(
-            route = Screen.Group.route,
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
-            GroupScreen(
-                groupId = groupId,
-                onBack = { navController.popBackStack() },
-                onShareInvite = {
-                    navController.navigate(Screen.Invite.createRoute(groupId))
-                },
-                onEditGroup = {
-                    navController.navigate(Screen.EditGroup.createRoute(groupId))
-                },
-                onOpenWeeklyReview = {
-                    navController.navigate(Screen.WeeklyReview.createRoute(groupId))
-                },
-                onOpenNextWeekPlan = {
-                    navController.navigate(Screen.NextWeekPlan.createRoute(groupId))
-                },
-                onOpenAdventure = { navController.navigate(Screen.Adventure.createRoute(groupId)) },
-                onSponsorGroup = {
-                    navController.navigate(Screen.Paywall.createRoute(groupId))
-                },
-            )
-        }
-
-        composable(Screen.Adventure.route, arguments = listOf(navArgument("groupId") { type = NavType.StringType })) { entry ->
-            val groupId = entry.arguments?.getString("groupId").orEmpty()
-            com.pamoja.app.ui.adventure.AdventureScreen(
-                onBack = { navController.popBackStack() },
-                onPremium = { navController.navigate(Screen.Paywall.createRoute(groupId)) },
-                onConnect = { navController.navigate(Screen.HealthConnect.createRoute(groupId)) },
-            )
-        }
-
-        composable(
-            route = Screen.NextWeekPlan.route,
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
-            WeeklyReviewScreen(
-                onBack = { navController.popBackStack() },
-                onContinue = { navController.popBackStack() },
-                onOpenPremium = { navController.navigate(Screen.Paywall.createRoute(groupId)) },
-                planningOnly = true,
             )
         }
 
@@ -452,44 +442,8 @@ fun PamojaNavGraph(
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
             WeeklyReviewScreen(
-                onBack = { navController.popBackStack() },
-                onOpenPremium = {
-                    navController.navigate(Screen.Paywall.createRoute(groupId))
-                },
-                onContinue = {
-                    val groupRoute = Screen.Group.createRoute(groupId)
-                    if (!navController.popBackStack(Screen.Group.route, inclusive = false)) {
-                        navController.navigate(groupRoute) { launchSingleTop = true }
-                    }
-                },
-            )
-        }
-
-        composable(
-            route = Screen.EditGroup.route,
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
-            com.pamoja.app.ui.group.EditGroupScreen(
-                onBack = { navController.popBackStack() },
-                // Replaces the group entry rather than popping back to it.
-                //
-                // GroupViewModel reads the group document once, in loadGroup,
-                // and survives a plain popBackStack, so returning that way
-                // would land on a screen still showing the old name and the
-                // old goal, which reads as the save having failed. Popping the
-                // entry and pushing a fresh one forces the reload.
-                onSaved = {
-                    navController.navigate(Screen.Group.createRoute(groupId)) {
-                        popUpTo(Screen.Group.route) { inclusive = true }
-                    }
-                },
-                onDeleted = {
-                    navController.navigate(Screen.Groups.route) {
-                        popUpTo(Screen.Home.route) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                },
+                onBack = { if (!navController.popBackStack()) navController.openGroupHome(groupId) },
+                onOpenPremium = { navController.navigate(Screen.Paywall.createRoute(groupId)) },
             )
         }
 
@@ -512,7 +466,7 @@ fun PamojaNavGraph(
                     if (!navController.popBackStack()) {
                         // Arrived straight from a link, so there is no back stack
                         // to return to.
-                        navController.navigate(Screen.Home.route) {
+                        navController.navigate(Screen.Home.createRoute()) {
                             popUpTo(Screen.JoinPreview.route) { inclusive = true }
                         }
                     }
@@ -522,12 +476,15 @@ fun PamojaNavGraph(
     }
 }
 
-/** Keeps the three main destinations as peers and restores their scroll state. */
-private fun NavHostController.navigateMainTab(route: String) {
-    navigate(route) {
-        popUpTo(Screen.Home.route) { saveState = true }
+/**
+ * Home showing [groupId], e.g. after joining it or from a notification.
+ * Replaces the Home entry rather than stacking a second one, so Back never
+ * lands on another copy of Home.
+ */
+internal fun NavHostController.openGroupHome(groupId: String) {
+    navigate(Screen.Home.createRoute(groupId)) {
+        popUpTo(Screen.Home.route) { inclusive = true }
         launchSingleTop = true
-        restoreState = true
     }
 }
 
@@ -536,33 +493,20 @@ private fun NavHostController.navigateMainTab(route: String) {
  * while Back returns toward the right. It stays below one perceptual beat so a
  * destination feels connected to the tap rather than waiting for an effect.
  */
-private fun pamojaEnter(from: String?, to: String?, returning: Boolean): EnterTransition {
-    val tabDirection = mainTabIndex(from)?.let { fromIndex ->
-        mainTabIndex(to)?.let { toIndex -> if (toIndex >= fromIndex) 1 else -1 }
-    }
-    val direction = tabDirection ?: if (returning) -1 else 1
+private fun pamojaEnter(returning: Boolean): EnterTransition {
+    val direction = if (returning) -1 else 1
     return slideInHorizontally(
         animationSpec = tween(PamojaMotion.durationFast),
         initialOffsetX = { fullWidth -> direction * (fullWidth / 20) },
     ) + fadeIn(animationSpec = tween(PamojaMotion.durationInstant))
 }
 
-private fun pamojaExit(from: String?, to: String?, returning: Boolean): ExitTransition {
-    val tabDirection = mainTabIndex(from)?.let { fromIndex ->
-        mainTabIndex(to)?.let { toIndex -> if (toIndex >= fromIndex) 1 else -1 }
-    }
-    val direction = tabDirection ?: if (returning) -1 else 1
+private fun pamojaExit(returning: Boolean): ExitTransition {
+    val direction = if (returning) -1 else 1
     return slideOutHorizontally(
         animationSpec = tween(PamojaMotion.durationFast),
         targetOffsetX = { fullWidth -> -direction * (fullWidth / 28) },
     ) + fadeOut(animationSpec = tween(PamojaMotion.durationInstant))
-}
-
-private fun mainTabIndex(route: String?): Int? = when (route) {
-    Screen.Home.route -> 0
-    Screen.Groups.route -> 1
-    Screen.Settings.route -> 2
-    else -> null
 }
 
 /**
@@ -606,7 +550,7 @@ private fun AuthRouting(
             }
 
             AuthDestination.Home -> {
-                navController.navigate(Screen.Home.route) {
+                navController.navigate(Screen.Home.createRoute()) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
                 viewModel.clearDestination()

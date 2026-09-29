@@ -37,12 +37,6 @@
     <string name="notif_subtitle">चुनें कि किस बात की सूचना चाहिए।</string>
     <string name="settings_notifications_title">सूचनाएँ</string>
     <string name="settings_notifications_sub">हम क्या भेजते हैं और कब चुप रहते हैं</string>
-    <string name="notif_primer_title">अपडेट पाते रहें</string>
-    <string name="notif_primer_body">Pamoja बंद होने पर भी समूह के अपडेट पाने के लिए सूचनाएँ चालू करें।</string>
-    <string name="notif_primer_goal">समूह अपना साप्ताहिक लक्ष्य पूरा करता है</string>
-    <string name="notif_primer_joined">कोई समूह में शामिल होता है</string>
-    <string name="notif_primer_overtaken">कोई साथी लीडरबोर्ड में आपसे आगे निकलता है</string>
-    <string name="notif_primer_control">सेटिंग में अपडेट और शांत समय चुनें।</string>
     <string name="notif_primer_allow">सूचनाओं की अनुमति दें</string>
     <string name="notif_blocked_title">सूचनाएँ बंद हैं</string>
     <string name="notif_blocked_body">Android ने Pamoja की सूचनाएँ रोक रखी हैं। अनुमति देने तक कोई सूचना नहीं मिलेगी।</string>

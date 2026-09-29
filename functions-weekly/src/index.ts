@@ -18,6 +18,13 @@ import {
   redactUserFromContributions,
 } from "./weekly-summary.js";
 import {buildCirclePreviewSeed} from "./circle-preview.js";
+import {
+  FinalizedWeek,
+  hasActivePaidAccess,
+  hasActivePreview,
+  needsStreakHistory,
+  nextGroupStreak,
+} from "./group-streak.js";
 import {eraseDepartedAdventureData, eraseDeletedGroupAdventures} from "./adventure-privacy.js";
 import {exportAdventurePage} from "./adventure-export-service.js";
 import {startTogetherTrail} from "./adventure-start-service.js";
@@ -141,6 +148,7 @@ export const finalizeCompletedGroupWeek = onDocumentUpdated(
       .collection("weeks")
       .doc(previousWeekStart);
     const previewRef = firestore.collection("groupPreviews").doc(groupId);
+    const accessRef = firestore.collection("groupAccess").doc(groupId);
     const nextWeekPlanRef = firestore
       .collection("groups")
       .doc(groupId)
@@ -175,15 +183,33 @@ export const finalizeCompletedGroupWeek = onDocumentUpdated(
       }
     });
 
+    // Finalized weeks are immutable, so this can be read outside the
+    // transaction. Only needed the first time a group reaches this code (it
+    // finalized weeks before the streak existed) or after a week nobody
+    // synced; otherwise the stored streak already ends the week before.
+    const streakHistory: FinalizedWeek[] = needsStreakHistory(previousWeekStart, after.streakThroughWeek) ?
+      (await firestore.collection("groups").doc(groupId).collection("weeks")
+        .where("weekStart", "<", previousWeekStart)
+        .orderBy("weekStart", "desc")
+        .limit(52)
+        .get()).docs.flatMap((document) => {
+        const weekStart = document.get("weekStart");
+        return typeof weekStart === "string" ?
+          [{weekStart, goalHit: document.get("goalHit") === true, shielded: document.get("shielded") === true}] :
+          [];
+      }) :
+      [];
+
     const previewStartedAtMillis = Date.now();
     await firestore.runTransaction(async (transaction) => {
       const groupRef = firestore.collection("groups").doc(groupId);
-      const [currentGroup, existingSummary, existingPreview, nextWeekPlan, previousGoal] = await Promise.all([
+      const [currentGroup, existingSummary, existingPreview, nextWeekPlan, previousGoal, access] = await Promise.all([
         transaction.get(groupRef),
         transaction.get(summaryRef),
         transaction.get(previewRef),
         transaction.get(nextWeekPlanRef),
         transaction.get(groupRef.collection("weekGoals").doc(previousWeekStart)),
+        transaction.get(accessRef),
       ]);
       if (!currentGroup.exists || existingSummary.exists) return;
 
@@ -204,8 +230,37 @@ export const finalizeCompletedGroupWeek = onDocumentUpdated(
         stepCountsByDocumentId,
       });
 
+      // Premium now, by a paid lease or the group's running preview. The
+      // preview created a few lines below cannot count: it starts after this.
+      const nowMs = Date.now();
+      const hasPremium = hasActivePaidAccess(access.exists ? {
+        isPremium: access.get("isPremium"),
+        featureSet: access.get("featureSet"),
+        leaseValidUntilMs: millisOf(access.get("leaseValidUntil")),
+      } : undefined, nowMs) || hasActivePreview(existingPreview.exists ? {
+        featureSet: existingPreview.get("featureSet"),
+        startedAtMs: millisOf(existingPreview.get("startedAt")),
+        validUntilMs: millisOf(existingPreview.get("validUntil")),
+      } : undefined, nowMs);
+      const outcome = nextGroupStreak({
+        weekStart: previousWeekStart,
+        goalHit: summary.goalHit,
+        hasPremium,
+        stored: {
+          streakWeeks: currentGroup.get("streakWeeks"),
+          streakThroughWeek: currentGroup.get("streakThroughWeek"),
+          shieldsStarted: currentGroup.get("shieldsStarted"),
+          streakShields: currentGroup.get("streakShields"),
+          shieldProgress: currentGroup.get("shieldProgress"),
+          lastShieldedWeek: currentGroup.get("lastShieldedWeek"),
+        },
+        history: streakHistory,
+      });
+
       transaction.create(summaryRef, {
         ...summary,
+        // Recorded so a later rebuild of the streak knows this miss was covered.
+        ...(outcome.shielded ? {shielded: true} : {}),
         finalizedAt: FieldValue.serverTimestamp(),
       });
       const preview = buildCirclePreviewSeed(summary, previewStartedAtMillis);
@@ -229,8 +284,20 @@ export const finalizeCompletedGroupWeek = onDocumentUpdated(
         groupId,
         nextWeekStart,
       );
+      // Server-owned: no client rule lists these keys. One update for the
+      // group document, whether or not a plan also changes its target.
+      const groupUpdate: Record<string, unknown> = {
+        streakWeeks: outcome.streakWeeks,
+        streakThroughWeek: outcome.streakThroughWeek,
+        ...(outcome.shields ? {
+          shieldsStarted: true,
+          streakShields: outcome.shields.streakShields,
+          shieldProgress: outcome.shields.shieldProgress,
+          ...(outcome.shields.lastShieldedWeek ? {lastShieldedWeek: outcome.shields.lastShieldedWeek} : {}),
+        } : {}),
+      };
       if (currentGroup.get("weekStart") === nextWeekStart && scheduledTarget != null) {
-        transaction.update(groupRef, {weeklyTarget: scheduledTarget});
+        groupUpdate.weeklyTarget = scheduledTarget;
         transaction.update(nextWeekPlanRef, {
           status: "applied",
           appliedTargetSteps: scheduledTarget,
@@ -238,6 +305,7 @@ export const finalizeCompletedGroupWeek = onDocumentUpdated(
           updatedAt: FieldValue.serverTimestamp(),
         });
       }
+      transaction.update(groupRef, groupUpdate);
     });
   },
 );
@@ -352,3 +420,7 @@ export const eraseAdventuresAfterGroupDeletion = onDocumentDeleted(
     }
   },
 );
+
+function millisOf(value: unknown): number | null {
+  return value instanceof Timestamp ? value.toMillis() : null;
+}

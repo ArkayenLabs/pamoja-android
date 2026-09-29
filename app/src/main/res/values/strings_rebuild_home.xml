@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Group home and group details rebuilt on the Lilac kit (REBUILD_PLAN.md Phase 4). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <!-- Home -->
+    <string name="home_switch_group_action">Switch group</string>
+    <string name="home_group_details_desc">Group details</string>
+    <string name="home_profile_desc">Your profile and settings</string>
+    <string name="home_this_week">This week</string>
+    <string name="home_goal_reached">Goal reached</string>
+    <string name="home_week_progress_desc">%1$s of %2$s steps</string>
+    <string name="home_pace_on_pace">%1$s · on pace for %2$s</string>
+    <string name="home_pace_finish_today">%1$s · on pace to finish today</string>
+    <string name="home_pace_per_day">%1$s · %2$s a day to finish</string>
+    <string name="home_today">Today</string>
+    <plurals name="home_walked_count">
+        <item quantity="one">%1$d of %2$d walked</item>
+        <item quantity="other">%1$d of %2$d walked</item>
+    </plurals>
+    <string name="home_face_walked_desc">%1$s, walked today</string>
+    <string name="home_face_not_walked_desc">%1$s, not walked yet today</string>
+    <string name="home_you">You</string>
+    <string name="home_you_today">You today</string>
+    <string name="home_your_usual">Your usual is %1$s</string>
+    <string name="home_today_vs_usual_desc">%1$s of your usual %2$s steps</string>
+    <string name="home_steps_title">Your steps</string>
+    <string name="home_connect_body">Connect Health Connect so your steps count for the group.</string>
+    <string name="home_connect_action">Connect</string>
+    <string name="home_week_range">%1$s to %2$s</string>
+    <string name="home_not_synced">Not synced</string>
+    <string name="home_invite_to">Invite to %1$s</string>
+    <string name="home_your_groups">Your groups</string>
+    <string name="home_group_summary">%1$s · %2$s of %3$s</string>
+    <string name="home_current_group_desc">Current group</string>
+    <string name="home_start_new_group">Start a new group</string>
+    <string name="home_join_with_link">Join with a link</string>
+    <string name="home_empty_title">No group yet</string>
+    <string name="home_empty_body">Start one, or join with a link.</string>
+    <string name="home_start_group">Start a group</string>
+
+    <!-- Join with a link, when already signed in -->
+    <string name="join_link_body">Paste the link someone sent you.</string>
+    <string name="join_link_scan">Scan a QR code</string>
+
+    <!-- Group details -->
+    <string name="details_subtitle">%1$s · Week starts %2$s</string>
+    <string name="details_invite">Invite</string>
+    <string name="details_members_count">%1$d of %2$d</string>
+    <string name="details_joined">Joined %1$s</string>
+    <string name="details_member_options_desc">Options for %1$s</string>
+    <string name="details_remove_member">Remove from group</string>
+    <string name="details_settings_title">Group settings</string>
+    <string name="details_goal">Weekly goal</string>
+    <string name="details_goal_value">%1$s steps</string>
+    <string name="details_member_limit">Member limit</string>
+    <string name="details_week_starts">Week starts</string>
+    <string name="details_photo_add">Add</string>
+    <string name="details_photo_choose">Choose a photo</string>
+    <string name="details_photo_remove">Remove photo</string>
+    <string name="details_save">Save</string>
+    <string name="details_fewer_desc">Fewer</string>
+    <string name="details_more_desc">More</string>
+    <string name="details_premium_title">Premium for the group</string>
+    <string name="details_premium_active">Active</string>
+    <string name="details_premium_manage">Premium details</string>
+    <string name="details_leave_confirm">Leave</string>
+</resources>

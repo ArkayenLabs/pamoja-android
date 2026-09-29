@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Neutral Spanish draft. Prices and trial durations come from Google Play. -->
-    <string name="premium_history_title">Vean su progreso juntos</string>
-    <string name="premium_history_body">Historial semanal completo y tendencias para todo el grupo. Los pasos y las clasificaciones siguen siendo gratis.</string>
     <string name="premium_move_named_body">¿Mover tu suscripción de %1$s a %2$s? El grupo anterior perderá el acceso que ofrece esta suscripción. No hace falta otra compra.</string>
     <string name="premium_purchase_named_body">Tu suscripción anterior cubría a %1$s. Cuando Google Play confirme la compra, cubrirá a %2$s.</string>
     <string name="premium_continue_checkout">Continuar con la compra</string>
@@ -23,20 +21,7 @@
     <string name="premium_refresh_status">Actualizar el estado de la suscripción</string>
     <string name="paywall_close">Cerrar</string>
     <string name="paywall_title">Pamoja Premium</string>
-    <string name="paywall_subtitle">Una persona se suscribe. Todo el grupo disfruta de Premium.</string>
-    <string name="paywall_sponsoring_label">GRUPO QUE CUBRES</string>
-    <string name="paywall_sponsoring_body">Premium se aplicará a este grupo.</string>
-    <string name="paywall_benefit_group">Cubre a todo tu grupo</string>
-    <string name="paywall_benefit_group_sub">Un miembro se suscribe y todos los miembros reciben Premium, sin importar cuántos sean</string>
-    <string name="paywall_benefit_history">Tu historial completo</string>
-    <string name="paywall_benefit_history_sub">Todas las semanas que han caminado, con un resumen semanal</string>
-    <string name="paywall_benefit_stats">Tendencias y récords semanales</string>
-    <string name="paywall_benefit_stats_sub">Compara semanas completas y descubre lo mejor de tu grupo</string>
-    <string name="paywall_benefit_compact_title">Revisen y planifiquen juntos</string>
-    <string name="paywall_benefit_compact_body">Historial semanal completo, tendencias y un plan compartido para la próxima semana. Los pasos y las clasificaciones siguen siendo gratis.</string>
-    <string name="paywall_free_forever">Crear grupos, invitar personas, el tamaño del grupo, el seguimiento de pasos y la clasificación siguen siendo gratis para siempre, con cualquier plan.</string>
     <string name="group_sponsor_title">Cubre a este grupo</string>
-    <string name="group_sponsor_body">Una persona se suscribe. Todo este grupo recibe Pamoja Premium.</string>
     <string name="group_access_premium">Premium</string>
     <string name="group_access_preview">Vista previa</string>
     <string name="paywall_plan_annual">Anual</string>
@@ -48,18 +33,14 @@
     <string name="paywall_disclosure">%1$s por %2$s. Se renueva automáticamente hasta que canceles.</string>
     <string name="paywall_disclosure_trial">Gratis durante %1$s; después, %2$s por %3$s. Se renueva automáticamente hasta que canceles. Cancelar durante la prueba no tiene costo.</string>
     <string name="paywall_start_trial">Iniciar prueba gratis</string>
-    <string name="paywall_subscribe">Suscribirme</string>
-    <string name="paywall_cancel_anytime">Cancela cuando quieras en Google Play.</string>
     <string name="paywall_restore">Restaurar compras</string>
     <string name="paywall_restoring">Comprobando…</string>
-    <string name="paywall_failed_title">No se pudo completar</string>
     <string name="paywall_verifying_title">Pago recibido</string>
     <string name="paywall_verifying_body">Confirmando Premium para %1$s. Mantén esta pantalla abierta un momento.</string>
     <string name="paywall_verifying_button">Verificando el acceso…</string>
     <string name="paywall_verify_retry">Verificar el acceso</string>
     <string name="paywall_move_action">Mover Premium aquí</string>
     <string name="paywall_move_title">¿Mover Premium a este grupo?</string>
-    <string name="paywall_move_body">%1$s recibirá Premium. El grupo que usa esta suscripción volverá al plan gratis.</string>
     <string name="paywall_move_confirm">Mover Premium</string>
     <string name="paywall_verify_failed_title">Tu pago está a salvo</string>
     <string name="paywall_verify_failed_body">Google Play completó la compra, pero Pamoja aún no ha confirmado Premium para %1$s. No se te volverá a cobrar. Intenta verificar el acceso.</string>

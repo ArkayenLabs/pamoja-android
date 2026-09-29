@@ -21,24 +21,37 @@ class PaywallScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
+    /** The exact group, and who else it reaches, before any price or button. */
     @Test
-    fun sponsorshipCardNamesTheExactGroupBeforeCheckout() {
+    fun thePaywallNamesTheExactGroupAndItsPeopleBeforeCheckout() {
         val exactName = "Asha & Ben's Sunrise Walking Circle"
+        val groupId = "6413795d-42d0-4f2b-80df-f017a9d32817"
 
         compose.setContent {
             PamojaTheme(themePreference = ThemePreference.Dark) {
-                SponsoringGroupCard(
-                    group = Group(
-                        groupId = "6413795d-42d0-4f2b-80df-f017a9d32817",
-                        name = exactName,
+                PaywallContent(
+                    state = PaywallUiState(
+                        group = Group(groupId = groupId, name = exactName),
+                        purchaseContext = com.pamoja.app.domain.repository.PurchaseContext(
+                            groupId = groupId, payerUid = "me", groupIsPremium = false, isGroupSponsor = false,
+                            subscriptionIsActive = false, sponsoredGroupId = null, sponsoredGroupName = null,
+                        ),
+                        isGroupLoading = false,
+                        members = listOf(
+                            com.pamoja.app.domain.model.Membership(userId = "me", displayName = "Me"),
+                            com.pamoja.app.domain.model.Membership(userId = "asha", displayName = "Asha Rao"),
+                            com.pamoja.app.domain.model.Membership(userId = "ben", displayName = "Ben"),
+                        ),
                     ),
+                    onDismiss = {}, onRetryContext = {}, onSelectPlan = {}, onPurchase = {}, onKeepBoth = {},
+                    onMoveHere = {}, onRestore = {}, onRetryVerification = {}, onRefresh = {}, onManageInPlay = {},
                 )
             }
         }
 
-        compose.onNodeWithText("SPONSORING").assertIsDisplayed()
-        compose.onNodeWithText(exactName).assertIsDisplayed()
-        compose.onNodeWithText("Premium will apply to this group.").assertIsDisplayed()
+        compose.onNodeWithText("Premium for $exactName").assertIsDisplayed()
+        // The payer is never listed as someone else who gets it.
+        compose.onNodeWithText("Asha and Ben get it too. One of you pays.").assertIsDisplayed()
     }
 
     @Test

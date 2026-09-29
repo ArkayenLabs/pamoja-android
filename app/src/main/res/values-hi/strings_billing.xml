@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Hindi draft. Prices and trial durations come from Google Play. -->
-    <string name="premium_history_title">अपनी प्रगति साथ देखें</string>
-    <string name="premium_history_body">पूरे समूह के लिए हर सप्ताह का पूरा इतिहास और रुझान। कदमों की गिनती और लीडरबोर्ड मुफ़्त रहेंगे।</string>
     <string name="premium_move_named_body">अपनी सदस्यता %1$s से %2$s में ले जाएँ? पिछले समूह को इस सदस्यता से मिलने वाली सुविधाएँ बंद हो जाएँगी। दोबारा खरीदने की ज़रूरत नहीं है।</string>
     <string name="premium_purchase_named_body">आपकी पिछली सदस्यता %1$s के लिए थी। Google Play से खरीद की पुष्टि होने के बाद यह %2$s के लिए लागू होगी।</string>
     <string name="premium_continue_checkout">खरीदारी के लिए आगे बढ़ें</string>
@@ -23,20 +21,7 @@
     <string name="premium_refresh_status">सदस्यता की स्थिति फिर से जाँचें</string>
     <string name="paywall_close">बंद करें</string>
     <string name="paywall_title">Pamoja Premium</string>
-    <string name="paywall_subtitle">एक व्यक्ति सदस्यता लेता है। पूरे समूह को Premium मिलता है।</string>
-    <string name="paywall_sponsoring_label">इस समूह के लिए सदस्यता</string>
-    <string name="paywall_sponsoring_body">Premium इस समूह पर लागू होगा।</string>
-    <string name="paywall_benefit_group">आपके पूरे समूह के लिए</string>
-    <string name="paywall_benefit_group_sub">एक सदस्य सदस्यता लेता है और सभी सदस्यों को Premium मिलता है, चाहे समूह में जितने भी सदस्य हों</string>
-    <string name="paywall_benefit_history">आपका पूरा इतिहास</string>
-    <string name="paywall_benefit_history_sub">चलने के हर सप्ताह का इतिहास और साप्ताहिक सारांश</string>
-    <string name="paywall_benefit_stats">साप्ताहिक रुझान और रिकॉर्ड</string>
-    <string name="paywall_benefit_stats_sub">पूरे हुए सप्ताहों की तुलना करें और समूह के बेहतरीन प्रदर्शन देखें</string>
-    <string name="paywall_benefit_compact_title">साथ समीक्षा करें और योजना बनाएँ</string>
-    <string name="paywall_benefit_compact_body">पूरे सप्ताह का इतिहास, रुझान और अगले सप्ताह की साझा योजना। कदमों की गिनती और लीडरबोर्ड मुफ़्त रहेंगे।</string>
-    <string name="paywall_free_forever">समूह बनाना, लोगों को बुलाना, समूह का आकार, कदमों की गिनती और लीडरबोर्ड हर योजना में हमेशा मुफ़्त रहेंगे।</string>
     <string name="group_sponsor_title">इस समूह के लिए सदस्यता लें</string>
-    <string name="group_sponsor_body">एक व्यक्ति सदस्यता लेता है। इस समूह के सभी सदस्यों को Pamoja Premium मिलता है।</string>
     <string name="group_access_premium">Premium</string>
     <string name="group_access_preview">झलक</string>
     <string name="paywall_plan_annual">सालाना</string>
@@ -48,18 +33,14 @@
     <string name="paywall_disclosure">%1$s प्रति %2$s। रद्द करने तक सदस्यता अपने आप नवीनीकृत होती रहेगी।</string>
     <string name="paywall_disclosure_trial">%1$s तक मुफ़्त, फिर %2$s प्रति %3$s। रद्द करने तक सदस्यता अपने आप नवीनीकृत होती रहेगी। मुफ़्त अवधि में रद्द करने पर कोई शुल्क नहीं लगेगा।</string>
     <string name="paywall_start_trial">मुफ़्त आज़माएँ</string>
-    <string name="paywall_subscribe">सदस्यता लें</string>
-    <string name="paywall_cancel_anytime">Google Play में कभी भी रद्द करें।</string>
     <string name="paywall_restore">खरीदारी बहाल करें</string>
     <string name="paywall_restoring">जाँच हो रही है…</string>
-    <string name="paywall_failed_title">पूरा नहीं हो सका</string>
     <string name="paywall_verifying_title">भुगतान मिल गया</string>
     <string name="paywall_verifying_body">%1$s के लिए Premium की पुष्टि हो रही है। यह स्क्रीन कुछ देर खुली रखें।</string>
     <string name="paywall_verifying_button">सुविधाओं की पुष्टि हो रही है…</string>
     <string name="paywall_verify_retry">सुविधाओं की पुष्टि करें</string>
     <string name="paywall_move_action">Premium यहाँ ले आएँ</string>
     <string name="paywall_move_title">Premium इस समूह में ले जाएँ?</string>
-    <string name="paywall_move_body">%1$s को Premium मिलेगा। अभी इस सदस्यता का उपयोग कर रहा समूह मुफ़्त योजना पर लौट जाएगा।</string>
     <string name="paywall_move_confirm">Premium स्थानांतरित करें</string>
     <string name="paywall_verify_failed_title">आपका भुगतान सुरक्षित है</string>
     <string name="paywall_verify_failed_body">Google Play पर खरीद पूरी हो गई, लेकिन Pamoja ने अभी %1$s के लिए Premium की पुष्टि नहीं की है। आपसे दोबारा शुल्क नहीं लिया जाएगा। सुविधाओं की पुष्टि करने की कोशिश करें।</string>

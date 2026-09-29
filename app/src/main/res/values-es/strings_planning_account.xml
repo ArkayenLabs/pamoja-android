@@ -1,44 +1,5 @@
 <resources>
-    <string name="weekly_review_same_as_previous">El mismo total que la semana anterior</string>
-    <string name="weekly_review_recent_progress">Progreso reciente</string>
-    <string name="weekly_review_best_short">Mejor: %1$s</string>
-    <string name="weekly_review_earlier_weeks">Semanas anteriores</string>
-    <string name="weekly_review_chart_bar_description">Semana del %1$s, %2$s pasos. Toca para ver detalles.</string>
-    <string name="weekly_review_chart_tooltip">%1$s pasos</string>
-    <string name="plan_next_week_title">Planificar la próxima semana</string>
-    <string name="planning_access_unavailable">No se pudo comprobar el acceso al grupo. Vuelve a intentarlo.</string>
-    <string name="planning_current_goal_basis">Según la meta actual del grupo. Las semanas completadas aparecerán en el Resumen semanal.</string>
-    <string name="planning_selected_target">Próxima semana: %1$s pasos</string>
-    <string name="planning_gentler_minimum">La meta ya está en el mínimo. Elige Repetir o Personalizar.</string>
-    <string name="planning_gentler_explanation">El 80% de la meta actual, redondeado a los 10.000 pasos más cercanos.</string>
-    <string name="planning_saved_current_basis">Según la meta de %1$s pasos al guardar. Esta semana no cambia.</string>
-    <string name="planning_premium_details">Detalles de Premium</string>
-    <string name="next_week_together_title">La próxima semana, juntos</string>
-    <string name="next_week_together_premium_body">La planificación está incluida en Premium. Tu meta actual y el Resumen semanal no cambian.</string>
-    <string name="next_week_together_unlock">Desbloquear con Premium</string>
-    <string name="next_week_together_waiting">Quien organiza el grupo está preparando la próxima meta.</string>
-    <string name="next_week_together_organizer_prompt">Prepara la próxima semana del grupo</string>
-    <string name="next_week_together_repeat">Repetir</string>
-    <string name="next_week_together_gentler">Más suave</string>
-    <string name="next_week_together_custom">Personalizar</string>
-    <string name="next_week_together_schedule">Programar la próxima semana</string>
-    <string name="next_week_together_scheduled">%1$s pasos · empieza el %2$s</string>
-    <string name="next_week_together_basis">Semana pasada: %1$s de %2$s pasos. Nada cambia hasta que empiece la nueva semana.</string>
-    <string name="next_week_together_change">Cambiar plan</string>
-    <string name="next_week_together_poll_prompt">¿Cómo ves la próxima semana?</string>
-    <string name="next_week_together_response_in">Me apunto</string>
-    <string name="next_week_together_response_gentler">Prefiero algo más suave</string>
-    <string name="next_week_together_counts">Se apuntan: %1$d · Más suave: %2$d · Descansan: %3$d</string>
-    <string name="group_back_desc">Atrás</string>
-    <string name="group_share_desc">Compartir enlace de invitación</string>
     <string name="group_of_target">de %1$s</string>
-    <string name="group_stat_completed">completado</string>
-    <string name="group_stat_remaining">restante</string>
-    <string name="group_rank_desc">Puesto %1$d</string>
-    <string name="group_you">tú</string>
-    <string name="group_today">hoy</string>
-    <string name="group_enable_tracking_title">Activar el registro de pasos</string>
-    <string name="group_enable_tracking_body">Toca para dar permiso y empezar a contar</string>
     <string name="join_invited_to">Te han invitado a</string>
     <string name="join_already_in">Ya estás en</string>
     <string name="join_members_one">miembro</string>
@@ -84,8 +45,6 @@
     <string name="settings_version">Pamoja v%1$s</string>
     <string name="settings_title">Tú</string>
     <string name="settings_subtitle">Tu perfil, preferencias y privacidad</string>
-    <string name="settings_back_desc">Atrás</string>
-    <string name="settings_section_profile">PERFIL</string>
     <string name="settings_section_information">PRIVACIDAD E INFORMACIÓN</string>
     <string name="settings_name_fallback">Invitado</string>
     <string name="settings_rate_title">Valóranos</string>
@@ -107,5 +66,4 @@
     <string name="profile_edit_photo_add">Añadir una foto</string>
     <string name="profile_edit_photo_change">Cambiar foto</string>
     <string name="profile_edit_photo_uploading">Subiendo…</string>
-    <plurals name="weekly_review_active_members"><item quantity="one">%1$d activos</item><item quantity="other">%1$d activos</item></plurals>
 </resources>

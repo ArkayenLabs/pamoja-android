@@ -9,9 +9,6 @@
     <string name="auth_error_rate_limited_body">Espera unos minutos o usa otro método para iniciar sesión.</string>
     <string name="auth_error_offline_title">Sin conexión</string>
     <string name="auth_error_offline_body">Necesitas conexión para iniciar sesión. Revísala e inténtalo de nuevo.</string>
-    <string name="auth_error_sms_title">No se pudo enviar el código</string>
-    <string name="auth_error_sms_body">Inténtalo de nuevo o inicia sesión con Google o correo.</string>
-    <string name="auth_error_phone_invalid">El número no parece correcto. Revisa los dígitos después del prefijo internacional.</string>
     <string name="auth_error_google_unavailable_title">No se pudo abrir el acceso con Google</string>
     <string name="auth_error_google_unavailable_body">Inténtalo de nuevo. Si vuelve a ocurrir, actualiza los Servicios de Google Play o usa teléfono o correo.</string>
     <string name="auth_error_generic_title">No funcionó</string>
@@ -74,7 +71,6 @@
     <string name="reset_resend">Reenviar</string>
     <string name="reset_back_to_signin">Volver al inicio de sesión</string>
     <string name="auth_step_sign_in">Iniciar sesión</string>
-    <string name="auth_step_sign_up">Registrarse</string>
     <string name="auth_step_verify">Verificar</string>
     <string name="auth_step_reset">Restablecer contraseña</string>
 </resources>

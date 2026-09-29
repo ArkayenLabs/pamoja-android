@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_switch_group_action">Cambiar de grupo</string>
+    <string name="home_group_details_desc">Detalles del grupo</string>
+    <string name="home_profile_desc">Tu perfil y ajustes</string>
+    <string name="home_this_week">Esta semana</string>
+    <string name="home_goal_reached">Meta cumplida</string>
+    <string name="home_week_progress_desc">%1$s de %2$s pasos</string>
+    <string name="home_pace_on_pace">%1$s · al ritmo para el %2$s</string>
+    <string name="home_pace_finish_today">%1$s · al ritmo para terminar hoy</string>
+    <string name="home_pace_per_day">%1$s · %2$s al día para terminar</string>
+    <string name="home_today">Hoy</string>
+    <plurals name="home_walked_count">
+        <item quantity="one">%1$d de %2$d ha caminado</item>
+        <item quantity="other">%1$d de %2$d han caminado</item>
+    </plurals>
+    <string name="home_face_walked_desc">%1$s, caminó hoy</string>
+    <string name="home_face_not_walked_desc">%1$s, aún no ha caminado hoy</string>
+    <string name="home_you">Tú</string>
+    <string name="home_you_today">Tú hoy</string>
+    <string name="home_your_usual">Lo habitual para ti: %1$s</string>
+    <string name="home_today_vs_usual_desc">%1$s de tus %2$s pasos habituales</string>
+    <string name="home_steps_title">Tus pasos</string>
+    <string name="home_connect_body">Conecta Health Connect para que tus pasos cuenten para el grupo.</string>
+    <string name="home_connect_action">Conectar</string>
+    <string name="home_week_range">%1$s a %2$s</string>
+    <string name="home_not_synced">Sin sincronizar</string>
+    <string name="home_invite_to">Invitar a %1$s</string>
+    <string name="home_your_groups">Tus grupos</string>
+    <string name="home_group_summary">%1$s · %2$s de %3$s</string>
+    <string name="home_current_group_desc">Grupo actual</string>
+    <string name="home_start_new_group">Crear un grupo nuevo</string>
+    <string name="home_join_with_link">Unirme con un enlace</string>
+    <string name="home_empty_title">Aún no tienes grupo</string>
+    <string name="home_empty_body">Crea uno o únete con un enlace.</string>
+    <string name="home_start_group">Crear un grupo</string>
+
+    <string name="join_link_body">Pega el enlace que te enviaron.</string>
+    <string name="join_link_scan">Escanear un código QR</string>
+
+    <string name="details_subtitle">%1$s · La semana empieza el %2$s</string>
+    <string name="details_invite">Invitar</string>
+    <string name="details_members_count">%1$d de %2$d</string>
+    <string name="details_joined">Se unió el %1$s</string>
+    <string name="details_member_options_desc">Opciones para %1$s</string>
+    <string name="details_remove_member">Quitar del grupo</string>
+    <string name="details_settings_title">Ajustes del grupo</string>
+    <string name="details_goal">Meta semanal</string>
+    <string name="details_goal_value">%1$s pasos</string>
+    <string name="details_member_limit">Límite de miembros</string>
+    <string name="details_week_starts">La semana empieza</string>
+    <string name="details_photo_add">Añadir</string>
+    <string name="details_photo_choose">Elegir una foto</string>
+    <string name="details_photo_remove">Quitar la foto</string>
+    <string name="details_save">Guardar</string>
+    <string name="details_fewer_desc">Menos</string>
+    <string name="details_more_desc">Más</string>
+    <string name="details_premium_title">Premium para el grupo</string>
+    <string name="details_premium_active">Activo</string>
+    <string name="details_premium_manage">Detalles de Premium</string>
+    <string name="details_leave_confirm">Salir</string>
+</resources>

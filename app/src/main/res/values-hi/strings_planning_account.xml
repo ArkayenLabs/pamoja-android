@@ -1,44 +1,5 @@
 <resources>
-    <string name="weekly_review_same_as_previous">पिछले हफ़्ते के बराबर कुल</string>
-    <string name="weekly_review_recent_progress">हाल की प्रगति</string>
-    <string name="weekly_review_best_short">सर्वश्रेष्ठ %1$s</string>
-    <string name="weekly_review_earlier_weeks">पिछले हफ़्ते</string>
-    <string name="weekly_review_chart_bar_description">%1$s वाला हफ़्ता, %2$s कदम। जानकारी के लिए टैप करें।</string>
-    <string name="weekly_review_chart_tooltip">%1$s कदम</string>
-    <string name="plan_next_week_title">अगले हफ़्ते की योजना</string>
-    <string name="planning_access_unavailable">समूह की पहुँच जाँची नहीं जा सकी। फिर कोशिश करें।</string>
-    <string name="planning_current_goal_basis">समूह के मौजूदा लक्ष्य पर आधारित। पूरे हुए हफ़्ते साप्ताहिक समीक्षा में दिखेंगे।</string>
-    <string name="planning_selected_target">अगला हफ़्ता: %1$s कदम</string>
-    <string name="planning_gentler_minimum">लक्ष्य पहले से न्यूनतम है। दोहराएँ या अपना लक्ष्य चुनें।</string>
-    <string name="planning_gentler_explanation">मौजूदा लक्ष्य का 80%, निकटतम 10,000 कदमों तक पूर्णांकित।</string>
-    <string name="planning_saved_current_basis">सहेजते समय %1$s कदमों के लक्ष्य पर आधारित। यह हफ़्ता नहीं बदलेगा।</string>
-    <string name="planning_premium_details">Premium की जानकारी</string>
-    <string name="next_week_together_title">अगला हफ़्ता साथ</string>
-    <string name="next_week_together_premium_body">योजना Premium में शामिल है। मौजूदा लक्ष्य और साप्ताहिक समीक्षा नहीं बदलते।</string>
-    <string name="next_week_together_unlock">Premium से खोलें</string>
-    <string name="next_week_together_waiting">आयोजक अगला साझा लक्ष्य तैयार कर रहा है।</string>
-    <string name="next_week_together_organizer_prompt">समूह का अगला हफ़्ता तय करें</string>
-    <string name="next_week_together_repeat">दोहराएँ</string>
-    <string name="next_week_together_gentler">हल्का</string>
-    <string name="next_week_together_custom">अपना लक्ष्य</string>
-    <string name="next_week_together_schedule">अगले हफ़्ते के लिए तय करें</string>
-    <string name="next_week_together_scheduled">%1$s कदम · %2$s से शुरू</string>
-    <string name="next_week_together_basis">पिछला हफ़्ता: %2$s में से %1$s कदम। नया हफ़्ता शुरू होने तक कुछ नहीं बदलता।</string>
-    <string name="next_week_together_change">योजना बदलें</string>
-    <string name="next_week_together_poll_prompt">अगला हफ़्ता कैसा रहेगा?</string>
-    <string name="next_week_together_response_in">मैं शामिल हूँ</string>
-    <string name="next_week_together_response_gentler">हल्का लक्ष्य चाहिए</string>
-    <string name="next_week_together_counts">शामिल: %1$d · हल्का: %2$d · आराम: %3$d</string>
-    <string name="group_back_desc">वापस</string>
-    <string name="group_share_desc">आमंत्रण लिंक शेयर करें</string>
     <string name="group_of_target">%1$s में से</string>
-    <string name="group_stat_completed">पूरा</string>
-    <string name="group_stat_remaining">बाकी</string>
-    <string name="group_rank_desc">स्थान %1$d</string>
-    <string name="group_you">आप</string>
-    <string name="group_today">आज</string>
-    <string name="group_enable_tracking_title">कदमों की गिनती चालू करें</string>
-    <string name="group_enable_tracking_body">अनुमति देने और गिनती शुरू करने के लिए टैप करें</string>
     <string name="join_invited_to">आपको आमंत्रित किया गया है</string>
     <string name="join_already_in">आप पहले से शामिल हैं</string>
     <string name="join_members_one">सदस्य</string>
@@ -84,8 +45,6 @@
     <string name="settings_version">Pamoja v%1$s</string>
     <string name="settings_title">आप</string>
     <string name="settings_subtitle">आपकी प्रोफ़ाइल, पसंद और गोपनीयता</string>
-    <string name="settings_back_desc">वापस</string>
-    <string name="settings_section_profile">प्रोफ़ाइल</string>
     <string name="settings_section_information">गोपनीयता और जानकारी</string>
     <string name="settings_name_fallback">अतिथि</string>
     <string name="settings_rate_title">रेटिंग दें</string>
@@ -107,5 +66,4 @@
     <string name="profile_edit_photo_add">फ़ोटो जोड़ें</string>
     <string name="profile_edit_photo_change">फ़ोटो बदलें</string>
     <string name="profile_edit_photo_uploading">अपलोड हो रहा है…</string>
-    <plurals name="weekly_review_active_members"><item quantity="one">%1$d सक्रिय</item><item quantity="other">%1$d सक्रिय</item></plurals>
 </resources>

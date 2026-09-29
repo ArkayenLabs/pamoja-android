@@ -24,6 +24,12 @@ data class Entitlement(
     val groupCapacity: Int = 0,
     /** RevenueCat's current Google Play product identifier, used for upgrades. */
     val productId: String? = null,
+    /**
+     * False once the subscriber has cancelled: access continues to [expiresAt]
+     * but nothing will be charged. Keeps "your trial renews" from being said
+     * to someone who already said no.
+     */
+    val willRenew: Boolean = true,
 ) {
     val isPremium: Boolean get() = tier == PlanTier.Premium
 }

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Premium rework: shields, the free last week, the Lilac paywall and review (REBUILD_PLAN.md Phase 6). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <!-- Shared -->
+    <string name="premium_see">See Premium</string>
+    <string name="premium_preview_until">Premium preview until %1$s</string>
+    <string name="premium_preview_chip">Preview</string>
+    <string name="premium_shields">Streak shields</string>
+    <plurals name="premium_shields_ready">
+        <item quantity="one">%d ready</item>
+        <item quantity="other">%d ready</item>
+    </plurals>
+    <string name="premium_shields_explain">When a week misses its goal, a shield keeps the streak going. The group earns one every 4 goal weeks and holds up to 2.</string>
+
+    <!-- Weekly review -->
+    <string name="review_last_week">Last week</string>
+    <string name="review_week_of">Week of %1$s</string>
+    <string name="review_goal_met">Goal met</string>
+    <string name="review_shield_used">Shield used</string>
+    <string name="review_short">%1$s short of the goal</string>
+    <string name="review_first_week_title">Your first week is still going</string>
+    <string name="review_first_week_body">Its review appears here when the week ends.</string>
+    <string name="review_earlier">Earlier weeks</string>
+    <string name="review_locked_title">Every week before last</string>
+    <string name="review_locked_body">Full history comes with Premium.</string>
+    <string name="review_row_met_desc">%1$s, %2$s steps, goal met</string>
+    <string name="review_row_shielded_desc">%1$s, %2$s steps, a shield kept the streak</string>
+    <string name="review_row_missed_desc">%1$s, %2$s steps, goal missed</string>
+
+    <!-- Paywall -->
+    <string name="paywall_hero_title">Premium for %1$s</string>
+    <string name="paywall_hero_one">%1$s gets it too. One of you pays.</string>
+    <string name="paywall_hero_two">%1$s and %2$s get it too. One of you pays.</string>
+    <plurals name="paywall_hero_many">
+        <item quantity="one">%1$s, %2$s and %3$d other get it too. One of you pays.</item>
+        <item quantity="other">%1$s, %2$s and %3$d others get it too. One of you pays.</item>
+    </plurals>
+    <string name="paywall_hero_alone">Everyone who joins gets it too. One of you pays.</string>
+    <string name="paywall_feature_shields_body">Miss a week without losing your streak.</string>
+    <string name="paywall_feature_history">Full history</string>
+    <string name="paywall_feature_history_body">Every week, not just the last one.</string>
+    <string name="paywall_timeline_today">Today</string>
+    <string name="paywall_timeline_access">Full access</string>
+    <string name="paywall_timeline_day">Day %1$d</string>
+    <string name="paywall_timeline_remind">We remind you</string>
+    <string name="paywall_timeline_charge">First charge</string>
+    <plurals name="paywall_try_free">
+        <item quantity="one">Try it free for %d day</item>
+        <item quantity="other">Try it free for %d days</item>
+    </plurals>
+    <string name="paywall_get_premium_for">Get Premium for %1$s</string>
+    <string name="paywall_maybe_later">Maybe later</string>
+    <string name="trial_reminder_title">Your Premium trial ends soon</string>
+    <string name="trial_reminder_body">It ends on %1$s and then renews. You can cancel any time in Google Play.</string>
+
+    <!-- Home and group details -->
+    <string name="home_shield_used">A shield kept your streak last week</string>
+    <string name="preview_ended_title">Your Premium preview has ended</string>
+    <string name="preview_ended_body">Keep streak shields and every week\'s history for %1$s.</string>
+
+    <!-- Weekly card -->
+    <string name="weekly_card_this_week">This week</string>
+    <string name="weekly_card_last_week">Last week</string>
+    <string name="weekly_card_last_body">%1$s, week of %2$s. The goal was %3$s.</string>
+</resources>

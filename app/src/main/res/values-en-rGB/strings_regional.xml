@@ -1,6 +1,5 @@
 <resources>
     <string name="planning_organizer_setup_body">The group organiser needs to open planning first to set the shared calendar. Then everyone can join the plan.</string>
-    <string name="next_week_together_waiting">Your organiser is preparing the next shared goal.</string>
     <string name="settings_licenses_title">Open source licences</string>
     <string name="licenses_title">Open source licences</string>
     <string name="licenses_link_body">This component\'s licence is published here.</string>

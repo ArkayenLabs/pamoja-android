@@ -37,12 +37,6 @@
     <string name="notif_subtitle">Elige qué merece interrumpirte.</string>
     <string name="settings_notifications_title">Notificaciones</string>
     <string name="settings_notifications_sub">Qué enviamos y cuándo guardamos silencio</string>
-    <string name="notif_primer_title">Mantente al día</string>
-    <string name="notif_primer_body">Activa las notificaciones para recibir novedades del grupo incluso con Pamoja cerrado.</string>
-    <string name="notif_primer_goal">Tu grupo alcanza la meta semanal</string>
-    <string name="notif_primer_joined">Alguien se une a tu grupo</string>
-    <string name="notif_primer_overtaken">Un compañero te supera en la clasificación</string>
-    <string name="notif_primer_control">Elige las notificaciones y las horas de silencio en Ajustes.</string>
     <string name="notif_primer_allow">Permitir notificaciones</string>
     <string name="notif_blocked_title">Las notificaciones están desactivadas</string>
     <string name="notif_blocked_body">Android bloquea las notificaciones de Pamoja. No recibirás ninguna hasta que las permitas.</string>

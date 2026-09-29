@@ -9,9 +9,6 @@
     <string name="auth_error_rate_limited_body">कुछ मिनट रुकें या साइन इन करने का दूसरा तरीका चुनें।</string>
     <string name="auth_error_offline_title">कनेक्शन नहीं है</string>
     <string name="auth_error_offline_body">साइन इन करने के लिए इंटरनेट चाहिए। अपना कनेक्शन जाँचकर फिर कोशिश करें।</string>
-    <string name="auth_error_sms_title">कोड नहीं भेजा जा सका</string>
-    <string name="auth_error_sms_body">फिर कोशिश करें या Google या ईमेल से साइन इन करें।</string>
-    <string name="auth_error_phone_invalid">नंबर सही नहीं लग रहा। देश के कोड के बाद के अंक जाँचें।</string>
     <string name="auth_error_google_unavailable_title">Google साइन इन नहीं खुल सका</string>
     <string name="auth_error_google_unavailable_body">फिर कोशिश करें। समस्या बनी रहे तो Google Play services अपडेट करें या फ़ोन या ईमेल इस्तेमाल करें।</string>
     <string name="auth_error_generic_title">यह काम नहीं हुआ</string>
@@ -74,7 +71,6 @@
     <string name="reset_resend">फिर भेजें</string>
     <string name="reset_back_to_signin">साइन इन पर वापस जाएँ</string>
     <string name="auth_step_sign_in">साइन इन</string>
-    <string name="auth_step_sign_up">खाता बनाएँ</string>
     <string name="auth_step_verify">पुष्टि करें</string>
     <string name="auth_step_reset">पासवर्ड रीसेट करें</string>
 </resources>

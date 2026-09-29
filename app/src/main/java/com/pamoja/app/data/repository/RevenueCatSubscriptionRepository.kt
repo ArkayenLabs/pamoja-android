@@ -57,12 +57,18 @@ import javax.inject.Singleton
  * is recoverable and much rarer.
  */
 @Singleton
-class RevenueCatSubscriptionRepository @Inject constructor() : SubscriptionRepository {
+class RevenueCatSubscriptionRepository @Inject constructor(
+    private val trialReminder: com.pamoja.app.data.local.billing.TrialReminder,
+) : SubscriptionRepository {
 
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _entitlement = MutableStateFlow(Entitlement())
 
     init {
+        // Here rather than on the paywall, so a trial started on another
+        // phone or found by a restore gets its reminder too.
+        repositoryScope.launch { _entitlement.collect(trialReminder::sync) }
+
         repositoryScope.launch {
             BillingIdentity.sessionState.collectLatest { state ->
                 if (state == BillingIdentity.SessionState.Ready && BillingIdentity.isReady) {
@@ -201,6 +207,7 @@ private fun CustomerInfo.toEntitlement(): Entitlement {
         expiresAt = premium.expirationDate?.time ?: 0L,
         groupCapacity = groupCapacityForProduct(premium.productIdentifier),
         productId = premium.productIdentifier,
+        willRenew = premium.willRenew,
     )
 }
 

@@ -22,6 +22,7 @@ rules_version = '2';
 //   pushRegistrations/{fid}          server-owned FCM installation mapping
 //   groups/{groupId}/weeks/{date}    server-finalized completed-week history
 //   groups/{groupId}/nextWeekPlans/{date} group Premium planning
+//   groups/{groupId}/signals/{date}_{kind}_{from}_{to}  cheers and nudges
 // ============================================================================
 
 service cloud.firestore {
@@ -83,6 +84,19 @@ service cloud.firestore {
     function isIsoDate(value) {
       return value is string
         && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // An ISO date that is "today" somewhere on Earth right now. Local dates run
+    // from UTC-12 to UTC+14, so a date D is current while server time is within
+    // [D - 14h, D + 36h); an hour either side absorbs device clock drift. Used
+    // where a date is part of a document ID, so that a future date cannot be
+    // used to mint more of something rationed per day. Call only after
+    // isIsoDate(value) has passed.
+    function isNearToday(value) {
+      let parts = value.split('-');
+      let day = timestamp.date(int(parts[0]), int(parts[1]), int(parts[2]));
+      return request.time > day - duration.value(15, 'h')
+        && request.time < day + duration.value(37, 'h');
     }
 
     // A photoUrl is rendered by Coil on every other member's device, so an
@@ -184,7 +198,19 @@ service cloud.firestore {
                     && request.resource.data.get('weeklySteps', 0) is int
                     && request.resource.data.get('weeklySteps', 0) >= 0
                     && request.resource.data.get('weeklySteps', 0) <= 42000000
-                    && isIsoDateOrBlank(request.resource.data.get('weekStart', ''));
+                    && isIsoDateOrBlank(request.resource.data.get('weekStart', ''))
+                    // The group streak is written only by the weekly finalizer.
+                    // No update case lists these keys, so clients can never move
+                    // them later; this stops one being baked in at creation.
+                    && request.resource.data.get('streakWeeks', 0) == 0
+                    && request.resource.data.get('streakThroughWeek', '') == ''
+                    // Streak shields, likewise the finalizer's alone. The app's
+                    // group DTO writes the two it displays at their defaults;
+                    // shieldsStarted is what tells the finalizer a group's
+                    // shields have begun, and no client may ever set it.
+                    && request.resource.data.get('streakShields', 0) == 0
+                    && request.resource.data.get('lastShieldedWeek', '') == ''
+                    && !request.resource.data.keys().hasAny(['shieldProgress', 'shieldsStarted']);
 
       allow update: if
         // A server-side group deletion marks the parent before removing its
@@ -368,8 +394,19 @@ service cloud.firestore {
     // current-week progress and leaderboard remain free in their existing
     // documents. Checking membership also protects orphaned subcollections
     // after the parent group is deleted (Firestore does not cascade deletion).
+    //
+    // One exception, added with the Premium rework: the group's most recent
+    // finished week is free to its members (this week and last are free, the
+    // rest is Premium). streakThroughWeek is set by the same finalizer every
+    // time a week is finalized, met or missed, so it always names that week.
+    // A get only, authorised on the path and the group document, never on
+    // resource.data, so asking for a week that does not exist is not an error.
+    // Listing stays Premium: it would return every week.
     match /groups/{groupId}/weeks/{weekStart} {
-      allow get, list: if isGroupMember(groupId) && hasCircleAccess(groupId);
+      allow get: if isGroupMember(groupId)
+                 && (hasCircleAccess(groupId)
+                     || weekStart == get(/databases/$(database)/documents/groups/$(groupId)).data.get('streakThroughWeek', ''));
+      allow list: if isGroupMember(groupId) && hasCircleAccess(groupId);
       allow create, update, delete: if false;
     }
 
@@ -495,9 +532,76 @@ service cloud.firestore {
       }
     }
 
+    // Cheers and nudges, one collection with `kind`, so Home needs two
+    // listeners (what I sent today, what I received today) rather than four.
+    //
+    // Private to the two people involved. Nobody else in the group can see who
+    // nudged whom, which matters more for nudges than for cheers: a list of who
+    // was nudged is a list of who is falling behind.
+    //
+    // The ID is {date}_{kind}_{fromUid}_{toUid} and a signal can only ever be
+    // created, never rewritten. That makes "one cheer and one nudge per person
+    // per day" a property of the ID rather than a counter anybody can race, and
+    // isNearToday stops a future date from being used to mint more. Firebase
+    // UIDs are alphanumeric, so the underscores are unambiguous.
+    //
+    // No names or photos are stored: the reader already has both from the
+    // memberships it loaded, and a copy here would go stale on a rename.
+    // functions-notifications pushes on create and stamps expireAt for a TTL
+    // policy, which is why expireAt is not a client-writable key.
+    match /groups/{groupId}/signals/{signalId} {
+      allow list: if isGroupMember(groupId)
+                  && (
+                       ('fromUserId' in resource.data
+                         && resource.data.fromUserId == request.auth.uid)
+                       ||
+                       ('toUserId' in resource.data
+                         && resource.data.toUserId == request.auth.uid)
+                     );
+      allow get, update, delete: if false;
+
+      allow create: if isGroupMember(groupId)
+                    && request.resource.data.keys().hasOnly([
+                         'kind', 'fromUserId', 'toUserId', 'date', 'createdAt'
+                       ])
+                    && request.resource.data.kind in ['cheer', 'nudge']
+                    && request.resource.data.fromUserId == request.auth.uid
+                    && request.resource.data.toUserId is string
+                    && request.resource.data.toUserId != request.auth.uid
+                    && isIsoDate(request.resource.data.date)
+                    // Checked before the path below is built from toUserId: a
+                    // document ID cannot contain '/', so this also keeps that
+                    // path to exactly one membership.
+                    && signalId == request.resource.data.date + '_'
+                         + request.resource.data.kind + '_'
+                         + request.auth.uid + '_'
+                         + request.resource.data.toUserId
+                    && exists(/databases/$(database)/documents/memberships/$(request.resource.data.toUserId + '_' + groupId))
+                    && request.resource.data.createdAt == request.time
+                    && isNearToday(request.resource.data.date);
+    }
+
     // ------------------------------------------------------------ memberships
 
     match /memberships/{membershipId} {
+      // The day dots in a group's standings. walkedDays has one bit per day of
+      // the group's week (bit 0 is its first day) set when that day reached
+      // 1,000 steps; walkedWeekStart names the week, and a reader shows the
+      // dots only when it matches the current one. A marker of its own rather
+      // than weekStart, because older app versions keep moving weekStart
+      // without knowing this field exists.
+      //
+      // Read with defaults, never required. Versions before 2026-10 do not
+      // write either key, and their updates must keep passing: onlyChanged
+      // ignores keys they leave alone, and a document without the fields
+      // validates as 0 and "".
+      function validWalkedDays() {
+        return request.resource.data.get('walkedDays', 0) is int
+          && request.resource.data.get('walkedDays', 0) >= 0
+          && request.resource.data.get('walkedDays', 0) <= 127
+          && isIsoDateOrBlank(request.resource.data.get('walkedWeekStart', ''));
+      }
+
       // `read` used to cover both of these with a bare isSignedIn(), and `read`
       // means get AND list. Groups were protected with `allow list: if false`
       // and users with isSelf(), but this collection was left open, so any
@@ -600,6 +704,7 @@ service cloud.firestore {
                     && request.resource.data.get('todaySteps', 0) <= 300000
                     && isIsoDateOrBlank(request.resource.data.get('weekStart', ''))
                     && isIsoDateOrBlank(request.resource.data.get('todayDate', ''))
+                    && validWalkedDays()
                     && request.resource.data.get('joinedAt', 0) is int
                     && request.resource.data.get('joinedAt', 0) >=
                          get(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
@@ -651,7 +756,9 @@ service cloud.firestore {
                          'weeklySteps',
                          'weekStart',
                          'todaySteps',
-                         'todayDate'
+                         'todayDate',
+                         'walkedDays',
+                         'walkedWeekStart'
                        ])
                     && request.resource.data.get('displayName', '') is string
                     && request.resource.data.get('displayName', '').size() <= 100
@@ -665,7 +772,8 @@ service cloud.firestore {
                     && request.resource.data.get('todaySteps', 0) >= 0
                     && request.resource.data.get('todaySteps', 0) <= 300000
                     && isIsoDateOrBlank(request.resource.data.get('weekStart', ''))
-                    && isIsoDateOrBlank(request.resource.data.get('todayDate', ''));
+                    && isIsoDateOrBlank(request.resource.data.get('todayDate', ''))
+                    && validWalkedDays();
 
       // Remove yourself, or the group admin may remove anyone.
       allow delete: if isSignedIn()

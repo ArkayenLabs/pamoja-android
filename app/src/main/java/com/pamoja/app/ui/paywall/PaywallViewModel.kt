@@ -10,6 +10,10 @@ import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.BillingPeriod
 import com.pamoja.app.domain.model.Entitlement
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
 import com.pamoja.app.domain.repository.SubscriptionPlan
 import com.pamoja.app.domain.repository.PurchaseContext
 import com.pamoja.app.domain.usecase.GetSubscriptionPlansUseCase
@@ -48,7 +52,13 @@ data class PaywallUiState(
     val justUpgraded: Boolean = false,
     /** A completed store upgrade is waiting for its larger capacity server-side. */
     val capacityUpgradePending: Boolean = false,
+    /** The group's members, for the faces and names the paywall is about. */
+    val members: List<Membership> = emptyList(),
 ) {
+    /** Everyone Premium would reach besides the person paying. */
+    val otherMembers: List<Membership>
+        get() = members.filter { it.userId != purchaseContext?.payerUid }
+
     /**
      * True when there is genuinely nothing to sell.
      *
@@ -82,7 +92,10 @@ class PaywallViewModel @Inject constructor(
     private val purchaseSubscriptionUseCase: PurchaseSubscriptionUseCase,
     private val restorePurchasesUseCase: RestorePurchasesUseCase,
     private val confirmPurchasedGroupAccessUseCase: ConfirmPurchasedGroupAccessUseCase,
+    private val getGroupMembershipsUseCase: GetGroupMembershipsUseCase,
 ) : ViewModel() {
+
+    private var membersJob: Job? = null
 
     private val requestedGroupId: String =
         savedStateHandle.get<String>("groupId").orEmpty()
@@ -131,6 +144,7 @@ class PaywallViewModel @Inject constructor(
                         purchaseContext = context,
                         isGroupLoading = false,
                     )
+                    observeMembers(group.groupId)
                     if (!context.groupIsPremium &&
                         (!context.subscriptionIsActive ||
                             (context.assignedElsewhere && !context.hasAvailableGroupSlot))) {
@@ -144,6 +158,16 @@ class PaywallViewModel @Inject constructor(
                     )
                 },
             )
+        }
+    }
+
+    /** Display only: a failure leaves the paywall without faces, never without a price. */
+    private fun observeMembers(groupId: String) {
+        membersJob?.cancel()
+        membersJob = viewModelScope.launch {
+            getGroupMembershipsUseCase(groupId)
+                .catch { emit(emptyList()) }
+                .collect { _uiState.value = _uiState.value.copy(members = it) }
         }
     }
 

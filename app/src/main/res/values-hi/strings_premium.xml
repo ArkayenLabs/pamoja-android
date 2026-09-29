@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shared -->
+    <string name="premium_see">Premium देखें</string>
+    <string name="premium_preview_until">%1$s तक Premium प्रीव्यू</string>
+    <string name="premium_preview_chip">प्रीव्यू</string>
+    <string name="premium_shields">स्ट्रीक शील्ड</string>
+    <plurals name="premium_shields_ready">
+        <item quantity="one">%d तैयार</item>
+        <item quantity="other">%d तैयार</item>
+    </plurals>
+    <string name="premium_shields_explain">जब कोई हफ़्ता लक्ष्य से चूकता है, तो एक शील्ड स्ट्रीक बचा लेती है। समूह हर 4 सफल हफ़्तों पर एक शील्ड कमाता है और अधिकतम 2 रख सकता है।</string>
+
+    <!-- Weekly review -->
+    <string name="review_last_week">पिछला हफ़्ता</string>
+    <string name="review_week_of">%1$s का हफ़्ता</string>
+    <string name="review_goal_met">लक्ष्य पूरा</string>
+    <string name="review_shield_used">शील्ड इस्तेमाल हुई</string>
+    <string name="review_short">लक्ष्य से %1$s कम</string>
+    <string name="review_first_week_title">आपका पहला हफ़्ता अभी चल रहा है</string>
+    <string name="review_first_week_body">हफ़्ता खत्म होने पर उसका रिव्यू यहाँ दिखेगा।</string>
+    <string name="review_earlier">पहले के हफ़्ते</string>
+    <string name="review_locked_title">पिछले हफ़्ते से पहले के सभी हफ़्ते</string>
+    <string name="review_locked_body">पूरा इतिहास Premium के साथ मिलता है।</string>
+    <string name="review_row_met_desc">%1$s, %2$s कदम, लक्ष्य पूरा</string>
+    <string name="review_row_shielded_desc">%1$s, %2$s कदम, शील्ड ने स्ट्रीक बचाई</string>
+    <string name="review_row_missed_desc">%1$s, %2$s कदम, लक्ष्य अधूरा</string>
+
+    <!-- Paywall -->
+    <string name="paywall_hero_title">%1$s के लिए Premium</string>
+    <string name="paywall_hero_one">%1$s को भी मिलेगा। भुगतान एक ही व्यक्ति करता है।</string>
+    <string name="paywall_hero_two">%1$s और %2$s को भी मिलेगा। भुगतान एक ही व्यक्ति करता है।</string>
+    <plurals name="paywall_hero_many">
+        <item quantity="one">%1$s, %2$s और %3$d और को भी मिलेगा। भुगतान एक ही व्यक्ति करता है।</item>
+        <item quantity="other">%1$s, %2$s और %3$d और को भी मिलेगा। भुगतान एक ही व्यक्ति करता है।</item>
+    </plurals>
+    <string name="paywall_hero_alone">जो भी जुड़ेगा, उसे भी मिलेगा। भुगतान एक ही व्यक्ति करता है।</string>
+    <string name="paywall_feature_shields_body">एक हफ़्ता चूकें, फिर भी स्ट्रीक न टूटे।</string>
+    <string name="paywall_feature_history">पूरा इतिहास</string>
+    <string name="paywall_feature_history_body">हर हफ़्ता, सिर्फ़ पिछला नहीं।</string>
+    <string name="paywall_timeline_today">आज</string>
+    <string name="paywall_timeline_access">पूरी पहुँच</string>
+    <string name="paywall_timeline_day">दिन %1$d</string>
+    <string name="paywall_timeline_remind">हम याद दिलाएँगे</string>
+    <string name="paywall_timeline_charge">पहला भुगतान</string>
+    <plurals name="paywall_try_free">
+        <item quantity="one">%d दिन मुफ़्त आज़माएँ</item>
+        <item quantity="other">%d दिन मुफ़्त आज़माएँ</item>
+    </plurals>
+    <string name="paywall_get_premium_for">%1$s के लिए Premium लें</string>
+    <string name="paywall_maybe_later">फिर कभी</string>
+    <string name="trial_reminder_title">आपका Premium ट्रायल जल्द खत्म होगा</string>
+    <string name="trial_reminder_body">यह %1$s को खत्म होगा और फिर रिन्यू होगा। आप Google Play में कभी भी रद्द कर सकते हैं।</string>
+
+    <!-- Home and group details -->
+    <string name="home_shield_used">पिछले हफ़्ते एक शील्ड ने आपकी स्ट्रीक बचाई</string>
+    <string name="preview_ended_title">आपका Premium प्रीव्यू खत्म हो गया</string>
+    <string name="preview_ended_body">%1$s के लिए स्ट्रीक शील्ड और हर हफ़्ते का इतिहास रखें।</string>
+
+    <!-- Weekly card -->
+    <string name="weekly_card_this_week">यह हफ़्ता</string>
+    <string name="weekly_card_last_week">पिछला हफ़्ता</string>
+    <string name="weekly_card_last_body">%1$s, %2$s का हफ़्ता। लक्ष्य %3$s था।</string>
+</resources>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shared -->
+    <string name="premium_see">Ver Premium</string>
+    <string name="premium_preview_until">Prueba de Premium hasta el %1$s</string>
+    <string name="premium_preview_chip">Prueba</string>
+    <string name="premium_shields">Escudos de racha</string>
+    <plurals name="premium_shields_ready">
+        <item quantity="one">%d listo</item>
+        <item quantity="many">%d listos</item>
+        <item quantity="other">%d listos</item>
+    </plurals>
+    <string name="premium_shields_explain">Cuando una semana no llega a la meta, un escudo mantiene la racha. El grupo gana uno cada 4 semanas con meta cumplida y puede guardar hasta 2.</string>
+
+    <!-- Weekly review -->
+    <string name="review_last_week">La semana pasada</string>
+    <string name="review_week_of">Semana del %1$s</string>
+    <string name="review_goal_met">Meta cumplida</string>
+    <string name="review_shield_used">Escudo usado</string>
+    <string name="review_short">Faltaron %1$s para la meta</string>
+    <string name="review_first_week_title">Tu primera semana sigue en marcha</string>
+    <string name="review_first_week_body">Su resumen aparecerá aquí cuando termine la semana.</string>
+    <string name="review_earlier">Semanas anteriores</string>
+    <string name="review_locked_title">Todas las semanas anteriores</string>
+    <string name="review_locked_body">El historial completo viene con Premium.</string>
+    <string name="review_row_met_desc">%1$s, %2$s pasos, meta cumplida</string>
+    <string name="review_row_shielded_desc">%1$s, %2$s pasos, un escudo mantuvo la racha</string>
+    <string name="review_row_missed_desc">%1$s, %2$s pasos, meta no cumplida</string>
+
+    <!-- Paywall -->
+    <string name="paywall_hero_title">Premium para %1$s</string>
+    <string name="paywall_hero_one">%1$s también lo recibe. Paga una sola persona.</string>
+    <string name="paywall_hero_two">%1$s y %2$s también lo reciben. Paga una sola persona.</string>
+    <plurals name="paywall_hero_many">
+        <item quantity="one">%1$s, %2$s y %3$d persona más también lo reciben. Paga una sola persona.</item>
+        <item quantity="many">%1$s, %2$s y %3$d personas más también lo reciben. Paga una sola persona.</item>
+        <item quantity="other">%1$s, %2$s y %3$d personas más también lo reciben. Paga una sola persona.</item>
+    </plurals>
+    <string name="paywall_hero_alone">Quien se una también lo recibe. Paga una sola persona.</string>
+    <string name="paywall_feature_shields_body">Falla una semana sin perder tu racha.</string>
+    <string name="paywall_feature_history">Historial completo</string>
+    <string name="paywall_feature_history_body">Todas las semanas, no solo la última.</string>
+    <string name="paywall_timeline_today">Hoy</string>
+    <string name="paywall_timeline_access">Acceso completo</string>
+    <string name="paywall_timeline_day">Día %1$d</string>
+    <string name="paywall_timeline_remind">Te avisamos</string>
+    <string name="paywall_timeline_charge">Primer cobro</string>
+    <plurals name="paywall_try_free">
+        <item quantity="one">Pruébalo gratis %d día</item>
+        <item quantity="many">Pruébalo gratis %d días</item>
+        <item quantity="other">Pruébalo gratis %d días</item>
+    </plurals>
+    <string name="paywall_get_premium_for">Obtener Premium para %1$s</string>
+    <string name="paywall_maybe_later">Quizás más tarde</string>
+    <string name="trial_reminder_title">Tu prueba de Premium termina pronto</string>
+    <string name="trial_reminder_body">Termina el %1$s y luego se renueva. Puedes cancelar cuando quieras en Google Play.</string>
+
+    <!-- Home and group details -->
+    <string name="home_shield_used">Un escudo mantuvo tu racha la semana pasada</string>
+    <string name="preview_ended_title">Tu prueba de Premium terminó</string>
+    <string name="preview_ended_body">Conserva los escudos de racha y el historial de todas las semanas para %1$s.</string>
+
+    <!-- Weekly card -->
+    <string name="weekly_card_this_week">Esta semana</string>
+    <string name="weekly_card_last_week">La semana pasada</string>
+    <string name="weekly_card_last_body">%1$s, semana del %2$s. La meta era %3$s.</string>
+</resources>

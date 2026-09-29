@@ -4,6 +4,8 @@ package com.pamoja.app.domain.model
 data class GroupWeekContribution(
     val userId: String,
     val stepCount: Long,
+    /** That week's [WalkedDays] mask; null on weeks finalized before it was kept. */
+    val walkedDays: Int? = null,
 )
 
 /**
@@ -25,6 +27,8 @@ data class GroupWeekSummary(
     val activeMemberCount: Int,
     val contributions: List<GroupWeekContribution>,
     val finalizedAtEpochMillis: Long,
+    /** The goal was missed and a streak shield kept the streak. */
+    val shielded: Boolean = false,
 ) {
     val goalHit: Boolean
         get() = targetSteps > 0L && totalSteps >= targetSteps

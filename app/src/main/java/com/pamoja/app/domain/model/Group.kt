@@ -66,10 +66,50 @@ data class Group(
     val planningTimeZone: String = "",
     /** Server-owned pending promise. Empty after activation or a missed week. */
     val plannedWeekStart: String = "",
+    /**
+     * Completed weeks in a row that met the goal, ending with
+     * [streakThroughWeek]. Written only by the weekly finalizer in
+     * functions-weekly; no client may write it (firestore.rules).
+     *
+     * Read through [streakFor], never directly: a group nobody synced for a
+     * whole week never had that week finalized, so the stored figure can
+     * outlive the streak it describes.
+     */
+    val streakWeeks: Int = 0,
+    /**
+     * ISO date of the last completed week [streakWeeks] counts. Blank means
+     * never. Set on every finalization, met or missed, so it is also "the
+     * last finished week", the one week of history that is free.
+     */
+    val streakThroughWeek: String = "",
+    /**
+     * Streak shields banked (0..2), Premium's lead feature. Server-owned like
+     * the streak: earned by goal weeks while Premium, spent automatically on
+     * a missed week. Zero until the group's first Premium week.
+     */
+    val streakShields: Int = 0,
+    /** ISO date of the last week a shield kept the streak. Blank if none. */
+    val lastShieldedWeek: String = "",
 ) {
     /** Resolved, with the locale fallback applied. Use this, never the raw field. */
     val startDay: java.time.DayOfWeek get() = WeekWindow.parseStartDay(weekStartDay)
 
     /** True when this document still carries the retired per-person metadata. */
     val hasRetiredPerPersonSetting: Boolean get() = dailyPerPersonTarget > 0
+
+    /**
+     * The streak still standing in the week starting [currentWeekStart]: the
+     * stored count if it runs up to the week just before, otherwise none,
+     * because a week in between was never finalized and so never met the goal.
+     */
+    /** True when a shield kept the streak in the week just before [currentWeekStart]. */
+    fun shieldUsedLastWeek(currentWeekStart: String): Boolean {
+        val current = runCatching { java.time.LocalDate.parse(currentWeekStart) }.getOrNull() ?: return false
+        return lastShieldedWeek == current.minusWeeks(1).toString()
+    }
+
+    fun streakFor(currentWeekStart: String): Int {
+        val current = runCatching { java.time.LocalDate.parse(currentWeekStart) }.getOrNull() ?: return 0
+        return streakWeeks.takeIf { streakThroughWeek == current.minusWeeks(1).toString() } ?: 0
+    }
 }

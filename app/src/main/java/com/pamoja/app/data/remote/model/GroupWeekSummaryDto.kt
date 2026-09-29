@@ -3,12 +3,15 @@ package com.pamoja.app.data.remote.model
 import com.google.firebase.Timestamp
 import com.pamoja.app.domain.model.GroupWeekContribution
 import com.pamoja.app.domain.model.GroupWeekSummary
+import com.pamoja.app.domain.model.WalkedDays
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 data class GroupWeekContributionDto(
     val userId: String = "",
     val stepCount: Long = 0L,
+    /** -1 when absent: weeks finalized before the mask was kept. */
+    val walkedDays: Int = -1,
 )
 
 /** Firestore shape written only by finalizeCompletedGroupWeek. */
@@ -23,6 +26,7 @@ data class GroupWeekSummaryDto(
     val activeMemberCount: Int = 0,
     val contributions: List<GroupWeekContributionDto> = emptyList(),
     val finalizedAt: Timestamp? = null,
+    val shielded: Boolean = false,
 ) {
     /**
      * Refuses shapes the app cannot explain instead of drawing a plausible but
@@ -42,6 +46,7 @@ data class GroupWeekSummaryDto(
                 GroupWeekContribution(
                     userId = it.userId,
                     stepCount = it.stepCount.coerceIn(0L, MAX_WEEKLY_MEMBER_STEPS),
+                    walkedDays = it.walkedDays.takeIf { mask -> mask in 0..WalkedDays.ALL },
                 )
             }
             .toList()
@@ -62,6 +67,7 @@ data class GroupWeekSummaryDto(
             ),
             contributions = safeContributions,
             finalizedAtEpochMillis = finalizedAt?.toDate()?.time ?: 0L,
+            shielded = shielded,
         )
     }
 

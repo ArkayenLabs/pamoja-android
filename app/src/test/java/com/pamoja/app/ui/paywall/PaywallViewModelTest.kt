@@ -445,6 +445,7 @@ class PaywallViewModelTest {
         confirmPurchasedGroupAccessUseCase = ConfirmPurchasedGroupAccessUseCase(
             ActivateGroupSponsorshipUseCase(sponsorshipRepository)
         ),
+        getGroupMembershipsUseCase = com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase(groupRepository),
     )
 
     private class FakeSubscriptionRepository(

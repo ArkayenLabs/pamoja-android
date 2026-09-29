@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widgets on the Lilac kit (REBUILD_PLAN.md Phase 7). Their other
+     text reuses Home's strings, so the two always say the same thing. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <string name="widget_group_name">Your group</string>
+    <string name="widget_today_name">You today</string>
+    <string name="widget_hook_name">Group streak</string>
+    <string name="widget_group_description">Who has walked today and how the week is going. Nudge from your home screen.</string>
+    <string name="widget_today_description">Your steps today, and cheers from your group.</string>
+    <string name="widget_hook_description">How many weeks in a row your group has reached its goal.</string>
+    <string name="widget_no_group_title">Walk together</string>
+    <string name="widget_no_group_body">Start or join a group in Pamoja</string>
+    <string name="widget_open_to_sync">Open Pamoja to update</string>
+    <string name="widget_steps_of">%1$s of %2$s</string>
+    <string name="widget_goal_share">of this week\'s goal</string>
+    <string name="widget_connect">Connect your steps in Pamoja</string>
+    <string name="settings_widgets_title">Home screen widgets</string>
+    <string name="settings_widgets_subtitle">Your group, you today, or the group streak</string>
+    <string name="settings_widgets_picker_title">Choose a widget</string>
+    <string name="settings_widgets_group_subtitle">Today\'s faces, the week\'s goal and Nudge</string>
+    <string name="settings_widgets_today_subtitle">Your steps, or a cheer to answer</string>
+    <string name="settings_widgets_hook_subtitle">Weeks in a row your group reached its goal</string>
+    <string name="settings_widgets_unavailable">Add it from your phone\'s widget picker.</string>
+    <plurals name="widget_streak_label">
+        <item quantity="one">week in a row</item>
+        <item quantity="other">weeks in a row</item>
+    </plurals>
+    <plurals name="widget_more_members">
+        <item quantity="one">%d more member</item>
+        <item quantity="other">%d more members</item>
+    </plurals>
+</resources>

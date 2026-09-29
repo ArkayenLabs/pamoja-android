@@ -60,7 +60,7 @@ class GroupDetailsScreenTest {
         compose.onNodeWithText("Group settings").assertDoesNotExist()
         compose.onNodeWithText("Delete group").assertDoesNotExist()
 
-        compose.onNodeWithText("Sponsor this group").performScrollTo().performClick()
+        compose.onNodeWithText("Get Premium for this group").performScrollTo().performClick()
         compose.onNodeWithText("Leave group").performScrollTo().performClick()
         compose.onNode(hasText("Leave") and hasAnyAncestor(isDialog())).performClick()
 

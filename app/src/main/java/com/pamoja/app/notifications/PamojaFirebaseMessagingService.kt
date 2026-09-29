@@ -9,6 +9,7 @@ import com.pamoja.app.util.NotificationCategory
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.WorkManagerScheduler
 import com.pamoja.app.util.minuteOfDayToTime
+import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -25,6 +26,7 @@ class PamojaFirebaseMessagingService : FirebaseMessagingService() {
     @Inject lateinit var notificationHelper: SmartNotificationHelper
     @Inject lateinit var userPreferences: UserPreferences
     @Inject lateinit var workManagerScheduler: WorkManagerScheduler
+    @Inject lateinit var widgetUpdater: PamojaWidgetUpdater
 
     override fun onRegistered(installationId: String) {
         registrationManager.onRegistered(installationId)
@@ -41,6 +43,9 @@ class PamojaFirebaseMessagingService : FirebaseMessagingService() {
         // A stale registration must never show one account's group details to
         // another account that later signs in on the same physical device.
         if (remote.recipientUid != currentUid) return
+        // A cheer or anything else about a group: the widgets show it too,
+        // whether or not this notification category is switched on.
+        if (remote.notification.category == NotificationCategory.GROUP_ACTIVITY) widgetUpdater.refresh()
         if (!notificationHelper.isCategoryEnabled(remote.notification.category)) return
 
         runBlocking(Dispatchers.IO) {

@@ -1,86 +1,289 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- tools:ignore: a launcher inflates these RemoteViews without AppCompat, so
+     the app: attributes lint suggests would be dropped there; the faces'
+     descriptions are set in code, per face. -->
+<!-- The group card (mockup row B): name and streak, today's faces, the
+     week's progress, and who has not walked yet with Nudge. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UseCompatTextViewDrawableXml,ContentDescription"
     android:id="@+id/widget_group_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_group_background"
-    android:padding="18dp">
+    android:background="@drawable/widget_bg_surface"
+    android:padding="14dp">
 
     <LinearLayout
+        android:id="@+id/widget_group_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/widget_group_title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="0.14"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="@string/widget_together_label"
-            android:textColor="#B9CEC1"
-            android:textSize="10sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_group_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:textColor="@color/widget_ink"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_group_streak"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/widget_chip_pop"
+                android:drawableStart="@drawable/ic_flame"
+                android:drawablePadding="4dp"
+                android:drawableTint="@color/widget_on_pop"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:paddingHorizontal="10dp"
+                android:textColor="@color/widget_on_pop"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="bottom"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/widget_group_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:maxLines="1"
-                android:text="—"
-                android:textColor="#FFF8EF"
-                android:textSize="31sp" />
-
-            <TextView
-                android:id="@+id/widget_group_state"
+            <LinearLayout
+                android:id="@+id/widget_face_slot_1"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginBottom="5dp"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/widget_steps_left"
-                android:textColor="#F5BC65"
-                android:textSize="12sp" />
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_face_1"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:importantForAccessibility="yes" />
+
+                <TextView
+                    android:id="@+id/widget_face_name_1"
+                    style="@style/WidgetFaceName" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_face_slot_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_face_2"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:importantForAccessibility="yes" />
+
+                <TextView
+                    android:id="@+id/widget_face_name_2"
+                    style="@style/WidgetFaceName" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_face_slot_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_face_3"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:importantForAccessibility="yes" />
+
+                <TextView
+                    android:id="@+id/widget_face_name_3"
+                    style="@style/WidgetFaceName" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_face_slot_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_face_4"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:importantForAccessibility="yes" />
+
+                <TextView
+                    android:id="@+id/widget_face_name_4"
+                    style="@style/WidgetFaceName" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_face_slot_5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_face_5"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:importantForAccessibility="yes" />
+
+                <TextView
+                    android:id="@+id/widget_face_name_5"
+                    style="@style/WidgetFaceName" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/widget_face_slot_6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/widget_face_6"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:importantForAccessibility="yes" />
+
+                <TextView
+                    android:id="@+id/widget_face_name_6"
+                    style="@style/WidgetFaceName" />
+            </LinearLayout>
+
         </LinearLayout>
 
         <ProgressBar
             android:id="@+id/widget_group_progress"
             style="@android:style/Widget.ProgressBar.Horizontal"
             android:layout_width="match_parent"
-            android:layout_height="7dp"
-            android:layout_marginTop="5dp"
+            android:layout_height="10dp"
+            android:layout_marginTop="10dp"
             android:max="100"
-            android:progress="0"
-            android:progressBackgroundTint="#40372F"
-            android:progressTint="#F5BC65" />
+            android:progressDrawable="@drawable/widget_progress" />
 
-        <TextView
-            android:id="@+id/widget_group_summary"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="7dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#D9CCC3"
-            android:textSize="11sp" />
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_group_total"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/widget_ink"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_group_days"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:maxLines="1"
+                android:textColor="@color/widget_muted"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_group_waiting_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="10dp"
+                android:background="@drawable/widget_divider" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/widget_group_waiting"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="@color/widget_ink"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/widget_group_nudge"
+                    style="@style/WidgetPillButton"
+                    android:layout_marginStart="10dp"
+                    android:drawableStart="@drawable/ic_bell"
+                    android:text="@string/home_nudge" />
+
+                <TextView
+                    android:id="@+id/widget_group_nudged"
+                    style="@style/WidgetPillDone"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/home_nudged"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_group_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:visibility="gone">
+
         <TextView
-            android:id="@+id/widget_group_cta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
             android:fontFamily="sans-serif-medium"
-            android:text="@string/widget_open_group"
-            android:textColor="#F5BC65"
-            android:textSize="12sp" />
+            android:text="@string/widget_no_group_title"
+            android:textColor="@color/widget_ink"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/widget_no_group_body"
+            android:textColor="@color/widget_muted"
+            android:textSize="14sp" />
     </LinearLayout>
 </FrameLayout>

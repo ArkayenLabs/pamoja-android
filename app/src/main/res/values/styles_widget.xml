@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="WidgetFaceName">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_muted</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <!-- The kit's small PrimaryButton: a 40dp pill. -->
+    <style name="WidgetPillButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:background">@drawable/widget_pill_button</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:drawableTint">@color/widget_on_button</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textColor">@color/widget_on_button</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <!-- "Aplaudir también" does not fit a 2x2 tile at 14sp. Shrinks to
+             fit one line rather than wrap and clip, as it first did. -->
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:autoSizeMinTextSize">10sp</item>
+        <item name="android:autoSizeMaxTextSize">14sp</item>
+    </style>
+
+    <style name="WidgetPillDone" parent="WidgetPillButton">
+        <item name="android:background">@drawable/widget_pill_done</item>
+        <item name="android:drawableTint">@color/widget_on_done</item>
+        <item name="android:textColor">@color/widget_on_done</item>
+    </style>
+
+    <!-- On the lime tile: an ink pill with lime text, as mocked. -->
+    <style name="WidgetPillInk" parent="WidgetPillButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:background">@drawable/widget_pill_ink</item>
+        <item name="android:textColor">@color/widget_pop</item>
+    </style>
+</resources>

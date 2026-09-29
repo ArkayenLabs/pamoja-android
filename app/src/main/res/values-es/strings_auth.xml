@@ -29,7 +29,7 @@
     <string name="phone_too_long">El número parece demasiado largo para %1$s. Revisa los dígitos después del prefijo internacional.</string>
     <string name="phone_send_code">Enviar código</string>
     <string name="phone_requesting_code">Solicitando código…</string>
-    <string name="phone_security_check">Verificando este dispositivo. Antes de enviar el código, puede abrirse brevemente una comprobación de seguridad en el navegador.</string>
+    <string name="phone_security_check">Comprobando este dispositivo. Puede abrirse un momento una ventana del navegador antes de enviar el código.</string>
     <string name="phone_select_country">Seleccionar país</string>
     <string name="phone_search_country">País o prefijo internacional</string>
     <string name="phone_label_country">País</string>
@@ -41,7 +41,7 @@
     <string name="otp_expired_title">El código caducó</string>
     <string name="otp_expired_body">Los códigos duran unos minutos. Solicita uno nuevo abajo.</string>
     <string name="otp_rate_limited_title">Demasiados intentos</string>
-    <string name="otp_rate_limited_body">Por seguridad, pausamos la verificación de códigos para este número. Inténtalo en unos minutos o usa el correo.</string>
+    <string name="otp_rate_limited_body">Por seguridad, hemos pausado los códigos para este número. Inténtalo en unos minutos o usa el correo.</string>
     <string name="otp_no_code">¿No lo recibiste?</string>
     <string name="otp_resend_in">Reenviar en 0:%1$02d</string>
     <string name="otp_send_new">Enviar un código nuevo</string>

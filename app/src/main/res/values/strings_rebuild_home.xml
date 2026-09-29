@@ -23,7 +23,7 @@
     <string name="home_your_usual">Your usual is %1$s</string>
     <string name="home_today_vs_usual_desc">%1$s of your usual %2$s steps</string>
     <string name="home_steps_title">Your steps</string>
-    <string name="home_connect_body">Connect Health Connect so your steps count for the group.</string>
+    <string name="home_connect_body">Allow Health Connect so your steps count for the group.</string>
     <string name="home_connect_action">Connect</string>
     <string name="home_week_range">%1$s to %2$s</string>
     <string name="home_not_synced">Not synced</string>

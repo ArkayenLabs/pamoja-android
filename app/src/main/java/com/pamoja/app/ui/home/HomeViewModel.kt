@@ -104,8 +104,6 @@ data class HomeUiState(
     /** Otherwise the error is a passing note over content that still stands. */
     val showErrorSnackbar: Boolean get() = error != null && hasContent
 
-    val personalWeekSteps: Long get() = personalDays.sumOf(PersonalDay::steps)
-
     val todaySteps: Long get() = personalDays
         .firstOrNull { it.date == LocalDate.now() }
         ?.steps
@@ -348,12 +346,21 @@ class HomeViewModel @Inject constructor(
         if (_uiState.value.selectedGroupId != groupId) return
         val next = chooseGroup(null, _uiState.value.groups, goneGroupIds)
         _uiState.value = _uiState.value.copy(selectedGroupId = next)
-        next?.let { viewModelScope.launch { userPreferences.saveActiveGroupId(it) } }
+        next?.let {
+            viewModelScope.launch {
+                userPreferences.saveActiveGroupId(it)
+                publishWidgets()
+            }
+        }
     }
 
     private fun select(groupId: String) {
         _uiState.value = _uiState.value.copy(selectedGroupId = groupId)
-        viewModelScope.launch { userPreferences.saveActiveGroupId(groupId) }
+        viewModelScope.launch {
+            userPreferences.saveActiveGroupId(groupId)
+            // The widgets show the group Home shows.
+            publishWidgets()
+        }
     }
 
     fun retry() {
@@ -451,14 +458,8 @@ class HomeViewModel @Inject constructor(
         publishWidgets()
     }
 
-    private fun publishWidgets() {
-        val state = _uiState.value
-        widgetUpdater.publish(
-            todaySteps = state.todaySteps,
-            weekSteps = state.personalWeekSteps,
-            groups = state.groups,
-        )
-    }
+    /** The widgets read for themselves; this only tells them something moved. */
+    private fun publishWidgets() = widgetUpdater.refresh()
 
     private companion object {
         /** Long enough that the gesture is acknowledged, short enough not to stall. */

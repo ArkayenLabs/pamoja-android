@@ -25,7 +25,7 @@
     <string name="edit_group_delete_type_name">समूह का नाम लिखें</string>
     <string name="edit_group_delete_confirm">समूह मिटाएँ</string>
     <string name="profile_show_photo_title">समूहों में मेरी फ़ोटो दिखाएँ</string>
-    <string name="profile_show_photo_sub">डिफ़ॉल्ट रूप से बंद है। बंद होने पर आपकी फ़ोटो समूह के सदस्यों को नहीं भेजी जाती; उन्हें आपके नाम के शुरुआती अक्षर दिखते हैं।</string>
+    <string name="profile_show_photo_sub">बंद होने पर आपके समूह आपकी फ़ोटो नहीं, सिर्फ़ नाम के शुरुआती अक्षर देखते हैं।</string>
     <string name="validation_member_cap_below_count">समूह में पहले से अधिक सदस्य हैं। पहले किसी को हटाएँ या बड़ी संख्या चुनें।</string>
     <string name="validation_group_name_too_long">समूह का नाम बहुत लंबा है। 40 या उससे कम अक्षर इस्तेमाल करें।</string>
     <string name="error_offline_title">आप ऑफ़लाइन हैं</string>
@@ -39,13 +39,13 @@
     <string name="error_conflict_title">कुछ बदल गया है</string>
     <string name="error_conflict_body">किसी ने पहले बदलाव कर दिया। नई स्थिति देखने के लिए रीफ़्रेश करें।</string>
     <string name="error_session_title">फिर से साइन इन करें</string>
-    <string name="error_session_body">सुरक्षा के लिए सत्र की अवधि सीमित होती है। कुछ भी खोया नहीं है।</string>
+    <string name="error_session_body">कुछ भी खोया नहीं है।</string>
     <string name="error_rate_limited_title">बहुत ज़्यादा कोशिशें</string>
     <string name="error_rate_limited_body">फिर कोशिश करने से पहले कुछ मिनट रुकें।</string>
     <string name="error_credentials_title">जानकारी मेल नहीं खाती</string>
     <string name="error_credentials_body">भरी हुई जानकारी जाँचकर फिर कोशिश करें।</string>
     <string name="error_expired_title">समय समाप्त हो गया</string>
-    <string name="error_expired_body">कोड और लिंक की अवधि सीमित होती है। नया माँगें।</string>
+    <string name="error_expired_body">यह अब मान्य नहीं है। नया माँगें।</string>
     <string name="error_validation_title">फिर से जाँचें</string>
     <string name="validation_email_missing">अपना ईमेल पता लिखें</string>
     <string name="validation_email_malformed">यह ईमेल पता सही नहीं लगता</string>
@@ -64,7 +64,7 @@
     <string name="validation_avatar_unreadable">यह तस्वीर नहीं पढ़ी जा सकी। दूसरी फ़ोटो चुनें।</string>
     <string name="validation_not_allowed_target">केवल एडमिन समूह का लक्ष्य बदल सकता है</string>
     <string name="error_unknown_title">कुछ गड़बड़ हुई</string>
-    <string name="error_unknown_body">यह काम नहीं हुआ। फिर कोशिश करें।</string>
+    <string name="error_unknown_body">फिर कोशिश करें। बार-बार हो तो सहायता से संपर्क करें।</string>
     <string name="error_snackbar_format">%1$s। %2$s</string>
     <string name="offline_banner_title">आप ऑफ़लाइन हैं</string>
     <string name="offline_group_stale">इस फ़ोन पर मिले पिछले कुल दिख रहे हैं</string>

@@ -1,24 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
-    <string name="premium_move_named_body">Move your subscription from %1$s to %2$s? The previous group will lose access provided by this subscription. No new purchase is needed.</string>
-    <string name="premium_purchase_named_body">Your previous subscription supported %1$s. After Google Play confirms your purchase, %2$s will be the group it supports.</string>
+    <string name="premium_move_named_body">Move your subscription from %1$s to %2$s? %1$s loses Premium. You won\'t pay again.</string>
+    <string name="premium_purchase_named_body">Your last subscription covered %1$s. Once Google Play confirms, it covers %2$s.</string>
     <string name="premium_continue_checkout">Continue to checkout</string>
-    <string name="planning_unavailable_title">Planning is not ready yet</string>
-    <string name="planning_not_enabled_body">Planning is not available for this group yet. You can still review completed weeks. Another purchase will not enable it.</string>
+    <string name="planning_unavailable_title">Planning isn\'t ready yet</string>
+    <string name="planning_not_enabled_body">Planning isn\'t available for this group yet. You can still review completed weeks. Another purchase won\'t enable it.</string>
     <string name="planning_organizer_setup_body">The group organizer needs to open planning first to set the shared calendar. Then everyone can join the plan.</string>
     <string name="planning_existing_plan_body">Your saved plan is still in progress. The new planning calendar will be available after it finishes.</string>
     <string name="planning_refresh_body">The week or goal has changed. Reopen planning to load the latest details.</string>
     <string name="premium_group_active">This group has Premium</string>
-    <string name="premium_group_active_body">Everyone in this group shares the benefits. No additional subscription is needed.</string>
+    <string name="premium_group_active_body">Everyone in the group gets it. Nobody else needs to pay.</string>
     <string name="premium_subscription_found">Your subscription is ready</string>
     <string name="premium_apply_existing_body">Apply your existing subscription to this group without another purchase.</string>
     <string name="premium_apply_existing">Apply Premium to this group</string>
     <string name="premium_previous_group">Premium currently covers %1$s.</string>
     <string name="premium_previous_group_inactive">Your previous Premium group was %1$s. Subscribe again to cover this group.</string>
-    <string name="premium_choose_group_title">No Premium musical chairs</string>
-    <string name="premium_choose_group_body">Move Premium here, or keep both groups moving with a multi-group plan.</string>
+    <string name="premium_choose_group_title">Choose where Premium goes</string>
+    <string name="premium_choose_group_body">Move Premium to this group, or keep both with a multi-group plan.</string>
     <string name="premium_keep_both_action">Keep both groups Premium</string>
-    <string name="premium_more_groups_unavailable_title">Multi-group plans are being connected</string>
-    <string name="premium_more_groups_unavailable_body">Your current group stays Premium. You can move it here now, or try again after the additional plan appears in Google Play.</string>
+    <string name="premium_more_groups_unavailable_title">Multi-group plans aren\'t available yet</string>
+    <string name="premium_more_groups_unavailable_body">Your current group keeps Premium. You can move it here now, or try again later.</string>
     <string name="premium_another_group">another group</string>
     <string name="premium_manage_play">Manage subscription in Google Play</string>
     <string name="premium_refresh_status">Refresh subscription status</string>
@@ -44,15 +44,15 @@
     <string name="crop_title">Position your photo</string>
     <string name="crop_hint">Drag to move, pinch to zoom.</string>
     <string name="crop_confirm">Use photo</string>
-    <string name="crop_failed">That image could not be opened. Try another one.</string>
+    <string name="crop_failed">That image couldn\'t be opened. Try another one.</string>
 
     <!-- ── Editing an existing group, admin only ───────────────────────── -->
     <string name="edit_group_name_label">Group name</string>
     <!-- A count followed by a noun, so a plural. Reuses member_count rather
          than adding a second way to say the same thing. -->
     <!-- Explains why the slider will not go lower, rather than letting it feel broken. -->
-    <string name="edit_group_cap_floor">Cannot go below %1$d, the number of people already here. Remove someone first.</string>
-    <string name="edit_group_week_start_sub">Changing this reshapes the current week for everyone in the group.</string>
+    <string name="edit_group_cap_floor">Can\'t go below %1$d, the number of people already here. Remove someone first.</string>
+    <string name="edit_group_week_start_sub">Changing this moves the current week for everyone in the group.</string>
     <string name="edit_group_members">Members</string>
     <string name="edit_group_member_admin">Admin</string>
     <string name="edit_group_remove_title">Remove member?</string>
@@ -68,16 +68,16 @@
     <string name="edit_group_photo_change">Change</string>
     <string name="edit_group_delete">Delete group</string>
     <string name="edit_group_delete_title">Delete this group?</string>
-    <string name="edit_group_delete_body">Type “%1$s” to confirm. This cannot be undone.</string>
+    <string name="edit_group_delete_body">Type “%1$s” to confirm. This can\'t be undone.</string>
     <string name="edit_group_delete_type_name">Type the group name</string>
     <string name="edit_group_delete_confirm">Delete group</string>
 
     <!-- Photo privacy. Default off, and the copy names the real consequence
          rather than saying something vague about visibility. -->
     <string name="profile_show_photo_title">Show my photo in groups</string>
-    <string name="profile_show_photo_sub">Off by default. When off, your photo is never sent to anyone else in your groups, and they see your initials instead.</string>
+    <string name="profile_show_photo_sub">When this is off, your groups see your initials, never your photo.</string>
 
-    <string name="validation_member_cap_below_count">That is fewer people than the group already has. Remove someone first, or pick a higher number.</string>
+    <string name="validation_member_cap_below_count">That\'s fewer people than the group already has. Remove someone first, or pick a higher number.</string>
     <string name="validation_group_name_too_long">That group name is too long. Use 40 characters or fewer.</string>
     <string name="common_continue">Continue</string>
     <string name="common_back">Back</string>
@@ -92,43 +92,43 @@
     <string name="common_back_to_groups">Back to your groups</string>
 
     <!-- ── Errors ─────────────────────────────────────────────────────── -->
-    <string name="error_offline_title">You are offline</string>
-    <string name="error_offline_body">Check your connection. Your steps keep counting and will sync when you are back.</string>
+    <string name="error_offline_title">You\'re offline</string>
+    <string name="error_offline_body">Check your connection. Your steps keep counting and will sync when you\'re back.</string>
     <string name="error_network_title">That took too long</string>
-    <string name="error_network_body">The connection dropped partway. Give it another go.</string>
-    <string name="error_permission_title">You cannot do that</string>
+    <string name="error_network_body">The connection dropped. Try again.</string>
+    <string name="error_permission_title">You can\'t do that</string>
     <string name="error_permission_body">You may have been removed from this group, or it no longer exists.</string>
     <string name="error_not_found_title">Not found</string>
     <string name="error_not_found_body">This may have been deleted, or the link may be wrong.</string>
     <string name="error_conflict_title">Something changed</string>
-    <string name="error_conflict_body">Someone got there first. Refresh to see how things stand now.</string>
+    <string name="error_conflict_body">Someone else changed this first. Refresh to see the latest.</string>
     <string name="error_session_title">Please sign in again</string>
-    <string name="error_session_body">For your security, sessions do not last forever. Nothing has been lost.</string>
+    <string name="error_session_body">Nothing has been lost.</string>
     <string name="error_rate_limited_title">Too many attempts</string>
     <string name="error_rate_limited_body">Wait a few minutes before trying again.</string>
-    <string name="error_credentials_title">That did not match</string>
+    <string name="error_credentials_title">That didn\'t match</string>
     <string name="error_credentials_body">Check what you entered and try again.</string>
     <string name="error_expired_title">That expired</string>
-    <string name="error_expired_body">Codes and links do not last forever. Ask for a new one.</string>
+    <string name="error_expired_body">It\'s no longer valid. Ask for a new one.</string>
     <string name="error_validation_title">Check that again</string>
 
     <!-- ── Validation, one per ValidationField ────────────────────────── -->
     <string name="validation_email_missing">Enter your email address</string>
-    <string name="validation_email_malformed">That email address does not look right</string>
+    <string name="validation_email_malformed">That email address doesn\'t look right</string>
     <string name="validation_password_missing">Enter your password</string>
     <string name="validation_password_too_short">Use at least 8 characters</string>
     <string name="validation_phone_country_code">Include the country code, for example +91</string>
-    <string name="validation_phone_malformed">That phone number does not look right</string>
+    <string name="validation_phone_malformed">That phone number doesn\'t look right</string>
     <string name="validation_otp_incomplete">Enter the 6 digit code</string>
     <string name="validation_group_name_missing">Give the group a name</string>
     <string name="validation_group_name_duplicate">You already manage a group with that name</string>
-    <string name="validation_weekly_target">Pick a weekly target above zero</string>
+    <string name="validation_weekly_target">Pick a weekly goal above zero</string>
     <string name="validation_member_cap">A group needs room for at least 2 people</string>
     <string name="validation_invite_missing">Enter an invite link or code</string>
-    <string name="validation_invite_malformed">That invite link does not look right</string>
+    <string name="validation_invite_malformed">That invite link doesn\'t look right</string>
     <string name="validation_display_name_missing">Enter a name</string>
-    <string name="validation_avatar_unreadable">That image could not be read. Try a different photo.</string>
-    <string name="validation_not_allowed_target">Only the admin can change this group\'s target</string>
+    <string name="validation_avatar_unreadable">That image couldn\'t be read. Try a different photo.</string>
+    <string name="validation_not_allowed_target">Only the admin can change this group\'s goal</string>
 
     <!-- ── Auth-specific error wording ────────────────────────────────── -->
     <!-- The generic copy is too vague inside a sign-in flow, where the user
@@ -137,22 +137,22 @@
     <string name="auth_error_email_in_use_body">Sign in instead, or use a different address.</string>
     <string name="auth_error_no_account_title">No account with that email</string>
     <string name="auth_error_no_account_body">Check the address, or create an account instead.</string>
-    <string name="auth_error_credentials_title">That email and password do not match</string>
+    <string name="auth_error_credentials_title">That email and password don\'t match</string>
     <string name="auth_error_credentials_body">Check both, or reset your password.</string>
     <string name="auth_error_rate_limited_title">Too many attempts</string>
     <string name="auth_error_rate_limited_body">Wait a few minutes, or use another sign-in method.</string>
     <string name="auth_error_offline_title">No connection</string>
-    <string name="auth_error_offline_body">Signing in needs a network. Check yours and try again.</string>
-    <string name="auth_error_google_unavailable_title">Google sign-in could not open</string>
+    <string name="auth_error_offline_body">Signing in needs a connection. Check yours and try again.</string>
+    <string name="auth_error_google_unavailable_title">Google sign-in couldn\'t open</string>
     <string name="auth_error_google_unavailable_body">Try again. If it keeps happening, update Google Play services or use phone or email.</string>
-    <string name="auth_error_generic_title">That did not work</string>
+    <string name="auth_error_generic_title">That didn\'t work</string>
     <string name="auth_error_generic_body">Try again, or use another sign-in method.</string>
     <string name="error_unknown_title">Something went wrong</string>
-    <string name="error_unknown_body">That did not work, and we are not sure why. Trying again often helps.</string>
+    <string name="error_unknown_body">Try again. If it keeps happening, contact support.</string>
     <string name="error_snackbar_format">%1$s. %2$s</string>
 
     <!-- ── Offline banner ─────────────────────────────────────────────── -->
-    <string name="offline_banner_title">You are offline</string>
+    <string name="offline_banner_title">You\'re offline</string>
     <string name="offline_group_stale">Showing the last totals that reached this phone</string>
     <!-- Offline with a known sync time. Preferred over the vaguer lines above,
          because "showing old data" without saying how old is not much of a
@@ -160,18 +160,6 @@
     <string name="offline_showing_from">Showing data from %1$s</string>
 
     <!-- ── Welcome ────────────────────────────────────────────────────── -->
-    <string name="welcome_get_started">Get started</string>
-    <string name="welcome_tagline">Pool every step with people who make the week worth showing up for.</string>
-    <string name="welcome_live_group">Family walkers</string>
-    <string name="welcome_shared_goal">Shared goal</string>
-    <string name="welcome_demo_steps">48,320</string>
-    <string name="welcome_demo_target">of 70,000 steps together</string>
-    <string name="welcome_people_moving">4 people moving</string>
-    <string name="welcome_steps_remaining">21,680 steps to go this week</string>
-    <string name="welcome_feature_steps">Step tracking</string>
-    <string name="welcome_feature_goals">Group goals</string>
-    <string name="welcome_feature_leaderboard">Leaderboard</string>
-    <string name="welcome_have_account">Already have an account? Sign in</string>
 
     <!-- ── Auth landing ───────────────────────────────────────────────── -->
     <string name="auth_continue_google">Continue with Google</string>
@@ -187,14 +175,14 @@
 
     <!-- ── Phone entry ────────────────────────────────────────────────── -->
     <string name="phone_title">What is your number?</string>
-    <string name="phone_subtitle">We will text you a code to confirm it is you.</string>
+    <string name="phone_subtitle">We\'ll text you a code to confirm it\'s you.</string>
     <string name="phone_label">Phone number</string>
     <string name="phone_placeholder">Your number</string>
     <string name="phone_too_short">That number looks too short for %1$s. Check the digits after the dial code.</string>
     <string name="phone_too_long">That number looks too long for %1$s. Check the digits after the dial code.</string>
     <string name="phone_send_code">Send code</string>
     <string name="phone_requesting_code">Requesting code…</string>
-    <string name="phone_security_check">Verifying this device. A secure browser check may briefly open before the code is sent.</string>
+    <string name="phone_security_check">Checking this device. A browser window may open for a moment before the code is sent.</string>
     <string name="phone_select_country">Select country</string>
     <string name="phone_search_country">Country or dial code</string>
     <string name="phone_label_country">Country</string>
@@ -203,13 +191,13 @@
     <string name="otp_title">Enter your code</string>
     <string name="otp_sent_to">Sent to %1$s %2$s</string>
     <string name="otp_wrong_number">Wrong number? Go back</string>
-    <string name="otp_wrong_code_title">That code is not right</string>
+    <string name="otp_wrong_code_title">That code isn\'t right</string>
     <string name="otp_wrong_code_body">Check the digits and try again.</string>
     <string name="otp_expired_title">This code expired</string>
     <string name="otp_expired_body">Codes last a few minutes. Send a fresh one below.</string>
     <string name="otp_rate_limited_title">Too many attempts</string>
-    <string name="otp_rate_limited_body">For safety we have paused code checks on this number. Try again in a few minutes, or use email instead.</string>
-    <string name="otp_no_code">Did not get it?</string>
+    <string name="otp_rate_limited_body">We\'ve paused codes for this number for safety. Try again in a few minutes, or use email.</string>
+    <string name="otp_no_code">Didn\'t get it?</string>
     <string name="otp_resend_in">Resend in 0:%1$02d</string>
     <string name="otp_send_new">Send a new code</string>
     <string name="otp_verify">Verify</string>
@@ -219,26 +207,26 @@
     <string name="email_label">Email</string>
     <string name="email_placeholder">you@example.com</string>
     <string name="email_required">Enter your email address</string>
-    <string name="email_invalid">That email address does not look right</string>
+    <string name="email_invalid">That email address doesn\'t look right</string>
     <string name="password_label">Password</string>
     <string name="password_placeholder_new">At least 8 characters</string>
     <string name="password_placeholder_existing">Your password</string>
     <string name="password_too_short">Use at least 8 characters</string>
     <string name="password_confirm_label">Confirm password</string>
     <string name="password_confirm_placeholder">Type your password again</string>
-    <string name="password_mismatch">The passwords do not match</string>
+    <string name="password_mismatch">The passwords don\'t match</string>
     <string name="email_forgot">Forgot password?</string>
     <string name="email_create_account">Create account</string>
     <string name="email_have_account">Already have an account?</string>
 
     <!-- ── Forgot password ────────────────────────────────────────────── -->
     <string name="reset_title">Reset your password</string>
-    <string name="reset_subtitle">We will email you a link to set a new one.</string>
+    <string name="reset_subtitle">We\'ll email you a link to set a new one.</string>
     <string name="reset_send">Send reset link</string>
     <string name="reset_sent_title">Check your inbox</string>
     <string name="reset_sent_body">We sent a reset link to %1$s.</string>
     <string name="reset_nothing_title">Can’t find the email?</string>
-    <string name="reset_nothing_body">Check your spam folder and confirm the email address. You can resend the link below.</string>
+    <string name="reset_nothing_body">Check your spam folder and the email address, then resend the link below.</string>
     <string name="reset_resend">Resend</string>
     <string name="reset_back_to_signin">Back to sign in</string>
 
@@ -246,20 +234,20 @@
     <string name="profile_name_label">Name</string>
     <string name="profile_name_placeholder">What should we call you?</string>
     <string name="profile_name_required">Your group needs something to call you</string>
-    <string name="profile_name_too_long">That is a little long, keep it under 50</string>
-    <string name="profile_offline_title">You are offline</string>
-    <string name="profile_offline_body">Setting up your profile needs a connection. Your answers stay here until you are back.</string>
-    <string name="profile_failed_title">Could not save your profile</string>
+    <string name="profile_name_too_long">Use 50 characters or fewer</string>
+    <string name="profile_offline_title">You\'re offline</string>
+    <string name="profile_offline_body">Setting up your profile needs a connection. Your answers stay here until you\'re back.</string>
+    <string name="profile_failed_title">Couldn\'t save your profile</string>
 
     <!-- ── Home ───────────────────────────────────────────────────────── -->
-    <string name="home_join_qr_not_pamoja">That QR code is not a Pamoja invite</string>
-    <string name="home_join_qr_failed">Could not read that code. Try again, or paste the link.</string>
+    <string name="home_join_qr_not_pamoja">That QR code isn\'t a Pamoja invite</string>
+    <string name="home_join_qr_failed">Couldn\'t read that code. Try again, or paste the link.</string>
 
     <!-- Shown when Health Connect is installed but not permitted, so no steps
          can arrive at all. Says what is wrong before it says what to do. -->
-    <string name="home_health_permission_denied">Health Connect permission was not granted. Your steps will stay at 0 until you connect it.</string>
-    <string name="home_pending_invite_title">Continue your group invite?</string>
-    <string name="home_pending_invite_body">You opened this invitation earlier. Review the group before deciding whether to join.</string>
+    <string name="home_health_permission_denied">Health Connect access wasn\'t given, so your steps stay at 0 until you connect it.</string>
+    <string name="home_pending_invite_title">Finish joining this group?</string>
+    <string name="home_pending_invite_body">You opened this invite earlier. Take a look before you join.</string>
     <string name="home_pending_invite_action">Review invitation</string>
 
     <!-- ── Create group ───────────────────────────────────────────────── -->
@@ -271,26 +259,26 @@
     <!-- A group setting, not a personal one. The official goal is organizer-controlled. -->
     <string name="weekly_goal_custom">Custom</string>
     <string name="weekly_goal_custom_title">Set a custom group goal</string>
-    <string name="weekly_goal_custom_body">Enter one weekly total for the whole group. This never becomes an individual quota.</string>
+    <string name="weekly_goal_custom_body">One weekly total for the whole group, never a quota for each person.</string>
     <string name="weekly_goal_custom_label">Weekly group total</string>
     <string name="weekly_goal_custom_placeholder">e.g. 300000</string>
     <string name="weekly_goal_custom_helper">From 10,000 to 2,800,000 steps.</string>
     <string name="weekly_goal_custom_error">Enter a total from 10,000 to 2,800,000.</string>
     <string name="weekly_goal_custom_use">Use this goal</string>
     <string name="create_group_submit">Create group</string>
-    <string name="create_group_offline_title">You are offline</string>
-    <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you are back.</string>
-    <string name="create_group_failed_title">Could not create the group</string>
+    <string name="create_group_offline_title">You\'re offline</string>
+    <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you\'re back.</string>
+    <string name="create_group_failed_title">Couldn\'t create the group</string>
     <string name="join_shared_goal_title">One goal, shared</string>
-    <string name="join_shared_goal_body">Everyone’s steps pool together. There is no individual target to miss.</string>
+    <string name="join_shared_goal_body">Everyone\'s steps add up to one goal. Nobody has a target of their own.</string>
 
     <!-- ── Health Connect ─────────────────────────────────────────────── -->
     <string name="hc_icon_desc">Step tracking</string>
     <string name="hc_title">Connect your steps</string>
-    <string name="hc_body_unavailable">Health Connect is not available on this device. Step tracking won\'t be available.</string>
-    <string name="hc_body_denied">Without this permission, your steps will show as 0 to your group. You can enable it later in Health Connect settings.</string>
+    <string name="hc_body_unavailable">This phone doesn\'t have Health Connect, so Pamoja can\'t count your steps.</string>
+    <string name="hc_body_denied">Without it, your group sees 0 steps from you. You can turn it on later in Health Connect.</string>
     <string name="hc_body_granted">Your daily step count is connected to Pamoja.</string>
-    <string name="hc_body_default">Let Health Connect add your daily step count to your group progress.</string>
+    <string name="hc_body_default">Let Health Connect add your daily steps to your group\'s progress.</string>
     <string name="hc_steps_only">Step count only. No location, route, heart rate or sleep.</string>
     <string name="hc_continue_without">Continue without steps</string>
     <string name="hc_open_settings">Open Settings</string>
@@ -299,16 +287,16 @@
     <string name="hc_connect">Connect steps</string>
 
     <!-- ── Invite ─────────────────────────────────────────────────────── -->
-    <string name="invite_subtitle">Invite your people. This link stays active until all %1$d spots are filled.</string>
+    <string name="invite_subtitle">This link works until all %1$d spots are filled.</string>
     <string name="invite_link_copied">Link copied</string>
     <string name="invite_copy_desc">Copy link</string>
     <string name="invite_share_chooser">Share invite link</string>
     <string name="invite_share">Share invite</string>
     <string name="invite_go_to_group">Go to my group</string>
-    <string name="invite_qr_hint">Scan, join, start moving together.</string>
-    <string name="invite_details_failed_title">Could not load the group details</string>
+    <string name="invite_qr_hint">Scan to join.</string>
+    <string name="invite_details_failed_title">Couldn\'t load the group details</string>
     <string name="invite_details_failed_body">The link below still works. Share it now, or retry to see the group.</string>
-    <string name="invite_offline_body">The link below still works offline. Share it now, or retry once you are back.</string>
+    <string name="invite_offline_body">The link below still works offline. Share it now, or retry once you\'re back.</string>
 
     <!-- ── Group dashboard ────────────────────────────────────────────── -->
     <!-- %2$s is the group's own week window, not a fixed Mon-Sun. The label was
@@ -324,22 +312,22 @@
     <string name="group_of_target">of %1$s</string>
 
     <!-- ── Join preview ───────────────────────────────────────────────── -->
-    <string name="join_invited_to">You have been invited to</string>
-    <string name="join_already_in">You are already in</string>
+    <string name="join_invited_to">You\'ve been invited to</string>
+    <string name="join_already_in">You\'re already in</string>
     <string name="join_members_one">member</string>
     <string name="join_members_other">members</string>
     <string name="join_target_label">steps a week, together</string>
-    <string name="join_already_member_title">You are already a member</string>
+    <string name="join_already_member_title">You\'re already a member</string>
     <string name="join_already_member_body">Nothing to do. Open the group to see how everyone is doing.</string>
     <string name="join_full_title">This group is full</string>
     <string name="join_full_body">It has reached its limit of %1$d members. Ask the admin to make room, or start a group of your own.</string>
-    <string name="join_offline_title">You are offline</string>
-    <string name="join_offline_body">Joining needs a connection. This invite will still work once you are back.</string>
-    <string name="join_failed_title">Could not join</string>
-    <string name="join_failed_taken">Someone took the last place while you were deciding.</string>
-    <string name="join_failed_offline">You are offline. Try again once you have a connection.</string>
+    <string name="join_offline_title">You\'re offline</string>
+    <string name="join_offline_body">Joining needs a connection. This invite will still work once you\'re back.</string>
+    <string name="join_failed_title">Couldn\'t join</string>
+    <string name="join_failed_taken">Someone just took the last spot.</string>
+    <string name="join_failed_offline">You\'re offline. Try again once you have a connection.</string>
     <string name="join_failed_closed">This invite is no longer accepting new members.</string>
-    <string name="join_failed_generic">That did not work. Try again in a moment.</string>
+    <string name="join_failed_generic">That didn\'t work. Try again in a moment.</string>
     <string name="join_open_group">Open group</string>
     <string name="join_button">Join group</string>
     <string name="join_button_full">Group is full</string>
@@ -349,38 +337,38 @@
     <string name="settings_privacy_subtitle">How we handle your data, including step data</string>
     <string name="settings_terms_title">Terms of Use</string>
     <string name="settings_terms_subtitle">The agreement you accepted when you signed in</string>
-    <string name="settings_account_actions">ACCOUNT ACTIONS</string>
-    <string name="settings_logout_title">Log Out</string>
+    <string name="settings_account_actions">Account actions</string>
+    <string name="settings_logout_title">Sign out</string>
     <string name="settings_logout_subtitle">Sign out of your account on this device</string>
-    <string name="settings_delete_title">Delete Account</string>
-    <string name="settings_delete_subtitle">Permanently wipe your profile and statistics</string>
-    <string name="settings_delete_confirm">Delete Permanently</string>
-    <string name="settings_delete_warning">This cannot be undone, and we cannot recover any of it for you afterwards.</string>
+    <string name="settings_delete_title">Delete account</string>
+    <string name="settings_delete_subtitle">Permanently delete your profile and step history</string>
+    <string name="settings_delete_confirm">Delete permanently</string>
+    <string name="settings_delete_warning">This can\'t be undone, and we can\'t recover any of it for you afterwards.</string>
     <string name="settings_delete_loses_profile">Your profile, name and photo</string>
     <string name="settings_delete_loses_history">Every step you have recorded, all time</string>
     <string name="settings_delete_loses_groups">Your place in every group you have joined</string>
     <string name="settings_delete_type_hint">Type DELETE to confirm</string>
     <string name="settings_delete_type_word">DELETE</string>
-    <string name="settings_logout_confirm_title">Log out?</string>
-    <string name="settings_logout_confirm_body">Your groups and step history stay safe. You will need to sign in again on this device to get back to them.</string>
-    <string name="settings_logout_confirm_action">Log Out</string>
-    <string name="settings_reauth_title">Confirm it is you</string>
+    <string name="settings_logout_confirm_title">Sign out?</string>
+    <string name="settings_logout_confirm_body">Your groups and step history stay safe. You\'ll need to sign in again on this device to get back to them.</string>
+    <string name="settings_logout_confirm_action">Sign out</string>
+    <string name="settings_reauth_title">Confirm it\'s you</string>
     <string name="settings_reauth_body">For your safety we ask you to sign in again before deleting an account. Nothing has been deleted yet.</string>
     <string name="settings_reauth_phone_body">For your safety we text a code to the number on this account before deleting it. Nothing has been deleted yet.</string>
     <string name="settings_reauth_code_body">Enter the code we sent to %1$s. Nothing has been deleted yet.</string>
     <string name="settings_version">Pamoja v%1$s</string>
     <string name="settings_title">You</string>
     <string name="settings_subtitle">Your profile, preferences and privacy</string>
-    <string name="settings_section_information">PRIVACY AND ABOUT</string>
-    <string name="settings_name_fallback">Guest User</string>
-    <string name="settings_rate_title">Rate Us</string>
-    <string name="settings_rate_subtitle">Support us by sharing your feedback</string>
+    <string name="settings_section_information">Privacy and about</string>
+    <string name="settings_name_fallback">No name yet</string>
+    <string name="settings_rate_title">Rate Pamoja</string>
+    <string name="settings_rate_subtitle">Leave a review on Google Play</string>
     <string name="settings_reauth_send_code">Send code</string>
     <string name="settings_no_phone">This account has no phone number on file</string>
-    <string name="settings_reauth_failed">Could not confirm it is you</string>
+    <string name="settings_reauth_failed">Couldn\'t confirm it\'s you</string>
     <string name="settings_code_expired">That code expired. Send a new one.</string>
-    <string name="settings_code_wrong">That code is not right</string>
-    <string name="settings_code_send_failed">Could not send the code</string>
+    <string name="settings_code_wrong">That code isn\'t right</string>
+    <string name="settings_code_send_failed">Couldn\'t send the code</string>
 
     <!-- ── Edit profile ───────────────────────────────────────────────── -->
     <string name="profile_edit_title">Edit profile</string>
@@ -388,9 +376,9 @@
     <string name="profile_edit_save">Save changes</string>
     <string name="profile_edit_saving">Saving…</string>
     <string name="profile_edit_saved">Profile updated</string>
-    <string name="profile_edit_failed_title">Could not save your changes</string>
-    <string name="profile_edit_offline_title">You are offline</string>
-    <string name="profile_edit_offline_body">Saving needs a connection. Your changes stay here until you are back.</string>
+    <string name="profile_edit_failed_title">Couldn\'t save your changes</string>
+    <string name="profile_edit_offline_title">You\'re offline</string>
+    <string name="profile_edit_offline_body">Saving needs a connection. Your changes stay here until you\'re back.</string>
     <string name="profile_edit_photo_add">Add a photo</string>
     <string name="profile_edit_photo_change">Change photo</string>
     <string name="profile_edit_photo_uploading">Uploading…</string>
@@ -399,14 +387,14 @@
     <string name="settings_open_profile">Edit your profile</string>
 
     <!-- ── Preferences ────────────────────────────────────────────────── -->
-    <string name="settings_section_preferences">APP EXPERIENCE</string>
+    <string name="settings_section_preferences">Appearance and language</string>
     <string name="settings_theme_label">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
 
     <!-- ── Support and your data ──────────────────────────────────────── -->
-    <string name="settings_section_support">HELP AND YOUR DATA</string>
+    <string name="settings_section_support">Help and your data</string>
     <string name="settings_support_title">Contact support</string>
     <string name="settings_support_subtitle">Ask a question, or report a problem</string>
     <string name="settings_support_subject">Pamoja support request</string>
@@ -417,18 +405,18 @@
     <string name="settings_export_subtitle">Save everything Pamoja holds about you as a file</string>
     <string name="settings_export_working">Gathering your data…</string>
     <string name="settings_export_saved">Your data was saved</string>
-    <string name="settings_export_failed">Could not write that file</string>
+    <string name="settings_export_failed">Couldn\'t write that file</string>
 
-    <string name="settings_theme_system_sub">Follows your phone, including its evening switch</string>
+    <string name="settings_theme_system_sub">Follows your phone\'s setting</string>
     <string name="settings_theme_fixed_sub">Stays this way whatever your phone does</string>
 
     <!-- ── Health section in Settings ─────────────────────────────────── -->
-    <string name="settings_section_health">HEALTH CONNECT</string>
+    <string name="settings_section_health">Health Connect</string>
     <string name="settings_health_connected">Steps are syncing</string>
     <string name="settings_health_connected_sub">Pamoja reads your daily step count from Health Connect.</string>
-    <string name="settings_health_not_connected">Steps are not syncing</string>
-    <string name="settings_health_not_connected_sub">Pamoja does not have permission to read your steps, so your group sees you at zero.</string>
-    <string name="settings_health_unavailable">Health Connect is not on this phone</string>
+    <string name="settings_health_not_connected">Steps aren\'t syncing</string>
+    <string name="settings_health_not_connected_sub">Pamoja doesn\'t have permission to read your steps, so your group sees you at zero.</string>
+    <string name="settings_health_unavailable">Health Connect isn\'t on this phone</string>
     <string name="settings_health_unavailable_sub">Step tracking needs it. Install it from the Play Store, then come back here.</string>
     <string name="settings_health_fix">Open Health Connect</string>
     <string name="settings_health_install">Get Health Connect</string>
@@ -450,32 +438,32 @@
     <string name="notif_primer_allow">Allow notifications</string>
 
     <string name="notif_blocked_title">Notifications are turned off</string>
-    <string name="notif_blocked_body">Android is blocking everything from Pamoja, so nothing below can reach you until you allow them.</string>
+    <string name="notif_blocked_body">Notifications for Pamoja are off in Android, so none of these can reach you.</string>
     <string name="notif_blocked_action">Open system settings</string>
     <string name="notif_all_muted_title">Everything is switched off</string>
-    <string name="notif_all_muted_body">You will not hear from Pamoja at all, including when your group hits its goal.</string>
-    <string name="notif_section_types">WHAT TO SEND</string>
+    <string name="notif_all_muted_body">You won\'t hear from Pamoja at all, including when your group hits its goal.</string>
+    <string name="notif_section_types">What to send</string>
     <!-- Says where the control really is. Android owns channel importance and
          will not let an app write it, so these rows report and hand over. -->
     <string name="notif_types_hint">These are your Android notification settings. Tap one to change it.</string>
     <string name="notif_status_on">On</string>
     <string name="notif_status_off">Off</string>
     <string name="notif_achievement_title">Goals and achievements</string>
-    <string name="notif_achievement_sub">Your group hit its weekly goal, streaks, milestones</string>
+    <string name="notif_achievement_sub">Weekly goals, streaks and milestones</string>
     <string name="notif_group_title">Group activity</string>
-    <string name="notif_group_sub">Someone joined, someone passed you on the leaderboard</string>
+    <string name="notif_group_sub">Joins, cheers and nudges</string>
     <string name="notif_reminder_title">Step reminders</string>
-    <string name="notif_reminder_sub">A nudge when there is still time in the day to act on it</string>
+    <string name="notif_reminder_sub">A reminder while there\'s still time to walk today</string>
     <string name="notif_recap_title">Weekly recap</string>
     <string name="notif_recap_sub">How your group did, once a week</string>
-    <string name="notif_section_quiet">QUIET HOURS</string>
+    <string name="notif_section_quiet">Quiet hours</string>
     <string name="notif_quiet_body">Nothing arrives during this window. Hitting your weekly goal is the one exception.</string>
     <string name="notif_quiet_from">From</string>
     <string name="notif_quiet_to">To</string>
     <string name="notif_quiet_all_day">This covers the whole day, so nothing would ever arrive.</string>
 
     <!-- ── Account, the sign-in methods attached to this account ──────── -->
-    <string name="settings_section_account">ACCOUNT AND SECURITY</string>
+    <string name="settings_section_account">Account and security</string>
     <string name="settings_account_title">Sign-in methods</string>
     <string name="settings_account_none">No sign-in method connected</string>
     <string name="settings_account_one">%1$s only. Add a second way in.</string>
@@ -490,34 +478,34 @@
     <!-- Deliberately does not mention groups or step history. The one-method
          warning below has to talk about losing them, and having this line
          promise they are safe a few lines above that reads as a contradiction. -->
-    <string name="account_subtitle">All of these sign you into the same account. Adding one never creates a second account.</string>
-    <string name="account_section_methods">SIGN-IN METHODS</string>
-    <string name="account_section_password">PASSWORD</string>
+    <string name="account_subtitle">Each of these signs you into the same account.</string>
+    <string name="account_section_methods">Sign-in methods</string>
+    <string name="account_section_password">Password</string>
     <string name="account_method_google">Google</string>
     <string name="account_method_phone">Phone</string>
     <string name="account_method_email">Email</string>
     <string name="account_connected">Connected</string>
     <string name="account_not_connected">Not connected</string>
     <string name="account_add">Add</string>
-    <string name="account_add_failed_title">That did not work</string>
+    <string name="account_add_failed_title">That didn\'t work</string>
     <string name="account_offline_note">Adding a sign-in method needs a connection.</string>
 
     <!-- The exposure this account is carrying, said before the list rather than
          left to be worked out from it. -->
     <string name="account_none_title">No way back into this account</string>
-    <string name="account_none_body">Nothing is connected yet, so if this app is removed there is no way to prove the account is yours. Add a method below.</string>
+    <string name="account_none_body">Nothing is connected yet. If you remove the app, you can\'t get back into this account. Add a sign-in method below.</string>
     <string name="account_single_title">One way in</string>
-    <string name="account_single_body">Lose access to it and you lose this account, with your groups and step history. Adding a second method takes a minute now, and cannot be done afterwards.</string>
+    <string name="account_single_body">If you lose access to it, you lose this account, your groups and your step history. Add a second way in now, while you still can.</string>
 
     <string name="account_add_email_title">Add email sign-in</string>
-    <string name="account_add_email_body">A password is a way back in that does not depend on your phone or your Google account.</string>
+    <string name="account_add_email_body">A password lets you back in without your phone or Google account.</string>
     <string name="account_add_phone_title">Add phone sign-in</string>
     <string name="account_add_phone_body">We text a code to confirm the number is yours.</string>
     <string name="account_phone_code_body">Enter the code we sent to %1$s.</string>
 
     <string name="account_change_password">Change password</string>
-    <string name="account_change_password_sub">You will need your current one</string>
-    <string name="account_change_password_body">Enter your current password first. Nothing changes if it does not match.</string>
+    <string name="account_change_password_sub">You\'ll need your current one</string>
+    <string name="account_change_password_body">Enter your current password first. Nothing changes if it doesn\'t match.</string>
     <string name="account_change_password_confirm">Change it</string>
     <string name="account_password_current">Current password</string>
     <string name="account_password_new">New password</string>
@@ -527,8 +515,8 @@
     <string name="account_conflict_google">That Google account already belongs to a different Pamoja account. Sign in with it instead, or pick another one.</string>
     <string name="account_conflict_phone">That number already belongs to a different Pamoja account. Sign in with it instead, or use another number.</string>
     <string name="account_conflict_email">That email already belongs to a different Pamoja account. Sign in with it instead, or use another address.</string>
-    <string name="account_password_wrong_current">That is not your current password. Nothing has been changed.</string>
-    <string name="account_phone_wrong_code">That code is not right. Check the message and try again.</string>
+    <string name="account_password_wrong_current">That isn\'t your current password. Nothing has been changed.</string>
+    <string name="account_phone_wrong_code">That code isn\'t right. Check the message and try again.</string>
 
     <string name="account_google_added">Google added. You can now sign in with it.</string>
     <string name="account_email_added">Email added. You can now sign in with it.</string>
@@ -543,15 +531,15 @@
     <string name="licenses_open_link">Open license</string>
     <!-- Reachable on a debug build, where the Gradle plugin has no dependency
          list to generate from. -->
-    <string name="licenses_empty_title">Licenses are not in this build</string>
-    <string name="licenses_empty_body">They are generated for release builds. Install a release build to read them.</string>
+    <string name="licenses_empty_title">Licenses aren\'t in this build</string>
+    <string name="licenses_empty_body">They\'re generated for release builds. Install a release build to read them.</string>
 
     <!-- ── Paywall ────────────────────────────────────────────────────── -->
     <string name="paywall_close">Close</string>
     <string name="paywall_title">Pamoja Premium</string>
     <!-- Reassurance, and literally true: paywalling tracking would break the
          groups free members are already in. -->
-    <string name="group_sponsor_title">Sponsor this group</string>
+    <string name="group_sponsor_title">Get Premium for this group</string>
     <string name="group_access_premium">Premium</string>
     <string name="group_access_preview">Preview</string>
     <string name="paywall_plan_annual">Yearly</string>
@@ -561,7 +549,7 @@
     <string name="paywall_per_year">per year</string>
     <string name="paywall_per_month">per month</string>
     <string name="paywall_disclosure">%1$s per %2$s. Renews automatically until you cancel.</string>
-    <string name="paywall_disclosure_trial">Free for %1$s, then %2$s per %3$s. It renews automatically until you cancel, and cancelling during the trial costs nothing.</string>
+    <string name="paywall_disclosure_trial">Free for %1$s, then %2$s per %3$s. It renews automatically until you cancel. Canceling during the trial costs nothing.</string>
     <string name="paywall_start_trial">Start free trial</string>
     <string name="paywall_restore">Restore purchases</string>
     <string name="paywall_restoring">Checking…</string>
@@ -573,35 +561,35 @@
     <string name="paywall_move_title">Move Premium to this group?</string>
     <string name="paywall_move_confirm">Move Premium</string>
     <string name="paywall_verify_failed_title">Your payment is safe</string>
-    <string name="paywall_verify_failed_body">Google Play completed, but Pamoja has not confirmed Premium for %1$s yet. You will not be charged again. Try verifying access.</string>
+    <string name="paywall_verify_failed_body">Google Play took the payment, but we haven\'t confirmed Premium for %1$s yet. You won\'t be charged again. Tap Verify access.</string>
     <string name="paywall_unassigned_title">Premium needs another group</string>
-    <string name="paywall_unassigned_body">Google Play may have completed your purchase, but Premium was not assigned to %1$s because the group changed or is already covered. Close this screen, open another group, and use Restore purchases.</string>
+    <string name="paywall_unassigned_body">Google Play took the payment, but Premium couldn\'t be added to %1$s because the group changed or already has Premium. Open another group and tap Restore purchases.</string>
     <string name="billing_cancelled_title">Purchase canceled</string>
     <string name="billing_cancelled_body">Nothing was charged.</string>
     <string name="billing_pending_title">Payment is pending</string>
-    <string name="billing_pending_body">Google Play has not completed the payment yet. Premium will not start until it does.</string>
-    <string name="billing_not_allowed_title">Purchase is not available</string>
-    <string name="billing_not_allowed_body">Google Play cannot make this purchase with the current account or device.</string>
+    <string name="billing_pending_body">Google Play hasn\'t completed the payment yet. Premium won\'t start until it does.</string>
+    <string name="billing_not_allowed_title">Purchase isn\'t available</string>
+    <string name="billing_not_allowed_body">Google Play can\'t make this purchase with the current account or device.</string>
     <string name="billing_unavailable_title">This plan is unavailable</string>
-    <string name="billing_unavailable_body">The selected plan cannot be purchased right now. Refresh the plans and try again.</string>
+    <string name="billing_unavailable_body">The selected plan can\'t be purchased right now. Refresh the plans and try again.</string>
     <string name="billing_owned_title">You may already own this</string>
     <string name="billing_owned_body">Use Restore purchases to check the current Google Play account.</string>
     <string name="billing_nothing_to_restore_title">No active purchase found</string>
-    <string name="billing_nothing_to_restore_body">Google Play did not return an active Pamoja subscription for this account.</string>
-    <string name="paywall_unavailable_title">Premium is not on sale yet</string>
-    <string name="paywall_unavailable_body">Nothing has been charged. Everything free keeps working exactly as it does now.</string>
+    <string name="billing_nothing_to_restore_body">Google Play didn\'t return an active Pamoja subscription for this account.</string>
+    <string name="paywall_unavailable_title">Premium isn\'t on sale yet</string>
+    <string name="paywall_unavailable_body">Nothing was charged. Everything free keeps working.</string>
     <string name="sponsorship_error_group_required_title">Choose a group first</string>
     <string name="sponsorship_error_group_required_body">Open Premium from the group you want to support. Nothing has been charged.</string>
-    <string name="sponsorship_error_group_unavailable_title">This group is not available</string>
+    <string name="sponsorship_error_group_unavailable_title">This group isn\'t available</string>
     <string name="sponsorship_error_group_unavailable_body">It may have been removed or changed since you opened it. Nothing has been charged.</string>
-    <string name="sponsorship_error_member_title">You are no longer in this group</string>
-    <string name="sponsorship_error_member_body">Only a current member can sponsor this group. Nothing has been charged.</string>
+    <string name="sponsorship_error_member_title">You\'re no longer in this group</string>
+    <string name="sponsorship_error_member_body">Only members can get Premium for this group. Nothing was charged.</string>
     <string name="sponsorship_error_subscription_title">No active subscription was found</string>
     <string name="sponsorship_error_subscription_body">Nothing has been assigned to a group. Check your Google Play account or restore your purchase.</string>
-    <string name="sponsorship_error_assigned_title">Your Premium is supporting another group</string>
-    <string name="sponsorship_error_assigned_body">Your current plan has no open group spots. Your existing groups have not been changed.</string>
+    <string name="sponsorship_error_assigned_title">Your Premium covers another group</string>
+    <string name="sponsorship_error_assigned_body">Your current plan has no open group spots. Your existing groups haven\'t been changed.</string>
     <string name="sponsorship_error_already_title">This group already has Premium</string>
-    <string name="sponsorship_error_already_body">Another subscription already covers this group. If your Google Play purchase completed, you can use it for another group or manage it in Google Play.</string>
+    <string name="sponsorship_error_already_body">Another subscription already covers this group. If Google Play took your payment, use it for another group or manage it in Google Play.</string>
 
     <!-- ── Activity centre ────────────────────────────────────────────── -->
     <string name="activity_title">Updates</string>
@@ -609,10 +597,10 @@
     <string name="activity_open_desc">Updates you may have missed</string>
     <string name="activity_clear">Clear</string>
     <string name="activity_clear_title">Clear your updates?</string>
-    <string name="activity_clear_body">This removes the list on this phone. Your groups, steps and history are not affected.</string>
+    <string name="activity_clear_body">This removes the list on this phone. Your groups, steps and history aren\'t affected.</string>
     <string name="activity_clear_confirm">Clear</string>
     <string name="activity_empty_title">Nothing yet</string>
-    <string name="activity_empty_body">When your group hits its goal, or someone joins, it will show up here so you can catch up later.</string>
+    <string name="activity_empty_body">When your group hits its goal or someone joins, you\'ll see it here.</string>
     <string name="activity_time_now">Just now</string>
     <string name="activity_time_minutes">%1$d min ago</string>
     <string name="activity_time_hours">%1$d h ago</string>
@@ -646,8 +634,8 @@
         <item quantity="other">%1$d years</item>
     </plurals>
     <plurals name="licenses_subtitle">
-        <item quantity="one">Pamoja is built on %1$d open source component. Thank you to whoever wrote it.</item>
-        <item quantity="other">Pamoja is built on %1$d open source components. Thank you to everyone who wrote them.</item>
+        <item quantity="one">Pamoja is built on %1$d open source component.</item>
+        <item quantity="other">Pamoja is built on %1$d open source components.</item>
     </plurals>
     <!-- Auth top-bar step markers, rendered uppercase. They name the flow, not
          the screen, so someone deep in a sign-up knows what they are doing. -->
@@ -662,9 +650,9 @@
     <!-- Pace badge. Falling short is never phrased as failure: this product's
          copy rule is that it does not shame, and a walking group missing its
          own target is the most ordinary thing in the world. -->
-    <string name="group_celebration_title">Look what you did together.</string>
+    <string name="group_celebration_title">You did it together.</string>
     <string name="group_celebration_progress">of %1$s steps together</string>
-    <string name="group_celebration_confirm">Take the victory lap</string>
+    <string name="group_celebration_confirm">See the week</string>
     <!-- Was a hardcoded "$daysLeft days left" in GroupScreen, which rendered
          "1 days left" on the last day of every week. -->
     <plurals name="group_days_left">
@@ -675,43 +663,13 @@
 
     <!-- Main app shell and personal dashboard. -->
 
-    <!-- Home-screen widgets -->
-    <string name="widget_today_name">Pamoja · Today</string>
-    <string name="widget_group_name">Pamoja · Group pulse</string>
-    <string name="widget_hook_name">Pamoja · Move now</string>
-    <string name="widget_today_description">Your steps today and a quick reason to move.</string>
-    <string name="widget_group_description">See the steps left toward one shared goal. Tap to open that group.</string>
-    <string name="widget_hook_description">A timely reason to get up and move.</string>
-    <string name="widget_today_label">STEPS TODAY</string>
-    <string name="widget_together_label">YOUR GROUP PULSE</string>
-    <string name="widget_open_to_sync">Tap to refresh your progress</string>
-    <string name="widget_first_step_hook">A little fresh air. A few more steps.</string>
-    <string name="widget_small_walk_hook">Got five minutes for a walk?</string>
-    <string name="widget_moving_hook">Small walks. Shared progress.</string>
-    <string name="widget_hook_keep_going">Make your next break a walk.</string>
-    <string name="widget_hook_day_moving">You made room for movement.</string>
-    <string name="widget_week_total">%1$s steps this week</string>
-    <string name="widget_no_group_title">Walk together</string>
-    <string name="widget_no_group_body">Create or join a group in Pamoja</string>
-    <string name="widget_open_pamoja">Tap to open Pamoja</string>
-    <string name="settings_widgets_title">Home screen widgets</string>
-    <string name="settings_widgets_subtitle">Add Today’s Rhythm, Group Pulse or Move Now</string>
-    <string name="settings_widgets_picker_title">Choose a Pamoja widget</string>
-    <string name="settings_widgets_today_subtitle">Today’s steps and a timely nudge</string>
-    <string name="settings_widgets_group_subtitle">Steps left toward one shared goal</string>
-    <string name="settings_widgets_hook_subtitle">A compact reason to get moving</string>
-    <string name="settings_widgets_unavailable">Add it from your phone’s widget picker.</string>
-    <plurals name="widget_group_members_days">
-        <item quantity="one">%1$d members · last day</item>
-        <item quantity="other">%1$d members · %2$d days left</item>
-    </plurals>
     <string name="edit_group_week_start_planned">Your saved plan starts %1$s. The week-start day stays fixed until that plan has been applied.</string>
     <string name="group_leave_title">Leave group</string>
-    <string name="group_leave_body">You will lose access to this group. Your personal step records stay in your account. You can join again with an active invite.</string>
+    <string name="group_leave_body">You\'ll leave this group\'s goal and history. Your own steps stay in your account, and you can rejoin with an invite link.</string>
     <string name="settings_background_steps_title">Keep my group progress updated</string>
-    <string name="settings_background_steps_off">Allow step syncing while Pamoja is closed. Optional; you can still sync when you open the app.</string>
-    <string name="settings_background_steps_on">Background access is on. Android controls sync timing. Tap to manage access in Health Connect.</string>
+    <string name="settings_background_steps_off">Sync steps while Pamoja is closed. Without it, steps sync when you open the app.</string>
+    <string name="settings_background_steps_on">On. Android decides exactly when it syncs. Tap to change it in Health Connect.</string>
     <string name="sponsorship_assignment_changed_title">Premium assignment changed</string>
-    <string name="sponsorship_assignment_changed_body">Refresh to see which group your subscription supports, then confirm where you want to use it. You will not be charged again.</string>
+    <string name="sponsorship_assignment_changed_body">Refresh to see which group your subscription covers, then choose where to use it. You won\'t be charged again.</string>
     <string name="planning_premium_required_body">This group needs active Premium to set up or save a new plan. Check Premium details from the group screen. Any plan already saved will still take effect.</string>
 </resources>

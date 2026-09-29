@@ -121,6 +121,12 @@
                 android:resource="@xml/widget_walk_hook_info" />
         </receiver>
 
+        <!-- Nudge and Cheer back on the widgets. Not exported: only their own
+             PendingIntents may reach it. -->
+        <receiver
+            android:name=".widgets.WidgetActionReceiver"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

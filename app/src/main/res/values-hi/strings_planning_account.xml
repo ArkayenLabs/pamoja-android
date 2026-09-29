@@ -12,7 +12,7 @@
     <string name="join_offline_title">आप ऑफ़लाइन हैं</string>
     <string name="join_offline_body">जुड़ने के लिए कनेक्शन चाहिए। लौटने पर आमंत्रण काम करेगा।</string>
     <string name="join_failed_title">शामिल नहीं हो सके</string>
-    <string name="join_failed_taken">आपके तय करने तक आख़िरी जगह किसी और ने ले ली।</string>
+    <string name="join_failed_taken">आख़िरी जगह अभी-अभी किसी और ने ले ली।</string>
     <string name="join_failed_offline">आप ऑफ़लाइन हैं। कनेक्शन आने पर फिर कोशिश करें।</string>
     <string name="join_failed_closed">यह आमंत्रण अब नए सदस्यों को नहीं जोड़ता।</string>
     <string name="join_failed_generic">यह काम नहीं हुआ। थोड़ी देर में फिर कोशिश करें।</string>
@@ -27,7 +27,7 @@
     <string name="settings_logout_title">साइन आउट करें</string>
     <string name="settings_logout_subtitle">इस डिवाइस पर अपने खाते से निकलें</string>
     <string name="settings_delete_title">खाता मिटाएँ</string>
-    <string name="settings_delete_subtitle">प्रोफ़ाइल और आँकड़े हमेशा के लिए मिटाएँ</string>
+    <string name="settings_delete_subtitle">प्रोफ़ाइल और कदमों का इतिहास हमेशा के लिए मिटाएँ</string>
     <string name="settings_delete_confirm">हमेशा के लिए मिटाएँ</string>
     <string name="settings_delete_warning">इसे वापस नहीं लिया जा सकता। हम बाद में डेटा वापस नहीं ला पाएँगे।</string>
     <string name="settings_delete_loses_profile">आपकी प्रोफ़ाइल, नाम और फ़ोटो</string>
@@ -46,9 +46,9 @@
     <string name="settings_title">आप</string>
     <string name="settings_subtitle">आपकी प्रोफ़ाइल, पसंद और गोपनीयता</string>
     <string name="settings_section_information">गोपनीयता और जानकारी</string>
-    <string name="settings_name_fallback">अतिथि</string>
-    <string name="settings_rate_title">रेटिंग दें</string>
-    <string name="settings_rate_subtitle">अपनी राय देकर हमारा साथ दें</string>
+    <string name="settings_name_fallback">अभी नाम नहीं</string>
+    <string name="settings_rate_title">Pamoja को रेटिंग दें</string>
+    <string name="settings_rate_subtitle">Google Play पर समीक्षा लिखें</string>
     <string name="settings_reauth_send_code">कोड भेजें</string>
     <string name="settings_no_phone">इस खाते में फ़ोन नंबर दर्ज नहीं है</string>
     <string name="settings_reauth_failed">आपकी पहचान की पुष्टि नहीं हो सकी</string>

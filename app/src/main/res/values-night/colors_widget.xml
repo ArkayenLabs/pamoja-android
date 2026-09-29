@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_surface">#1D1A36</color>
+    <color name="widget_hero">#2B2555</color>
+    <color name="widget_on_hero">#F4F2FF</color>
+    <color name="widget_ink">#F4F2FF</color>
+    <color name="widget_muted">#B4AED3</color>
+    <color name="widget_track">#332D58</color>
+    <color name="widget_line">#2C2848</color>
+    <color name="widget_bar">#CFC6FF</color>
+    <color name="widget_button">#CFC6FF</color>
+    <color name="widget_on_button">#16132B</color>
+    <color name="widget_done">#332D58</color>
+    <color name="widget_on_done">#B4AED3</color>
+    <color name="widget_pop">#D4F75A</color>
+    <color name="widget_on_pop">#16132B</color>
+</resources>

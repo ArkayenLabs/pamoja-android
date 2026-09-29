@@ -1,55 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- tools:ignore: a launcher inflates these RemoteViews without AppCompat, so
+     the app: attributes lint suggests would be dropped there; the faces'
+     descriptions are set in code, per face. -->
+<!-- "You today": your steps against your usual, or, once someone cheered
+     you today, the lime cheer tile with Cheer back. One state shows at a time. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UseAppTint,UseCompatTextViewDrawableXml"
     android:id="@+id/widget_today_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_today_background"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/widget_today_steps_state"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@drawable/widget_bg_surface"
         android:gravity="center_vertical"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="14dp">
 
         <TextView
-            android:id="@+id/widget_today_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="0.15"
-            android:text="@string/widget_today_label"
-            android:textColor="#665542"
-            android:textSize="10sp" />
+            android:maxLines="1"
+            android:text="@string/home_you_today"
+            android:textColor="@color/widget_muted"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/widget_today_steps"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:fontFamily="sans-serif-black"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:text="0"
-            android:textColor="#201C16"
-            android:textSize="36sp" />
+            android:textColor="@color/widget_ink"
+            android:textSize="32sp"
+            android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/widget_today_hook"
-            android:layout_width="match_parent"
+            android:id="@+id/widget_today_usual"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="2"
-            android:text="@string/widget_open_to_sync"
-            android:textColor="#584838"
-            android:textSize="11sp" />
+            android:textColor="@color/widget_muted"
+            android:textSize="12sp" />
+
+        <ProgressBar
+            android:id="@+id/widget_today_bar"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="8dp"
+            android:max="100"
+            android:progressDrawable="@drawable/widget_progress" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_today_cheer_state"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_bg_pop"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/widget_today_cheer_face"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:importantForAccessibility="no" />
+
         <TextView
-            android:id="@+id/widget_today_cta"
+            android:id="@+id/widget_today_cheer_text"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:textColor="@color/widget_on_pop"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_today_cheer_back"
+            style="@style/WidgetPillInk"
+            android:layout_marginTop="6dp"
+            android:text="@string/home_cheer_back" />
+
+        <TextView
+            android:id="@+id/widget_today_cheered"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginTop="6dp"
+            android:drawableStart="@drawable/ic_check"
+            android:drawablePadding="6dp"
+            android:drawableTint="@color/widget_on_pop"
+            android:gravity="center_vertical"
+            android:text="@string/home_cheered"
+            android:textColor="@color/widget_on_pop"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_today_connect_state"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_bg_surface"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_footprints"
+            android:tint="@color/widget_ink" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/widget_view_progress"
-            android:textColor="#9E3C17"
-            android:textSize="12sp" />
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:text="@string/widget_connect"
+            android:textColor="@color/widget_ink"
+            android:textSize="14sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </FrameLayout>

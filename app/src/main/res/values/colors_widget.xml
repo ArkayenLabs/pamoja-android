@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widgets on the Lilac kit (ui/kit/KitColors.kt). RemoteViews
+     cannot read Compose tokens, so the same values are repeated here, with
+     their dark twins in values-night. -->
+<resources>
+    <color name="widget_surface">#FFFFFF</color>
+    <color name="widget_hero">#CFC6FF</color>
+    <color name="widget_on_hero">#16132B</color>
+    <color name="widget_ink">#16132B</color>
+    <color name="widget_muted">#5A5670</color>
+    <color name="widget_track">#EEEBFA</color>
+    <color name="widget_line">#EEEBFA</color>
+    <color name="widget_bar">#16132B</color>
+    <color name="widget_button">#16132B</color>
+    <color name="widget_on_button">#FFFFFF</color>
+    <color name="widget_done">#EEEBFA</color>
+    <color name="widget_on_done">#5A5670</color>
+    <color name="widget_pop">#D4F75A</color>
+    <color name="widget_on_pop">#16132B</color>
+</resources>

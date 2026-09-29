@@ -1,6 +1,6 @@
 <resources>
     <string name="settings_open_profile">अपनी प्रोफ़ाइल बदलें</string>
-    <string name="settings_section_preferences">ऐप का अनुभव</string>
+    <string name="settings_section_preferences">रूप और भाषा</string>
     <string name="settings_theme_label">दिखावट</string>
     <string name="settings_theme_system">सिस्टम</string>
     <string name="settings_theme_light">हल्का</string>
@@ -15,9 +15,9 @@
     <string name="settings_export_working">आपका डेटा इकट्ठा हो रहा है…</string>
     <string name="settings_export_saved">आपका डेटा सहेज दिया गया</string>
     <string name="settings_export_failed">फ़ाइल नहीं लिखी जा सकी</string>
-    <string name="settings_theme_system_sub">फ़ोन के अनुसार, शाम के बदलाव सहित</string>
+    <string name="settings_theme_system_sub">फ़ोन की सेटिंग के अनुसार</string>
     <string name="settings_theme_fixed_sub">फ़ोन बदले तब भी ऐसा ही रहेगा</string>
-    <string name="settings_section_health">HEALTH CONNECT</string>
+    <string name="settings_section_health">Health Connect</string>
     <string name="settings_health_connected">कदम सिंक हो रहे हैं</string>
     <string name="settings_health_connected_sub">Pamoja Health Connect से आपके रोज़ के कदम पढ़ता है।</string>
     <string name="settings_health_not_connected">कदम सिंक नहीं हो रहे</string>
@@ -50,9 +50,9 @@
     <string name="notif_achievement_title">लक्ष्य और उपलब्धियाँ</string>
     <string name="notif_achievement_sub">साप्ताहिक लक्ष्य, लगातार सफलता और पड़ाव</string>
     <string name="notif_group_title">समूह की गतिविधि</string>
-    <string name="notif_group_sub">नए सदस्य और लीडरबोर्ड में आगे निकलने वाले साथी</string>
+    <string name="notif_group_sub">नए सदस्य, शाबाशी और याद दिलाना</string>
     <string name="notif_reminder_title">चलने के रिमाइंडर</string>
-    <string name="notif_reminder_sub">जब दिन में चलने का समय बाकी हो तब याद दिलाएँ</string>
+    <string name="notif_reminder_sub">जब आज चलने का समय बाकी हो, तब एक रिमाइंडर</string>
     <string name="notif_recap_title">साप्ताहिक सारांश</string>
     <string name="notif_recap_sub">हफ़्ते में एक बार समूह की प्रगति</string>
     <string name="notif_section_quiet">शांत समय</string>
@@ -69,7 +69,7 @@
     <string name="settings_subscription_title">सदस्यता का प्रबंधन</string>
     <string name="settings_subscription_sub">Google Play में आपकी सदस्यताएँ खोलता है</string>
     <string name="account_title">खाता</string>
-    <string name="account_subtitle">इन सभी तरीकों से एक ही खाता खुलता है। नया तरीका जोड़ने से दूसरा खाता नहीं बनता।</string>
+    <string name="account_subtitle">इन सभी तरीकों से एक ही खाता खुलता है।</string>
     <string name="account_section_methods">साइन इन के तरीके</string>
     <string name="account_section_password">पासवर्ड</string>
     <string name="account_method_google">Google</string>
@@ -81,7 +81,7 @@
     <string name="account_add_failed_title">यह काम नहीं हुआ</string>
     <string name="account_offline_note">साइन इन का तरीका जोड़ने के लिए कनेक्शन चाहिए।</string>
     <string name="account_none_title">इस खाते में लौटने का तरीका नहीं है</string>
-    <string name="account_none_body">अभी कोई तरीका नहीं जुड़ा। ऐप हटने पर खाते की पहचान साबित नहीं कर पाएँगे। नीचे एक तरीका जोड़ें।</string>
+    <string name="account_none_body">अभी कुछ नहीं जुड़ा है। ऐप हटाने पर आप इस खाते में वापस नहीं आ पाएँगे। नीचे एक तरीका जोड़ें।</string>
     <string name="account_single_title">साइन इन का एक तरीका</string>
     <string name="account_single_body">इसका ऐक्सेस खोने पर खाता, समूह और इतिहास भी खो जाएँगे। अभी दूसरा तरीका जोड़ें, बाद में नहीं जोड़ पाएँगे।</string>
     <string name="account_add_email_title">ईमेल से साइन इन जोड़ें</string>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_group_name">Tu grupo</string>
+    <string name="widget_today_name">Tú hoy</string>
+    <string name="widget_hook_name">Racha del grupo</string>
+    <string name="widget_group_description">Quién ha caminado hoy y cómo va la semana. Avisa desde la pantalla de inicio.</string>
+    <string name="widget_today_description">Tus pasos de hoy y los aplausos de tu grupo.</string>
+    <string name="widget_hook_description">Cuántas semanas seguidas ha cumplido tu grupo su objetivo.</string>
+    <string name="widget_no_group_title">Camina en compañía</string>
+    <string name="widget_no_group_body">Crea un grupo o únete en Pamoja</string>
+    <string name="widget_open_to_sync">Abre Pamoja para actualizar</string>
+    <string name="widget_steps_of">%1$s de %2$s</string>
+    <string name="widget_goal_share">del objetivo de esta semana</string>
+    <string name="widget_connect">Conecta tus pasos en Pamoja</string>
+    <string name="settings_widgets_title">Widgets de inicio</string>
+    <string name="settings_widgets_subtitle">Tu grupo, tú hoy o la racha del grupo</string>
+    <string name="settings_widgets_picker_title">Elige un widget</string>
+    <string name="settings_widgets_group_subtitle">Quién ha caminado hoy, el objetivo semanal y Avisar</string>
+    <string name="settings_widgets_today_subtitle">Tus pasos, o un aplauso que devolver</string>
+    <string name="settings_widgets_hook_subtitle">Semanas seguidas en que tu grupo cumplió su objetivo</string>
+    <string name="settings_widgets_unavailable">Añádelo desde el selector de widgets de tu teléfono.</string>
+    <plurals name="widget_streak_label">
+        <item quantity="one">semana seguida</item>
+        <item quantity="many">semanas seguidas</item>
+        <item quantity="other">semanas seguidas</item>
+    </plurals>
+    <plurals name="widget_more_members">
+        <item quantity="one">%d miembro más</item>
+        <item quantity="many">%d miembros más</item>
+        <item quantity="other">%d miembros más</item>
+    </plurals>
+</resources>

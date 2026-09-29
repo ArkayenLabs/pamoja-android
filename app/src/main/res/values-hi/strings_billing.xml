@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Hindi draft. Prices and trial durations come from Google Play. -->
-    <string name="premium_move_named_body">अपनी सदस्यता %1$s से %2$s में ले जाएँ? पिछले समूह को इस सदस्यता से मिलने वाली सुविधाएँ बंद हो जाएँगी। दोबारा खरीदने की ज़रूरत नहीं है।</string>
+    <string name="premium_move_named_body">अपनी सदस्यता %1$s से %2$s में ले जाएँ? %1$s का Premium हट जाएगा। आपको दोबारा भुगतान नहीं करना होगा।</string>
     <string name="premium_purchase_named_body">आपकी पिछली सदस्यता %1$s के लिए थी। Google Play से खरीद की पुष्टि होने के बाद यह %2$s के लिए लागू होगी।</string>
     <string name="premium_continue_checkout">खरीदारी के लिए आगे बढ़ें</string>
     <string name="premium_group_active">इस समूह के पास Premium है</string>
-    <string name="premium_group_active_body">इस समूह के सभी सदस्यों को सुविधाएँ मिलती हैं। किसी और सदस्यता की ज़रूरत नहीं है।</string>
+    <string name="premium_group_active_body">समूह में सभी को यह मिलता है। किसी और को भुगतान नहीं करना है।</string>
     <string name="premium_subscription_found">आपकी सदस्यता तैयार है</string>
     <string name="premium_apply_existing_body">दोबारा खरीदे बिना अपनी मौजूदा सदस्यता इस समूह पर लागू करें।</string>
     <string name="premium_apply_existing">इस समूह पर Premium लागू करें</string>
     <string name="premium_previous_group">अभी Premium से %1$s कवर होता है।</string>
     <string name="premium_previous_group_inactive">आपका पिछला Premium समूह %1$s था। इस समूह को कवर करने के लिए फिर से सदस्यता लें।</string>
-    <string name="premium_choose_group_title">Premium के साथ म्यूज़िकल चेयर नहीं</string>
-    <string name="premium_choose_group_body">Premium यहाँ ले आएँ, या मल्टी-ग्रुप योजना से दोनों समूहों को साथ आगे बढ़ाएँ।</string>
+    <string name="premium_choose_group_title">चुनें कि Premium किस समूह को मिले</string>
+    <string name="premium_choose_group_body">Premium इस समूह में ले आएँ, या मल्टी-ग्रुप योजना से दोनों रखें।</string>
     <string name="premium_keep_both_action">दोनों समूहों के लिए Premium रखें</string>
-    <string name="premium_more_groups_unavailable_title">मल्टी-ग्रुप योजनाएँ जोड़ी जा रही हैं</string>
-    <string name="premium_more_groups_unavailable_body">आपके मौजूदा समूह का Premium बना रहेगा। अभी इसे यहाँ ले आएँ, या Google Play में अतिरिक्त योजना आने के बाद फिर कोशिश करें।</string>
+    <string name="premium_more_groups_unavailable_title">मल्टी-ग्रुप योजनाएँ अभी उपलब्ध नहीं हैं</string>
+    <string name="premium_more_groups_unavailable_body">आपके मौजूदा समूह का Premium बना रहेगा। अभी इसे यहाँ ले आएँ, या बाद में फिर कोशिश करें।</string>
     <string name="premium_another_group">कोई दूसरा समूह</string>
     <string name="premium_manage_play">Google Play में सदस्यता प्रबंधित करें</string>
     <string name="premium_refresh_status">सदस्यता की स्थिति फिर से जाँचें</string>
     <string name="paywall_close">बंद करें</string>
     <string name="paywall_title">Pamoja Premium</string>
-    <string name="group_sponsor_title">इस समूह के लिए सदस्यता लें</string>
+    <string name="group_sponsor_title">इस समूह के लिए Premium लें</string>
     <string name="group_access_premium">Premium</string>
     <string name="group_access_preview">झलक</string>
     <string name="paywall_plan_annual">सालाना</string>
@@ -45,7 +45,7 @@
     <string name="paywall_verify_failed_title">आपका भुगतान सुरक्षित है</string>
     <string name="paywall_verify_failed_body">Google Play पर खरीद पूरी हो गई, लेकिन Pamoja ने अभी %1$s के लिए Premium की पुष्टि नहीं की है। आपसे दोबारा शुल्क नहीं लिया जाएगा। सुविधाओं की पुष्टि करने की कोशिश करें।</string>
     <string name="paywall_unassigned_title">Premium के लिए दूसरा समूह चुनें</string>
-    <string name="paywall_unassigned_body">Google Play पर खरीद पूरी हुई हो सकती है, लेकिन %1$s को Premium नहीं मिला क्योंकि समूह बदल गया है या उसके पास पहले से Premium है। यह स्क्रीन बंद करें, दूसरा समूह खोलें और खरीदारी बहाल करें चुनें।</string>
+    <string name="paywall_unassigned_body">Google Play ने भुगतान ले लिया, लेकिन %1$s को Premium नहीं मिल सका क्योंकि समूह बदल गया या उसके पास पहले से Premium है। दूसरा समूह खोलें और खरीदारी बहाल करें पर टैप करें।</string>
     <string name="billing_cancelled_title">खरीदारी रद्द हो गई</string>
     <string name="billing_cancelled_body">कोई शुल्क नहीं लिया गया।</string>
     <string name="billing_pending_title">भुगतान लंबित है</string>
@@ -59,13 +59,13 @@
     <string name="billing_nothing_to_restore_title">कोई सक्रिय खरीद नहीं मिली</string>
     <string name="billing_nothing_to_restore_body">Google Play को इस खाते के लिए Pamoja की कोई सक्रिय सदस्यता नहीं मिली।</string>
     <string name="paywall_unavailable_title">Premium की बिक्री अभी शुरू नहीं हुई है</string>
-    <string name="paywall_unavailable_body">कोई शुल्क नहीं लिया गया। सभी मुफ़्त सुविधाएँ पहले की तरह काम करती रहेंगी।</string>
+    <string name="paywall_unavailable_body">कोई शुल्क नहीं लिया गया। सभी मुफ़्त सुविधाएँ काम करती रहेंगी।</string>
     <string name="sponsorship_error_group_required_title">पहले समूह चुनें</string>
     <string name="sponsorship_error_group_required_body">जिस समूह के लिए सदस्यता लेना चाहते हैं, उसी समूह से Premium खोलें। कोई शुल्क नहीं लिया गया।</string>
     <string name="sponsorship_error_group_unavailable_title">यह समूह उपलब्ध नहीं है</string>
     <string name="sponsorship_error_group_unavailable_body">आपके खोलने के बाद यह समूह हटाया या बदला गया हो सकता है। कोई शुल्क नहीं लिया गया।</string>
     <string name="sponsorship_error_member_title">आप अब इस समूह में नहीं हैं</string>
-    <string name="sponsorship_error_member_body">केवल मौजूदा सदस्य ही इस समूह के लिए सदस्यता ले सकता है। कोई शुल्क नहीं लिया गया।</string>
+    <string name="sponsorship_error_member_body">केवल सदस्य ही इस समूह के लिए Premium ले सकते हैं। कोई शुल्क नहीं लिया गया।</string>
     <string name="sponsorship_error_subscription_title">कोई सक्रिय सदस्यता नहीं मिली</string>
     <string name="sponsorship_error_subscription_body">किसी समूह को सदस्यता नहीं दी गई है। अपना Google Play खाता जाँचें या खरीदारी बहाल करें।</string>
     <string name="sponsorship_error_assigned_title">आपका Premium दूसरे समूह के लिए है</string>

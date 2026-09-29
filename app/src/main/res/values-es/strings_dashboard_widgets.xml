@@ -15,48 +15,26 @@
     <string name="activity_clear_body">Se borra la lista de este teléfono. Tus grupos, pasos e historial no cambian.</string>
     <string name="activity_clear_confirm">Borrar</string>
     <string name="activity_empty_title">Aún no hay novedades</string>
-    <string name="activity_empty_body">Cuando el grupo alcance su meta o alguien se una, lo verás aquí para consultarlo después.</string>
+    <string name="activity_empty_body">Cuando el grupo alcance su meta o alguien se una, lo verás aquí.</string>
     <string name="activity_time_now">Ahora mismo</string>
     <string name="activity_time_minutes">Hace %1$d min</string>
     <string name="activity_time_hours">Hace %1$d h</string>
     <string name="activity_time_days">Hace %1$d d</string>
-    <string name="group_celebration_title">Mira lo que habéis logrado juntos.</string>
+    <string name="group_celebration_title">Lo habéis logrado juntos.</string>
     <string name="group_celebration_progress">de %1$s pasos juntos</string>
-    <string name="group_celebration_confirm">Seguir celebrando</string>
-    <string name="widget_today_name">Pamoja · Hoy</string>
-    <string name="widget_group_name">Pamoja · Tu grupo</string>
-    <string name="widget_hook_name">Pamoja · Muévete</string>
-    <string name="widget_today_description">Tus pasos de hoy y un motivo para moverte.</string>
-    <string name="widget_group_description">Los pasos que faltan para una meta compartida. Toca para abrir el grupo.</string>
-    <string name="widget_hook_description">Un motivo oportuno para levantarte y moverte.</string>
-    <string name="widget_today_label">PASOS DE HOY</string>
-    <string name="widget_together_label">TU GRUPO</string>
-    <string name="widget_open_to_sync">Toca para actualizar tu progreso</string>
-    <string name="widget_first_step_hook">Un poco de aire. Unos pasos más.</string>
-    <string name="widget_small_walk_hook">¿Tienes cinco minutos para caminar?</string>
-    <string name="widget_moving_hook">Paseos cortos. Progreso compartido.</string>
-    <string name="widget_hook_keep_going">Dedica tu próxima pausa a caminar.</string>
-    <string name="widget_hook_day_moving">Hoy has hecho sitio para moverte.</string>
-    <string name="widget_week_total">%1$s pasos esta semana</string>
-    <string name="widget_no_group_title">Camina en compañía</string>
-    <string name="widget_no_group_body">Crea un grupo o únete en Pamoja</string>
-    <string name="widget_open_pamoja">Toca para abrir Pamoja</string>
-    <string name="settings_widgets_title">Widgets de inicio</string>
-    <string name="settings_widgets_subtitle">Añade tus pasos, tu grupo o un motivo para moverte</string>
-    <string name="settings_widgets_picker_title">Elige un widget de Pamoja</string>
-    <string name="settings_widgets_today_subtitle">Tus pasos de hoy y un recordatorio oportuno</string>
-    <string name="settings_widgets_group_subtitle">Lo que falta para una meta compartida</string>
-    <string name="settings_widgets_hook_subtitle">Un motivo breve para moverte</string>
-    <string name="settings_widgets_unavailable">Añádelo desde el selector de widgets de tu teléfono.</string>
+    <string name="group_celebration_confirm">Ver la semana</string>
     <string name="edit_group_week_start_planned">Tu plan empieza el %1$s. El día de inicio queda fijo hasta que se aplique.</string>
     <string name="group_leave_title">Salir del grupo</string>
-    <string name="group_leave_body">Perderás el acceso al grupo. Tus pasos personales se conservan en tu cuenta. Puedes volver con una invitación activa.</string>
+    <string name="group_leave_body">Dejarás la meta y el historial de este grupo. Tus pasos se quedan en tu cuenta y puedes volver con un enlace de invitación.</string>
     <string name="settings_background_steps_title">Mantener actualizado el progreso del grupo</string>
-    <string name="settings_background_steps_off">Permite sincronizar con Pamoja cerrado. Es opcional: también puedes sincronizar al abrir la app.</string>
-    <string name="settings_background_steps_on">El acceso en segundo plano está activo. Android decide cuándo sincronizar. Toca para gestionarlo en Health Connect.</string>
+    <string name="settings_background_steps_off">Sincroniza los pasos con Pamoja cerrado. Si no, se sincronizan al abrir la app.</string>
+    <string name="settings_background_steps_on">Activado. Android decide cuándo sincroniza. Toca para cambiarlo en Health Connect.</string>
     <string name="planning_premium_required_body">El grupo necesita Premium activo para crear o guardar un plan nuevo. Consulta sus detalles en la pantalla del grupo. Los planes ya guardados se aplicarán igualmente.</string>
     <plurals name="member_count"><item quantity="one">%1$d miembro</item><item quantity="other">%1$d miembros</item></plurals>
-    <plurals name="licenses_subtitle"><item quantity="one">Pamoja utiliza %1$d componente de código abierto. Gracias a su autoría.</item><item quantity="other">Pamoja utiliza %1$d componentes de código abierto. Gracias a quienes los crearon.</item></plurals>
+    <plurals name="licenses_subtitle">
+        <item quantity="one">Pamoja utiliza %1$d componente de código abierto.</item>
+        <item quantity="many">Pamoja utiliza %1$d componentes de código abierto.</item>
+        <item quantity="other">Pamoja utiliza %1$d componentes de código abierto.</item>
+    </plurals>
     <plurals name="group_days_left"><item quantity="one">Queda %1$d día</item><item quantity="other">Quedan %1$d días</item></plurals>
-    <plurals name="widget_group_members_days"><item quantity="one">%1$d miembros · último día</item><item quantity="other">%1$d miembros · quedan %2$d días</item></plurals>
 </resources>

@@ -4,6 +4,7 @@
     <string name="licenses_title">Open source licences</string>
     <string name="licenses_link_body">This component\'s licence is published here.</string>
     <string name="licenses_open_link">Open licence</string>
-    <string name="licenses_empty_title">Licences are not in this build</string>
+    <string name="licenses_empty_title">Licences aren\'t in this build</string>
     <string name="billing_cancelled_title">Purchase cancelled</string>
+    <string name="paywall_disclosure_trial">Free for %1$s, then %2$s per %3$s. It renews automatically until you cancel. Cancelling during the trial costs nothing.</string>
 </resources>

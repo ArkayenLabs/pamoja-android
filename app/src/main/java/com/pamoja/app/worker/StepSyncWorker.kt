@@ -135,12 +135,8 @@ class StepSyncWorker @AssistedInject constructor(
             userPreferences.saveLastSyncTime(System.currentTimeMillis())
 
             // ── Refresh each group's cached weekly total ─────────────────
-            val widgetGroups = publishWeeklyTotals(user.userId, todaySteps, todayStr)
-            val personalWeekSteps = getMyStepsForWeekUseCase(
-                user.userId,
-                java.time.DayOfWeek.MONDAY,
-            ).firstOrNull().orEmpty().sumOf { it.stepCount }
-            widgetUpdater.publish(todaySteps, personalWeekSteps, widgetGroups)
+            publishWeeklyTotals(user.userId, todaySteps, todayStr)
+            widgetUpdater.refresh()
 
             // ── Smart Notifications Trigger ──────────────────────────────
             checkAndTriggerNotification(user.userId, todaySteps, isFirstEverSync)
@@ -179,10 +175,9 @@ class StepSyncWorker @AssistedInject constructor(
         userId: String,
         todaySteps: Long,
         todayDate: String,
-    ): List<com.pamoja.app.domain.model.Group> {
-        return try {
+    ) {
+        try {
             val groups = getUserGroupsUseCase(userId).firstOrNull().orEmpty()
-            val widgetGroups = mutableListOf<com.pamoja.app.domain.model.Group>()
             for (group in groups) {
                 // This device publishes THIS user's figures and nobody else's.
                 // The rules pin a membership write to its owner, and the steps
@@ -234,16 +229,9 @@ class StepSyncWorker @AssistedInject constructor(
                     group.startDay,
                     reportingDate,
                 ).onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
-
-                widgetGroups += group.copy(
-                    weeklySteps = groupTotal,
-                    weekStart = thisWeek,
-                )
             }
-            widgetGroups
         } catch (e: Exception) {
             Log.w(TAG, "Weekly totals refresh failed", e)
-            emptyList()
         }
     }
 

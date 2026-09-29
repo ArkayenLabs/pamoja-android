@@ -29,7 +29,7 @@
     <string name="phone_too_long">%1$s के लिए यह नंबर बहुत लंबा लग रहा है। देश के कोड के बाद के अंक जाँचें।</string>
     <string name="phone_send_code">कोड भेजें</string>
     <string name="phone_requesting_code">कोड माँगा जा रहा है…</string>
-    <string name="phone_security_check">डिवाइस की जाँच हो रही है। कोड भेजने से पहले ब्राउज़र में थोड़ी देर के लिए सुरक्षा जाँच खुल सकती है।</string>
+    <string name="phone_security_check">डिवाइस की जाँच हो रही है। कोड भेजने से पहले ब्राउज़र की एक विंडो थोड़ी देर के लिए खुल सकती है।</string>
     <string name="phone_select_country">देश चुनें</string>
     <string name="phone_search_country">देश या देश का कोड</string>
     <string name="phone_label_country">देश</string>
@@ -41,7 +41,7 @@
     <string name="otp_expired_title">कोड की समय-सीमा खत्म हो गई</string>
     <string name="otp_expired_body">कोड कुछ मिनट तक मान्य रहते हैं। नीचे से नया कोड मँगाएँ।</string>
     <string name="otp_rate_limited_title">बहुत ज़्यादा कोशिशें</string>
-    <string name="otp_rate_limited_body">सुरक्षा के लिए इस नंबर पर कोड की जाँच रोक दी गई है। कुछ मिनट बाद कोशिश करें या ईमेल इस्तेमाल करें।</string>
+    <string name="otp_rate_limited_body">सुरक्षा के लिए इस नंबर पर कोड रोक दिए गए हैं। कुछ मिनट बाद कोशिश करें या ईमेल इस्तेमाल करें।</string>
     <string name="otp_no_code">कोड नहीं मिला?</string>
     <string name="otp_resend_in">0:%1$02d बाद फिर भेजें</string>
     <string name="otp_send_new">नया कोड भेजें</string>

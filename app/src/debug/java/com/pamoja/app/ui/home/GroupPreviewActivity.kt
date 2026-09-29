@@ -28,6 +28,8 @@ import com.pamoja.app.ui.group.GroupDetailsUiState
 import com.pamoja.app.ui.group.GroupUiState
 import com.pamoja.app.ui.group.MemberStepData
 import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.widgets.WidgetPreview
+import com.pamoja.app.widgets.WidgetSnapshot
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.launch
@@ -46,12 +48,16 @@ import kotlinx.coroutines.launch
  * five-week streak (Phase 5), and that a shield kept it last week (Phase 6).
  * 8 the paywall with a 7-day trial, 9 the weekly review of a free group whose
  * last week used a shield. Billing is not called: the plans are samples.
+ * 10 the three home-screen widgets as mocked (group card, a cheer on "You
+ * today", the streak), 11 their other states: no group, your steps, this
+ * week's share before a streak, and a group too big for six faces with
+ * everyone nudged. Both are the real RemoteViews, inflated as a launcher would.
  */
 class GroupPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 9)
+        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 11)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
 
         setContent {
@@ -139,6 +145,24 @@ class GroupPreviewActivity : ComponentActivity() {
                             members = SAMPLE.associate { it.id to com.pamoja.app.ui.weeklyreview.WeeklyReviewMember(it.name, null) },
                         ),
                         onBack = {}, onOpenPremium = {}, onSelectWeek = {}, onRetry = {},
+                    )
+                    10 -> WidgetPreview.Board(
+                        dark = dark,
+                        rows = listOf(
+                            WidgetPreview.Row.Group(widgetSnapshot()),
+                            WidgetPreview.Row.Tiles(widgetSnapshot(), widgetSnapshot()),
+                        ),
+                    )
+                    11 -> WidgetPreview.Board(
+                        dark = dark,
+                        rows = listOf(
+                            WidgetPreview.Row.Group(WidgetSnapshot(userId = ME, group = null)),
+                            WidgetPreview.Row.Group(bigGroupSnapshot()),
+                            WidgetPreview.Row.Tiles(
+                                widgetSnapshot().copy(cheersFrom = emptyList()),
+                                widgetSnapshot().copy(group = group.copy(streakWeeks = 0, streakThroughWeek = "")),
+                            ),
+                        ),
                     )
                     else -> Details(
                         currentUserId = "priya",
@@ -260,6 +284,32 @@ class GroupPreviewActivity : ComponentActivity() {
                 walkedDays = days ?: 0, walkedWeekStart = if (days == null) "" else week,
             )
         }
+    }
+
+    private fun widgetSnapshot() = WidgetSnapshot(
+        userId = ME,
+        group = group,
+        members = memberships(),
+        signalsDate = LocalDate.now().toString(),
+        cheersFrom = listOf("priya"),
+        todaySteps = 6_240,
+        stepsDate = LocalDate.now().toString(),
+        usualSteps = 7_500,
+        refreshedAt = System.currentTimeMillis(),
+    )
+
+    /** Nine people: five faces and "+4", and everyone waiting already nudged. */
+    private fun bigGroupSnapshot(): WidgetSnapshot {
+        val extra = listOf("Kavya", "Dev Patel", "Anil").mapIndexed { i, name ->
+            Membership(userId = "extra$i", groupId = GROUP, displayName = name, todayDate = LocalDate.now().toString())
+        }
+        val base = widgetSnapshot()
+        val members = base.members + extra
+        return base.copy(
+            group = group.copy(name = "Office Walkers and Friends of the Park"),
+            members = members,
+            nudged = members.map { it.userId }.toSet(),
+        )
     }
 
     /** Masks cover every day of the week; the screens only use the days that have begun. */

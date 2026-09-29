@@ -12,7 +12,7 @@
     <string name="join_offline_title">Sin conexión</string>
     <string name="join_offline_body">Necesitas conexión para unirte. La invitación seguirá disponible cuando vuelvas.</string>
     <string name="join_failed_title">No se pudo entrar</string>
-    <string name="join_failed_taken">Alguien ha ocupado la última plaza mientras decidías.</string>
+    <string name="join_failed_taken">Alguien acaba de ocupar la última plaza.</string>
     <string name="join_failed_offline">Sin conexión. Vuelve a intentarlo cuando te conectes.</string>
     <string name="join_failed_closed">Esta invitación ya no admite nuevos miembros.</string>
     <string name="join_failed_generic">No ha funcionado. Vuelve a intentarlo en un momento.</string>
@@ -23,11 +23,11 @@
     <string name="settings_privacy_subtitle">Cómo tratamos tus datos, incluidos tus pasos</string>
     <string name="settings_terms_title">Condiciones de uso</string>
     <string name="settings_terms_subtitle">El acuerdo que aceptaste al iniciar sesión</string>
-    <string name="settings_account_actions">ACCIONES DE LA CUENTA</string>
+    <string name="settings_account_actions">Acciones de la cuenta</string>
     <string name="settings_logout_title">Cerrar sesión</string>
     <string name="settings_logout_subtitle">Salir de tu cuenta en este dispositivo</string>
     <string name="settings_delete_title">Eliminar cuenta</string>
-    <string name="settings_delete_subtitle">Borrar tu perfil y estadísticas de forma permanente</string>
+    <string name="settings_delete_subtitle">Elimina tu perfil y tu historial de pasos para siempre</string>
     <string name="settings_delete_confirm">Eliminar para siempre</string>
     <string name="settings_delete_warning">No se puede deshacer. No podremos recuperar estos datos.</string>
     <string name="settings_delete_loses_profile">Tu perfil, nombre y foto</string>
@@ -45,10 +45,10 @@
     <string name="settings_version">Pamoja v%1$s</string>
     <string name="settings_title">Tú</string>
     <string name="settings_subtitle">Tu perfil, preferencias y privacidad</string>
-    <string name="settings_section_information">PRIVACIDAD E INFORMACIÓN</string>
-    <string name="settings_name_fallback">Invitado</string>
-    <string name="settings_rate_title">Valóranos</string>
-    <string name="settings_rate_subtitle">Apóyanos compartiendo tu opinión</string>
+    <string name="settings_section_information">Privacidad e información</string>
+    <string name="settings_name_fallback">Sin nombre aún</string>
+    <string name="settings_rate_title">Valora Pamoja</string>
+    <string name="settings_rate_subtitle">Deja una reseña en Google Play</string>
     <string name="settings_reauth_send_code">Enviar código</string>
     <string name="settings_no_phone">Esta cuenta no tiene un teléfono registrado</string>
     <string name="settings_reauth_failed">No se pudo confirmar tu identidad</string>

@@ -19,7 +19,7 @@ import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.auth.AuthEntryContent
 import com.pamoja.app.ui.auth.EmailSignInContent
 import com.pamoja.app.ui.group.CreateGroupContent
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 import com.pamoja.app.util.InviteLink
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -30,7 +30,7 @@ import org.junit.runner.RunWith
 
 /**
  * The onboarding screens rebuilt on the Lilac kit (REBUILD_PLAN.md Phase 3),
- * rendered inside PamojaTheme as they are in the app during the migration.
+ * rendered inside KitTheme as they are in the app.
  */
 @RunWith(AndroidJUnit4::class)
 class OnboardingScreenTest {
@@ -45,7 +45,7 @@ class OnboardingScreenTest {
         var started = false
         var invite = false
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 StartContent(onGetStarted = { started = true }, onHaveInvite = { invite = true })
             }
         }
@@ -64,7 +64,7 @@ class OnboardingScreenTest {
     fun aPastedInviteLinkIsCheckedBeforeItIsKept() {
         var submitted: String? = null
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 EnterInviteContent(onSubmit = { submitted = it }, onBack = {})
             }
         }
@@ -85,7 +85,7 @@ class OnboardingScreenTest {
         var phone = false
         var email = false
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 AuthEntryContent(
                     busyWith = null,
                     error = null,
@@ -116,7 +116,7 @@ class OnboardingScreenTest {
         var forgotEmail: String? = null
         var created = false
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 EmailSignInContent(
                     busy = false,
                     error = null,
@@ -146,7 +146,7 @@ class OnboardingScreenTest {
     fun theNameStepWaitsForTheAgeConfirmation() {
         var submitted = false
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Dark) {
+            KitTheme(dark = true) {
                 var adult by remember { mutableStateOf(false) }
                 ProfileSetupContent(
                     name = "Asha",
@@ -174,7 +174,7 @@ class OnboardingScreenTest {
     fun startingAGroupAsksOnlyForItsName() {
         var created: String? = null
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 CreateGroupContent(
                     isLoading = false,
                     isOffline = false,
@@ -198,7 +198,7 @@ class OnboardingScreenTest {
         var requested = false
         var skipped = false
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 HealthConnectContent(
                     permState = PermState.UNKNOWN,
                     onPrimary = { requested = true },

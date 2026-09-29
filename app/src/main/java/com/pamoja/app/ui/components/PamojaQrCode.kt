@@ -20,7 +20,6 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import com.pamoja.app.ui.theme.PamojaRadii
 
 /**
  * The invite link as a scannable code.
@@ -46,7 +45,7 @@ fun PamojaQrCode(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(PamojaRadii.md))
+            .clip(RoundedCornerShape(15.dp))
             .background(Color.White)
             // Quiet zone. A QR needs clear margin around it or scanners fail to
             // find the finder patterns against whatever is behind the card.

@@ -17,7 +17,7 @@ import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.GroupAccessState
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.ThemePreference
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
 
 /**
  * Group details rebuilt on the Lilac kit (REBUILD_PLAN.md Phase 4), rendered
- * inside PamojaTheme as it is in the app during the migration. Replaces the
+ * inside KitTheme as it is in the app. Replaces the
  * test of the old sponsorship card, which this screen's Premium card replaced.
  */
 @RunWith(AndroidJUnit4::class)
@@ -104,7 +104,7 @@ class GroupDetailsScreenTest {
         onDelete: () -> Unit = {},
     ) {
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 GroupDetailsContent(
                     state = GroupDetailsUiState(
                         group = group,

@@ -27,7 +27,7 @@ import com.pamoja.app.ui.group.GroupDetailsContent
 import com.pamoja.app.ui.group.GroupDetailsUiState
 import com.pamoja.app.ui.group.GroupUiState
 import com.pamoja.app.ui.group.MemberStepData
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 import com.pamoja.app.widgets.WidgetPreview
 import com.pamoja.app.widgets.WidgetSnapshot
 import java.time.DayOfWeek
@@ -65,7 +65,7 @@ class GroupPreviewActivity : ComponentActivity() {
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
 
         setContent {
-            PamojaTheme(themePreference = if (dark) ThemePreference.Dark else ThemePreference.Light) {
+            KitTheme(dark = dark) {
                 when (screen) {
                     1 -> Home(home(), groupState())
                     2 -> Home(

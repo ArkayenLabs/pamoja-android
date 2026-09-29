@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.pamoja.app.R
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.PrimaryButton
 import com.pamoja.app.ui.kit.SecondaryButton
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +73,7 @@ fun PhotoCropScreen(
     sourceUri: String,
     onCancel: () -> Unit,
     onCropped: (String) -> Unit,
-) = KitInAppTheme {
+) {
     val colors = Kit.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

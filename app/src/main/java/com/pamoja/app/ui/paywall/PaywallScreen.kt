@@ -64,7 +64,6 @@ import com.pamoja.app.ui.kit.Avatar
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitDialog
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitSkeleton
 import com.pamoja.app.ui.kit.MaxContentWidth
@@ -134,7 +133,7 @@ internal fun PaywallContent(
     onRetryVerification: () -> Unit,
     onRefresh: () -> Unit,
     onManageInPlay: () -> Unit,
-) = KitInAppTheme {
+) {
     var confirmMove by rememberSaveable { mutableStateOf(false) }
     val group = state.group
     val context = state.purchaseContext

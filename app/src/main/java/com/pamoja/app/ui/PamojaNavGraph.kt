@@ -39,7 +39,6 @@ import com.pamoja.app.ui.onboarding.EnterInviteScreen
 import com.pamoja.app.ui.onboarding.HealthConnectScreen
 import com.pamoja.app.ui.onboarding.ProfileSetupScreen
 import com.pamoja.app.ui.onboarding.StartScreen
-import com.pamoja.app.ui.theme.PamojaMotion
 
 /**
  * Set by the profile editor on the entry beneath it when a save succeeds, so
@@ -496,17 +495,17 @@ internal fun NavHostController.openGroupHome(groupId: String) {
 private fun pamojaEnter(returning: Boolean): EnterTransition {
     val direction = if (returning) -1 else 1
     return slideInHorizontally(
-        animationSpec = tween(PamojaMotion.durationFast),
+        animationSpec = tween(NAV_DURATION_MS),
         initialOffsetX = { fullWidth -> direction * (fullWidth / 20) },
-    ) + fadeIn(animationSpec = tween(PamojaMotion.durationInstant))
+    ) + fadeIn(animationSpec = tween(NAV_FADE_MS))
 }
 
 private fun pamojaExit(returning: Boolean): ExitTransition {
     val direction = if (returning) -1 else 1
     return slideOutHorizontally(
-        animationSpec = tween(PamojaMotion.durationFast),
+        animationSpec = tween(NAV_DURATION_MS),
         targetOffsetX = { fullWidth -> -direction * (fullWidth / 28) },
-    ) + fadeOut(animationSpec = tween(PamojaMotion.durationInstant))
+    ) + fadeOut(animationSpec = tween(NAV_FADE_MS))
 }
 
 /**
@@ -560,3 +559,7 @@ private fun AuthRouting(
         }
     }
 }
+
+/** Screen changes: a short slide, and a quicker fade so the old screen is gone first. */
+private const val NAV_DURATION_MS = 160
+private const val NAV_FADE_MS = 100

@@ -7,7 +7,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.kit.KitTheme
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,7 +27,7 @@ class UpdateRequiredScreenTest {
     fun theGateExplainsItselfAndItsButtonAsksForTheUpdate() {
         var updates = 0
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 UpdateRequiredScreen(onUpdate = { updates++ })
             }
         }

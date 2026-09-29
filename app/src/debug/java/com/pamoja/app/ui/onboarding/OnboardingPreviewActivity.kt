@@ -7,7 +7,7 @@ import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.auth.AuthEntryContent
 import com.pamoja.app.ui.auth.EmailSignInContent
 import com.pamoja.app.ui.group.CreateGroupContent
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 
 /**
  * Debug-only visual review surface for the real onboarding content.
@@ -23,9 +23,7 @@ class OnboardingPreviewActivity : ComponentActivity() {
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
 
         setContent {
-            PamojaTheme(
-                themePreference = if (dark) ThemePreference.Dark else ThemePreference.Light,
-            ) {
+            KitTheme(dark = dark) {
                 when (screen) {
                     1 -> StartContent(onGetStarted = {}, onHaveInvite = {})
                     2 -> EnterInviteContent(onSubmit = {}, onBack = {})

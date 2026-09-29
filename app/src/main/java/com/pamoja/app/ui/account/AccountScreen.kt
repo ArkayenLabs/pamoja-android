@@ -67,7 +67,6 @@ import com.pamoja.app.ui.kit.FieldShape
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
 import com.pamoja.app.ui.kit.KitDialog
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -128,7 +127,7 @@ internal fun AccountContent(
     onSendPhoneCode: (String) -> Unit,
     onConfirmPhoneCode: (String) -> Unit,
     onMessageShown: () -> Unit,
-) = KitInAppTheme {
+) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
 

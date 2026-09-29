@@ -27,7 +27,6 @@ import com.pamoja.app.ui.kit.CardTone
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
 import com.pamoja.app.ui.kit.PopChip
@@ -58,7 +57,7 @@ fun StartScreen(
 
 /** Stateless rendering boundary used by visual and interaction tests. */
 @Composable
-internal fun StartContent(onGetStarted: () -> Unit, onHaveInvite: () -> Unit) = KitInAppTheme {
+internal fun StartContent(onGetStarted: () -> Unit, onHaveInvite: () -> Unit) {
     KitScreen(
         bottom = {
             PrimaryButton(stringResource(R.string.start_get_started), onClick = onGetStarted)
@@ -137,7 +136,7 @@ internal fun EnterInviteContent(
     body: String = stringResource(R.string.enter_invite_body),
     onScan: (() -> Unit)? = null,
     scanError: String? = null,
-) = KitInAppTheme {
+) {
     var input by rememberSaveable { mutableStateOf("") }
     var showError by rememberSaveable { mutableStateOf(false) }
     val code = inviteCodeFrom(input)

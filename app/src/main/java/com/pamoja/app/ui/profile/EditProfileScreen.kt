@@ -41,7 +41,6 @@ import com.pamoja.app.ui.kit.Avatar
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -123,7 +122,7 @@ internal fun EditProfileContent(
     onShowPhoto: (Boolean) -> Unit,
     onChoosePhoto: () -> Unit,
     onSave: () -> Unit,
-) = KitInAppTheme {
+) {
     val context = LocalContext.current
     val nameRequired = stringResource(R.string.profile_name_required)
     val nameTooLong = stringResource(R.string.profile_name_too_long)

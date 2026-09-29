@@ -15,7 +15,6 @@ import com.pamoja.app.R
 import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.kit.CheckRow
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
@@ -89,7 +88,7 @@ internal fun ProfileSetupContent(
     isOffline: Boolean,
     errorBody: String?,
     onSubmit: () -> Unit,
-) = KitInAppTheme {
+) {
     var touched by rememberSaveable { mutableStateOf(false) }
     KitScreen(
         bottom = {

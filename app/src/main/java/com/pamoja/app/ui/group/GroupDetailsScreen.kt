@@ -49,7 +49,6 @@ import com.pamoja.app.ui.kit.GroupTile
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
 import com.pamoja.app.ui.kit.KitDialog
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSheet
@@ -156,7 +155,7 @@ internal fun GroupDetailsContent(
     onActionErrorShown: () -> Unit,
     subscriptionSalesEnabled: Boolean = BillingIdentity.isSalesEnabled,
     onOpenWeeklyCard: () -> Unit = {},
-) = KitInAppTheme {
+) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -313,7 +312,7 @@ internal fun GroupDetailsContent(
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 
-    val group = state.group ?: return@KitInAppTheme
+    val group = state.group ?: return
 
     sheet?.let { which ->
         SettingSheet(

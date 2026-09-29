@@ -28,7 +28,6 @@ import com.pamoja.app.ui.kit.CardTone
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.PrimaryButton
@@ -50,7 +49,7 @@ fun InviteScreen(
     onGoToGroup: () -> Unit,
     onBack: () -> Unit,
     viewModel: InviteViewModel = hiltViewModel(),
-) = KitInAppTheme {
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current

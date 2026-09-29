@@ -22,7 +22,6 @@ import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
@@ -68,7 +67,7 @@ internal fun AuthEntryContent(
     onPhone: () -> Unit,
     onEmail: () -> Unit,
     onBack: (() -> Unit)? = null,
-) = KitInAppTheme {
+) {
     KitScreen(
         top = if (onBack != null) {
             {
@@ -156,7 +155,7 @@ internal fun EmailSignInContent(
     onForgotPassword: (String) -> Unit,
     onClearError: () -> Unit = {},
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var emailTouched by rememberSaveable { mutableStateOf(false) }

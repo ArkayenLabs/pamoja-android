@@ -73,7 +73,6 @@ import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
 import com.pamoja.app.ui.kit.KitDialog
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSheet
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -311,7 +310,7 @@ internal fun SettingsContent(
     onSendReauthCode: () -> Unit,
     onReauthPhone: (String) -> Unit,
     onCancelReauth: () -> Unit,
-) = KitInAppTheme {
+) {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var widgetSheet by rememberSaveable { mutableStateOf(false) }

@@ -18,7 +18,6 @@ import com.pamoja.app.domain.usecase.UpdateGroupSettingsUseCase
 import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
@@ -73,7 +72,7 @@ internal fun CreateGroupContent(
     errorBody: String?,
     onCreate: (String) -> Unit,
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     var name by rememberSaveable { mutableStateOf("") }
     var touched by rememberSaveable { mutableStateOf(false) }
     val max = UpdateGroupSettingsUseCase.MAX_GROUP_NAME_LENGTH

@@ -17,7 +17,6 @@ import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
@@ -62,7 +61,7 @@ internal fun ForgotPasswordContent(
     error: AppError?,
     onSend: (String) -> Unit,
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     // Carried forward from sign-in so nothing is retyped.
     var email by rememberSaveable { mutableStateOf(prefilledEmail) }
     val send = { if (email.isNotBlank() && !blocked) onSend(email) }

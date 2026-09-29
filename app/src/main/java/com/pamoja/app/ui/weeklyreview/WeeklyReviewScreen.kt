@@ -43,7 +43,6 @@ import com.pamoja.app.ui.kit.DayDots
 import com.pamoja.app.ui.kit.GoalBar
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -91,7 +90,7 @@ internal fun WeeklyReviewContent(
     onOpenPremium: () -> Unit,
     onSelectWeek: (String) -> Unit,
     onRetry: () -> Unit,
-) = KitInAppTheme {
+) {
     val context = LocalContext.current
     KitScreen(
         gutter = 20.dp,

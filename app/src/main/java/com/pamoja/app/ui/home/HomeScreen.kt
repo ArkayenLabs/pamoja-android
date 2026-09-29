@@ -100,7 +100,6 @@ import com.pamoja.app.ui.kit.HeroShape
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
 import com.pamoja.app.ui.kit.KitDialog
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSheet
@@ -144,7 +143,7 @@ fun HomeScreen(
     groupViewModel: GroupViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel(),
     signalsViewModel: GroupSignalsViewModel = hiltViewModel(),
-) = KitInAppTheme {
+) {
     val home by viewModel.uiState.collectAsStateWithLifecycle()
     val groupState by groupViewModel.uiState.collectAsStateWithLifecycle()
     val signals by signalsViewModel.uiState.collectAsStateWithLifecycle()
@@ -321,7 +320,7 @@ internal fun HomeContent(
     signals: SignalsUiState = SignalsUiState(),
     onCheer: (List<String>) -> Unit = {},
     onNudge: (List<String>) -> Unit = {},
-) = KitInAppTheme {
+) {
     val scope = rememberCoroutineScope()
     var showSwitcher by rememberSaveable { mutableStateOf(false) }
     val selectedId = home.selectedGroupId

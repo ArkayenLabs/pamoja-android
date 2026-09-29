@@ -14,7 +14,7 @@ import com.pamoja.app.domain.model.GroupFeature
 import com.pamoja.app.domain.model.GroupWeekContribution
 import com.pamoja.app.domain.model.GroupWeekSummary
 import com.pamoja.app.domain.model.ThemePreference
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -46,7 +46,7 @@ class WeeklyReviewScreenTest {
 
     private fun show(state: WeeklyReviewUiState, onOpenPremium: () -> Unit = {}, onSelectWeek: (String) -> Unit = {}) {
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 WeeklyReviewContent(state, onBack = {}, onOpenPremium = onOpenPremium, onSelectWeek = onSelectWeek, onRetry = {})
             }
         }

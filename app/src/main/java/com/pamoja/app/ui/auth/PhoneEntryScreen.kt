@@ -43,7 +43,6 @@ import com.pamoja.app.ui.components.rememberSingleClick
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.FieldShape
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSheet
 import com.pamoja.app.ui.kit.KitTextField
@@ -105,7 +104,7 @@ internal fun PhoneEntryContent(
     onNumber: (String) -> Unit,
     onSend: () -> Unit,
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     var showCountryPicker by rememberSaveable { mutableStateOf(false) }
     var lengthError by rememberSaveable { mutableStateOf<String?>(null) }
 

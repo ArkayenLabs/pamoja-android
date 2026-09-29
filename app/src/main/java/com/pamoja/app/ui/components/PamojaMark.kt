@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.pamoja.app.ui.theme.LocalPamojaColors
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -45,14 +44,14 @@ import kotlin.math.sin
  */
 @Composable
 fun PamojaMark(modifier: Modifier = Modifier, size: Dp = 60.dp) {
-    val colors = LocalPamojaColors.current
-    val ember = colors.accentPrimary
-    val jade = colors.accentTeal
+    // The mark's own colours, fixed rather than themed: they are the logo's,
+    // shared with the launcher icon and splash, which are drawn from this.
+    val ember = MarkEmber
+    val jade = MarkJade
 
-    // The surface the mark sits on, used for the tread marks so they read as
-    // the background showing through rather than as painted-on white. Theme
-    // aware for the same reason the soles are.
-    val surface = colors.surfaceApp
+    // The launcher's background, for the tread marks so they read as the
+    // background showing through rather than as painted-on white.
+    val surface = MarkGround
 
     // Lightened by lerping toward white rather than by reaching for a second
     // palette token, because the ramp's "hover" shades are not reliably
@@ -183,3 +182,7 @@ private const val TREAD_WIDTH = 1.9f
 
 private val BACK_TREAD_POSITIONS = listOf(0.62f, 0.78f)
 private val FRONT_TREAD_POSITIONS = listOf(0.22f, 0.38f)
+
+private val MarkEmber = Color(0xFFC34A21)
+private val MarkJade = Color(0xFF0E8563)
+private val MarkGround = Color(0xFFFAF5EF)

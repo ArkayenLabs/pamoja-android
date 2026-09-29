@@ -28,7 +28,6 @@ import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.ui.kit.CardTone
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.PrimaryButton
 import com.pamoja.app.ui.kit.QuietButton
@@ -134,7 +133,7 @@ internal fun HealthConnectContent(
     permState: PermState,
     onPrimary: () -> Unit,
     onSkip: () -> Unit,
-) = KitInAppTheme {
+) {
     val body = when (permState) {
         PermState.HC_UNAVAILABLE -> stringResource(R.string.hc_body_unavailable)
         PermState.DENIED -> stringResource(R.string.hc_body_denied)

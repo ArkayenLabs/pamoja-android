@@ -8,9 +8,9 @@ import androidx.compose.ui.graphics.Color
 // PAMOJA KIT. LILAC COLOURS
 //
 // The rebuild's palette, "B · Family album", taken token for token from the
-// mockup canvas (rows C and D, REBUILD_PLAN.md §5). Kept apart from the
-// terracotta PamojaColors in ui/theme on purpose: screens move to the kit one
-// at a time, and the old theme is deleted when the last one has.
+// mockup canvas (rows C and D, REBUILD_PLAN.md §5). The app's only palette
+// since the terracotta theme was deleted (2026-09-29); the widgets repeat it
+// in res/values/colors_widget.xml because RemoteViews cannot read this.
 //
 // Rules the palette carries (REBUILD_PLAN.md §5): lavender is only ever a
 // surface or an accent, lime is the only bright colour, and there is no

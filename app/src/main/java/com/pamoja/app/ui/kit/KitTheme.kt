@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.domain.model.ThemePreference
 
 /**
  * The rebuild's theme. Screens read [Kit.colors] and [Kit.type].
@@ -92,14 +92,15 @@ fun KitTheme(
 }
 
 /**
- * For a screen rebuilt on the kit while the app around it still runs
- * PamojaTheme: follows that theme's light or dark choice, which already
- * honours the user's Settings preference. Delete with ui/theme once every
- * screen has moved and the app root uses KitTheme.
+ * The user's Settings choice, resolved. System is read on every
+ * recomposition rather than resolved once, so the phone's automatic evening
+ * switch still moves the app with it.
  */
 @Composable
-fun KitInAppTheme(content: @Composable () -> Unit) {
-    KitTheme(dark = LocalPamojaColors.current.isDark, content = content)
+fun ThemePreference.isDark(): Boolean = when (this) {
+    ThemePreference.System -> isSystemInDarkTheme()
+    ThemePreference.Light -> false
+    ThemePreference.Dark -> true
 }
 
 /** Accessors, in the style of MaterialTheme.colorScheme. */

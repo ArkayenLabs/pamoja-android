@@ -38,7 +38,6 @@ import com.pamoja.app.R
 import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -88,7 +87,7 @@ internal fun WeeklyCardContent(
     onBack: () -> Unit,
     onShare: () -> Unit,
     onShowLastWeek: (Boolean) -> Unit = {},
-) = KitInAppTheme {
+) {
     val context = LocalContext.current
     // The whole card on screen at once where the window allows: the height
     // left after the bars, back button, title and Share button (about 340dp

@@ -32,7 +32,6 @@ import com.pamoja.app.ui.components.toErrorCopy
 import com.pamoja.app.ui.kit.CardTone
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -83,7 +82,7 @@ internal fun JoinGroupContent(
     onOpen: () -> Unit,
     onRetry: () -> Unit,
     onCancel: () -> Unit,
-) = KitInAppTheme {
+) {
     val context = LocalContext.current
     val group = state.group
 

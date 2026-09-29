@@ -29,7 +29,8 @@ import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.PamojaNavGraph
 import com.pamoja.app.ui.Screen
 import com.pamoja.app.ui.openGroupHome
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
+import com.pamoja.app.ui.kit.isDark
 import com.pamoja.app.ui.update.UpdateGateViewModel
 import com.pamoja.app.ui.update.UpdateRequiredScreen
 import com.pamoja.app.util.InviteLink
@@ -133,7 +134,7 @@ class MainActivity : AppCompatActivity() {
             val themePreference by userPreferences.themePreference
                 .collectAsState(initial = ThemePreference.System)
 
-            PamojaTheme(themePreference = themePreference) {
+            KitTheme(dark = themePreference.isDark()) {
                 val navController = rememberNavController()
 
                 // Null until the onboarding flag has been read. The NavHost is

@@ -19,7 +19,6 @@ import com.pamoja.app.ui.kit.ButtonSize
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
 import com.pamoja.app.ui.kit.ListRow
@@ -69,7 +68,7 @@ internal fun LicensesContent(
     selected: OssLicense?,
     onSelect: (OssLicense) -> Unit,
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     KitScreen(
         gutter = 20.dp,
         top = {

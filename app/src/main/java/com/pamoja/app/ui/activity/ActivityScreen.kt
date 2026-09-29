@@ -38,7 +38,6 @@ import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
 import com.pamoja.app.ui.kit.KitDialog
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
 import com.pamoja.app.ui.kit.SecondaryButton
@@ -82,7 +81,7 @@ internal fun ActivityContent(
     onBack: () -> Unit,
     onOpenGroup: (String) -> Unit,
     onClear: () -> Unit,
-) = KitInAppTheme {
+) {
     var confirmClear by rememberSaveable { mutableStateOf(false) }
 
     KitScreen(

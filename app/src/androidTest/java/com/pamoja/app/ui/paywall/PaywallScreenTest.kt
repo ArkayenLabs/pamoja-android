@@ -9,7 +9,7 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.SponsorshipFailure
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.ThemePreference
-import com.pamoja.app.ui.theme.PamojaTheme
+import com.pamoja.app.ui.kit.KitTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +28,7 @@ class PaywallScreenTest {
         val groupId = "6413795d-42d0-4f2b-80df-f017a9d32817"
 
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Dark) {
+            KitTheme(dark = true) {
                 PaywallContent(
                     state = PaywallUiState(
                         group = Group(groupId = groupId, name = exactName),
@@ -59,7 +59,7 @@ class PaywallScreenTest {
         val exactName = "Asha's Sunrise Walkers"
 
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 SponsorshipVerificationNotice(
                     groupName = exactName,
                     isVerifying = true,
@@ -83,7 +83,7 @@ class PaywallScreenTest {
         val exactName = "Family Steps"
 
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Dark) {
+            KitTheme(dark = true) {
                 SponsorshipVerificationNotice(
                     groupName = exactName,
                     isVerifying = false,
@@ -107,7 +107,7 @@ class PaywallScreenTest {
         var moves = 0
 
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Light) {
+            KitTheme(dark = false) {
                 SponsorshipVerificationNotice(
                     groupName = "Family Steps",
                     isVerifying = false,
@@ -128,7 +128,7 @@ class PaywallScreenTest {
     @Test
     fun completedPurchaseNeverClaimsNothingWasChargedWhenGroupChanged() {
         compose.setContent {
-            PamojaTheme(themePreference = ThemePreference.Dark) {
+            KitTheme(dark = true) {
                 SponsorshipVerificationNotice(
                     groupName = "Family Steps",
                     isVerifying = false,

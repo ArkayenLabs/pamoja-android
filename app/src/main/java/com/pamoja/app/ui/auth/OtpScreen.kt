@@ -16,7 +16,6 @@ import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.PrimaryButton
@@ -64,7 +63,7 @@ internal fun OtpContent(
     onResend: () -> Unit,
     onWrongNumber: () -> Unit,
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     var code by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
 

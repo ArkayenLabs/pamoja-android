@@ -22,7 +22,6 @@ import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.model.PasswordPolicy
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
-import com.pamoja.app.ui.kit.KitInAppTheme
 import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
@@ -59,7 +58,7 @@ internal fun EmailSignUpContent(
     onSignUp: (name: String, email: String, password: String) -> Unit,
     onClearError: () -> Unit,
     onBack: () -> Unit,
-) = KitInAppTheme {
+) {
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }

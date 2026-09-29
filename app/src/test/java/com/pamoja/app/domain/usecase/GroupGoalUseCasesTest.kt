@@ -311,6 +311,7 @@ class GroupGoalUseCasesTest {
             weekStart: String,
             todaySteps: Long,
             todayDate: String,
+            walkedDays: Int,
         ): Result<Unit> = unexpected()
         override suspend fun getMembership(userId: String, groupId: String): Result<Membership> =
             unexpected()

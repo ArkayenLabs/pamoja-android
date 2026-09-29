@@ -81,6 +81,7 @@ class SponsorshipGroupRepository(
         weekStart: String,
         todaySteps: Long,
         todayDate: String,
+        walkedDays: Int,
     ): Result<Unit> = unexpected()
     override fun getUserGroups(userId: String): Flow<List<Group>> = emptyFlow()
     override suspend fun updateMemberCap(groupId: String, cap: Int): Result<Unit> = unexpected()

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home -->
+    <plurals name="home_streak_weeks">
+        <item quantity="one">%d semana seguida</item>
+        <item quantity="many">%d semanas seguidas</item>
+        <item quantity="other">%d semanas seguidas</item>
+    </plurals>
+    <string name="home_not_walked_one">%1$s aún no ha caminado</string>
+    <string name="home_not_walked_two">%1$s y %2$s aún no han caminado</string>
+    <plurals name="home_not_walked_many">
+        <item quantity="one">%1$s, %2$s y %3$d más aún no han caminado</item>
+        <item quantity="many">%1$s, %2$s y %3$d más aún no han caminado</item>
+        <item quantity="other">%1$s, %2$s y %3$d más aún no han caminado</item>
+    </plurals>
+    <string name="home_nudge">Avisar</string>
+    <string name="home_nudged">Avisado</string>
+    <string name="home_cheer_from_one">%1$s aplaudió tu caminata</string>
+    <plurals name="home_cheer_from_many">
+        <item quantity="one">%1$s y %2$d persona más te aplaudieron</item>
+        <item quantity="many">%1$s y %2$d personas más te aplaudieron</item>
+        <item quantity="other">%1$s y %2$d personas más te aplaudieron</item>
+    </plurals>
+    <string name="home_cheer_back">Aplaudir también</string>
+    <string name="home_cheered">Aplaudido</string>
+    <string name="home_cheer_desc">Aplaudir a %1$s</string>
+    <string name="home_cheered_desc">Aplaudiste a %1$s</string>
+    <plurals name="home_days_walked_desc">
+        <item quantity="one">Caminó %1$d de %2$d día hasta ahora</item>
+        <item quantity="many">Caminó %1$d de %2$d días hasta ahora</item>
+        <item quantity="other">Caminó %1$d de %2$d días hasta ahora</item>
+    </plurals>
+    <string name="social_primer_title">Entérate cuando te aplaudan</string>
+    <string name="social_primer_body">Activa las notificaciones para recibir aplausos y avisos de tu grupo, incluso con Pamoja cerrado.</string>
+
+    <!-- Group details -->
+    <string name="details_weekly_card">Tarjeta semanal</string>
+
+    <!-- Weekly card -->
+    <string name="weekly_card_title">Tarjeta semanal</string>
+    <string name="weekly_card_share">Compartir</string>
+    <string name="weekly_card_share_failed">No se pudo crear la tarjeta. Inténtalo de nuevo.</string>
+    <string name="weekly_card_desc">Tarjeta semanal de %1$s</string>
+    <string name="weekly_card_done_lead">¡Lo</string>
+    <string name="weekly_card_done_emph">logramos!</string>
+    <string name="weekly_card_done_body">%1$s caminó %2$s pasos en conjunto. La meta era %3$s.</string>
+    <string name="weekly_card_so_far_headline">%1$s pasos</string>
+    <string name="weekly_card_so_far_body">%1$s en lo que va de semana. La meta es %2$s.</string>
+    <string name="weekly_card_award_every_day">Caminó todos los días</string>
+    <string name="weekly_card_award_comeback">Regreso de la semana</string>
+    <string name="weekly_card_award_most">Más pasos</string>
+    <plurals name="weekly_card_streak_weeks">
+        <item quantity="one">%d semana</item>
+        <item quantity="many">%d semanas</item>
+        <item quantity="other">%d semanas</item>
+    </plurals>
+    <string name="weekly_card_in_a_row">seguidas</string>
+    <plurals name="weekly_card_walks">
+        <item quantity="one">%d caminata</item>
+        <item quantity="many">%d caminatas</item>
+        <item quantity="other">%d caminatas</item>
+    </plurals>
+    <string name="weekly_card_walks_label">esta semana, juntos</string>
+    <plurals name="weekly_card_more">
+        <item quantity="one">y %d más</item>
+        <item quantity="many">y %d más</item>
+        <item quantity="other">y %d más</item>
+    </plurals>
+    <string name="weekly_card_footer_title">Camina con los tuyos</string>
+    <string name="weekly_card_footer_body">Escanea para crear un grupo en %1$s</string>
+    <string name="weekly_card_share_text">Caminamos juntos en %1$s. %2$s</string>
+</resources>

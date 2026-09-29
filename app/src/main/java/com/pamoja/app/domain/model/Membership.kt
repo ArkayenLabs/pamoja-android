@@ -61,4 +61,15 @@ data class Membership(
      * the one way this denormalisation can lie.
      */
     val todayDate: String = "",
+    /**
+     * The day dots: which days of [walkedWeekStart]'s week this member walked,
+     * as a [WalkedDays] mask. Written with the figures above by the member's
+     * own device; blank-marked on documents from older app versions.
+     */
+    val walkedDays: Int = 0,
+    /**
+     * The week [walkedDays] belongs to. Its own marker, not [weekStart]:
+     * older app versions keep moving [weekStart] without touching the mask.
+     */
+    val walkedWeekStart: String = "",
 )

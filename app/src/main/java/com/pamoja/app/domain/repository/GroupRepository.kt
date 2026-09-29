@@ -38,6 +38,10 @@ interface GroupRepository {
      * so each member's figure is written by their own device after a sync. A
      * member who has not synced recently therefore shows their last known total,
      * which was already true before this data moved.
+     *
+     * [walkedDays] is the day-dot mask for the same week (see
+     * [com.pamoja.app.domain.model.WalkedDays]); it is stamped with
+     * [weekStart] as its own marker in the same write.
      */
     suspend fun publishMyWeeklySteps(
         groupId: String,
@@ -46,6 +50,7 @@ interface GroupRepository {
         weekStart: String,
         todaySteps: Long,
         todayDate: String,
+        walkedDays: Int,
     ): Result<Unit>
 
     suspend fun getMembership(userId: String, groupId: String): Result<Membership>

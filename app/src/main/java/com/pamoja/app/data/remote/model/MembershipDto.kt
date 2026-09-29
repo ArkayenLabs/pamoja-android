@@ -14,7 +14,10 @@ data class MembershipDto(
     val weeklySteps: Long = 0L,
     val weekStart: String = "",
     val todaySteps: Long = 0L,
-    val todayDate: String = ""
+    val todayDate: String = "",
+    /** See Membership.walkedDays. */
+    val walkedDays: Int = 0,
+    val walkedWeekStart: String = "",
 ) {
     fun toDomain() = com.pamoja.app.domain.model.Membership(
         userId = userId,
@@ -27,7 +30,9 @@ data class MembershipDto(
         weeklySteps = weeklySteps,
         weekStart = weekStart,
         todaySteps = todaySteps,
-        todayDate = todayDate
+        todayDate = todayDate,
+        walkedDays = walkedDays,
+        walkedWeekStart = walkedWeekStart,
     )
 
     companion object {
@@ -42,7 +47,9 @@ data class MembershipDto(
             weeklySteps = membership.weeklySteps,
             weekStart = membership.weekStart,
             todaySteps = membership.todaySteps,
-            todayDate = membership.todayDate
+            todayDate = membership.todayDate,
+            walkedDays = membership.walkedDays,
+            walkedWeekStart = membership.walkedWeekStart,
         )
     }
 }

@@ -358,6 +358,7 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         weekStart: String,
         todaySteps: Long,
         todayDate: String,
+        walkedDays: Int,
     ): Result<Unit> {
         return try {
             membershipsCollection
@@ -368,6 +369,11 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                         "weekStart" to weekStart,
                         "todaySteps" to todaySteps,
                         "todayDate" to todayDate,
+                        // Its own marker, equal to weekStart here. Older app
+                        // versions move weekStart without touching the mask,
+                        // so readers must not trust weekStart for it.
+                        "walkedDays" to walkedDays,
+                        "walkedWeekStart" to weekStart,
                     )
                 )
                 .await()

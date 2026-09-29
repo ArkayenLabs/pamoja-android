@@ -4,8 +4,10 @@ initializeApp();
 
 export {
   cleanupPushRegistrationsOnUserDelete,
+  eraseDepartedMemberSignals,
   notifyGroupGoalReached,
   notifyGroupMemberJoined,
+  notifySignalCreated,
   pruneStalePushRegistrations,
   registerPushInstallation,
   unregisterPushInstallation,

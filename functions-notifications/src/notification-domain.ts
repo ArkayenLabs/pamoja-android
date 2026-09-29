@@ -80,6 +80,73 @@ export function buildGoalReachedPush(input: {
   };
 }
 
+export type SignalKind = "cheer" | "nudge";
+
+export interface ParsedSignal {
+  kind: SignalKind;
+  fromUserId: string;
+  toUserId: string;
+  date: string;
+}
+
+/** Same threshold the app uses for "walked today" and the day dots. */
+export const WALKED_MIN_STEPS = 1_000;
+
+/** How long a cheer or nudge is kept before the TTL policy removes it. */
+export const SIGNAL_RETENTION_MS = 14 * 24 * 60 * 60 * 1_000;
+
+/** Reads a signal document defensively; the rules already shaped it. */
+export function parseSignal(data: unknown): ParsedSignal | null {
+  if (typeof data !== "object" || data === null) return null;
+  const value = data as Record<string, unknown>;
+  const kind = value.kind;
+  if (kind !== "cheer" && kind !== "nudge") return null;
+  if (!isUserId(value.fromUserId) || !isUserId(value.toUserId)) return null;
+  if (!isValidIsoDate(value.date)) return null;
+  return {kind, fromUserId: value.fromUserId, toUserId: value.toUserId, date: value.date};
+}
+
+/**
+ * Whether the recipient's own published figures already show a walk on the
+ * nudge's date, in which case the nudge is stale by the time it would land.
+ */
+export function walkedOn(membership: unknown, date: string): boolean {
+  if (typeof membership !== "object" || membership === null) return false;
+  const value = membership as Record<string, unknown>;
+  return value.todayDate === date &&
+    typeof value.todaySteps === "number" &&
+    value.todaySteps >= WALKED_MIN_STEPS;
+}
+
+/**
+ * One event per kind, recipient, group and day. The app drops an event it
+ * has already shown, so however many people cheer someone in a day, that
+ * person gets one cheer notification per group, and the same for nudges.
+ * The rest are on Home.
+ */
+export function buildSignalPush(input: {
+  signal: ParsedSignal;
+  groupId: string;
+  senderName: unknown;
+  groupName: unknown;
+}): PushPayload {
+  const who = shortName(input.senderName);
+  const group = shortGroupName(input.groupName);
+  const {kind, toUserId, date} = input.signal;
+  return {
+    schemaVersion: "1",
+    eventId: notificationEventId(`signal-${kind}`, `${input.groupId}:${toUserId}:${date}`),
+    category: "GROUP_ACTIVITY",
+    title: kind === "cheer" ? `${who} cheered your walk` : `${who} nudged you`,
+    body: kind === "cheer" ? group : `${group} is walking today. Join in?`,
+    groupId: input.groupId,
+  };
+}
+
+function isUserId(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= 128 && !value.includes("/");
+}
+
 export function notificationEventId(kind: string, identity: string): string {
   const digest = createHash("sha256")
     .update(`${kind}:${identity}`)

@@ -31,37 +31,42 @@ sealed class Screen(val route: String) {
             return "connect_steps/$groupId"
         }
     }
-    object Home : Screen("home")
-    object Groups : Screen("groups")
+    /**
+     * The group home. Optional [groupId] opens that group, e.g. after joining
+     * it or from a notification; without it Home shows the group chosen last.
+     */
+    object Home : Screen("home?groupId={groupId}") {
+        fun createRoute(groupId: String? = null) =
+            if (groupId == null) "home" else "home?groupId=$groupId"
+    }
     object CreateGroup : Screen("create_group")
-    object Invite : Screen("invite/{groupId}") {
-        fun createRoute(groupId: String) = "invite/$groupId"
+    /**
+     * Share a group's invite. [created] marks the step right after creating
+     * the group, where step access comes next; from Home it just goes back.
+     */
+    object Invite : Screen("invite/{groupId}?created={created}") {
+        fun createRoute(groupId: String, created: Boolean = false) =
+            if (created) "invite/$groupId?created=true" else "invite/$groupId"
     }
-    object Group : Screen("group/{groupId}") {
-        fun createRoute(groupId: String) = "group/$groupId"
+    /** Members, settings, Premium and leaving, from Home. */
+    object GroupDetails : Screen("group/{groupId}/details") {
+        fun createRoute(groupId: String) = "group/$groupId/details"
     }
-    /** Completed weeks for one group. Current week progress remains on Group. */
+    /** This week as a shareable picture, from group details. */
+    object WeeklyCard : Screen("group/{groupId}/card") {
+        fun createRoute(groupId: String) = "group/$groupId/card"
+    }
+    /** Completed weeks for one group. The current week is on Home. */
     object WeeklyReview : Screen("group/{groupId}/review") {
         fun createRoute(groupId: String) = "group/$groupId/review"
-    }
-    object NextWeekPlan : Screen("group/{groupId}/plan") {
-        fun createRoute(groupId: String) = "group/$groupId/plan"
-    }
-    object Adventure : Screen("group/{groupId}/adventure") {
-        fun createRoute(groupId: String): String {
-            require(PamojaGroupId.isValid(groupId))
-            return "group/$groupId/adventure"
-        }
-    }
-    /** Admin-only settings for an existing group. */
-    object EditGroup : Screen("group/{groupId}/edit") {
-        fun createRoute(groupId: String) = "group/$groupId/edit"
     }
 
     /** Invite preview. Resolves a code and asks before joining anything. */
     object JoinPreview : Screen("join/{code}") {
         fun createRoute(code: String) = "join/$code"
     }
+    /** Paste or scan an invite while signed in, from the group switcher. */
+    object JoinWithLink : Screen("join_with_link")
     object Settings : Screen("settings")
 
     /** Editing the profile captured during onboarding, reachable from Settings. */
@@ -73,7 +78,7 @@ sealed class Screen(val route: String) {
     /** Open source licences, generated at build time. Legally required. */
     object Licenses : Screen("licenses")
 
-    /** Past updates, opened from the dashboard bell after the system tray forgets them. */
+    /** Past updates, from Settings, after the system tray forgets them. */
     object Activity : Screen("activity")
 
     /**

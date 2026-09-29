@@ -7,6 +7,7 @@ import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.PamojaGroupId
 import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.WalkedDays
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AvatarRepository
 import com.pamoja.app.domain.repository.GroupRepository
@@ -202,6 +203,7 @@ class PublishMyWeeklyStepsUseCase @Inject constructor(
         startDay: DayOfWeek,
         todaySteps: Long,
         todayDate: String,
+        walkedDays: Int,
         reportingDate: java.time.LocalDate = java.time.LocalDate.now(),
     ): Result<Unit> {
         if (groupId.isBlank() || userId.isBlank()) return Result.success(Unit)
@@ -214,6 +216,7 @@ class PublishMyWeeklyStepsUseCase @Inject constructor(
             weekStart = WeekWindow.startOf(startDay, reportingDate),
             todaySteps = todaySteps.coerceIn(0L, MAX_PUBLISHABLE_DAILY_STEPS),
             todayDate = todayDate,
+            walkedDays = walkedDays and WalkedDays.ALL,
         )
     }
 

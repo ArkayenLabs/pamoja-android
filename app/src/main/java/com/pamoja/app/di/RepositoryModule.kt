@@ -62,6 +62,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindSignalRepository(
+        impl: com.pamoja.app.data.remote.firebase.FirebaseSignalRepositoryImpl
+    ): com.pamoja.app.domain.repository.SignalRepository
+
+    @Binds
+    @Singleton
     abstract fun bindGroupAccessRepository(
         impl: FirebaseGroupAccessRepositoryImpl
     ): GroupAccessRepository

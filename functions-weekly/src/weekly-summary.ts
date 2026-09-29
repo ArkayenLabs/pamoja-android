@@ -7,10 +7,19 @@ export const MAX_DAILY_STEPS = 300_000;
 export const MAX_GROUP_MEMBERS = 20;
 export const MAX_GROUP_TARGET_STEPS = 2_800_000;
 export const MAX_ROLLOVER_GAP_DAYS = 53 * DAYS_PER_WEEK;
+/** A day with at least this many steps is a walk: the app's day dots use the same. */
+export const WALKED_MIN_STEPS = 1_000;
 
 export interface GroupWeekContribution {
   userId: string;
   stepCount: number;
+  /**
+   * Which days of the week this member walked, bit 0 the first day. The same
+   * mask members already see live on each other's memberships during the
+   * week, kept so a finished week can be shown and shared. Absent on weeks
+   * finalized before it existed.
+   */
+  walkedDays?: number;
 }
 
 export interface GroupWeekSummary {
@@ -92,15 +101,16 @@ export function buildGroupWeekSummary(
     .filter(isSafeFirebaseUserId)
     .sort()
     .slice(0, MAX_GROUP_MEMBERS);
-  const contributions = memberUserIds.map((userId) => ({
-    userId,
-    stepCount: dates.reduce((total, date) => {
-      const documentId = `${userId}_${date}`;
-      return total + sanitizeDailySteps(
-        input.stepCountsByDocumentId[documentId],
-      );
-    }, 0),
-  }));
+  const contributions = memberUserIds.map((userId) => {
+    let stepCount = 0;
+    let walkedDays = 0;
+    dates.forEach((date, index) => {
+      const steps = sanitizeDailySteps(input.stepCountsByDocumentId[`${userId}_${date}`]);
+      stepCount += steps;
+      if (steps >= WALKED_MIN_STEPS) walkedDays |= 1 << index;
+    });
+    return {userId, stepCount, walkedDays};
+  });
   const totalSteps = contributions.reduce(
     (total, contribution) => total + contribution.stepCount,
     0,
@@ -143,9 +153,12 @@ export function redactUserFromContributions(
       return [];
     }
 
+    const walkedDays = (value as {walkedDays?: unknown}).walkedDays;
     return [{
       userId: contribution.userId,
       stepCount: sanitizeWeeklySteps(contribution.stepCount),
+      ...(typeof walkedDays === "number" && Number.isSafeInteger(walkedDays) &&
+        walkedDays >= 0 && walkedDays <= 127 ? {walkedDays} : {}),
     }];
   });
 }

@@ -11,9 +11,21 @@
 
   It is also marked noindex so invite URLs never appear in search results.
 
-  This page is only ever seen by users who do NOT have the app installed.
-  If the app is installed and App Links are verified, Android opens the app
-  directly and this page is never rendered.
+  This page is mostly seen by people who do NOT have the app installed. If
+  the app is installed and App Links are verified, Android opens the app
+  directly and this page is never rendered. In-app browsers (Instagram and
+  similar) ignore App Links, so the page can also be shown with the app
+  installed; the main button handles both cases on Android.
+
+  Carrying the invite through an install (2026-09-28): on Android the button
+  is an intent:// link. With the app installed it opens pamoja://join/[code];
+  without it, the browser falls back to the Play listing with the code in the
+  install referrer, which the app reads on first launch
+  (InstallReferrerReader). Before this, the code was dropped at Play and a
+  new user landed on the Start screen with no group.
+
+  Only the code from this page's own URL goes into those links, and only if
+  it has the shape of a group ID. Nothing is fetched.
 -->
 <html lang="en">
 <head>
@@ -22,22 +34,29 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>You've been invited to a Pamoja group</title>
   <style>
+    /* Lilac, the app's palette since the 2026 rebuild (REBUILD_PLAN.md §5). */
     :root {
-      --bg: #f8f7fc;
+      --bg: #f6f4fb;
       --card: #ffffff;
-      --text: #16141f;
-      --muted: #575371;
-      --brand: #6c63e8;
-      --border: rgba(22, 20, 31, 0.10);
+      --text: #16132b;
+      --muted: #5a5670;
+      --mark: #cfc6ff;
+      --on-mark: #16132b;
+      --button: #16132b;
+      --on-button: #ffffff;
+      --border: #e7e3f2;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0b0b11;
-        --card: #14141f;
-        --text: #f5f4fa;
-        --muted: #a9a6c0;
-        --brand: #7b7ff2;
-        --border: rgba(255, 255, 255, 0.10);
+        --bg: #121026;
+        --card: #1d1a36;
+        --text: #f4f2ff;
+        --muted: #b4aed3;
+        --mark: #2b2555;
+        --on-mark: #f4f2ff;
+        --button: #cfc6ff;
+        --on-button: #16132b;
+        --border: #2c2848;
       }
     }
     * { box-sizing: border-box; }
@@ -50,7 +69,7 @@
       padding: 24px;
       background: var(--bg);
       color: var(--text);
-      font-family: "Nunito", system-ui, -apple-system, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
     .card {
@@ -68,18 +87,18 @@
       height: 64px;
       margin: 0 auto 24px;
       border-radius: 20px;
-      background: var(--brand);
+      background: var(--mark);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .mark svg { width: 32px; height: 32px; stroke: #fff; }
+    .mark svg { width: 32px; height: 32px; stroke: var(--on-mark); }
     h1 { font-size: 24px; line-height: 1.25; margin: 0 0 12px; font-weight: 800; }
     p { font-size: 16px; line-height: 1.55; color: var(--muted); margin: 0 0 28px; }
     .btn {
       display: inline-block;
-      background: var(--brand);
-      color: #fff;
+      background: var(--button);
+      color: var(--on-button);
       text-decoration: none;
       font-weight: 700;
       font-size: 16px;
@@ -89,6 +108,8 @@
     }
     .btn:hover { opacity: .9; }
     .hint { font-size: 13px; color: var(--muted); margin: 20px 0 0; }
+    .hint a { color: var(--muted); }
+    .ios { display: none; }
     .brand { font-size: 12px; color: var(--muted); margin-top: 28px; }
     .brand a { color: var(--muted); }
   </style>
@@ -105,13 +126,14 @@
     </div>
 
     <h1>You've been invited to a Pamoja group</h1>
-    <p>Pamoja is a step challenge you do together. Install the app to accept your invite and start counting steps with your group.</p>
+    <p>Pamoja is one weekly step goal you share with your group. Get the app to see your invite.</p>
 
-    <a class="btn" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">
-      Get Pamoja on Google Play
+    <a class="btn" id="open" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">
+      Open the invite
     </a>
 
-    <p class="hint">Already have the app? Open this link again from your phone and it will take you straight there.</p>
+    <p class="hint">Button not working? <a id="play" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">Get Pamoja on Google Play</a>, then open this link again.</p>
+    <p class="hint ios" id="ios">Pamoja is on Android for now.</p>
 
     <p class="brand">
       An <a href="https://www.arkayenlabs.com">Arkayen Labs</a> product ·
@@ -119,5 +141,29 @@
       <a href="https://www.arkayenlabs.com/terms/pamoja">Terms</a>
     </p>
   </main>
+  <script>
+    (function () {
+      var PACKAGE = "com.arkayenlabs.pamoja";
+      // A group ID, and nothing else, from this page's own path.
+      var match = location.pathname.match(/\/pamoja\/join\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/?$/);
+      var code = match ? match[1] : null;
+      var referrer = "utm_source=invite_link" + (code ? "&invite=" + code : "");
+      var play = "https://play.google.com/store/apps/details?id=" + PACKAGE +
+        "&referrer=" + encodeURIComponent(referrer);
+      var ua = navigator.userAgent || "";
+      var open = document.getElementById("open");
+      document.getElementById("play").href = play;
+      if (/android/i.test(ua) && code) {
+        // The app if it is installed; Play, carrying the code, if it is not.
+        open.href = "intent://join/" + code + "#Intent;scheme=pamoja;package=" + PACKAGE +
+          ";S.browser_fallback_url=" + encodeURIComponent(play) + ";end";
+      } else {
+        open.href = play;
+      }
+      if (/iPhone|iPad|iPod/i.test(ua)) {
+        document.getElementById("ios").style.display = "block";
+      }
+    })();
+  </script>
 </body>
 </html>

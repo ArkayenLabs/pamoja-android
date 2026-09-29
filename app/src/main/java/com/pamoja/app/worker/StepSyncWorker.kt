@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.StepEntry
+import com.pamoja.app.domain.model.WalkedDays
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.repository.AuthRepository
 import com.pamoja.app.domain.repository.StepRepository
@@ -204,6 +205,12 @@ class StepSyncWorker @AssistedInject constructor(
                     startDay = group.startDay,
                     todaySteps = todaySteps,
                     todayDate = todayDate,
+                    // The same entries and the same week, so the dots can
+                    // never disagree with the total beside them.
+                    walkedDays = WalkedDays.of(
+                        myWeek,
+                        LocalDate.parse(WeekWindow.startOf(group.startDay, reportingDate)),
+                    ),
                     reportingDate = reportingDate,
                 ).onFailure { Log.w(TAG, "Own total not published for ${group.groupId}", it) }
 

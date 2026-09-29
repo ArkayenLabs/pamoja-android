@@ -23,10 +23,12 @@ import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.firebase.auth.FirebaseAuth
+import com.pamoja.app.data.local.install.InstallReferrerReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.PamojaNavGraph
 import com.pamoja.app.ui.Screen
+import com.pamoja.app.ui.openGroupHome
 import com.pamoja.app.ui.theme.PamojaTheme
 import com.pamoja.app.ui.update.UpdateGateViewModel
 import com.pamoja.app.ui.update.UpdateRequiredScreen
@@ -73,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var userPreferences: UserPreferences
     @Inject lateinit var firebaseAuth: FirebaseAuth
     @Inject lateinit var workManagerScheduler: WorkManagerScheduler
+    @Inject lateinit var installReferrerReader: InstallReferrerReader
 
     private val updateGate: UpdateGateViewModel by viewModels()
 
@@ -99,6 +102,14 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         handleIntent(intent)
+
+        // An invite carried through a fresh install from Play. Goes the same
+        // way as a tapped link, and never over one: a link tapped now is newer.
+        lifecycleScope.launch {
+            installReferrerReader.inviteCodeOnce()?.let { code ->
+                if (launchTarget.value == null) launchTarget.value = LaunchTarget.Invite(code)
+            }
+        }
 
         // Play In-App Update (flexible). Downloads in the background, then
         // prompts for a restart. No effect when installed via direct APK.
@@ -187,9 +198,7 @@ class MainActivity : AppCompatActivity() {
                             // Only meaningful once signed in. Mid onboarding we
                             // drop it rather than pushing a screen that cannot load.
                             if (firebaseAuth.currentUser != null) {
-                                navController.navigate(Screen.Group.createRoute(t.groupId)) {
-                                    launchSingleTop = true
-                                }
+                                navController.openGroupHome(t.groupId)
                             }
                             launchTarget.value = null
                         }

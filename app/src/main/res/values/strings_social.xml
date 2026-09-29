@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The social loop: cheers, nudges, day dots, streak and the weekly card (REBUILD_PLAN.md Phase 5). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <!-- Home -->
+    <plurals name="home_streak_weeks">
+        <item quantity="one">%d week in a row</item>
+        <item quantity="other">%d weeks in a row</item>
+    </plurals>
+    <string name="home_not_walked_one">%1$s hasn\'t walked yet</string>
+    <string name="home_not_walked_two">%1$s and %2$s haven\'t walked yet</string>
+    <plurals name="home_not_walked_many">
+        <item quantity="one">%1$s, %2$s and %3$d more haven\'t walked yet</item>
+        <item quantity="other">%1$s, %2$s and %3$d more haven\'t walked yet</item>
+    </plurals>
+    <string name="home_nudge">Nudge</string>
+    <string name="home_nudged">Nudged</string>
+    <string name="home_cheer_from_one">%1$s cheered your walk</string>
+    <plurals name="home_cheer_from_many">
+        <item quantity="one">%1$s and %2$d other cheered you</item>
+        <item quantity="other">%1$s and %2$d others cheered you</item>
+    </plurals>
+    <string name="home_cheer_back">Cheer back</string>
+    <string name="home_cheered">Cheered</string>
+    <string name="home_cheer_desc">Cheer %1$s</string>
+    <string name="home_cheered_desc">Cheered %1$s</string>
+    <plurals name="home_days_walked_desc">
+        <item quantity="one">Walked %1$d of %2$d day so far</item>
+        <item quantity="other">Walked %1$d of %2$d days so far</item>
+    </plurals>
+    <string name="social_primer_title">Hear it when they cheer</string>
+    <string name="social_primer_body">Turn on notifications to get cheers and nudges from your group, even when Pamoja is closed.</string>
+
+    <!-- Group details -->
+    <string name="details_weekly_card">Weekly card</string>
+
+    <!-- Weekly card -->
+    <string name="weekly_card_title">Weekly card</string>
+    <string name="weekly_card_share">Share</string>
+    <string name="weekly_card_share_failed">Couldn\'t make the card. Try again.</string>
+    <string name="weekly_card_desc">Weekly card for %1$s</string>
+    <string name="weekly_card_done_lead">We</string>
+    <string name="weekly_card_done_emph">did it.</string>
+    <string name="weekly_card_done_body">%1$s walked %2$s steps together. The goal was %3$s.</string>
+    <string name="weekly_card_so_far_headline">%1$s steps</string>
+    <string name="weekly_card_so_far_body">%1$s so far this week. The goal is %2$s.</string>
+    <string name="weekly_card_award_every_day">Walked every day</string>
+    <string name="weekly_card_award_comeback">Comeback of the week</string>
+    <string name="weekly_card_award_most">Most steps</string>
+    <plurals name="weekly_card_streak_weeks">
+        <item quantity="one">%d week</item>
+        <item quantity="other">%d weeks</item>
+    </plurals>
+    <string name="weekly_card_in_a_row">in a row</string>
+    <plurals name="weekly_card_walks">
+        <item quantity="one">%d walk</item>
+        <item quantity="other">%d walks</item>
+    </plurals>
+    <string name="weekly_card_walks_label">this week, together</string>
+    <plurals name="weekly_card_more">
+        <item quantity="one">and %d more</item>
+        <item quantity="other">and %d more</item>
+    </plurals>
+    <string name="weekly_card_footer_title">Walk with your people</string>
+    <string name="weekly_card_footer_body">Scan to start a group on %1$s</string>
+    <string name="weekly_card_share_text">We walk together on %1$s. %2$s</string>
+</resources>

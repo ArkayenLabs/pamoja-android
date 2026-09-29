@@ -11,8 +11,12 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 
 import {
   PushPayload,
+  SIGNAL_RETENTION_MS,
   buildGoalReachedPush,
   buildMemberJoinedPush,
+  buildSignalPush,
+  parseSignal,
+  walkedOn,
   isValidAppVersion,
   isValidGroupId,
   isValidInstallationId,
@@ -174,6 +178,79 @@ export const notifyGroupGoalReached = onDocumentUpdated(
         finalSteps: afterSteps,
       }),
     );
+  },
+);
+
+/**
+ * Pushes a cheer or nudge to its recipient, and stamps the expiry that a TTL
+ * policy on the signals collection group's expireAt field uses to delete it
+ * after two weeks.
+ *
+ * Nothing is sent if either person has left the group since, and a nudge is
+ * dropped if the recipient's own figures already show a walk that day.
+ */
+export const notifySignalCreated = onDocumentCreated(
+  {
+    ...RUNTIME_OPTIONS,
+    document: "groups/{groupId}/signals/{signalId}",
+    retry: true,
+  },
+  async (event) => {
+    const snapshot = event.data;
+    const groupId = event.params.groupId;
+    const signal = parseSignal(snapshot?.data());
+    if (!snapshot || !signal || !isValidGroupId(groupId)) return;
+
+    const createdAt = snapshot.get("createdAt");
+    const createdAtMs = createdAt instanceof Timestamp ? createdAt.toMillis() : Date.now();
+    await snapshot.ref.update({expireAt: Timestamp.fromMillis(createdAtMs + SIGNAL_RETENTION_MS)});
+
+    const firestore = getFirestore();
+    const [sender, recipient, group] = await firestore.getAll(
+      firestore.collection("memberships").doc(`${signal.fromUserId}_${groupId}`),
+      firestore.collection("memberships").doc(`${signal.toUserId}_${groupId}`),
+      firestore.collection("groups").doc(groupId),
+    );
+    if (!sender.exists || !recipient.exists || !group.exists) return;
+    if (signal.kind === "nudge" && walkedOn(recipient.data(), signal.date)) return;
+
+    await sendToUsers(
+      [signal.toUserId],
+      buildSignalPush({
+        signal,
+        groupId,
+        senderName: sender.get("displayName"),
+        groupName: group.get("name"),
+      }),
+    );
+  },
+);
+
+/**
+ * Deletes what a departing member sent and received in that group, so an
+ * account that leaves or is deleted is not left behind in other people's
+ * cheers for the two weeks until expiry. Group deletion removes the whole
+ * subcollection separately.
+ */
+export const eraseDepartedMemberSignals = onDocumentDeleted(
+  {
+    ...RUNTIME_OPTIONS,
+    document: "memberships/{membershipId}",
+    retry: true,
+  },
+  async (event) => {
+    const userId = stringOrNull(event.data?.get("userId"));
+    const groupId = stringOrNull(event.data?.get("groupId"));
+    if (!userId || !groupId || !isValidGroupId(groupId)) return;
+
+    const signals = getFirestore().collection("groups").doc(groupId).collection("signals");
+    for (const field of ["fromUserId", "toUserId"]) {
+      while (true) {
+        const snapshot = await signals.where(field, "==", userId).limit(400).get();
+        if (snapshot.empty) break;
+        await deleteReferences(snapshot.docs.map((document) => document.ref));
+      }
+    }
   },
 );
 

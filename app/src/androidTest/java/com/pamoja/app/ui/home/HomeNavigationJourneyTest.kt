@@ -6,13 +6,13 @@ import android.provider.MediaStore
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -43,8 +43,8 @@ import java.util.UUID
  * Visual smoke journey for the actual app shell and navigation graph.
  *
  * The outer rule points the production Firebase singletons at local emulators
- * before Hilt creates [MainActivity]. That gives the real Home and Group
- * screens an authenticated, representative group without a debug bypass or a
+ * before Hilt creates [MainActivity]. That gives the real Home and group
+ * details screens an authenticated, representative group without a debug bypass or a
  * production read. Screenshots are test artifacts; release builds contain
  * neither the seed data nor this class.
  */
@@ -100,6 +100,7 @@ class HomeNavigationJourneyTest {
                 weekStart = monday,
                 todaySteps = 8_500,
                 todayDate = LocalDate.now().toString(),
+                walkedDays = 0,
             ).getOrThrow()
             groupRepository.publishWeeklyTotal(
                 groupId = group.groupId,
@@ -107,10 +108,9 @@ class HomeNavigationJourneyTest {
                 weekStart = monday,
             ).getOrThrow()
 
-            // Personal dashboard fixture. These are intentionally the user's
-            // own daily documents, not the group's cached total: the two cards
-            // have different sources in production and the visual journey must
-            // exercise both.
+            // The user's own daily documents, for "You today". Intentionally not
+            // the group's cached total: the two cards have different sources in
+            // production and the visual journey must exercise both.
             listOf(
                 LocalDate.parse(monday) to 8_500L,
                 LocalDate.parse(monday).plusDays(1) to 10_200L,
@@ -153,61 +153,51 @@ class HomeNavigationJourneyTest {
     val rules: RuleChain = RuleChain.outerRule(localState).around(compose)
 
     @Test
-    fun homeToGroupAndBackUsesTheRealNavigationGraph() {
-        compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("Journey walkers").fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithText("Journey walkers").assertIsDisplayed()
-        compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("42,300", substring = true)
-                .fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onAllNodesWithText("42,300", substring = true)[0].assertIsDisplayed()
-        compose.onNodeWithText("Every step counts. Let's go!").assertDoesNotExist()
-        compose.onNodeWithText("Pamoja").assertIsDisplayed()
-        compose.onNodeWithText("Good morning, Journey").assertDoesNotExist()
-        compose.onNodeWithText("Good afternoon, Journey").assertDoesNotExist()
-        compose.onNodeWithText("Good evening, Journey").assertDoesNotExist()
+    fun homeToGroupDetailsAndBackUsesTheRealNavigationGraph() {
+        waitForHome()
+        // One home, the group itself: its week, today's faces, your own day.
+        compose.onAllNodesWithText("42,300")[0].assertIsDisplayed()
         compose.onNodeWithText("Today").assertIsDisplayed()
-        // The selected design represents the normal connected state. The test
-        // emulator has no Health Connect provider, so dismiss its recovery row
-        // before capturing the like-for-like visual target.
-        compose.onNodeWithContentDescription("Dismiss").performClick()
-        saveScreenshot("home-weekly-dashboard.png")
-
-        compose.onNodeWithText("Groups").performClick()
-        compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("Groups").fetchSemanticsNodes().size >= 2
-        }
-        saveScreenshot("groups-trail-dock.png")
+        compose.onNodeWithText("Journey walkers").assertIsDisplayed()
+        // The tabs are gone.
+        compose.onNodeWithText("Groups").assertDoesNotExist()
+        compose.onNodeWithContentDescription("You").assertDoesNotExist()
+        saveScreenshot("home-group.png")
 
         compose.onNodeWithText("Journey walkers").performClick()
         compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("Weekly review").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithText("Your groups").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("Weekly review").assertIsDisplayed()
-        compose.onNodeWithText("42,300").assertIsDisplayed()
-        saveScreenshot("group-after-forward-navigation.png")
-
+        compose.onNodeWithText("Start a new group").assertIsDisplayed()
+        compose.onNodeWithText("Join with a link").assertIsDisplayed()
+        // No screenshot here: the sheet is a popup window, and captureToImage
+        // grabs the activity's window without it.
         pressBack()
         compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("Journey walkers").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithText("Your groups").fetchSemanticsNodes().isEmpty()
         }
-        compose.onNodeWithText("Journey walkers").assertIsDisplayed()
+
+        compose.onNodeWithContentDescription("Group details").performClick()
         compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onNodeWithText("42,300 · 60%").isDisplayed()
+            compose.onAllNodesWithText("Members").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("42,300 · 60%").assertIsDisplayed()
+        // The fixture's user created the group, so they see its settings.
+        compose.onNodeWithText("Group settings").assertExists()
+        compose.onNodeWithText("Premium for the group").assertExists()
+        compose.onNodeWithText("Delete group").assertExists()
+        saveScreenshot("group-details.png")
+
+        pressBack()
+        waitForHome()
+        compose.onAllNodesWithText("42,300")[0].assertIsDisplayed()
         saveScreenshot("home-after-back-navigation.png")
     }
 
     @Test
     fun notificationSettingsShowsRealAndroidChannelState() {
-        compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("Journey walkers").fetchSemanticsNodes().isNotEmpty()
-        }
-        // The settings tab is labelled "You" since the navigation redesign.
-        compose.onNodeWithContentDescription("You").performClick()
+        waitForHome()
+        // Settings sit behind the avatar since the tabs went.
+        compose.onNodeWithContentDescription("Your profile and settings").performClick()
         compose.waitUntil(timeoutMillis = 15_000) {
             compose.onAllNodesWithText("Notifications").fetchSemanticsNodes().isNotEmpty()
         }
@@ -232,14 +222,12 @@ class HomeNavigationJourneyTest {
             installedCirclePreviewEnabled(),
         )
 
-        compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("Journey walkers").fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithText("Journey walkers").performClick()
+        waitForHome()
+        compose.onNodeWithContentDescription("Group details").performClick()
         compose.waitUntil(timeoutMillis = 15_000) {
             compose.onAllNodesWithText("Weekly review").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("Weekly review").performClick()
+        compose.onNodeWithText("Weekly review").performScrollTo().performClick()
 
         val pendingTitle = "Your Circle Preview starts after an active week"
         compose.waitUntil(timeoutMillis = 15_000) {
@@ -253,10 +241,17 @@ class HomeNavigationJourneyTest {
         saveScreenshot("preview-pending-from-current-apk.png")
 
         pressBack()
+        pressBack()
+        waitForHome()
+        compose.onAllNodesWithText("42,300")[0].assertIsDisplayed()
+    }
+
+    /** Home has the group and this week's total, from the emulator fixture. */
+    private fun waitForHome() {
         compose.waitUntil(timeoutMillis = 15_000) {
-            compose.onAllNodesWithText("42,300").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithText("Journey walkers").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithText("42,300").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("42,300").assertIsDisplayed()
     }
 
     private fun installedCirclePreviewEnabled(): Boolean = runCatching {

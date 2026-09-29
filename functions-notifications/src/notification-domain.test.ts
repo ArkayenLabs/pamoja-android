@@ -3,6 +3,9 @@ import test from "node:test";
 
 import {
   buildGoalReachedPush,
+  buildSignalPush,
+  parseSignal,
+  walkedOn,
   buildMemberJoinedPush,
   isValidAppVersion,
   isValidGroupId,
@@ -91,4 +94,40 @@ test("notification copy never contains an em dash", () => {
   for (const push of [joined, completed]) {
     assert.equal(`${push.title}${push.body}`.includes("\u2014"), false);
   }
+});
+
+test("signals parse only the two kinds with real ids and an ISO date", () => {
+  const good = {kind: "cheer", fromUserId: "alice", toUserId: "bob", date: "2026-09-28"};
+  assert.deepEqual(parseSignal(good), good);
+  assert.equal(parseSignal({...good, kind: "poke"}), null);
+  assert.equal(parseSignal({...good, toUserId: "bob/../x"}), null);
+  assert.equal(parseSignal({...good, date: "yesterday"}), null);
+  assert.equal(parseSignal(null), null);
+});
+
+test("a nudge is stale once the recipient's own figures show a walk that day", () => {
+  assert.equal(walkedOn({todayDate: "2026-09-28", todaySteps: 1_000}, "2026-09-28"), true);
+  assert.equal(walkedOn({todayDate: "2026-09-28", todaySteps: 999}, "2026-09-28"), false);
+  assert.equal(walkedOn({todayDate: "2026-09-27", todaySteps: 9_000}, "2026-09-28"), false);
+  assert.equal(walkedOn(undefined, "2026-09-28"), false);
+});
+
+test("signal pushes fit the app's limits and share one event per recipient and day", () => {
+  const signal = {kind: "cheer" as const, fromUserId: "alice", toUserId: "bob", date: "2026-09-28"};
+  const fromAlice = buildSignalPush({
+    signal, groupId: GROUP_ID, senderName: "Alexandria-With-A-Very-Long-Name", groupName: "Sharma Family",
+  });
+  const fromCarol = buildSignalPush({
+    signal: {...signal, fromUserId: "carol"}, groupId: GROUP_ID, senderName: "Carol", groupName: "Sharma Family",
+  });
+  const nudge = buildSignalPush({
+    signal: {...signal, kind: "nudge"}, groupId: GROUP_ID, senderName: "Carol", groupName: "Sharma Family",
+  });
+
+  assert.equal(fromAlice.category, "GROUP_ACTIVITY");
+  assert.ok(fromAlice.title.length <= 40, fromAlice.title);
+  assert.ok(nudge.body.length <= 120, nudge.body);
+  assert.equal(fromAlice.eventId, fromCarol.eventId);
+  assert.notEqual(fromAlice.eventId, nudge.eventId);
+  assert.equal(nudge.title, "Carol nudged you");
 });

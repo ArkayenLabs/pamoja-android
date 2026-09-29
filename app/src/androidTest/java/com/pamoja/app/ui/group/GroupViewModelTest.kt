@@ -266,6 +266,35 @@ class GroupViewModelTest {
         assertFalse(free.groupAccess.isPremium)
     }
 
+    /**
+     * Home switches groups on one ViewModel. While the next group loads, the
+     * last one's members and total must not show under the new name.
+     */
+    @Test
+    fun switchingGroupsShowsNothingOfTheLastOne() = runBlocking {
+        val vm = viewModel()
+        vm.loadGroup(groupId)
+        groups.memberships.emit(listOf(member(meId, "Me", weeklySteps = 30_000)))
+        vm.awaitState("the first group's total") { it.hasLoadedMembers && it.combinedWeeklySteps == 30_000L }
+
+        val otherId = "0b7c5d3e-9f2a-4c1b-8e6d-2a4f5b6c7d8e"
+        groups.groupResult = Result.success(group.copy(groupId = otherId, name = "Other group"))
+        val nextMembers = MutableSharedFlow<List<Membership>>(replay = 1)
+        groups.membershipsOverride = nextMembers
+        vm.loadGroup(otherId)
+
+        val loading = vm.awaitState("the switch") { it.groupId == otherId }
+        assertNull(loading.group)
+        assertTrue(loading.memberStepData.isEmpty())
+        assertEquals(0L, loading.combinedWeeklySteps)
+        assertFalse(loading.hasLoadedMembers)
+
+        nextMembers.emit(listOf(member(meId, "Me", weeklySteps = 5_000)))
+        val loaded = vm.awaitState("the next group") { it.hasLoadedMembers }
+        assertEquals("Other group", loaded.group?.name)
+        assertEquals(5_000L, loaded.combinedWeeklySteps)
+    }
+
     // ── The denormalisation's one way to lie: stale markers ──────────────────
 
     /**
@@ -745,6 +774,7 @@ class GroupViewModelTest {
             weekStart: String,
             todaySteps: Long,
             todayDate: String,
+            walkedDays: Int,
         ): Result<Unit> = notUsed()
 
         override fun getUserGroups(userId: String): Flow<List<Group>> = notUsed()

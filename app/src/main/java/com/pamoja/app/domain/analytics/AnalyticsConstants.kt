@@ -27,6 +27,11 @@ object AnalyticsEvent {
     const val GROUP_SCREEN_VIEWED = "group_screen_viewed"
     const val WEEKLY_GOAL_REACHED = "weekly_goal_reached"
 
+    // Social loop. How many recipients, never who.
+    const val CHEER_SENT = "cheer_sent"
+    const val NUDGE_SENT = "nudge_sent"
+    const val WEEKLY_CARD_SHARED = "weekly_card_shared"
+
     // Step sync
     const val STEPS_SYNC_STARTED = "steps_sync_started"
     const val STEPS_SYNC_SUCCESS = "steps_sync_success"
@@ -46,4 +51,5 @@ object AnalyticsParam {
     const val REASON = "reason"
     const val TIMESTAMP = "timestamp"
     const val DURATION_MS = "duration_ms"
+    const val RECIPIENTS = "recipients"
 }

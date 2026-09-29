@@ -21,6 +21,8 @@ object PamojaIcons {
     @DrawableRes val Settings = R.drawable.ic_settings
     @DrawableRes val Link = R.drawable.ic_link
     @DrawableRes val ChevronRight = R.drawable.ic_chevron_right
+    @DrawableRes val More = R.drawable.ic_more_horizontal
+    @DrawableRes val Minus = R.drawable.ic_minus
     @DrawableRes val ArrowLeft = R.drawable.ic_arrow_left
     @DrawableRes val ArrowRight = R.drawable.ic_arrow_right
     @DrawableRes val Users = R.drawable.ic_users
@@ -52,6 +54,8 @@ object PamojaIcons {
     @DrawableRes val Search = R.drawable.ic_search
     @DrawableRes val Close = R.drawable.ic_x
     @DrawableRes val Flame = R.drawable.ic_flame
+    @DrawableRes val Heart = R.drawable.ic_heart
+    @DrawableRes val HeartFilled = R.drawable.ic_heart_filled
     @DrawableRes val TrendingUp = R.drawable.ic_trending_up
     @DrawableRes val Notification = R.drawable.ic_notification
 

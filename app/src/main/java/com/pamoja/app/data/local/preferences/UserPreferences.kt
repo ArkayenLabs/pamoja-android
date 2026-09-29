@@ -47,6 +47,12 @@ class UserPreferences @Inject constructor(
         // us asking a second time after someone said "not now".
         val KEY_NOTIFICATION_PRIMER_SHOWN = booleanPreferencesKey("notification_primer_shown")
 
+        // Once per installation, like the intro: survives clearAll().
+        val KEY_INSTALL_REFERRER_CHECKED = booleanPreferencesKey("install_referrer_checked")
+
+        // Groups whose ended Premium preview this account was already told about.
+        val KEY_PREVIEW_END_SEEN = stringSetPreferencesKey("preview_end_seen_groups")
+
         // Consecutive notifications sent without the user opening one.
         // Drives engagement backoff: if we are noise to someone, continuing to
         // send guarantees a mute or an uninstall.
@@ -142,6 +148,28 @@ class UserPreferences @Inject constructor(
 
     suspend fun setNotificationPrimerShown() {
         context.dataStore.edit { it[KEY_NOTIFICATION_PRIMER_SHOWN] = true }
+    }
+
+    /**
+     * Whether Play's install referrer has been read for this installation.
+     * Read once: signing out and in again must not bring back the invite a
+     * person installed from weeks ago.
+     */
+    val installReferrerChecked: Flow<Boolean> = context.dataStore.data.map {
+        it[KEY_INSTALL_REFERRER_CHECKED] ?: false
+    }
+
+    suspend fun setInstallReferrerChecked() {
+        context.dataStore.edit { it[KEY_INSTALL_REFERRER_CHECKED] = true }
+    }
+
+    /** Groups whose ended preview has been offered once; never offered twice. */
+    val previewEndSeenGroups: Flow<Set<String>> = context.dataStore.data.map {
+        it[KEY_PREVIEW_END_SEEN].orEmpty()
+    }
+
+    suspend fun markPreviewEndSeen(groupId: String) {
+        context.dataStore.edit { it[KEY_PREVIEW_END_SEEN] = it[KEY_PREVIEW_END_SEEN].orEmpty() + groupId }
     }
 
     // Muted notification categories used to be stored here. They are read from
@@ -306,17 +334,19 @@ class UserPreferences @Inject constructor(
     /**
      * Wipes everything account-scoped, on sign out and on account deletion.
      *
-     * Theme and the completed product introduction are deliberately
-     * carried across. They describe this installation, not the signed-in
-     * account. Logging out must not replay first-run education.
+     * Theme, the completed product introduction and the install referrer
+     * check are deliberately carried across. They describe this installation,
+     * not the signed-in account. Logging out must not replay first-run education.
      */
     suspend fun clearAll() {
         val theme = context.dataStore.data.map { it[KEY_THEME] }.first()
         val introSeen = context.dataStore.data.map { it[KEY_INTRO_SEEN] }.first()
+        val referrerChecked = context.dataStore.data.map { it[KEY_INSTALL_REFERRER_CHECKED] }.first()
         context.dataStore.edit { prefs ->
             prefs.clear()
             theme?.let { prefs[KEY_THEME] = it }
             introSeen?.let { prefs[KEY_INTRO_SEEN] = it }
+            referrerChecked?.let { prefs[KEY_INSTALL_REFERRER_CHECKED] = it }
         }
     }
 

@@ -140,11 +140,6 @@ android {
             // Debug keeps minify off for faster builds and readable stack traces
             isMinifyEnabled = false
         }
-        create("preview") {
-            initWith(getByName("debug"))
-            applicationIdSuffix = ".preview"
-            matchingFallbacks += "debug"
-        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -228,6 +223,7 @@ dependencies {
 
     // QR, for joining a group in person
     implementation(libs.zxing.core)
+    implementation(libs.installreferrer)
     implementation(libs.play.services.code.scanner)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.text.google.fonts)
@@ -258,5 +254,3 @@ kapt {
     correctErrorTypes = true
 }
 
-// Offline device preview has no Firebase project or network access.
-tasks.matching { it.name == "processPreviewGoogleServices" }.configureEach { enabled = false }

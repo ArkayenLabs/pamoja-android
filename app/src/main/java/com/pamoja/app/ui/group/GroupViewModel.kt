@@ -12,6 +12,7 @@ import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.GroupAccessState
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
+import com.pamoja.app.domain.model.WalkedDays
 import com.pamoja.app.domain.model.WeekWindow
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
@@ -42,9 +43,28 @@ data class MemberStepData(
     val weeklySteps: Long,
     val todaySynced: Boolean = true,
     val weekSynced: Boolean = true,
-)
+    /**
+     * This week's day dots as a [WalkedDays] mask, or null when unknown: the
+     * member has not synced this week, or runs an app version that does not
+     * publish them. Unknown shows no dots, never a row of missed days.
+     */
+    val walkedDays: Int? = null,
+) {
+    /**
+     * Counts as having walked today on Home's faces. A threshold rather than
+     * any step at all: a phone carried around the house records a few hundred,
+     * and that is not a walk worth a tick.
+     */
+    val walkedToday: Boolean get() = todaySynced && todaySteps >= WalkedDays.MIN_STEPS
+}
 
 data class GroupUiState(
+    /**
+     * The group this state describes, set the moment loading starts. Lets a
+     * screen that switches groups tell a stale "unavailable" about the last
+     * group from one about the group it now shows.
+     */
+    val groupId: String = "",
     val isLeaving: Boolean = false,
     val hasLeftGroup: Boolean = false,
     val isLoading: Boolean = true,
@@ -170,17 +190,35 @@ class GroupViewModel @Inject constructor(
     }
 
     fun loadGroup(groupId: String) {
+        val switching = currentGroupId != null && currentGroupId != groupId
         currentGroupId = groupId
         viewModelScope.launch {
             accessJob?.cancel()
+            // Home switches groups on this one ViewModel. Nothing of the last
+            // group may show under the next one's name while it loads, so on a
+            // switch its figures go in the same write that names the new group.
+            if (switching) {
+                observeJob?.cancel()
+                weeklyGoalLoggedThisSession = false
+            }
             // Clears the previous attempt's errors without discarding connectivity
             // or anything else already resolved.
-            _uiState.value = _uiState.value.copy(
+            val cleared = _uiState.value.copy(
+                groupId = groupId,
                 isLoading = true,
                 fatalError = null,
                 stepsError = null,
                 isGroupUnavailable = false,
                 groupAccess = GroupAccessState.Loading,
+            )
+            _uiState.value = if (!switching) cleared else cleared.copy(
+                group = null,
+                membership = null,
+                memberStepData = emptyList(),
+                combinedWeeklySteps = 0L,
+                isAdmin = false,
+                hasLoadedMembers = false,
+                showGoalCelebration = false,
             )
 
             val currentUser = getCurrentUserUseCase()
@@ -345,6 +383,8 @@ class GroupViewModel @Inject constructor(
                                 .takeIf { membership.weekStart == thisWeek } ?: 0L,
                             todaySynced = membership.todayDate == today,
                             weekSynced = membership.weekStart == thisWeek,
+                            walkedDays = membership.walkedDays
+                                .takeIf { membership.walkedWeekStart == thisWeek },
                         )
                     }.sortedByDescending { it.todaySteps }
 

@@ -87,4 +87,18 @@ object InviteLink {
 
     /** True if [raw] is any recognised Pamoja invite link. */
     fun isInviteLink(raw: String?): Boolean = parseCode(raw) != null
+
+    /**
+     * The invite code in a Play install referrer, e.g.
+     * `utm_source=invite_link&invite=<code>`, which the web join page puts in
+     * the Play link so an invite survives a fresh install. Only a well-formed
+     * group ID is accepted: the referrer is whatever the link said.
+     */
+    fun codeFromInstallReferrer(referrer: String?): String? =
+        referrer.orEmpty()
+            .split('&')
+            .map { it.split('=', limit = 2) }
+            .firstOrNull { it.size == 2 && it[0] == "invite" }
+            ?.let { runCatching { java.net.URLDecoder.decode(it[1], "UTF-8") }.getOrNull() }
+            ?.takeIf(com.pamoja.app.domain.model.PamojaGroupId::isValid)
 }

@@ -246,6 +246,86 @@ class GroupWeekRulesEmulatorTest {
         assertTrue(result.isFailure)
     }
 
+    // ── The last finished week is free (Phase 6) ────────────────────────────
+
+    /** What the weekly finalizer sets on every rollover, met or missed. */
+    private fun markLastFinished(groupId: String, weekStart: String) {
+        FirebaseEmulator.updateServerFields("groups/$groupId", mapOf("streakThroughWeek" to weekStart))
+    }
+
+    private suspend fun readWeek(client: FirebaseEmulator.Client, groupId: String, weekStart: String) =
+        runCatching {
+            client.firestore.collection("groups").document(groupId)
+                .collection("weeks").document(weekStart).get().await()
+        }
+
+    /** The real read: a free member opens last week's review. */
+    @Test
+    fun aMemberWithoutPremiumCanReadTheLastFinishedWeek() = runBlocking {
+        val member = newUser()
+        val group = createGroup(member)
+        seedWeek(group.groupId)
+        markLastFinished(group.groupId, "2026-08-17")
+
+        val result = readWeek(member, group.groupId, "2026-08-17")
+
+        assertEquals(84_000L, result.getOrThrow().getLong("totalSteps"))
+    }
+
+    /** Older weeks are the Premium part of history. */
+    @Test
+    fun anOlderWeekStaysPremium() = runBlocking {
+        val member = newUser()
+        val group = createGroup(member)
+        seedWeek(group.groupId)
+        markLastFinished(group.groupId, "2026-08-24")
+
+        assertTrue(readWeek(member, group.groupId, "2026-08-17").isFailure)
+    }
+
+    /** Listing returns every week, so it stays Premium even when one is free. */
+    @Test
+    fun listingWeeksStaysPremium() = runBlocking {
+        val member = newUser()
+        val group = createGroup(member)
+        seedWeek(group.groupId)
+        markLastFinished(group.groupId, "2026-08-17")
+
+        val listed = runCatching {
+            member.firestore.collection("groups").document(group.groupId)
+                .collection("weeks").get().await()
+        }
+
+        assertTrue("A free member must not list history, got $listed", listed.isFailure)
+    }
+
+    /** Free to members, not to anyone holding an invite link. */
+    @Test
+    fun aStrangerCannotReadTheFreeWeek() = runBlocking {
+        val member = newUser()
+        val group = createGroup(member)
+        seedWeek(group.groupId)
+        markLastFinished(group.groupId, "2026-08-17")
+        val stranger = newUser()
+
+        assertTrue(readWeek(stranger, group.groupId, "2026-08-17").isFailure)
+    }
+
+    /**
+     * The rule is authorised on the path, never resource.data, so the free
+     * week not existing yet reads as empty rather than as a denial.
+     */
+    @Test
+    fun aFreeWeekThatDoesNotExistYetIsEmptyNotDenied() = runBlocking {
+        val member = newUser()
+        val group = createGroup(member)
+        markLastFinished(group.groupId, "2026-08-17")
+
+        val result = readWeek(member, group.groupId, "2026-08-17")
+
+        assertTrue("Expected an empty read, got $result", result.isSuccess && !result.getOrThrow().exists())
+    }
+
     @Test
     fun evenTheGroupAdminCannotWriteACompletedWeek() = runBlocking {
         val admin = newUser()

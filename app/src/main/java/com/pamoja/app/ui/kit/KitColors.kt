@@ -144,3 +144,60 @@ val DarkKitColors = KitColors(
 )
 
 val LocalKitColors = staticCompositionLocalOf { LightKitColors }
+
+/**
+ * The weekly card, a picture made to be posted, so its colours are the
+ * canvas boards' own (B-WeeklyCard in Lilac, Dark-WeeklyCard) rather than the
+ * screen tokens: the dark card sits on a deeper ground and uses lime tags.
+ */
+@Immutable
+data class CardArtColors(
+    val ground: Color,
+    val onGround: Color,
+    val mutedOnGround: Color,
+    val emphasis: Color,
+    val photoRing: Color,
+    val tag: Color,
+    val onTag: Color,
+    val surface: Color,
+    val onSurface: Color,
+    val muted: Color,
+    val track: Color,
+    val bar: Color,
+    val accent: Color,
+    val onAccent: Color,
+)
+
+val LightCardArt = CardArtColors(
+    ground = Color(0xFFCFC6FF),
+    onGround = Ink,
+    mutedOnGround = Color(0xFF3E3960),
+    emphasis = Color(0xFF3A22D6),
+    photoRing = Color(0xFFFFFFFF),
+    tag = Ink,
+    onTag = Color(0xFFFFFFFF),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Ink,
+    muted = Color(0xFF5A5670),
+    track = Color(0xFFEEEBFA),
+    bar = Ink,
+    accent = Ink,
+    onAccent = Color(0xFFFFFFFF),
+)
+
+val DarkCardArt = CardArtColors(
+    ground = Color(0xFF16122E),
+    onGround = Color(0xFFF4F2FF),
+    mutedOnGround = Color(0xFFB4AED3),
+    emphasis = Color(0xFFCFC6FF),
+    photoRing = Color(0xFFF4F2FF),
+    tag = Color(0xFFD4F75A),
+    onTag = Ink,
+    surface = Color(0xFF221E40),
+    onSurface = Color(0xFFF4F2FF),
+    muted = Color(0xFFB4AED3),
+    track = Color(0xFF3A3560),
+    bar = Color(0xFFCFC6FF),
+    accent = Color(0xFFCFC6FF),
+    onAccent = Ink,
+)

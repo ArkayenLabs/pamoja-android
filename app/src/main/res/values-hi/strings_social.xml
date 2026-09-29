@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home -->
+    <plurals name="home_streak_weeks">
+        <item quantity="one">लगातार %d हफ़्ता</item>
+        <item quantity="other">लगातार %d हफ़्ते</item>
+    </plurals>
+    <string name="home_not_walked_one">%1$s अभी तक नहीं चले</string>
+    <string name="home_not_walked_two">%1$s और %2$s अभी तक नहीं चले</string>
+    <plurals name="home_not_walked_many">
+        <item quantity="one">%1$s, %2$s और %3$d और अभी तक नहीं चले</item>
+        <item quantity="other">%1$s, %2$s और %3$d और अभी तक नहीं चले</item>
+    </plurals>
+    <string name="home_nudge">याद दिलाएँ</string>
+    <string name="home_nudged">याद दिलाया</string>
+    <string name="home_cheer_from_one">%1$s ने आपकी सैर पर शाबाशी दी</string>
+    <plurals name="home_cheer_from_many">
+        <item quantity="one">%1$s और %2$d और ने शाबाशी दी</item>
+        <item quantity="other">%1$s और %2$d और ने शाबाशी दी</item>
+    </plurals>
+    <string name="home_cheer_back">शाबाशी लौटाएँ</string>
+    <string name="home_cheered">शाबाशी दी</string>
+    <string name="home_cheer_desc">%1$s को शाबाशी दें</string>
+    <string name="home_cheered_desc">%1$s को शाबाशी दी</string>
+    <plurals name="home_days_walked_desc">
+        <item quantity="one">अब तक %2$d में से %1$d दिन चले</item>
+        <item quantity="other">अब तक %2$d में से %1$d दिन चले</item>
+    </plurals>
+    <string name="social_primer_title">शाबाशी मिलते ही जानें</string>
+    <string name="social_primer_body">Pamoja बंद होने पर भी अपने समूह से शाबाशी और याद दिलाने की सूचनाएँ पाने के लिए सूचनाएँ चालू करें।</string>
+
+    <!-- Group details -->
+    <string name="details_weekly_card">साप्ताहिक कार्ड</string>
+
+    <!-- Weekly card -->
+    <string name="weekly_card_title">साप्ताहिक कार्ड</string>
+    <string name="weekly_card_share">शेयर करें</string>
+    <string name="weekly_card_share_failed">कार्ड नहीं बन सका। फिर से कोशिश करें।</string>
+    <string name="weekly_card_desc">%1$s का साप्ताहिक कार्ड</string>
+    <string name="weekly_card_done_lead">हमने</string>
+    <string name="weekly_card_done_emph">कर दिखाया।</string>
+    <string name="weekly_card_done_body">%1$s ने मिलकर %2$s कदम चले। लक्ष्य %3$s था।</string>
+    <string name="weekly_card_so_far_headline">%1$s कदम</string>
+    <string name="weekly_card_so_far_body">इस हफ़्ते अब तक %1$s। लक्ष्य %2$s है।</string>
+    <string name="weekly_card_award_every_day">हर दिन चले</string>
+    <string name="weekly_card_award_comeback">हफ़्ते की वापसी</string>
+    <string name="weekly_card_award_most">सबसे ज़्यादा कदम</string>
+    <plurals name="weekly_card_streak_weeks">
+        <item quantity="one">%d हफ़्ता</item>
+        <item quantity="other">%d हफ़्ते</item>
+    </plurals>
+    <string name="weekly_card_in_a_row">लगातार</string>
+    <plurals name="weekly_card_walks">
+        <item quantity="one">%d सैर</item>
+        <item quantity="other">%d सैर</item>
+    </plurals>
+    <string name="weekly_card_walks_label">इस हफ़्ते, साथ मिलकर</string>
+    <plurals name="weekly_card_more">
+        <item quantity="one">और %d</item>
+        <item quantity="other">और %d</item>
+    </plurals>
+    <string name="weekly_card_footer_title">अपनों के साथ चलें</string>
+    <string name="weekly_card_footer_body">%1$s पर समूह शुरू करने के लिए स्कैन करें</string>
+    <string name="weekly_card_share_text">हम %1$s पर साथ चलते हैं। %2$s</string>
+</resources>

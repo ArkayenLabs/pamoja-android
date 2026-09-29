@@ -64,8 +64,8 @@ test("summary totals seven daily documents per member without storing PII", () =
     memberCount: 2,
     activeMemberCount: 2,
     contributions: [
-      {userId: "member-a", stepCount: 30_000},
-      {userId: "member-b", stepCount: 40_000},
+      {userId: "member-a", stepCount: 30_000, walkedDays: 0b11},
+      {userId: "member-b", stepCount: 40_000, walkedDays: 0b1},
     ],
   });
   assert.equal("displayName" in summary.contributions[0], false);
@@ -125,4 +125,27 @@ test("redaction also removes malformed identifiers and bounds retained totals", 
     {userId: "remaining", stepCount: 2_100_000},
   ]);
   assert.deepEqual(redactUserFromContributions("not-an-array", "departed"), []);
+});
+
+test("a day below the walk threshold is not a walked day, and redaction keeps the mask", () => {
+  const summary = buildGroupWeekSummary({
+    groupId: "6413795d-42d0-4f2b-80df-f017a9d32817",
+    weekStart: "2026-08-17",
+    targetSteps: 70_000,
+    memberUserIds: ["member-a"],
+    stepCountsByDocumentId: {
+      "member-a_2026-08-17": 999,
+      "member-a_2026-08-19": 1_000,
+      "member-a_2026-08-23": 5_000,
+    },
+  });
+  assert.equal(summary.contributions[0].walkedDays, 0b1000100);
+
+  assert.deepEqual(
+    redactUserFromContributions(
+      [{userId: "gone", stepCount: 1}, {userId: "kept", stepCount: 9_000, walkedDays: 0b101}, {userId: "bad", stepCount: 1, walkedDays: 999}],
+      "gone",
+    ),
+    [{userId: "kept", stepCount: 9_000, walkedDays: 0b101}, {userId: "bad", stepCount: 1}],
+  );
 });

@@ -156,8 +156,10 @@ Only after steps 2 and 3 are live and watched.
 - [ ] Launcher icon and splash are Lilac on `rebuild` (done 2026-09-29).
       With the release, upload `design/store-listing/pamoja-icon-512.png` as
       the Play Store icon (regenerate: `python tools/launcher_icon.py`), and
-      replace the store screenshots (`design/store-listing/0*.png` are the
-      terracotta app) and the feature graphic if it shows the old look.
+      replace the phone screenshots with the five Lilac ones in
+      `design/store-listing/` (1080x1920, 24-bit PNG; the old terracotta set
+      is in `terracotta/`). Replace the feature graphic too if it shows the
+      old look.
 - [ ] Internal track, real phones, both themes:
   - [ ] Sign in with Google (first tap works), phone, email.
   - [ ] Two accounts in one group: cheer and nudge arrive as pushes; the
@@ -168,6 +170,12 @@ Only after steps 2 and 3 are live and watched.
         link joins the group (Install Referrer).
   - [ ] Paywall: license tester sees prices and the trial; purchase; restore.
   - [ ] Widgets place and refresh; Nudge from the widget sends.
+  - [ ] **R8 was narrowed on `rebuild`** (release-only risk): every flow
+        above on the release build, plus Health Connect permission and sync,
+        the weekly card share, the data export, a push arriving, and the
+        in-app update prompt.
+  - [ ] QR scanner opens and reads an invite code, upright and rotated
+        (its portrait lock was removed).
 - [ ] Closed track, then production staged 5% > 20% > 100%, checking between
       steps: Crashlytics crash-free vs baseline, Rules monitor Deny/Error,
       `notifySignalCreated` errors in the functions log.

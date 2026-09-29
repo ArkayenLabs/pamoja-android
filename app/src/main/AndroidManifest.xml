@@ -208,6 +208,15 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/share_paths" />
         </provider>
+
+        <!-- Google's QR scanner (play-services-code-scanner, util/QrScanner.kt)
+             declares its delegate activity portrait-only, which Play Console
+             flags for large screens (Android 16 ignores the lock there anyway).
+             Removing the attribute lets it follow rotation. Not yet run on a
+             device: the scanner is only reachable signed in (JoinWithLinkScreen). -->
+        <activity
+            android:name="com.google.mlkit.vision.codescanner.internal.GmsBarcodeScanningDelegateActivity"
+            tools:remove="android:screenOrientation" />
     </application>
 
 </manifest>

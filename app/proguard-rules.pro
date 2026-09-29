@@ -16,9 +16,11 @@
 # Custom exceptions keep their names so they are greppable in the dashboard.
 -keep public class * extends java.lang.Exception
 
-# ─── Firebase Auth & Firestore ────────────────────────────────────────────────
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
+# ─── Libraries ───────────────────────────────────────────────────────────────
+# Firebase, Play services, Hilt, Health Connect, Play Core and DataStore ship
+# their own consumer rules. This file used to blanket-keep all of them, which
+# stopped R8 shrinking most of the app (Play Console rated it ~33% on 1.0.12).
+# Only what reflects on OUR classes belongs here: the DTOs and Workers below.
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
@@ -26,12 +28,10 @@
 -keep class com.pamoja.app.data.remote.model.** { *; }
 -keepclassmembers class com.pamoja.app.data.remote.model.** { *; }
 
-# ─── Domain models (used in Firestore toDomain() mappings) ───────────────────
--keep class com.pamoja.app.domain.model.** { *; }
+# Domain models are never reflected on: every toObject() names a DTO, and the
+# DTOs hold only primitives and other DTOs.
 
 # ─── Hilt / Dagger ───────────────────────────────────────────────────────────
--keep class dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
 -dontwarn dagger.**
 
 # ─── WorkManager ─────────────────────────────────────────────────────────────
@@ -42,7 +42,6 @@
 }
 
 # ─── Health Connect ───────────────────────────────────────────────────────────
--keep class androidx.health.connect.** { *; }
 -dontwarn androidx.health.connect.**
 
 # ─── Coroutines ───────────────────────────────────────────────────────────────
@@ -54,11 +53,7 @@
 -dontwarn androidx.compose.**
 
 # ─── Play In-App Update ───────────────────────────────────────────────────────
--keep class com.google.android.play.core.** { *; }
 -dontwarn com.google.android.play.core.**
-
-# ─── DataStore ───────────────────────────────────────────────────────────────
--keep class androidx.datastore.** { *; }
 
 # ─── Strip debug logging from release ────────────────────────────────────────
 # R8 does NOT remove android.util.Log on its own, and neither does
@@ -83,7 +78,5 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.conscrypt.**
 -dontwarn org.openjsse.**
-# Firebase Storage and Coil, both reached reflectively in places.
--keep class com.google.firebase.storage.** { *; }
 -dontwarn com.google.firebase.storage.**
 -dontwarn coil.**

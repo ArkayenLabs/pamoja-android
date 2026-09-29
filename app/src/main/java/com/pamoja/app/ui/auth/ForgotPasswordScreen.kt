@@ -1,47 +1,30 @@
 package com.pamoja.app.ui.auth
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.PamojaTextField
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.QuietButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
 
 @Composable
 fun ForgotPasswordScreen(
@@ -49,174 +32,91 @@ fun ForgotPasswordScreen(
     prefilledEmail: String,
     onBack: () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // Carried forward so nothing is retyped.
-    var email by remember { mutableStateOf(prefilledEmail) }
-
-    // Hoisted: validate runs on focus change, outside composable scope.
-    val emailRequired = stringResource(R.string.email_required)
 
     // Shared ViewModel: a failure from an earlier auth screen would otherwise
     // still be showing here, unrelated to resetting a password.
     LaunchedEffect(Unit) { viewModel.clearError() }
 
-    val sentTo = uiState.resetEmailSentTo
+    ForgotPasswordContent(
+        prefilledEmail = prefilledEmail,
+        sentTo = uiState.resetEmailSentTo,
+        busy = uiState.busyWith == AuthMethod.Email,
+        blocked = uiState.busyWith != null,
+        error = uiState.error,
+        onSend = viewModel::sendPasswordReset,
+        onBack = {
+            viewModel.clearResetConfirmation()
+            onBack()
+        },
+    )
+}
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(horizontal = Spacing.x6)
-        ) {
-            Spacer(modifier = Modifier.height(Spacing.x2))
+/** Stateless boundary for previews and tests. */
+@Composable
+internal fun ForgotPasswordContent(
+    prefilledEmail: String,
+    sentTo: String?,
+    busy: Boolean,
+    blocked: Boolean,
+    error: AppError?,
+    onSend: (String) -> Unit,
+    onBack: () -> Unit,
+) = KitInAppTheme {
+    // Carried forward from sign-in so nothing is retyped.
+    var email by rememberSaveable { mutableStateOf(prefilledEmail) }
+    val send = { if (email.isNotBlank() && !blocked) onSend(email) }
 
-            AuthTopBar(
-                label = stringResource(R.string.auth_step_reset),
-                onBack = {
-                    viewModel.clearResetConfirmation()
-                    onBack()
-                }
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
+    KitScreen(
+        top = {
+            TopRow(start = {
+                CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+            })
+        },
+        bottom = {
             if (sentTo == null) {
-                Text(
-                    text = stringResource(R.string.reset_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = colors.textPrimary,
+                PrimaryButton(
+                    text = stringResource(R.string.reset_send),
+                    onClick = send,
+                    enabled = email.isNotBlank() && !blocked,
+                    loading = busy,
                 )
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                Text(
-                    text = stringResource(R.string.reset_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x8))
-
-                PamojaTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = stringResource(R.string.email_label),
-                    placeholder = stringResource(R.string.email_placeholder),
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Done,
-                    validate = { input ->
-                        if (input.isBlank()) emailRequired else null
-                    },
-                )
-
-                uiState.error?.let { message ->
-                    Spacer(modifier = Modifier.height(Spacing.x5))
-                    PamojaNotice(
-                        icon = PamojaIcons.AlertCircle,
-                        title = message.authErrorTitle(),
-                        body = message.authErrorBody(),
-                        tone = NoticeTone.Danger,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x8))
-
-                Button(
-                    onClick = { viewModel.sendPasswordReset(email) },
-                    enabled = email.isNotBlank() && uiState.busyWith == null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = PillShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimary,
-                        contentColor = colors.textOnBrand,
-                        disabledContainerColor = colors.accentPrimarySubtle,
-                        disabledContentColor = colors.textTertiary,
-                    ),
-                ) {
-                    if (uiState.busyWith == AuthMethod.Email) {
-                        CircularProgressIndicator(
-                            color = colors.textOnBrand,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    } else {
-                        Text(text = stringResource(R.string.reset_send), style = MaterialTheme.typography.labelLarge)
-                    }
-                }
             } else {
-                Text(
-                    text = stringResource(R.string.reset_sent_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = colors.textPrimary,
+                PrimaryButton(
+                    text = stringResource(R.string.reset_back_to_signin),
+                    onClick = onBack,
                 )
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                Text(
-                    text = stringResource(R.string.reset_sent_body, sentTo),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary,
+                QuietButton(
+                    text = stringResource(R.string.reset_resend),
+                    onClick = { onSend(sentTo) },
+                    enabled = !blocked,
                 )
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // Specific about what to do when the mail does not arrive, since
-                // that is the only situation in which this screen is read twice.
-                PamojaNotice(
-                    icon = PamojaIcons.Info,
-                    title = stringResource(R.string.reset_nothing_title),
-                    body = stringResource(R.string.reset_nothing_body),
-                    tone = NoticeTone.Info,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                Button(
-                    onClick = { viewModel.sendPasswordReset(sentTo) },
-                    enabled = uiState.busyWith == null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = PillShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimary,
-                        contentColor = colors.textOnBrand,
-                        disabledContainerColor = colors.accentPrimarySubtle,
-                    ),
-                ) {
-                    Text(text = stringResource(R.string.reset_resend), style = MaterialTheme.typography.labelLarge)
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x2))
-
-                TextButton(
-                    onClick = {
-                        viewModel.clearResetConfirmation()
-                        onBack()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(R.string.reset_back_to_signin),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = colors.accentPrimary,
-                    )
-                }
             }
-
-            Spacer(modifier = Modifier.height(Spacing.x10))
+        },
+    ) {
+        if (sentTo == null) {
+            Text(stringResource(R.string.reset_title), style = Kit.type.headline)
+            Text(stringResource(R.string.reset_subtitle), style = Kit.type.body, color = Kit.colors.muted)
+            KitTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = stringResource(R.string.email_label),
+                placeholder = stringResource(R.string.email_placeholder),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { send() }),
+            )
+            error?.let {
+                KitNotice(title = it.authErrorTitle(), body = it.authErrorBody(), danger = true)
+            }
+        } else {
+            Text(stringResource(R.string.reset_sent_title), style = Kit.type.headline)
+            Text(stringResource(R.string.reset_sent_body, sentTo), style = Kit.type.body, color = Kit.colors.muted)
+            // Specific about what to do when the mail does not arrive, since
+            // that is the only situation in which this screen is read twice.
+            KitNotice(
+                title = stringResource(R.string.reset_nothing_title),
+                body = stringResource(R.string.reset_nothing_body),
+            )
         }
     }
 }

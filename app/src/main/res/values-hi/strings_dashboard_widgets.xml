@@ -1,7 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="account_password_changed">पासवर्ड बदल गया</string>
     <string name="settings_licenses_title">ओपन सोर्स लाइसेंस</string>
-    <string name="settings_licenses_subtitle">Pamoja में इस्तेमाल किया गया सॉफ़्टवेयर</string>
     <string name="licenses_title">ओपन सोर्स लाइसेंस</string>
     <string name="licenses_link_body">इस घटक का लाइसेंस यहाँ प्रकाशित है।</string>
     <string name="licenses_open_link">लाइसेंस खोलें</string>
@@ -9,7 +8,6 @@
     <string name="licenses_empty_body">लाइसेंस रिलीज़ बिल्ड के लिए बनते हैं। पढ़ने के लिए रिलीज़ बिल्ड इंस्टॉल करें।</string>
     <string name="activity_title">अपडेट</string>
     <string name="activity_back_desc">वापस</string>
-    <string name="activity_open_desc">वे अपडेट जो शायद छूट गए</string>
     <string name="activity_clear">साफ़ करें</string>
     <string name="activity_clear_title">अपने अपडेट साफ़ करें?</string>
     <string name="activity_clear_body">इस फ़ोन की सूची मिट जाएगी। समूह, कदम और इतिहास नहीं बदलेंगे।</string>

@@ -9,41 +9,28 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,11 +40,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
@@ -66,20 +58,25 @@ import com.pamoja.app.ui.auth.Country
 import com.pamoja.app.ui.auth.OTP_LENGTH
 import com.pamoja.app.ui.auth.OtpBoxes
 import com.pamoja.app.ui.auth.authErrorBody
-import com.pamoja.app.ui.components.DisabledReason
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.OfflineBanner
-import com.pamoja.app.ui.components.PamojaErrorState
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.components.PamojaTextField
-import com.pamoja.app.ui.components.SkeletonBlock
 import com.pamoja.app.ui.components.rememberSingleClick
-import androidx.compose.ui.text.style.TextOverflow
-import com.pamoja.app.ui.theme.Layout
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.components.toErrorCopy
+import com.pamoja.app.ui.kit.ButtonSize
+import com.pamoja.app.ui.kit.CardHeader
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.FieldShape
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitCard
+import com.pamoja.app.ui.kit.KitDialog
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitSkeleton
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.ListRow
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.SecondaryButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.Spacing
 
 /**
  * Which ways back into this account exist, and adding another.
@@ -97,270 +94,169 @@ fun AccountScreen(
     onBack: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
     // LocalActivity rather than casting LocalContext, which throws when the
     // context is wrapped rather than being the Activity itself.
     val activity = LocalActivity.current
 
-    LaunchedEffect(uiState.messageRes) {
-        val res = uiState.messageRes ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(context.getString(res))
-        viewModel.clearMessage()
+    AccountContent(
+        state = uiState,
+        onBack = onBack,
+        onRetry = viewModel::load,
+        onAddGoogle = { activity?.let(viewModel::addGoogle) },
+        onOpen = viewModel::openDialog,
+        onDismiss = viewModel::dismissDialog,
+        onAddEmail = viewModel::addEmail,
+        onChangePassword = viewModel::changePassword,
+        onSendPhoneCode = { e164 -> activity?.let { viewModel.sendPhoneCode(e164, it) } },
+        onConfirmPhoneCode = viewModel::confirmPhoneCode,
+        onMessageShown = viewModel::clearMessage,
+    )
+}
+
+/** Stateless boundary for previews and tests. */
+@Composable
+internal fun AccountContent(
+    state: AccountUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onAddGoogle: () -> Unit,
+    onOpen: (AccountFlow) -> Unit,
+    onDismiss: () -> Unit,
+    onAddEmail: (String, String) -> Unit,
+    onChangePassword: (String, String) -> Unit,
+    onSendPhoneCode: (String) -> Unit,
+    onConfirmPhoneCode: (String) -> Unit,
+    onMessageShown: () -> Unit,
+) = KitInAppTheme {
+    val context = LocalContext.current
+    val snackbar = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.messageRes) {
+        val res = state.messageRes ?: return@LaunchedEffect
+        snackbar.showSnackbar(context.getString(res))
+        onMessageShown()
     }
 
-    when (uiState.activeDialog) {
-        AccountFlow.AddEmail -> AddEmailDialog(
-            state = uiState,
-            onConfirm = viewModel::addEmail,
-            onDismiss = viewModel::dismissDialog,
-        )
-
-        AccountFlow.AddPhone -> AddPhoneDialog(
-            state = uiState,
-            onSendCode = { e164 -> activity?.let { viewModel.sendPhoneCode(e164, it) } },
-            onConfirmCode = viewModel::confirmPhoneCode,
-            onDismiss = viewModel::dismissDialog,
-        )
-
-        AccountFlow.ChangePassword -> ChangePasswordDialog(
-            state = uiState,
-            onConfirm = viewModel::changePassword,
-            onDismiss = viewModel::dismissDialog,
-        )
-
-        // Google needs no form, and nothing opens a dialog for it.
-        AccountFlow.AddGoogle, null -> Unit
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+    Box(Modifier.fillMaxSize()) {
+        KitScreen(
+            gutter = 20.dp,
+            top = {
+                TopRow(start = {
+                    CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+                })
+            },
         ) {
-            OfflineBanner(isOffline = uiState.isOffline)
+            Text(stringResource(R.string.account_title), style = Kit.type.headline)
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = Spacing.x4, vertical = Spacing.x2),
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = stringResource(R.string.common_back),
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.account_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.textPrimary,
-                )
-            }
-
+            val loadError = state.loadError
             when {
                 // Nothing loaded, so the failure is the screen.
-                uiState.loadError != null -> PamojaErrorState(
-                    error = uiState.loadError!!,
-                    onRetry = { viewModel.load() },
-                    modifier = Modifier.padding(top = Spacing.x10),
-                )
+                loadError != null -> {
+                    val copy = loadError.toErrorCopy()
+                    KitNotice(title = stringResource(copy.title), body = copy.body(context), danger = true)
+                    PrimaryButton(stringResource(R.string.common_try_again), onClick = onRetry)
+                }
 
-                uiState.isLoading -> AccountSkeleton()
+                state.isLoading -> {
+                    KitSkeleton(height = 80.dp)
+                    KitSkeleton(height = 220.dp)
+                }
 
-                else -> Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Text(
-                        text = stringResource(R.string.account_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(horizontal = Spacing.x6),
-                    )
-
-                    Spacer(modifier = Modifier.height(Spacing.x5))
+                else -> {
+                    Text(stringResource(R.string.account_subtitle), style = Kit.type.body, color = Kit.colors.muted)
 
                     // How exposed this account is, stated before the list rather
                     // than left to be inferred from it. One method is the state
                     // every account starts in, and nothing has ever said what
                     // that costs if the phone is lost.
-                    val warning = when (uiState.methodCount) {
-                        0 -> R.string.account_none_title to R.string.account_none_body
-                        1 -> R.string.account_single_title to R.string.account_single_body
-                        else -> null
-                    }
-                    warning?.let { (title, body) ->
-                        Column(modifier = Modifier.padding(horizontal = Spacing.x6)) {
-                            PamojaNotice(
-                                icon = PamojaIcons.Shield,
-                                title = stringResource(title),
-                                body = stringResource(body),
-                                tone = if (uiState.methodCount == 0) NoticeTone.Danger
-                                else NoticeTone.Warning,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(Spacing.x5))
+                    when (state.methodCount) {
+                        0 -> KitNotice(
+                            title = stringResource(R.string.account_none_title),
+                            body = stringResource(R.string.account_none_body),
+                            danger = true,
+                        )
+                        1 -> KitNotice(
+                            title = stringResource(R.string.account_single_title),
+                            body = stringResource(R.string.account_single_body),
+                        )
                     }
 
-                    SectionLabel(stringResource(R.string.account_section_methods))
+                    if (state.isOffline) {
+                        KitNotice(
+                            title = stringResource(R.string.offline_banner_title),
+                            body = stringResource(R.string.account_offline_note),
+                        )
+                    }
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Spacing.x6)
-                            .clip(RoundedCornerShape(PamojaRadii.xl))
-                            .background(colors.surface1)
-                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                            .padding(vertical = Spacing.x1)
-                    ) {
+                    KitCard(spacing = 0.dp) {
+                        CardHeader(stringResource(R.string.account_section_methods), Modifier.padding(bottom = 6.dp))
                         MethodRow(
                             icon = PamojaIcons.Google,
                             isGoogleMark = true,
                             title = stringResource(R.string.account_method_google),
-                            value = uiState.methods.email.takeIf { uiState.methods.hasGoogle },
-                            isConnected = uiState.methods.hasGoogle,
-                            isBusy = uiState.busyWith == AccountFlow.AddGoogle,
-                            enabled = uiState.canLink,
-                            onAdd = { activity?.let(viewModel::addGoogle) },
+                            value = state.methods.email.takeIf { state.methods.hasGoogle },
+                            isConnected = state.methods.hasGoogle,
+                            isBusy = state.busyWith == AccountFlow.AddGoogle,
+                            enabled = state.canLink,
+                            onAdd = onAddGoogle,
                         )
-                        MethodDivider()
                         MethodRow(
                             icon = PamojaIcons.Smartphone,
                             title = stringResource(R.string.account_method_phone),
-                            value = uiState.methods.phoneNumber.takeIf { uiState.methods.hasPhone },
-                            isConnected = uiState.methods.hasPhone,
+                            value = state.methods.phoneNumber.takeIf { state.methods.hasPhone },
+                            isConnected = state.methods.hasPhone,
                             isBusy = false,
-                            enabled = uiState.canLink,
-                            onAdd = { viewModel.openDialog(AccountFlow.AddPhone) },
+                            enabled = state.canLink,
+                            onAdd = { onOpen(AccountFlow.AddPhone) },
                         )
-                        MethodDivider()
                         MethodRow(
                             icon = PamojaIcons.Mail,
                             title = stringResource(R.string.account_method_email),
-                            value = uiState.methods.email.takeIf { uiState.methods.hasEmail },
-                            isConnected = uiState.methods.hasEmail,
+                            value = state.methods.email.takeIf { state.methods.hasEmail },
+                            isConnected = state.methods.hasEmail,
                             isBusy = false,
-                            enabled = uiState.canLink,
-                            onAdd = { viewModel.openDialog(AccountFlow.AddEmail) },
+                            enabled = state.canLink,
+                            onAdd = { onOpen(AccountFlow.AddEmail) },
+                            showDivider = false,
                         )
                     }
 
                     // Google is the one flow with no dialog to fail inside, so
-                    // its failure is drawn here, under the row it belongs to.
-                    if (uiState.errorFrom == AccountFlow.AddGoogle) {
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-                        Column(modifier = Modifier.padding(horizontal = Spacing.x6)) {
-                            PamojaNotice(
-                                icon = PamojaIcons.AlertCircle,
-                                title = stringResource(R.string.account_add_failed_title),
-                                body = uiState.error!!.accountErrorBody(AccountFlow.AddGoogle),
-                                tone = NoticeTone.Danger,
-                            )
-                        }
-                    }
-
-                    if (uiState.isOffline) {
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-                        DisabledReason(
-                            text = stringResource(R.string.account_offline_note),
-                            modifier = Modifier.padding(horizontal = Spacing.x6),
+                    // its failure is drawn here, under the list it belongs to.
+                    state.error?.takeIf { state.errorFrom == AccountFlow.AddGoogle }?.let {
+                        KitNotice(
+                            title = stringResource(R.string.account_add_failed_title),
+                            body = it.accountErrorBody(AccountFlow.AddGoogle),
+                            danger = true,
                         )
                     }
 
                     // Only an account with a password has one to change. On a
                     // Google or phone account the row would be a dead end.
-                    if (uiState.methods.hasEmail) {
-                        Spacer(modifier = Modifier.height(Spacing.x6))
-
-                        SectionLabel(stringResource(R.string.account_section_password))
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Spacing.x6)
-                                .clip(RoundedCornerShape(PamojaRadii.md))
-                                .background(colors.surface1)
-                                .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
-                                .clickable(enabled = uiState.canLink) {
-                                    viewModel.openDialog(AccountFlow.ChangePassword)
-                                }
-                                .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(RoundedCornerShape(PamojaRadii.xs))
-                                        .background(colors.accentPrimary.copy(alpha = 0.12f)),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(PamojaIcons.Lock),
-                                        contentDescription = null,
-                                        tint = colors.accentPrimary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(Spacing.x3))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(R.string.account_change_password),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = colors.textPrimary,
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = stringResource(R.string.account_change_password_sub),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = colors.textSecondary,
-                                    )
-                                }
-                                Icon(
-                                    painter = painterResource(PamojaIcons.ChevronRight),
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                            }
+                    if (state.methods.hasEmail) {
+                        KitCard(spacing = 0.dp) {
+                            ListRow(
+                                label = stringResource(R.string.account_change_password),
+                                onClick = { if (state.canLink) onOpen(AccountFlow.ChangePassword) },
+                                leadingIcon = PamojaIcons.Lock,
+                                showDivider = false,
+                            )
                         }
                     }
-
-                    Spacer(
-                        modifier = Modifier
-                            .navigationBarsPadding()
-                            .height(Spacing.x10)
-                    )
                 }
             }
         }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
-}
-@Composable
-private fun SectionLabel(text: String) {
-    val colors = LocalPamojaColors.current
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = colors.textTertiary,
-        modifier = Modifier.padding(
-            start = Spacing.x6, end = Spacing.x6, bottom = Spacing.x2
-        ),
-    )
+
+    when (state.activeDialog) {
+        AccountFlow.AddEmail -> AddEmailDialog(state, onAddEmail, onDismiss)
+        AccountFlow.AddPhone -> AddPhoneDialog(state, onSendPhoneCode, onConfirmPhoneCode, onDismiss)
+        AccountFlow.ChangePassword -> ChangePasswordDialog(state, onChangePassword, onDismiss)
+        // Google needs no form, and nothing opens a dialog for it.
+        AccountFlow.AddGoogle, null -> Unit
+    }
 }
 
 /**
@@ -371,24 +267,6 @@ private fun SectionLabel(text: String) {
  * account permanently and the guard rails that would make it safe are more
  * work than the feature is worth today.
  */
-/**
- * Hairline between method rows, inset past the icon chip.
- *
- * Full-width would cut the chips off from their own text; starting it where the
- * text starts is what makes each row read as one object.
- */
-@Composable
-private fun MethodDivider() {
-    val colors = LocalPamojaColors.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 72.dp)
-            .height(Layout.strokeHairline)
-            .background(colors.borderSubtle)
-    )
-}
-
 @Composable
 private fun MethodRow(
     @DrawableRes icon: Int,
@@ -399,119 +277,78 @@ private fun MethodRow(
     enabled: Boolean,
     onAdd: () -> Unit,
     isGoogleMark: Boolean = false,
+    showDivider: Boolean = true,
 ) {
-    val colors = LocalPamojaColors.current
-    val accent = if (isConnected) colors.statusSuccess else colors.accentPrimary
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !isConnected && enabled && !isBusy, onClick = onAdd)
-            .padding(horizontal = Spacing.x4, vertical = Spacing.x3)
-            .heightIn(min = 56.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // The design's 44dp chip. A connected method carries the jade tint; an
-        // unconnected one stays neutral, so the list reads as "what I have"
-        // before any word on it has been read.
-        Box(
+    val colors = Kit.colors
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(PamojaRadii.md))
-                .background(
-                    if (isConnected) colors.statusSuccessSubtle else colors.surface2
-                ),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 64.dp)
+                .padding(vertical = 10.dp),
         ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                // Google's mark is multi-colour and its brand rules forbid
-                // recolouring it, so it alone goes untinted.
-                tint = when {
-                    isGoogleMark -> Color.Unspecified
-                    isConnected -> colors.statusSuccess
-                    else -> colors.textSecondary
-                },
-                modifier = Modifier.size(21.dp),
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    // Google's mark keeps its own colours on white, as its
+                    // brand rules require; the others sit on the kit's tint.
+                    .background(if (isGoogleMark) Color.White else colors.iconBackground),
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = if (isGoogleMark) Color.Unspecified else colors.ink,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = Kit.type.bodyStrong.copy(fontWeight = FontWeight.SemiBold))
+                Text(
+                    value ?: stringResource(if (isConnected) R.string.account_connected else R.string.account_not_connected),
+                    style = Kit.type.caption,
+                    color = colors.muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            when {
+                isBusy -> CircularProgressIndicator(Modifier.size(20.dp), color = colors.ink, strokeWidth = 2.dp)
+                // A tick as well as the words, so the state is not carried by
+                // colour alone.
+                isConnected -> Icon(
+                    painter = painterResource(PamojaIcons.ShieldCheck),
+                    contentDescription = stringResource(R.string.account_connected),
+                    tint = colors.ink,
+                    modifier = Modifier.size(22.dp),
+                )
+                else -> SecondaryButton(
+                    stringResource(R.string.account_add),
+                    onClick = onAdd,
+                    enabled = enabled,
+                    size = ButtonSize.Small,
+                )
+            }
+        }
+        if (showDivider) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.line),
             )
         }
-
-        Spacer(modifier = Modifier.width(Spacing.x3))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.textPrimary,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = value ?: stringResource(
-                    if (isConnected) R.string.account_connected
-                    else R.string.account_not_connected
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        Spacer(modifier = Modifier.width(Spacing.x3))
-
-        when {
-            isBusy -> CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                color = colors.accentPrimary,
-                strokeWidth = 2.dp,
-            )
-
-            // A tick as well as the word, so the state is not carried by colour
-            // alone.
-            isConnected -> Icon(
-                painter = painterResource(PamojaIcons.ShieldCheck),
-                contentDescription = stringResource(R.string.account_connected),
-                tint = colors.statusSuccess,
-                modifier = Modifier.size(20.dp),
-            )
-
-            else -> Text(
-                text = stringResource(R.string.account_add),
-                style = MaterialTheme.typography.labelLarge,
-                color = if (enabled) colors.accentPrimary else colors.textTertiary,
-            )
-        }
-    }
-}
-
-/** Matches the real layout: a notice, then three method rows. */
-@Composable
-private fun AccountSkeleton() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.x6),
-    ) {
-        SkeletonBlock(modifier = Modifier.fillMaxWidth(0.9f), height = 14.dp)
-
-        Spacer(modifier = Modifier.height(Spacing.x6))
-        SkeletonBlock(modifier = Modifier.fillMaxWidth(), height = 72.dp)
-
-        Spacer(modifier = Modifier.height(Spacing.x6))
-        SkeletonBlock(modifier = Modifier.fillMaxWidth(0.3f), height = 12.dp)
-        Spacer(modifier = Modifier.height(Spacing.x3))
-        SkeletonBlock(modifier = Modifier.fillMaxWidth(), height = 200.dp)
     }
 }
 
 // ── Dialogs ─────────────────────────────────────────────────────────────────
 
 /**
- * The shell every flow on this screen shares.
- *
- * Keeps the failure notice in one place, directly above the button that raised
- * it, rather than each dialog inventing its own placement.
+ * The shell every flow on this screen shares: the failure notice sits in one
+ * place, directly above the button that raised it.
  */
 @Composable
 private fun AccountDialog(
@@ -524,83 +361,32 @@ private fun AccountDialog(
     flow: AccountFlow,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    /**
-     * False once dismissing would throw away something that cost money, namely
-     * a verification code already sent. Back still closes it; only the stray
-     * tap on the scrim is refused.
-     */
     dismissOnClickOutside: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = dismissOnClickOutside),
-        containerColor = colors.surface3,
-        shape = RoundedCornerShape(PamojaRadii.xl),
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = colors.textPrimary,
+    KitDialog(
+        title = title,
+        body = body,
+        confirmText = confirmLabel,
+        dismissText = stringResource(R.string.common_cancel),
+        // Guarded because this same button sends the SMS in the add-phone
+        // flow, and two taps inside the recomposition gap would be two paid
+        // messages.
+        onConfirm = rememberSingleClick(onClick = onConfirm),
+        onDismiss = onDismiss,
+        confirmEnabled = confirmEnabled,
+        loading = isBusy,
+        dismissOnClickOutside = dismissOnClickOutside,
+    ) {
+        content()
+        error?.let {
+            KitNotice(
+                title = stringResource(R.string.account_add_failed_title),
+                body = it.accountErrorBody(flow),
+                danger = true,
             )
-        },
-        text = {
-            Column {
-                Text(
-                    text = body,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x4))
-
-                content()
-
-                if (error != null) {
-                    Spacer(modifier = Modifier.height(Spacing.x4))
-                    PamojaNotice(
-                        icon = PamojaIcons.AlertCircle,
-                        title = stringResource(R.string.account_add_failed_title),
-                        body = error.accountErrorBody(flow),
-                        tone = NoticeTone.Danger,
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                // Guarded because this same button sends the SMS in the
-                // add-phone flow, and two taps inside the recomposition gap
-                // would be two paid messages.
-                onClick = rememberSingleClick(onClick = onConfirm),
-                enabled = confirmEnabled && !isBusy,
-                shape = RoundedCornerShape(PamojaRadii.sm),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accentPrimary,
-                    contentColor = colors.textOnBrand,
-                    disabledContainerColor = colors.accentPrimarySubtle,
-                    disabledContentColor = colors.textTertiary,
-                ),
-            ) {
-                if (isBusy) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = colors.textTertiary,
-                        strokeWidth = 2.dp,
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
-                }
-                Text(text = confirmLabel, style = MaterialTheme.typography.labelLarge)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable
@@ -611,63 +397,45 @@ private fun AddEmailDialog(
 ) {
     // Prefilled from the account where there is one, which is the Google case:
     // the address is already known and retyping it is a chance to get it wrong.
-    var email by remember { mutableStateOf(state.methods.email.orEmpty()) }
-    var password by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf(state.methods.email.orEmpty()) }
+    var password by rememberSaveable { mutableStateOf("") }
 
-    // Hoisted, since validate runs on focus change rather than in composition.
-    val emailRequired = stringResource(R.string.email_required)
-    val emailInvalid = stringResource(R.string.email_invalid)
-    val passwordTooShort = stringResource(R.string.password_too_short)
-
-    // The same check the sign-up screen makes, so an address rejected there
-    // cannot be accepted here. Patterns is an Android class, which the domain
-    // may not touch but the UI layer may.
-    val emailErrorFor: (String) -> String? = { input ->
-        when {
-            input.isBlank() -> emailRequired
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(input.trim()).matches() -> emailInvalid
-            else -> null
-        }
-    }
-    // Same rule the field shows and the button asks, so a password the field
-    // flags cannot still be submitted.
-    val passwordErrorFor: (String) -> String? = { input ->
-        if (PasswordPolicy.isAccepted(input)) null else passwordTooShort
-    }
+    // The same checks the sign-up screen makes, so an address or password
+    // rejected there cannot be accepted here.
+    val emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+    val emailError = stringResource(R.string.email_invalid).takeIf { email.isNotBlank() && !emailValid }
+    val passwordError = stringResource(R.string.password_too_short)
+        .takeIf { password.isNotEmpty() && !PasswordPolicy.isAccepted(password) }
 
     AccountDialog(
         title = stringResource(R.string.account_add_email_title),
         body = stringResource(R.string.account_add_email_body),
         confirmLabel = stringResource(R.string.account_add),
-        confirmEnabled = emailErrorFor(email) == null && passwordErrorFor(password) == null,
+        confirmEnabled = emailValid && PasswordPolicy.isAccepted(password),
         isBusy = state.busyWith == AccountFlow.AddEmail,
         error = state.error.takeIf { state.errorFrom == AccountFlow.AddEmail },
         flow = AccountFlow.AddEmail,
         onConfirm = { onConfirm(email, password) },
         onDismiss = onDismiss,
     ) {
-        PamojaTextField(
+        KitTextField(
             value = email,
             onValueChange = { email = it },
             label = stringResource(R.string.email_label),
             placeholder = stringResource(R.string.email_placeholder),
-            keyboardType = KeyboardType.Email,
+            error = emailError,
             enabled = state.busyWith == null,
-            validate = emailErrorFor,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        PamojaTextField(
+        KitTextField(
             value = password,
             onValueChange = { password = it },
             label = stringResource(R.string.password_label),
             placeholder = stringResource(R.string.password_placeholder_new),
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-            isPassword = true,
+            error = passwordError,
             enabled = state.busyWith == null,
-            validate = passwordErrorFor,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
     }
 }
@@ -678,47 +446,40 @@ private fun ChangePasswordDialog(
     onConfirm: (String, String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var current by remember { mutableStateOf("") }
-    var new by remember { mutableStateOf("") }
-
-    val passwordTooShort = stringResource(R.string.password_too_short)
-    val newPasswordErrorFor: (String) -> String? = { input ->
-        if (PasswordPolicy.isAccepted(input)) null else passwordTooShort
-    }
+    var current by rememberSaveable { mutableStateOf("") }
+    var new by rememberSaveable { mutableStateOf("") }
+    val newError = stringResource(R.string.password_too_short)
+        .takeIf { new.isNotEmpty() && !PasswordPolicy.isAccepted(new) }
 
     AccountDialog(
         title = stringResource(R.string.account_change_password),
         body = stringResource(R.string.account_change_password_body),
         confirmLabel = stringResource(R.string.account_change_password_confirm),
-        confirmEnabled = current.isNotBlank() && newPasswordErrorFor(new) == null,
+        confirmEnabled = current.isNotBlank() && PasswordPolicy.isAccepted(new),
         isBusy = state.busyWith == AccountFlow.ChangePassword,
         error = state.error.takeIf { state.errorFrom == AccountFlow.ChangePassword },
         flow = AccountFlow.ChangePassword,
         onConfirm = { onConfirm(current, new) },
         onDismiss = onDismiss,
     ) {
-        PamojaTextField(
+        KitTextField(
             value = current,
             onValueChange = { current = it },
             label = stringResource(R.string.account_password_current),
             placeholder = stringResource(R.string.password_placeholder_existing),
-            keyboardType = KeyboardType.Password,
-            isPassword = true,
             enabled = state.busyWith == null,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
         )
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        PamojaTextField(
+        KitTextField(
             value = new,
             onValueChange = { new = it },
             label = stringResource(R.string.account_password_new),
             placeholder = stringResource(R.string.password_placeholder_new),
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-            isPassword = true,
+            error = newError,
             enabled = state.busyWith == null,
-            validate = newPasswordErrorFor,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
     }
 }
@@ -726,9 +487,9 @@ private fun ChangePasswordDialog(
 /**
  * Number, then code, in one dialog.
  *
- * The country list replaces the dialog's own body rather than opening a bottom
- * sheet on top of it, so there is never a second window over this one competing
- * for the keyboard.
+ * The country list replaces the dialog's own body rather than opening a sheet
+ * on top of it, so there is never a second window over this one competing for
+ * the keyboard.
  */
 @Composable
 private fun AddPhoneDialog(
@@ -737,27 +498,25 @@ private fun AddPhoneDialog(
     onConfirmCode: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
-
-    var country by remember { mutableStateOf(Country.fromLocale()) }
-    var number by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
-    var pickingCountry by remember { mutableStateOf(false) }
+    var countryIso by rememberSaveable { mutableStateOf(Country.fromLocale().isoCode) }
+    val country = Country.sorted.firstOrNull { it.isoCode == countryIso } ?: Country.fromLocale()
+    var number by rememberSaveable { mutableStateOf("") }
+    var code by rememberSaveable { mutableStateOf("") }
+    var pickingCountry by rememberSaveable { mutableStateOf(false) }
 
     val awaitingCode = state.verificationId != null
     val isBusy = state.busyWith == AccountFlow.AddPhone
-    val digits = number.filter { it.isDigit() }
 
     val otpFocusRequester = remember { FocusRequester() }
     LaunchedEffect(awaitingCode) {
-        if (awaitingCode) otpFocusRequester.requestFocus()
+        if (awaitingCode) runCatching { otpFocusRequester.requestFocus() }
     }
 
     if (pickingCountry) {
         CountryPickerDialog(
             selected = country,
             onSelect = {
-                country = it
+                countryIso = it.isoCode
                 pickingCountry = false
             },
             onDismiss = { pickingCountry = false },
@@ -772,22 +531,14 @@ private fun AddPhoneDialog(
         } else {
             stringResource(R.string.account_add_phone_body)
         },
-        confirmLabel = stringResource(
-            if (awaitingCode) R.string.common_confirm else R.string.phone_send_code
-        ),
+        confirmLabel = stringResource(if (awaitingCode) R.string.common_confirm else R.string.phone_send_code),
         // Gated on a country-appropriate digit count, because every send costs
         // a real message and a half-typed number would simply waste one.
-        confirmEnabled = if (awaitingCode) {
-            code.length == OTP_LENGTH
-        } else {
-            digits.length in country.nationalDigits
-        },
+        confirmEnabled = if (awaitingCode) code.length == OTP_LENGTH else number.length in country.nationalDigits,
         isBusy = isBusy,
         error = state.error.takeIf { state.errorFrom == AccountFlow.AddPhone },
         flow = AccountFlow.AddPhone,
-        onConfirm = {
-            if (awaitingCode) onConfirmCode(code) else onSendCode(country.dialCode + digits)
-        },
+        onConfirm = { if (awaitingCode) onConfirmCode(code) else onSendCode(country.dialCode + number) },
         onDismiss = onDismiss,
         // A code has been paid for and sent, so a mistap on the scrim must not
         // be what throws it away.
@@ -797,69 +548,37 @@ private fun AddPhoneDialog(
             OtpBoxes(
                 code = code,
                 // Frozen while the code is being checked, matching the sign-in
-                // OTP screen: editing mid-verification changes what is on
+                // code screen: editing mid-verification changes what is on
                 // screen without changing what is being verified.
                 onCodeChange = { if (!isBusy) code = it },
                 hasError = state.errorFrom == AccountFlow.AddPhone,
                 focusRequester = otpFocusRequester,
             )
         } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.x2),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // ISO code and dial code, never a flag: emoji are banned product
-                // wide and this reads correctly to a screen reader.
-                // wrapContentWidth, and fillMaxHeight rather than fillMaxSize.
-                // A Row is measured before its weighted siblings and is handed
-                // the full width, so fillMaxSize here made this chip swallow the
-                // row and squeezed the number field to nothing: its label
-                // wrapped one letter per line and every tap landed on the
-                // country picker, leaving no way to type a number at all.
-                Surface(
-                    onClick = { pickingCountry = true },
-                    enabled = !isBusy,
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    color = colors.surfaceInput,
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                // Dial code only, never a flag: emoji are banned product wide
+                // and this reads correctly to a screen reader.
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .height(56.dp)
-                        .wrapContentWidth(),
+                        .defaultMinSize(minHeight = 56.dp)
+                        .clip(FieldShape)
+                        .background(Kit.colors.field)
+                        .border(1.5.dp, Kit.colors.fieldBorder, FieldShape)
+                        .clickable(enabled = !isBusy, role = Role.Button) { pickingCountry = true }
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = colors.borderDefault,
-                                shape = RoundedCornerShape(PamojaRadii.sm),
-                            )
-                            .fillMaxHeight()
-                            .padding(horizontal = Spacing.x3),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = country.dialCode,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.textPrimary,
-                            maxLines = 1,
-                        )
-                    }
+                    Text(country.dialCode, style = Kit.type.body.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold))
                 }
-
-                PamojaTextField(
+                KitTextField(
                     value = number,
-                    // Capped to the country's own longest valid length, same
-                    // reason as the sign-in phone screen: the field must not
-                    // accept more digits than the country could ever need.
-                    onValueChange = {
-                        number = it.filter { char -> char.isDigit() }
-                            .take(country.nationalDigits.last)
-                    },
+                    // Capped to the country's own longest valid length, same as
+                    // the sign-in phone screen.
+                    onValueChange = { number = it.filter(Char::isDigit).take(country.nationalDigits.last) },
                     label = stringResource(R.string.phone_label),
                     placeholder = stringResource(R.string.phone_placeholder),
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Done,
                     enabled = !isBusy,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -868,8 +587,8 @@ private fun AddPhoneDialog(
 }
 
 /**
- * The country list, as a dialog rather than the bottom sheet the sign-in screen
- * uses, so it stays inside the dialog window the add-phone flow already owns.
+ * The country list, as a dialog rather than the sheet the sign-in screen uses,
+ * so it stays inside the dialog window the add-phone flow already owns.
  */
 @Composable
 private fun CountryPickerDialog(
@@ -877,75 +596,58 @@ private fun CountryPickerDialog(
     onSelect: (Country) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     val results = remember(query) { Country.search(query) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.surface3,
-        shape = RoundedCornerShape(PamojaRadii.xl),
-        title = {
-            Text(
-                text = stringResource(R.string.phone_select_country),
-                style = MaterialTheme.typography.headlineSmall,
-                color = colors.textPrimary,
-            )
-        },
-        text = {
-            Column {
-                PamojaTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = stringResource(R.string.phone_label_country),
-                    placeholder = stringResource(R.string.phone_search_country),
-                    imeAction = ImeAction.Search,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                // Bounded, because a LazyColumn inside a dialog with no height
-                // constraint measures to zero and renders nothing.
-                LazyColumn(modifier = Modifier.heightIn(max = 280.dp)) {
-                    items(results, key = { it.isoCode }) { country ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelect(country) }
-                                .padding(vertical = Spacing.x3),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = country.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textPrimary,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Text(
-                                text = country.dialCode,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textSecondary,
-                            )
-                            if (country.isoCode == selected.isoCode) {
-                                Spacer(modifier = Modifier.width(Spacing.x3))
-                                Icon(
-                                    painter = painterResource(PamojaIcons.Check),
-                                    contentDescription = stringResource(R.string.common_selected),
-                                    tint = colors.accentPrimary,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
+    KitDialog(
+        title = stringResource(R.string.phone_select_country),
+        confirmText = stringResource(R.string.common_back),
+        onConfirm = onDismiss,
+        onDismiss = onDismiss,
+    ) {
+        KitTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = stringResource(R.string.phone_search_country),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        )
+        // Bounded, so the list scrolls inside the dialog rather than pushing
+        // its buttons off the screen.
+        Column(
+            Modifier
+                .heightIn(max = 300.dp)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            results.forEach { country ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
+                        .clickable(role = Role.Button) { onSelect(country) }
+                        .padding(vertical = 8.dp),
+                ) {
+                    Text(
+                        country.name,
+                        style = Kit.type.bodyStrong.copy(
+                            fontWeight = if (country.isoCode == selected.isoCode) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(country.dialCode, style = Kit.type.body, color = Kit.colors.muted)
+                    if (country.isoCode == selected.isoCode) {
+                        Icon(
+                            painter = painterResource(PamojaIcons.Check),
+                            contentDescription = stringResource(R.string.common_selected),
+                            tint = Kit.colors.ink,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.common_back), color = colors.textSecondary)
-            }
-        },
-    )
+        }
+    }
 }
 
 /**

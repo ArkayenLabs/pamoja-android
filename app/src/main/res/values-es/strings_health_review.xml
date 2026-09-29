@@ -3,7 +3,6 @@
     <string name="create_group_offline_title">Sin conexión</string>
     <string name="create_group_offline_body">Necesitas conexión para crear un grupo. Tus ajustes se conservarán aquí mientras tanto.</string>
     <string name="create_group_failed_title">No se pudo crear el grupo</string>
-    <string name="join_shared_goal_title">Una meta compartida</string>
     <string name="join_shared_goal_body">Los pasos de todos suman una sola meta. Nadie tiene una meta propia.</string>
     <string name="hc_icon_desc">Registro de pasos</string>
     <string name="hc_title">Conecta tus pasos</string>

@@ -13,7 +13,6 @@
     <string name="widget_goal_share">इस हफ़्ते के लक्ष्य का</string>
     <string name="widget_connect">Pamoja में अपने कदम जोड़ें</string>
     <string name="settings_widgets_title">होम स्क्रीन विजेट</string>
-    <string name="settings_widgets_subtitle">आपका समूह, आप आज, या समूह का सिलसिला</string>
     <string name="settings_widgets_picker_title">विजेट चुनें</string>
     <string name="settings_widgets_group_subtitle">आज किसने चला, हफ़्ते का लक्ष्य और याद दिलाएँ</string>
     <string name="settings_widgets_today_subtitle">आपके कदम, या लौटाने को शाबाशी</string>

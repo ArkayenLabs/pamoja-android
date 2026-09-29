@@ -12,19 +12,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,9 +44,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.pamoja.app.R
-import com.pamoja.app.ui.theme.LocalPamojaColors
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.SecondaryButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +66,7 @@ import kotlin.math.min
  *
  * Deliberately built here rather than pulled in as a cropping library. Every
  * such library ships its own Activity and its own Material theming, which would
- * arrive in the middle of a terracotta app looking like a different product,
+ * arrive in the middle of the app looking like a different product,
  * and this needs one circular viewport and two gestures.
  */
 @Composable
@@ -79,8 +74,8 @@ fun PhotoCropScreen(
     sourceUri: String,
     onCancel: () -> Unit,
     onCropped: (String) -> Unit,
-) {
-    val colors = LocalPamojaColors.current
+) = KitInAppTheme {
+    val colors = Kit.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -116,7 +111,7 @@ fun PhotoCropScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.surfaceApp)
+            .background(colors.page)
             .onSizeChanged { boxSize = Size(it.width.toFloat(), it.height.toFloat()) },
     ) {
         val bmp = source
@@ -125,15 +120,15 @@ fun PhotoCropScreen(
             failed -> {
                 Text(
                     text = stringResource(R.string.crop_failed),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary,
-                    modifier = Modifier.align(Alignment.Center).padding(Spacing.x6),
+                    style = Kit.type.body,
+                    color = colors.muted,
+                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
                 )
             }
 
             bmp == null -> {
                 CircularProgressIndicator(
-                    color = colors.accentPrimary,
+                    color = colors.ink,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
@@ -215,20 +210,12 @@ fun PhotoCropScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
-                .padding(horizontal = Spacing.x6, vertical = Spacing.x5),
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                text = stringResource(R.string.crop_title),
-                style = MaterialTheme.typography.headlineSmall,
-                color = colors.textPrimary,
-            )
-            Spacer(Modifier.height(Spacing.x1))
-            Text(
-                text = stringResource(R.string.crop_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary,
-            )
+            Text(stringResource(R.string.crop_title), style = Kit.type.title, color = colors.ink)
+            Text(stringResource(R.string.crop_hint), style = Kit.type.caption, color = colors.muted)
         }
 
         Row(
@@ -236,21 +223,19 @@ fun PhotoCropScreen(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = Spacing.x6, vertical = Spacing.x6),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
+                .padding(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.common_cancel),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.textSecondary,
-                )
-            }
-
-            Button(
+            SecondaryButton(
+                stringResource(R.string.common_cancel),
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+            )
+            PrimaryButton(
+                text = stringResource(R.string.crop_confirm),
                 onClick = {
-                    val bitmap = source ?: return@Button
+                    val bitmap = source ?: return@PrimaryButton
                     working = true
                     // Off the main thread: this allocates a bitmap and JPEG
                     // encodes it, which is tens to hundreds of milliseconds on
@@ -269,19 +254,10 @@ fun PhotoCropScreen(
                         if (saved != null) onCropped(saved) else onCancel()
                     }
                 },
-                enabled = source != null && !working,
+                enabled = source != null,
+                loading = working,
                 modifier = Modifier.weight(1f),
-                shape = PillShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accentPrimary,
-                    contentColor = colors.textOnBrand,
-                ),
-            ) {
-                Text(
-                    text = stringResource(R.string.crop_confirm),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
+            )
         }
     }
 }

@@ -1,255 +1,141 @@
 package com.pamoja.app.ui.auth
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.domain.error.AppError
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.QuietButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
 
 @Composable
 fun OtpScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // LocalActivity rather than casting LocalContext, which throws when the
     // context is wrapped rather than being the Activity itself.
     val activity = LocalActivity.current
 
-    var code by remember { mutableStateOf("") }
+    OtpContent(
+        dialCode = uiState.country.dialCode,
+        number = uiState.phoneNumber,
+        verifying = uiState.busyWith == AuthMethod.Phone,
+        failure = uiState.otpFailure,
+        error = uiState.error,
+        resendSecondsLeft = uiState.resendSecondsLeft,
+        onVerify = viewModel::verifyCode,
+        onResend = { activity?.let(viewModel::sendCode) },
+        onWrongNumber = {
+            viewModel.restartPhoneEntry()
+            onBack()
+        },
+        onBack = onBack,
+    )
+}
+
+/** Stateless boundary for previews and tests. */
+@Composable
+internal fun OtpContent(
+    dialCode: String,
+    number: String,
+    verifying: Boolean,
+    failure: OtpFailure?,
+    error: AppError?,
+    resendSecondsLeft: Int,
+    onVerify: (String) -> Unit,
+    onResend: () -> Unit,
+    onWrongNumber: () -> Unit,
+    onBack: () -> Unit,
+) = KitInAppTheme {
+    var code by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
 
     // Submitting the moment the last digit lands saves a tap, and SMS autofill
     // delivers all six at once anyway.
     LaunchedEffect(code) {
-        if (code.length == OTP_LENGTH) viewModel.verifyCode(code)
+        if (code.length == OTP_LENGTH) onVerify(code)
     }
 
-    // A wrong or expired code never wipes what was typed. Clearing the field is
-    // the most common and most infuriating failure in OTP design.
-    val isVerifying = uiState.busyWith == AuthMethod.Phone
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(horizontal = Spacing.x6)
-        ) {
-            Spacer(modifier = Modifier.height(Spacing.x2))
-
-            AuthTopBar(onBack = onBack, label = stringResource(R.string.auth_step_verify))
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
-            Text(
-                text = stringResource(R.string.otp_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = colors.textPrimary,
+    KitScreen(
+        top = {
+            TopRow(start = {
+                CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+            })
+        },
+        bottom = {
+            PrimaryButton(
+                text = stringResource(R.string.otp_verify),
+                onClick = { onVerify(code) },
+                enabled = code.length == OTP_LENGTH && !verifying,
+                loading = verifying,
             )
-
-            Spacer(modifier = Modifier.height(Spacing.x3))
-
-            // The number is restated in full so a mistyped digit is caught here
-            // rather than after a code that could never have arrived.
-            Text(
-                text = stringResource(R.string.otp_sent_to, uiState.country.dialCode, uiState.phoneNumber),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x2))
-
-            TextButton(
-                onClick = {
-                    viewModel.restartPhoneEntry()
-                    onBack()
-                },
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.otp_wrong_number),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colors.accentPrimary,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
-            OtpBoxes(
-                code = code,
-                onCodeChange = { if (!isVerifying) code = it },
-                hasError = uiState.otpFailure != null,
-                focusRequester = focusRequester,
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x4))
-
-            when (uiState.otpFailure) {
-                OtpFailure.WrongCode -> PamojaNotice(
-                    icon = PamojaIcons.AlertCircle,
-                    title = stringResource(R.string.otp_wrong_code_title),
-                    body = stringResource(R.string.otp_wrong_code_body),
-                    tone = NoticeTone.Danger,
-                )
-
-                OtpFailure.Expired -> PamojaNotice(
-                    icon = PamojaIcons.Clock,
-                    title = stringResource(R.string.otp_expired_title),
-                    body = stringResource(R.string.otp_expired_body),
-                    tone = NoticeTone.Warning,
-                )
-
-                OtpFailure.RateLimited -> PamojaNotice(
-                    icon = PamojaIcons.Lock,
-                    title = stringResource(R.string.otp_rate_limited_title),
-                    body = stringResource(R.string.otp_rate_limited_body),
-                    tone = NoticeTone.Danger,
-                )
-
-                null -> uiState.error?.let {
-                    PamojaNotice(
-                        icon = PamojaIcons.AlertCircle,
-                        title = it.authErrorTitle(),
-                        body = it.authErrorBody(),
-                        tone = NoticeTone.Danger,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
             // Disabled with a live countdown rather than swapped out, which is
             // the honest version of an inactive control: it says when it works.
-            val secondsLeft = uiState.resendSecondsLeft
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.otp_no_code),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-                Spacer(modifier = Modifier.width(Spacing.x2))
-                if (secondsLeft > 0) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Clock),
-                        contentDescription = null,
-                        tint = colors.textTertiary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x1))
-                    Text(
-                        text = stringResource(R.string.otp_resend_in, secondsLeft),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.textTertiary,
-                    )
+            QuietButton(
+                text = if (resendSecondsLeft > 0) {
+                    "${stringResource(R.string.otp_no_code)} ${stringResource(R.string.otp_resend_in, resendSecondsLeft)}"
                 } else {
-                    TextButton(
-                        onClick = {
-                            code = ""
-                            activity?.let(viewModel::sendCode)
-                        },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.otp_send_new),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = colors.accentPrimary,
-                        )
-                    }
-                }
-            }
+                    "${stringResource(R.string.otp_no_code)} ${stringResource(R.string.otp_send_new)}"
+                },
+                onClick = {
+                    code = ""
+                    onResend()
+                },
+                enabled = resendSecondsLeft <= 0 && !verifying,
+            )
+        },
+    ) {
+        Text(stringResource(R.string.otp_title), style = Kit.type.headline)
+        // The number is restated in full so a mistyped digit is caught here
+        // rather than after a code that could never have arrived.
+        Text(stringResource(R.string.otp_sent_to, dialCode, number), style = Kit.type.body, color = Kit.colors.muted)
+        QuietButton(text = stringResource(R.string.otp_wrong_number), onClick = onWrongNumber)
 
-            Spacer(modifier = Modifier.height(Spacing.x6))
+        // A wrong or expired code never wipes what was typed. Clearing the
+        // field is the most common and most infuriating failure in OTP design.
+        OtpBoxes(
+            code = code,
+            onCodeChange = { if (!verifying) code = it },
+            hasError = failure != null,
+            focusRequester = focusRequester,
+        )
 
-            Button(
-                onClick = { viewModel.verifyCode(code) },
-                enabled = code.length == OTP_LENGTH && !isVerifying,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = PillShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accentPrimary,
-                    contentColor = colors.textOnBrand,
-                    disabledContainerColor = colors.accentPrimarySubtle,
-                    disabledContentColor = colors.textTertiary,
-                ),
-            ) {
-                if (isVerifying) {
-                    CircularProgressIndicator(
-                        color = colors.textOnBrand,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(20.dp),
-                    )
-                } else {
-                    Text(text = stringResource(R.string.otp_verify), style = MaterialTheme.typography.labelLarge)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x10))
+        when (failure) {
+            OtpFailure.WrongCode -> KitNotice(
+                title = stringResource(R.string.otp_wrong_code_title),
+                body = stringResource(R.string.otp_wrong_code_body),
+                danger = true,
+            )
+            OtpFailure.Expired -> KitNotice(
+                title = stringResource(R.string.otp_expired_title),
+                body = stringResource(R.string.otp_expired_body),
+            )
+            OtpFailure.RateLimited -> KitNotice(
+                title = stringResource(R.string.otp_rate_limited_title),
+                body = stringResource(R.string.otp_rate_limited_body),
+                danger = true,
+            )
+            null -> error?.let { KitNotice(title = it.authErrorTitle(), body = it.authErrorBody(), danger = true) }
         }
     }
 }
-

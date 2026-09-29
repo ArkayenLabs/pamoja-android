@@ -1,13 +1,11 @@
 <resources>
     <string name="settings_open_profile">Editar tu perfil</string>
     <string name="settings_section_preferences">Apariencia e idioma</string>
-    <string name="settings_theme_label">Apariencia</string>
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_light">Claro</string>
     <string name="settings_theme_dark">Oscuro</string>
     <string name="settings_section_support">Ayuda y tus datos</string>
     <string name="settings_support_title">Contactar con soporte</string>
-    <string name="settings_support_subtitle">Haz una pregunta o informa de un problema</string>
     <string name="settings_support_subject">Solicitud de ayuda de Pamoja</string>
     <string name="settings_support_body">\n\n\n---\nConserva estos datos para ayudarnos a encontrar el problema.\nDispositivo: %1$s %2$s\nAndroid: %3$s\nPamoja: %4$s\nCuenta: %5$s</string>
     <string name="settings_export_title">Exportar mis datos</string>
@@ -36,7 +34,6 @@
     <string name="notif_title">Notificaciones</string>
     <string name="notif_subtitle">Elige qué merece interrumpirte.</string>
     <string name="settings_notifications_title">Notificaciones</string>
-    <string name="settings_notifications_sub">Qué enviamos y cuándo guardamos silencio</string>
     <string name="notif_primer_allow">Permitir notificaciones</string>
     <string name="notif_blocked_title">Las notificaciones están desactivadas</string>
     <string name="notif_blocked_body">Las notificaciones de Pamoja están desactivadas en Android, así que no te llegará ninguna.</string>
@@ -67,11 +64,9 @@
     <string name="settings_account_many">%1$s conectados</string>
     <string name="account_method_separator">, </string>
     <string name="settings_subscription_title">Gestionar suscripción</string>
-    <string name="settings_subscription_sub">Abre tus suscripciones en Google Play</string>
     <string name="account_title">Cuenta</string>
     <string name="account_subtitle">Todos estos métodos abren la misma cuenta.</string>
     <string name="account_section_methods">Métodos de inicio de sesión</string>
-    <string name="account_section_password">Contraseña</string>
     <string name="account_method_google">Google</string>
     <string name="account_method_phone">Teléfono</string>
     <string name="account_method_email">Correo</string>
@@ -90,7 +85,6 @@
     <string name="account_add_phone_body">Te enviaremos un código para confirmar que el número es tuyo.</string>
     <string name="account_phone_code_body">Introduce el código enviado a %1$s.</string>
     <string name="account_change_password">Cambiar contraseña</string>
-    <string name="account_change_password_sub">Necesitarás la contraseña actual</string>
     <string name="account_change_password_body">Introduce primero la contraseña actual. Si no coincide, nada cambiará.</string>
     <string name="account_change_password_confirm">Cambiar</string>
     <string name="account_password_current">Contraseña actual</string>

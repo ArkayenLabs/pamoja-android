@@ -52,12 +52,16 @@ import kotlinx.coroutines.launch
  * today", the streak), 11 their other states: no group, your steps, this
  * week's share before a streak, and a group too big for six faces with
  * everyone nudged. Both are the real RemoteViews, inflated as a launcher would.
+ * 12 Settings, signed in with Google only and steps syncing. The rest of the
+ * Lilac move: 13 create account, 14 reset password (sent), 15 phone entry,
+ * 16 code entry with a wrong code, 17 updates, 18 licences, 19 notifications,
+ * 20 edit profile, 21 account (Google only), 22 the invite preview.
  */
 class GroupPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 11)
+        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 22)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
 
         setContent {
@@ -163,6 +167,81 @@ class GroupPreviewActivity : ComponentActivity() {
                                 widgetSnapshot().copy(group = group.copy(streakWeeks = 0, streakThroughWeek = "")),
                             ),
                         ),
+                    )
+                    12 -> com.pamoja.app.ui.settings.SettingsContent(
+                        state = com.pamoja.app.ui.settings.SettingsUiState(
+                            userName = "Ravi Sharma",
+                            userId = ME,
+                            authMethods = com.pamoja.app.domain.repository.AuthMethods(hasGoogle = true),
+                            theme = if (dark) ThemePreference.Dark else ThemePreference.System,
+                            healthStatus = com.pamoja.app.ui.settings.HealthStatus.Connected,
+                            backgroundReadSupported = true,
+                            lastSyncTime = System.currentTimeMillis() - 12 * 60_000,
+                        ),
+                        snackbar = remember { SnackbarHostState() },
+                        language = "",
+                        onBack = {}, onEditProfile = {}, onAccount = {}, onSubscription = {}, onTheme = {},
+                        onLanguage = {}, onNotifications = {}, onActivity = {}, onPinWidget = {}, onSyncNow = {},
+                        onFixHealth = {}, onBackgroundSteps = {}, onSupport = {}, onExport = {}, onPrivacy = {},
+                        onTerms = {}, onLicenses = {}, onRate = {}, onSignOut = {}, onDeleteAccount = {},
+                        onReauthGoogle = {}, onReauthPassword = {}, onSendReauthCode = {}, onReauthPhone = {},
+                        onCancelReauth = {},
+                    )
+                    13 -> com.pamoja.app.ui.auth.EmailSignUpContent(
+                        busy = false, blocked = false, error = null, onSignUp = { _, _, _ -> }, onClearError = {}, onBack = {},
+                    )
+                    14 -> com.pamoja.app.ui.auth.ForgotPasswordContent(
+                        prefilledEmail = "ravi@example.com", sentTo = "ravi@example.com", busy = false, blocked = false,
+                        error = null, onSend = {}, onBack = {},
+                    )
+                    15 -> com.pamoja.app.ui.auth.PhoneEntryContent(
+                        country = com.pamoja.app.ui.auth.Country.fromLocale(), number = "98765", busy = false, blocked = false,
+                        error = null, onCountry = {}, onNumber = {}, onSend = {}, onBack = {},
+                    )
+                    16 -> com.pamoja.app.ui.auth.OtpContent(
+                        dialCode = "+91", number = "9876543210", verifying = false,
+                        failure = com.pamoja.app.ui.auth.OtpFailure.WrongCode, error = null, resendSecondsLeft = 24,
+                        onVerify = {}, onResend = {}, onWrongNumber = {}, onBack = {},
+                    )
+                    17 -> com.pamoja.app.ui.activity.ActivityContent(
+                        isLoading = false,
+                        items = listOf(
+                            com.pamoja.app.domain.model.ActivityItem("1", com.pamoja.app.domain.model.NotificationCategory.ACHIEVEMENT,
+                                "Sharma Family hit its goal", "70,000 steps together this week.", System.currentTimeMillis() - 3_600_000, GROUP, false),
+                            com.pamoja.app.domain.model.ActivityItem("2", com.pamoja.app.domain.model.NotificationCategory.GROUP_ACTIVITY,
+                                "Priya cheered your walk", "Open Pamoja to cheer back.", System.currentTimeMillis() - 86_400_000, GROUP, true),
+                            com.pamoja.app.domain.model.ActivityItem("3", com.pamoja.app.domain.model.NotificationCategory.RECAP,
+                                "Your week in Sharma Family", "61,300 of 70,000. A shield kept the streak.", System.currentTimeMillis() - 3 * 86_400_000, null, true),
+                        ),
+                        onBack = {}, onOpenGroup = {}, onClear = {},
+                    )
+                    18 -> com.pamoja.app.ui.licenses.LicensesContent(
+                        isLoading = false,
+                        licenses = listOf("Accompanist", "Coil", "Firebase Firestore", "Jetpack Compose", "Kotlin Coroutines", "ZXing")
+                            .map { com.pamoja.app.data.local.licenses.OssLicense(it, "https://example.com/license") },
+                        selected = null, onSelect = {}, onBack = {},
+                    )
+                    19 -> com.pamoja.app.ui.notifications.NotificationSettingsContent(
+                        state = com.pamoja.app.ui.notifications.NotificationSettingsUiState(
+                            mutedCategories = setOf(com.pamoja.app.util.NotificationCategory.REMINDER),
+                        ),
+                        onBack = {}, onOpenApp = {}, onOpenCategory = {}, onQuietHours = { _, _ -> },
+                    )
+                    20 -> com.pamoja.app.ui.profile.EditProfileContent(
+                        state = com.pamoja.app.ui.profile.EditProfileUiState(isLoading = false, name = "Ravi Sharma"),
+                        onBack = {}, onRetry = {}, onName = {}, onShowPhoto = {}, onChoosePhoto = {}, onSave = {},
+                    )
+                    21 -> com.pamoja.app.ui.account.AccountContent(
+                        state = com.pamoja.app.ui.account.AccountUiState(
+                            isLoading = false,
+                            methods = com.pamoja.app.domain.repository.AuthMethods(hasGoogle = true, email = "ravi@example.com"),
+                        ),
+                        onBack = {}, onRetry = {}, onAddGoogle = {}, onOpen = {}, onDismiss = {}, onAddEmail = { _, _ -> },
+                        onChangePassword = { _, _ -> }, onSendPhoneCode = {}, onConfirmPhoneCode = {}, onMessageShown = {},
+                    )
+                    22 -> com.pamoja.app.ui.join.JoinGroupContent(
+                        state = com.pamoja.app.ui.join.JoinUiState(isResolving = false, group = group),
+                        onJoin = {}, onOpen = {}, onRetry = {}, onCancel = {},
                     )
                     else -> Details(
                         currentUserId = "priya",

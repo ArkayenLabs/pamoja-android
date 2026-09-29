@@ -86,8 +86,6 @@
     <string name="common_refresh">Refresh</string>
     <string name="common_sign_in">Sign in</string>
     <string name="common_confirm">Confirm</string>
-    <string name="common_show_password">Show password</string>
-    <string name="common_hide_password">Hide password</string>
     <string name="common_selected">Selected</string>
     <string name="common_back_to_groups">Back to your groups</string>
 
@@ -257,19 +255,10 @@
     <string name="create_group_name_too_long">Use 40 characters or fewer</string>
     <string name="group_name_character_count">%1$d/%2$d characters</string>
     <!-- A group setting, not a personal one. The official goal is organizer-controlled. -->
-    <string name="weekly_goal_custom">Custom</string>
-    <string name="weekly_goal_custom_title">Set a custom group goal</string>
-    <string name="weekly_goal_custom_body">One weekly total for the whole group, never a quota for each person.</string>
-    <string name="weekly_goal_custom_label">Weekly group total</string>
-    <string name="weekly_goal_custom_placeholder">e.g. 300000</string>
-    <string name="weekly_goal_custom_helper">From 10,000 to 2,800,000 steps.</string>
-    <string name="weekly_goal_custom_error">Enter a total from 10,000 to 2,800,000.</string>
-    <string name="weekly_goal_custom_use">Use this goal</string>
     <string name="create_group_submit">Create group</string>
     <string name="create_group_offline_title">You\'re offline</string>
     <string name="create_group_offline_body">Creating a group needs a connection. Your settings stay here until you\'re back.</string>
     <string name="create_group_failed_title">Couldn\'t create the group</string>
-    <string name="join_shared_goal_title">One goal, shared</string>
     <string name="join_shared_goal_body">Everyone\'s steps add up to one goal. Nobody has a target of their own.</string>
 
     <!-- ── Health Connect ─────────────────────────────────────────────── -->
@@ -314,8 +303,6 @@
     <!-- ── Join preview ───────────────────────────────────────────────── -->
     <string name="join_invited_to">You\'ve been invited to</string>
     <string name="join_already_in">You\'re already in</string>
-    <string name="join_members_one">member</string>
-    <string name="join_members_other">members</string>
     <string name="join_target_label">steps a week, together</string>
     <string name="join_already_member_title">You\'re already a member</string>
     <string name="join_already_member_body">Nothing to do. Open the group to see how everyone is doing.</string>
@@ -334,14 +321,9 @@
 
     <!-- ── Settings ───────────────────────────────────────────────────── -->
     <string name="settings_privacy_title">Privacy Policy</string>
-    <string name="settings_privacy_subtitle">How we handle your data, including step data</string>
     <string name="settings_terms_title">Terms of Use</string>
-    <string name="settings_terms_subtitle">The agreement you accepted when you signed in</string>
-    <string name="settings_account_actions">Account actions</string>
     <string name="settings_logout_title">Sign out</string>
-    <string name="settings_logout_subtitle">Sign out of your account on this device</string>
     <string name="settings_delete_title">Delete account</string>
-    <string name="settings_delete_subtitle">Permanently delete your profile and step history</string>
     <string name="settings_delete_confirm">Delete permanently</string>
     <string name="settings_delete_warning">This can\'t be undone, and we can\'t recover any of it for you afterwards.</string>
     <string name="settings_delete_loses_profile">Your profile, name and photo</string>
@@ -357,12 +339,9 @@
     <string name="settings_reauth_phone_body">For your safety we text a code to the number on this account before deleting it. Nothing has been deleted yet.</string>
     <string name="settings_reauth_code_body">Enter the code we sent to %1$s. Nothing has been deleted yet.</string>
     <string name="settings_version">Pamoja v%1$s</string>
-    <string name="settings_title">You</string>
-    <string name="settings_subtitle">Your profile, preferences and privacy</string>
     <string name="settings_section_information">Privacy and about</string>
     <string name="settings_name_fallback">No name yet</string>
     <string name="settings_rate_title">Rate Pamoja</string>
-    <string name="settings_rate_subtitle">Leave a review on Google Play</string>
     <string name="settings_reauth_send_code">Send code</string>
     <string name="settings_no_phone">This account has no phone number on file</string>
     <string name="settings_reauth_failed">Couldn\'t confirm it\'s you</string>
@@ -388,7 +367,6 @@
 
     <!-- ── Preferences ────────────────────────────────────────────────── -->
     <string name="settings_section_preferences">Appearance and language</string>
-    <string name="settings_theme_label">Appearance</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
@@ -396,7 +374,6 @@
     <!-- ── Support and your data ──────────────────────────────────────── -->
     <string name="settings_section_support">Help and your data</string>
     <string name="settings_support_title">Contact support</string>
-    <string name="settings_support_subtitle">Ask a question, or report a problem</string>
     <string name="settings_support_subject">Pamoja support request</string>
     <!-- Device details are prefilled because the first reply to any support
          mail is otherwise a request for exactly these. -->
@@ -432,7 +409,6 @@
     <string name="notif_title">Notifications</string>
     <string name="notif_subtitle">Choose what is worth interrupting you for.</string>
     <string name="settings_notifications_title">Notifications</string>
-    <string name="settings_notifications_sub">What we send, and when we stay quiet</string>
     <!-- Shown before the system dialog. Framed around what arrives, because
          nobody wants notifications, they want to know the group hit its goal. -->
     <string name="notif_primer_allow">Allow notifications</string>
@@ -472,7 +448,6 @@
     <string name="settings_subscription_title">Manage subscription</string>
     <!-- Says where it goes rather than assuming one is held, since it is also
          correct for someone who has never subscribed. -->
-    <string name="settings_subscription_sub">Opens your subscriptions in Google Play</string>
 
     <string name="account_title">Account</string>
     <!-- Deliberately does not mention groups or step history. The one-method
@@ -480,7 +455,6 @@
          promise they are safe a few lines above that reads as a contradiction. -->
     <string name="account_subtitle">Each of these signs you into the same account.</string>
     <string name="account_section_methods">Sign-in methods</string>
-    <string name="account_section_password">Password</string>
     <string name="account_method_google">Google</string>
     <string name="account_method_phone">Phone</string>
     <string name="account_method_email">Email</string>
@@ -504,7 +478,6 @@
     <string name="account_phone_code_body">Enter the code we sent to %1$s.</string>
 
     <string name="account_change_password">Change password</string>
-    <string name="account_change_password_sub">You\'ll need your current one</string>
     <string name="account_change_password_body">Enter your current password first. Nothing changes if it doesn\'t match.</string>
     <string name="account_change_password_confirm">Change it</string>
     <string name="account_password_current">Current password</string>
@@ -525,7 +498,6 @@
 
     <!-- ── Open source licences ───────────────────────────────────────── -->
     <string name="settings_licenses_title">Open source licenses</string>
-    <string name="settings_licenses_subtitle">The software Pamoja is built on</string>
     <string name="licenses_title">Open source licenses</string>
     <string name="licenses_link_body">This component\'s license is published here.</string>
     <string name="licenses_open_link">Open license</string>
@@ -540,8 +512,6 @@
     <!-- Reassurance, and literally true: paywalling tracking would break the
          groups free members are already in. -->
     <string name="group_sponsor_title">Get Premium for this group</string>
-    <string name="group_access_premium">Premium</string>
-    <string name="group_access_preview">Preview</string>
     <string name="paywall_plan_annual">Yearly</string>
     <string name="paywall_plan_monthly">Monthly</string>
     <string name="paywall_period_year">year</string>
@@ -594,7 +564,6 @@
     <!-- ── Activity centre ────────────────────────────────────────────── -->
     <string name="activity_title">Updates</string>
     <string name="activity_back_desc">Back</string>
-    <string name="activity_open_desc">Updates you may have missed</string>
     <string name="activity_clear">Clear</string>
     <string name="activity_clear_title">Clear your updates?</string>
     <string name="activity_clear_body">This removes the list on this phone. Your groups, steps and history aren\'t affected.</string>
@@ -639,9 +608,6 @@
     </plurals>
     <!-- Auth top-bar step markers, rendered uppercase. They name the flow, not
          the screen, so someone deep in a sign-up knows what they are doing. -->
-    <string name="auth_step_sign_in">Sign in</string>
-    <string name="auth_step_verify">Verify</string>
-    <string name="auth_step_reset">Reset password</string>
     <!-- Group card goal label, rendered uppercase. Was a hardcoded
          "%,d steps / week goal" format string in HomeScreen. -->
     <!-- Leaderboard range toggle. -->

@@ -2,8 +2,6 @@
     <string name="group_of_target">%1$s में से</string>
     <string name="join_invited_to">आपको आमंत्रित किया गया है</string>
     <string name="join_already_in">आप पहले से शामिल हैं</string>
-    <string name="join_members_one">सदस्य</string>
-    <string name="join_members_other">सदस्य</string>
     <string name="join_target_label">हर हफ़्ते मिलकर कदम</string>
     <string name="join_already_member_title">आप पहले से सदस्य हैं</string>
     <string name="join_already_member_body">सबकी प्रगति देखने के लिए समूह खोलें।</string>
@@ -20,14 +18,9 @@
     <string name="join_button">समूह में शामिल हों</string>
     <string name="join_button_full">समूह भरा है</string>
     <string name="settings_privacy_title">गोपनीयता नीति</string>
-    <string name="settings_privacy_subtitle">हम आपके डेटा और कदमों की जानकारी कैसे सँभालते हैं</string>
     <string name="settings_terms_title">उपयोग की शर्तें</string>
-    <string name="settings_terms_subtitle">साइन इन करते समय स्वीकार किया गया समझौता</string>
-    <string name="settings_account_actions">खाते के विकल्प</string>
     <string name="settings_logout_title">साइन आउट करें</string>
-    <string name="settings_logout_subtitle">इस डिवाइस पर अपने खाते से निकलें</string>
     <string name="settings_delete_title">खाता मिटाएँ</string>
-    <string name="settings_delete_subtitle">प्रोफ़ाइल और कदमों का इतिहास हमेशा के लिए मिटाएँ</string>
     <string name="settings_delete_confirm">हमेशा के लिए मिटाएँ</string>
     <string name="settings_delete_warning">इसे वापस नहीं लिया जा सकता। हम बाद में डेटा वापस नहीं ला पाएँगे।</string>
     <string name="settings_delete_loses_profile">आपकी प्रोफ़ाइल, नाम और फ़ोटो</string>
@@ -43,12 +36,9 @@
     <string name="settings_reauth_phone_body">सुरक्षा के लिए खाता मिटाने से पहले आपके नंबर पर कोड भेजेंगे। अभी कुछ भी नहीं मिटा है।</string>
     <string name="settings_reauth_code_body">%1$s पर भेजा कोड लिखें। अभी कुछ भी नहीं मिटा है।</string>
     <string name="settings_version">Pamoja v%1$s</string>
-    <string name="settings_title">आप</string>
-    <string name="settings_subtitle">आपकी प्रोफ़ाइल, पसंद और गोपनीयता</string>
     <string name="settings_section_information">गोपनीयता और जानकारी</string>
     <string name="settings_name_fallback">अभी नाम नहीं</string>
     <string name="settings_rate_title">Pamoja को रेटिंग दें</string>
-    <string name="settings_rate_subtitle">Google Play पर समीक्षा लिखें</string>
     <string name="settings_reauth_send_code">कोड भेजें</string>
     <string name="settings_no_phone">इस खाते में फ़ोन नंबर दर्ज नहीं है</string>
     <string name="settings_reauth_failed">आपकी पहचान की पुष्टि नहीं हो सकी</string>

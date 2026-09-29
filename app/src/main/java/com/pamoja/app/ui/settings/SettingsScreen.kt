@@ -2,47 +2,33 @@ package com.pamoja.app.ui.settings
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
-import androidx.annotation.DrawableRes
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -50,44 +36,55 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.activity.compose.LocalActivity
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.pamoja.app.R
 import com.pamoja.app.BuildConfig
+import com.pamoja.app.R
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.domain.repository.AuthMethods
 import com.pamoja.app.ui.auth.OTP_LENGTH
-import com.pamoja.app.ui.auth.OtpBoxes
-import com.pamoja.app.ui.components.PamojaConfirmDialog
-import com.pamoja.app.ui.components.PamojaDestructiveConfirmDialog
-import com.pamoja.app.ui.components.PamojaTextField
 import com.pamoja.app.ui.components.toSnackbarMessage
-import com.pamoja.app.ui.profile.ProfileAvatar
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.kit.Avatar
+import com.pamoja.app.ui.kit.ButtonSize
+import com.pamoja.app.ui.kit.CardHeader
+import com.pamoja.app.ui.kit.CardShape
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitCard
+import com.pamoja.app.ui.kit.KitDialog
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitSheet
+import com.pamoja.app.ui.kit.KitSkeleton
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.OptionRow
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.QuietButton
+import com.pamoja.app.ui.kit.SecondaryButton
+import com.pamoja.app.ui.kit.TopRow
+import com.pamoja.app.ui.kit.mutedContentColor
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.Spacing
 import com.pamoja.app.widgets.GroupProgressWidgetProvider
 import com.pamoja.app.widgets.TodayStepsWidgetProvider
 import com.pamoja.app.widgets.WalkHookWidgetProvider
@@ -114,9 +111,8 @@ fun SettingsScreen(
     onProfileSavedShown: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -124,57 +120,15 @@ fun SettingsScreen(
         androidx.health.connect.client.PermissionController.createRequestPermissionResultContract(),
     ) { viewModel.onBackgroundPermissionResult() }
 
-    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    var showLogoutConfirmDialog by remember { mutableStateOf(false) }
-    var showWidgetPicker by remember { mutableStateOf(false) }
-    var showLanguagePicker by remember { mutableStateOf(false) }
-    val selectedLanguage = AppCompatDelegate.getApplicationLocales().toLanguageTags()
-    val languages = listOf(
-        "" to stringResource(R.string.settings_language_system),
-        "en-US" to "English (US)",
-        "en-GB" to "English (UK)",
-        "es" to "Español",
-        "hi" to "हिन्दी",
-    )
-    if (showLanguagePicker) {
-        AlertDialog(
-            onDismissRequest = { showLanguagePicker = false },
-            title = { Text(stringResource(R.string.settings_language)) },
-            text = {
-                Column {
-                    languages.forEach { (tag, label) ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                                .clickable {
-                                    showLanguagePicker = false
-                                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
-                                }.padding(vertical = Spacing.x2),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            androidx.compose.material3.RadioButton(
-                                selected = selectedLanguage == tag,
-                                onClick = null,
-                            )
-                            Text(label, modifier = Modifier.padding(start = Spacing.x2))
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-        )
-    }
-
     LaunchedEffect(uiState.isSignedOut) {
-        if (uiState.isSignedOut) {
-            onSignedOut()
-        }
+        if (uiState.isSignedOut) onSignedOut()
     }
 
     // Two channels: failures that came back from a repository, and messages this
     // screen raised itself as a resource id.
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            snackbarHostState.showSnackbar(it.toSnackbarMessage(context))
+            snackbar.showSnackbar(it.toSnackbarMessage(context))
             viewModel.clearMessages()
         }
     }
@@ -184,7 +138,7 @@ fun SettingsScreen(
         val message = uiState.messageArg
             ?.let { context.getString(res, it) }
             ?: context.getString(res)
-        snackbarHostState.showSnackbar(message)
+        snackbar.showSnackbar(message)
         viewModel.clearMessages()
     }
 
@@ -194,7 +148,7 @@ fun SettingsScreen(
     LaunchedEffect(profileWasSaved) {
         if (profileWasSaved) {
             onProfileSavedShown()
-            snackbarHostState.showSnackbar(context.getString(R.string.profile_edit_saved))
+            snackbar.showSnackbar(context.getString(R.string.profile_edit_saved))
         }
     }
 
@@ -226,18 +180,14 @@ fun SettingsScreen(
         }.isSuccess
 
         scope.launch {
-            snackbarHostState.showSnackbar(
-                if (wrote) exportSavedMessage else exportFailedMessage
-            )
+            snackbar.showSnackbar(if (wrote) exportSavedMessage else exportFailedMessage)
         }
     }
 
     // Opens the picker only once the data is actually in hand, so the user is
     // never asked where to save something that then fails to arrive.
     LaunchedEffect(uiState.exportJson) {
-        if (uiState.exportJson != null) {
-            createDocumentLauncher.launch(EXPORT_FILE_NAME)
-        }
+        if (uiState.exportJson != null) createDocumentLauncher.launch(EXPORT_FILE_NAME)
     }
 
     // Health Connect permission can be revoked in system settings while the app
@@ -252,785 +202,658 @@ fun SettingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // ── Dialogs ──────────────────────────────────────────────────────────────
-    //
-    // The rename dialog that used to live here is gone, replaced by the profile
-    // editor. It built a User from just the id and the new name and handed it to
-    // updateUser, which writes the whole document, so renaming yourself silently
-    // erased your age, height and weight.
+    val widgetUnavailable = stringResource(R.string.settings_widgets_unavailable)
 
-    if (showLogoutConfirmDialog) {
-        PamojaConfirmDialog(
+    SettingsContent(
+        state = uiState,
+        snackbar = snackbar,
+        language = AppCompatDelegate.getApplicationLocales().toLanguageTags(),
+        onBack = onBack,
+        onEditProfile = onEditProfile,
+        onAccount = onAccount,
+        onSubscription = {
+            // Play owns the subscription, so cancelling has to happen there.
+            // Required by policy, and it has to be easy to find rather than
+            // buried: burying it is the dark pattern that gets apps removed.
+            context.openUri(
+                "https://play.google.com/store/account/subscriptions" +
+                    "?sku=pamoja_circle_v1&package=com.arkayenlabs.pamoja",
+            )
+        },
+        onTheme = viewModel::setTheme,
+        onLanguage = { tag -> AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag)) },
+        onNotifications = onNotificationSettings,
+        onActivity = onActivity,
+        onPinWidget = { provider ->
+            if (!requestWidgetPin(context, provider)) scope.launch { snackbar.showSnackbar(widgetUnavailable) }
+        },
+        onSyncNow = viewModel::syncNow,
+        onFixHealth = {
+            // Health Connect owns the permission, so the fix is over there.
+            // Falls back to the Play listing when the app is absent, which is
+            // the Android 13-and-below case.
+            val intent = if (uiState.healthStatus == HealthStatus.Unavailable) {
+                Intent(Intent.ACTION_VIEW, "market://details?id=$HEALTH_CONNECT_PACKAGE".toUri())
+            } else {
+                Intent(HEALTH_CONNECT_SETTINGS_ACTION)
+            }
+            runCatching { context.startActivity(intent) }.onFailure {
+                context.openUri("https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE")
+            }
+        },
+        onBackgroundSteps = {
+            if (uiState.backgroundReadGranted) {
+                runCatching { context.startActivity(Intent(HEALTH_CONNECT_SETTINGS_ACTION)) }
+            } else {
+                backgroundPermissionLauncher.launch(
+                    com.pamoja.app.data.local.health.HealthConnectReader.BACKGROUND_PERMISSIONS,
+                )
+            }
+        },
+        onSupport = { context.openSupportMail(uiState.userId) },
+        onExport = { if (!uiState.isExporting) viewModel.exportData() },
+        onPrivacy = { context.openUri("https://www.arkayenlabs.com/privacy/pamoja") },
+        onTerms = { context.openUri("https://www.arkayenlabs.com/terms/pamoja") },
+        onLicenses = onLicenses.takeIf { BuildConfig.DEBUG },
+        onRate = {
+            val packageName = context.packageName
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri()))
+            }.onFailure { context.openUri("https://play.google.com/store/apps/details?id=$packageName") }
+        },
+        onSignOut = viewModel::signOut,
+        onDeleteAccount = { viewModel.deleteAccount() },
+        onReauthGoogle = { activity?.let(viewModel::reauthenticateWithGoogle) },
+        onReauthPassword = viewModel::reauthenticateWithPassword,
+        onSendReauthCode = { activity?.let(viewModel::sendReauthCode) },
+        onReauthPhone = viewModel::reauthenticateWithPhone,
+        onCancelReauth = viewModel::cancelReauth,
+    )
+}
+
+/** The languages the app is translated into, as each one names itself. */
+private val LANGUAGES = listOf(
+    "en-US" to "English (US)",
+    "en-GB" to "English (UK)",
+    "es" to "Español",
+    "hi" to "हिन्दी",
+)
+
+/** Stateless rendering boundary, driven by the debug preview. */
+@Composable
+internal fun SettingsContent(
+    state: SettingsUiState,
+    snackbar: SnackbarHostState,
+    language: String,
+    onBack: () -> Unit,
+    onEditProfile: () -> Unit,
+    onAccount: () -> Unit,
+    onSubscription: () -> Unit,
+    onTheme: (ThemePreference) -> Unit,
+    onLanguage: (String) -> Unit,
+    onNotifications: () -> Unit,
+    onActivity: () -> Unit,
+    onPinWidget: (Class<out android.appwidget.AppWidgetProvider>) -> Unit,
+    onSyncNow: () -> Unit,
+    onFixHealth: () -> Unit,
+    onBackgroundSteps: () -> Unit,
+    onSupport: () -> Unit,
+    onExport: () -> Unit,
+    onPrivacy: () -> Unit,
+    onTerms: () -> Unit,
+    /** Null hides the row: licences are only generated for release builds. */
+    onLicenses: (() -> Unit)?,
+    onRate: () -> Unit,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onReauthGoogle: () -> Unit,
+    onReauthPassword: (String) -> Unit,
+    onSendReauthCode: () -> Unit,
+    onReauthPhone: (String) -> Unit,
+    onCancelReauth: () -> Unit,
+) = KitInAppTheme {
+    var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var widgetSheet by rememberSaveable { mutableStateOf(false) }
+    var languageSheet by rememberSaveable { mutableStateOf(false) }
+    val name = state.userName.ifBlank { stringResource(R.string.settings_name_fallback) }
+    val systemLanguage = stringResource(R.string.settings_language_system)
+    val languageLabel = LANGUAGES.firstOrNull { it.first == language }?.second ?: systemLanguage
+
+    Box(Modifier.fillMaxSize()) {
+        KitScreen(
+            gutter = 20.dp,
+            top = {
+                TopRow(start = {
+                    CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+                })
+            },
+        ) {
+            // You first: the face and name your groups see, and the way to
+            // change them.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(CardShape)
+                    .clickable(role = Role.Button, onClick = onEditProfile)
+                    .padding(vertical = 4.dp),
+            ) {
+                Avatar(name = name, photoUrl = state.photoUrl, size = 64.dp, seed = state.userId.ifBlank { name })
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        name,
+                        style = Kit.type.headline.copy(fontSize = 28.sp),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(stringResource(R.string.settings_open_profile), style = Kit.type.caption, color = Kit.colors.muted)
+                }
+                Icon(
+                    painter = painterResource(PamojaIcons.ChevronRight),
+                    contentDescription = null,
+                    tint = Kit.colors.muted,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+
+            if (state.isLoading) {
+                KitSkeleton(height = 140.dp)
+                KitSkeleton(height = 200.dp)
+                KitSkeleton(height = 160.dp)
+                return@KitScreen
+            }
+
+            KitCard(spacing = 0.dp) {
+                CardHeader(stringResource(R.string.settings_section_account), Modifier.padding(bottom = 6.dp))
+                SettingsRow(
+                    label = stringResource(R.string.settings_account_title),
+                    // Names the methods rather than saying "manage", so an
+                    // account with only one way in says so from here without
+                    // having to be opened.
+                    detail = authMethodsSummary(state.authMethods),
+                    onClick = onAccount,
+                )
+                SettingsRow(
+                    label = stringResource(R.string.settings_subscription_title),
+                    onClick = onSubscription,
+                    showDivider = false,
+                )
+            }
+
+            HealthCard(
+                status = state.healthStatus,
+                lastSyncTime = state.lastSyncTime,
+                isSyncing = state.isSyncing,
+                showBackground = state.healthStatus == HealthStatus.Connected && state.backgroundReadSupported,
+                backgroundGranted = state.backgroundReadGranted,
+                onSyncNow = onSyncNow,
+                onFix = onFixHealth,
+                onBackground = onBackgroundSteps,
+            )
+
+            KitCard(spacing = 0.dp) {
+                CardHeader(stringResource(R.string.settings_section_preferences), Modifier.padding(bottom = 10.dp))
+                ThemeChoice(selected = state.theme, onSelect = onTheme)
+                Text(
+                    stringResource(
+                        if (state.theme == ThemePreference.System) R.string.settings_theme_system_sub
+                        else R.string.settings_theme_fixed_sub,
+                    ),
+                    style = Kit.type.caption,
+                    color = Kit.colors.muted,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                )
+                SettingsRow(
+                    label = stringResource(R.string.settings_language),
+                    value = languageLabel,
+                    onClick = { languageSheet = true },
+                    showDivider = false,
+                )
+            }
+
+            KitCard(spacing = 0.dp) {
+                SettingsRow(stringResource(R.string.settings_notifications_title), onClick = onNotifications)
+                SettingsRow(stringResource(R.string.activity_title), onClick = onActivity)
+                SettingsRow(
+                    stringResource(R.string.settings_widgets_title),
+                    onClick = { widgetSheet = true },
+                    showDivider = false,
+                )
+            }
+
+            KitCard(spacing = 0.dp) {
+                CardHeader(stringResource(R.string.settings_section_support), Modifier.padding(bottom = 6.dp))
+                SettingsRow(stringResource(R.string.settings_support_title), onClick = onSupport)
+                SettingsRow(
+                    label = stringResource(R.string.settings_export_title),
+                    detail = stringResource(
+                        if (state.isExporting) R.string.settings_export_working else R.string.settings_export_subtitle,
+                    ),
+                    onClick = onExport,
+                    showDivider = false,
+                )
+            }
+
+            KitCard(spacing = 0.dp) {
+                CardHeader(stringResource(R.string.settings_section_information), Modifier.padding(bottom = 6.dp))
+                SettingsRow(stringResource(R.string.settings_privacy_title), onClick = onPrivacy)
+                SettingsRow(stringResource(R.string.settings_terms_title), onClick = onTerms)
+                onLicenses?.let { SettingsRow(stringResource(R.string.settings_licenses_title), onClick = it) }
+                SettingsRow(stringResource(R.string.settings_rate_title), onClick = onRate, showDivider = false)
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                SecondaryButton(
+                    stringResource(R.string.settings_logout_title),
+                    icon = PamojaIcons.LogOut,
+                    onClick = { confirmSignOut = true },
+                )
+                QuietButton(
+                    stringResource(R.string.settings_delete_title),
+                    danger = true,
+                    onClick = { confirmDelete = true },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Text(
+                // Read from the build, never typed here: a hardcoded "1.0.0"
+                // once claimed that on every release.
+                stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+                style = Kit.type.caption,
+                color = Kit.colors.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+    }
+
+    if (languageSheet) {
+        KitSheet(onDismiss = { languageSheet = false }, title = stringResource(R.string.settings_language)) { close ->
+            Column(Modifier.selectableGroup()) {
+                (listOf("" to systemLanguage) + LANGUAGES).forEach { (tag, label) ->
+                    OptionRow(
+                        text = label,
+                        selected = tag == language,
+                        onClick = { close { onLanguage(tag) } },
+                    )
+                }
+            }
+        }
+    }
+
+    if (widgetSheet) {
+        KitSheet(onDismiss = { widgetSheet = false }, title = stringResource(R.string.settings_widgets_picker_title)) { close ->
+            SettingsRow(
+                label = stringResource(R.string.widget_group_name),
+                detail = stringResource(R.string.settings_widgets_group_subtitle),
+                onClick = { close { onPinWidget(GroupProgressWidgetProvider::class.java) } },
+            )
+            SettingsRow(
+                label = stringResource(R.string.widget_today_name),
+                detail = stringResource(R.string.settings_widgets_today_subtitle),
+                onClick = { close { onPinWidget(TodayStepsWidgetProvider::class.java) } },
+            )
+            SettingsRow(
+                label = stringResource(R.string.widget_hook_name),
+                detail = stringResource(R.string.settings_widgets_hook_subtitle),
+                onClick = { close { onPinWidget(WalkHookWidgetProvider::class.java) } },
+                showDivider = false,
+            )
+        }
+    }
+
+    if (confirmSignOut) {
+        KitDialog(
             title = stringResource(R.string.settings_logout_confirm_title),
             body = stringResource(R.string.settings_logout_confirm_body),
-            confirmLabel = stringResource(R.string.settings_logout_confirm_action),
+            confirmText = stringResource(R.string.settings_logout_confirm_action),
+            dismissText = stringResource(R.string.common_cancel),
             // Signing out loses nothing, so it is not painted as danger. The
             // dialog exists to catch the misplaced tap, not to warn.
-            isDestructive = false,
             onConfirm = {
-                showLogoutConfirmDialog = false
-                viewModel.signOut()
+                confirmSignOut = false
+                onSignOut()
             },
-            onDismiss = { showLogoutConfirmDialog = false },
+            onDismiss = { confirmSignOut = false },
         )
     }
 
-    if (showDeleteConfirmDialog) {
-        // Exactly what deleteAllUserData actually removes, no more. It deletes
-        // memberships and step entries and decrements member counts; it does
-        // not delete groups this user administers, so nothing here claims it
-        // does.
-        PamojaDestructiveConfirmDialog(
-            title = stringResource(R.string.settings_delete_title),
-            body = stringResource(R.string.settings_delete_warning),
-            consequences = listOf(
-                stringResource(R.string.settings_delete_loses_profile),
-                stringResource(R.string.settings_delete_loses_history),
-                stringResource(R.string.settings_delete_loses_groups),
-            ),
-            confirmationWord = stringResource(R.string.settings_delete_type_word),
-            confirmationHint = stringResource(R.string.settings_delete_type_hint),
-            confirmLabel = stringResource(R.string.settings_delete_confirm),
+    if (confirmDelete) {
+        DeleteAccountDialog(
             onConfirm = {
-                showDeleteConfirmDialog = false
-                viewModel.deleteAccount()
+                confirmDelete = false
+                onDeleteAccount()
             },
-            onDismiss = { showDeleteConfirmDialog = false },
-        )
-    }
-
-    if (showWidgetPicker) {
-        val unavailable = stringResource(R.string.settings_widgets_unavailable)
-        AlertDialog(
-            onDismissRequest = { showWidgetPicker = false },
-            containerColor = colors.surface3,
-            shape = RoundedCornerShape(PamojaRadii.xl),
-            title = {
-                Text(
-                    text = stringResource(R.string.settings_widgets_picker_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.textPrimary,
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.x2)) {
-                    WidgetChoice(
-                        title = stringResource(R.string.widget_today_name),
-                        subtitle = stringResource(R.string.settings_widgets_today_subtitle),
-                        onClick = {
-                            showWidgetPicker = false
-                            if (!requestWidgetPin(context, TodayStepsWidgetProvider::class.java)) {
-                                scope.launch { snackbarHostState.showSnackbar(unavailable) }
-                            }
-                        },
-                    )
-                    WidgetChoice(
-                        title = stringResource(R.string.widget_group_name),
-                        subtitle = stringResource(R.string.settings_widgets_group_subtitle),
-                        onClick = {
-                            showWidgetPicker = false
-                            if (!requestWidgetPin(context, GroupProgressWidgetProvider::class.java)) {
-                                scope.launch { snackbarHostState.showSnackbar(unavailable) }
-                            }
-                        },
-                    )
-                    WidgetChoice(
-                        title = stringResource(R.string.widget_hook_name),
-                        subtitle = stringResource(R.string.settings_widgets_hook_subtitle),
-                        onClick = {
-                            showWidgetPicker = false
-                            if (!requestWidgetPin(context, WalkHookWidgetProvider::class.java)) {
-                                scope.launch { snackbarHostState.showSnackbar(unavailable) }
-                            }
-                        },
-                    )
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showWidgetPicker = false }) {
-                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
-                }
-            },
+            onDismiss = { confirmDelete = false },
         )
     }
 
     // Firebase refuses to delete an account on a stale session. Sessions here
     // last indefinitely, so this is the normal path rather than an edge case.
-    uiState.reauthRequired?.let { method ->
-        var password by remember { mutableStateOf("") }
-        var otpCode by remember { mutableStateOf("") }
-        val otpFocusRequester = remember { FocusRequester() }
-
-        // Phone runs in two steps inside one dialog: send the SMS, then enter the
-        // code. This flag is what tells them apart.
-        val awaitingCode = uiState.reauthVerificationId != null
-
-        LaunchedEffect(awaitingCode) {
-            if (awaitingCode) otpFocusRequester.requestFocus()
-        }
-
-        AlertDialog(
-            onDismissRequest = { viewModel.cancelReauth() },
-            containerColor = colors.surface3,
-            shape = RoundedCornerShape(PamojaRadii.xl),
-            title = {
-                Text(
-                    text = stringResource(R.string.settings_reauth_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.textPrimary
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = when {
-                            method == ReauthMethod.Phone && awaitingCode ->
-                                stringResource(R.string.settings_reauth_code_body, uiState.reauthPhoneNumber.orEmpty())
-
-                            method == ReauthMethod.Phone ->
-                                stringResource(R.string.settings_reauth_phone_body)
-
-                            else ->
-                                stringResource(R.string.settings_reauth_body)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textSecondary
-                    )
-
-                    if (method == ReauthMethod.Password) {
-                        Spacer(modifier = Modifier.height(Spacing.x4))
-                        PamojaTextField(
-                            value = password,
-                            onValueChange = { password = it },
-                            label = stringResource(R.string.password_label),
-                            placeholder = stringResource(R.string.password_placeholder_existing),
-                            keyboardType = KeyboardType.Password,
-                            isPassword = true,
-                        )
-                    }
-
-                    if (method == ReauthMethod.Phone && awaitingCode) {
-                        Spacer(modifier = Modifier.height(Spacing.x4))
-                        OtpBoxes(
-                            code = otpCode,
-                            onCodeChange = { otpCode = it },
-                            hasError = uiState.error != null,
-                            focusRequester = otpFocusRequester,
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        when (method) {
-                            ReauthMethod.Google -> activity?.let(viewModel::reauthenticateWithGoogle)
-                            ReauthMethod.Password -> viewModel.reauthenticateWithPassword(password)
-                            ReauthMethod.Phone ->
-                                if (awaitingCode) {
-                                    viewModel.reauthenticateWithPhone(otpCode)
-                                } else {
-                                    activity?.let(viewModel::sendReauthCode)
-                                }
-                        }
-                    },
-                    enabled = !uiState.isLoading && when (method) {
-                        ReauthMethod.Google -> true
-                        ReauthMethod.Password -> password.isNotBlank()
-                        ReauthMethod.Phone -> !awaitingCode || otpCode.length == OTP_LENGTH
-                    },
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
-                ) {
-                    Text(
-                        text = when {
-                            method == ReauthMethod.Google -> stringResource(R.string.auth_continue_google)
-                            method == ReauthMethod.Phone && !awaitingCode -> stringResource(R.string.settings_reauth_send_code)
-                            else -> stringResource(R.string.common_confirm)
-                        },
-                        color = colors.textOnBrand,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.cancelReauth() }) {
-                    Text(stringResource(R.string.common_cancel), color = colors.textSecondary)
-                }
-            }
-        )
-    }
-
-    // ── Main UI Structure ────────────────────────────────────────────────────
-
-    Scaffold(
-        containerColor = colors.surfaceApp,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        contentWindowInsets = WindowInsets.systemBars.only(
-            WindowInsetsSides.Horizontal + WindowInsetsSides.Top,
-        ),
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .navigationBarsPadding(),
-            ) {
-            // Reached from the avatar on Home: identity and preferences.
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.padding(start = Spacing.x3, top = Spacing.x2),
-            ) {
-                Icon(
-                    painter = painterResource(PamojaIcons.ArrowLeft),
-                    contentDescription = stringResource(R.string.common_back),
-                    tint = colors.textSecondary,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.x6)
-                    .padding(bottom = Spacing.x2),
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = colors.textPrimary
-                )
-                Spacer(modifier = Modifier.height(Spacing.x1))
-                Text(
-                    text = stringResource(R.string.settings_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary,
-                )
-            }
-
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = colors.accentPrimary,
-                        strokeWidth = 2.dp
-                    )
-                }
-            } else {
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(colors.accentPrimarySubtle, colors.surface2)
-                            )
-                        )
-                        .border(1.dp, colors.borderStrong, RoundedCornerShape(PamojaRadii.xl))
-                        .clickable(onClick = onEditProfile)
-                        .padding(Spacing.x5),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ProfileAvatar(
-                            name = uiState.userName.takeIf { it.isNotBlank() }
-                                ?: stringResource(R.string.settings_name_fallback),
-                            size = 64.dp,
-                            photoUrl = uiState.photoUrl,
-                        )
-
-                        Spacer(modifier = Modifier.width(Spacing.x4))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = uiState.userName.takeIf { it.isNotBlank() }
-                                    ?: stringResource(R.string.settings_name_fallback),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = colors.textPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(colors.accentPrimary),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                painter = painterResource(PamojaIcons.Edit),
-                                contentDescription = stringResource(R.string.settings_open_profile),
-                                tint = colors.textOnBrand,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // ─── Section: Account ────────────────────────────────────────
-                SectionLabel(stringResource(R.string.settings_section_account), color = colors.textTertiary)
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                ) {
-                    SettingsRow(
-                        icon = PamojaIcons.Shield,
-                        title = stringResource(R.string.settings_account_title),
-                        // Names the methods rather than saying "manage", so an
-                        // account with only one way in says so from here without
-                        // having to be opened.
-                        subtitle = authMethodsSummary(uiState.authMethods),
-                        onClick = onAccount,
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.Star,
-                        title = stringResource(R.string.settings_subscription_title),
-                        subtitle = stringResource(R.string.settings_subscription_sub),
-                        onClick = {
-                            // Play owns the subscription, so cancelling has to
-                            // happen there. Required by policy, and it has to be
-                            // easy to find rather than buried: burying it is the
-                            // dark pattern that gets apps removed.
-                            //
-                            // The general subscription centre until there are
-                            // products to name. Once they exist this should carry
-                            // ?sku=<productId>&package=<packageName> so it lands
-                            // on Pamoja's own subscription rather than a list.
-                            runCatching {
-                                context.startActivity(
-                                    Intent(
-                                        Intent.ACTION_VIEW,
-                                        (
-                                            "https://play.google.com/store/account/subscriptions" +
-                                                "?sku=pamoja_circle_v1" +
-                                                "&package=com.arkayenlabs.pamoja"
-                                            ).toUri(),
-                                    )
-                                )
-                            }
-                        },
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // ─── Section: Preferences ───────────────────────────────────
-                SectionLabel(stringResource(R.string.settings_section_preferences), color = colors.textTertiary)
-
-                ThemeSelector(
-                    selected = uiState.theme,
-                    onSelect = viewModel::setTheme,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x3))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                ) {
-                    SettingsRow(
-                        icon = PamojaIcons.Bell,
-                        title = stringResource(R.string.settings_notifications_title),
-                        subtitle = stringResource(R.string.settings_notifications_sub),
-                        onClick = onNotificationSettings,
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.Clock,
-                        title = stringResource(R.string.activity_title),
-                        subtitle = stringResource(R.string.activity_open_desc),
-                        onClick = onActivity,
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.Smartphone,
-                        title = stringResource(R.string.settings_widgets_title),
-                        subtitle = stringResource(R.string.settings_widgets_subtitle),
-                        onClick = { showWidgetPicker = true },
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // ─── Section: Health ────────────────────────────────────────
-                SectionLabel(stringResource(R.string.settings_section_health), color = colors.textTertiary)
-
-                HealthSection(
-                    status = uiState.healthStatus,
-                    lastSyncTime = uiState.lastSyncTime,
-                    isSyncing = uiState.isSyncing,
-                    onSyncNow = viewModel::syncNow,
-                    onFix = {
-                        // Health Connect owns the permission, so the fix is over
-                        // there. Falls back to the Play listing when the app is
-                        // absent, which is the Android 13-and-below case.
-                        val intent = if (uiState.healthStatus == HealthStatus.Unavailable) {
-                            Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("market://details?id=$HEALTH_CONNECT_PACKAGE")
-                            )
-                        } else {
-                            Intent(HEALTH_CONNECT_SETTINGS_ACTION)
-                        }
-                        runCatching { context.startActivity(intent) }.onFailure {
-                            context.startActivity(
-                                Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse("https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE")
-                                )
-                            )
-                        }
-                    },
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                if (uiState.healthStatus == HealthStatus.Connected && uiState.backgroundReadSupported) {
-                    SettingsRow(
-                        icon = PamojaIcons.Footprints,
-                        title = stringResource(R.string.settings_background_steps_title),
-                        subtitle = stringResource(if (uiState.backgroundReadGranted)
-                            R.string.settings_background_steps_on else R.string.settings_background_steps_off),
-                        onClick = {
-                            if (uiState.backgroundReadGranted) {
-                                runCatching { context.startActivity(Intent(HEALTH_CONNECT_SETTINGS_ACTION)) }
-                            } else {
-                                backgroundPermissionLauncher.launch(
-                                    com.pamoja.app.data.local.health.HealthConnectReader.BACKGROUND_PERMISSIONS,
-                                )
-                            }
-                        },
-                    )
-                    Spacer(modifier = Modifier.height(Spacing.x6))
-                }
-
-                // ─── Section: Support & your data ────────────────────────────
-                SectionLabel(stringResource(R.string.settings_section_support), color = colors.textTertiary)
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                ) {
-                    SettingsRow(
-                        icon = PamojaIcons.Mail,
-                        title = stringResource(R.string.settings_support_title),
-                        subtitle = stringResource(R.string.settings_support_subtitle),
-                        onClick = {
-                            // Device, Android version and app version are
-                            // prefilled because the first reply to any support
-                            // mail is otherwise a request for exactly those,
-                            // which costs a day for no reason.
-                            val body = context.getString(
-                                R.string.settings_support_body,
-                                android.os.Build.MANUFACTURER,
-                                android.os.Build.MODEL,
-                                android.os.Build.VERSION.RELEASE,
-                                // Not a literal. The About row below was fixed
-                                // to read BuildConfig.VERSION_NAME for exactly
-                                // this reason and this call site was missed, so
-                                // every support mail will report 1.0.0 forever,
-                                // which is worse than reporting nothing.
-                                com.pamoja.app.BuildConfig.VERSION_NAME,
-                                uiState.userId.ifBlank { "-" },
-                            )
-                            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = "mailto:".toUri()
-                                putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
-                                putExtra(
-                                    Intent.EXTRA_SUBJECT,
-                                    context.getString(R.string.settings_support_subject),
-                                )
-                                putExtra(Intent.EXTRA_TEXT, body)
-                            }
-                            // ACTION_SENDTO with a mailto URI resolves only to
-                            // mail apps, so no unrelated share targets appear.
-                            // A phone with no mail app configured does nothing
-                            // rather than crashing.
-                            runCatching { context.startActivity(intent) }
-                        },
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.Share,
-                        title = stringResource(R.string.settings_export_title),
-                        subtitle = stringResource(
-                            if (uiState.isExporting) R.string.settings_export_working
-                            else R.string.settings_export_subtitle
-                        ),
-                        onClick = { if (!uiState.isExporting) viewModel.exportData() },
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // ─── Section: App Settings & Info ───────────────────────────
-                SectionLabel(stringResource(R.string.settings_section_information), color = colors.textTertiary)
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                ) {
-                    SettingsRow(
-                        icon = PamojaIcons.Info,
-                        title = stringResource(R.string.settings_language),
-                        subtitle = languages.firstOrNull { it.first == selectedLanguage }?.second
-                            ?: stringResource(R.string.settings_language_system),
-                        onClick = { showLanguagePicker = true },
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.ShieldCheck,
-                        title = stringResource(R.string.settings_privacy_title),
-                        subtitle = stringResource(R.string.settings_privacy_subtitle),
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/privacy/pamoja"))
-                            context.startActivity(intent)
-                        }
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.Info,
-                        title = stringResource(R.string.settings_terms_title),
-                        subtitle = stringResource(R.string.settings_terms_subtitle),
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.arkayenlabs.com/terms/pamoja"))
-                            context.startActivity(intent)
-                        }
-                    )
-                    if (BuildConfig.DEBUG) {
-                        SettingsRow(
-                            icon = PamojaIcons.Info,
-                            title = stringResource(R.string.settings_licenses_title),
-                            subtitle = stringResource(R.string.settings_licenses_subtitle),
-                            onClick = onLicenses,
-                        )
-                    }
-                    SettingsRow(
-                        icon = PamojaIcons.Star,
-                        title = stringResource(R.string.settings_rate_title),
-                        subtitle = stringResource(R.string.settings_rate_subtitle),
-                        onClick = {
-                            val packageName = context.packageName
-                            val intent = try {
-                                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-                            } catch (e: Exception) {
-                                Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
-                            }
-                            context.startActivity(intent)
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x6))
-
-                // ─── Section: Danger Zone ────────────────────────────────────
-                SectionLabel(stringResource(R.string.settings_account_actions), color = colors.statusDanger)
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6)
-                        .clip(RoundedCornerShape(PamojaRadii.xl))
-                        .background(colors.surface1)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.xl))
-                ) {
-                    SettingsRow(
-                        icon = PamojaIcons.LogOut,
-                        title = stringResource(R.string.settings_logout_title),
-                        subtitle = stringResource(R.string.settings_logout_subtitle),
-                        iconColor = colors.textSecondary,
-                        onClick = { showLogoutConfirmDialog = true }
-                    )
-                    SettingsRow(
-                        icon = PamojaIcons.Trash,
-                        title = stringResource(R.string.settings_delete_title),
-                        subtitle = stringResource(R.string.settings_delete_subtitle),
-                        iconColor = colors.statusDanger,
-                        onClick = { showDeleteConfirmDialog = true }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x12))
-
-                // App version signature
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.x6),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Info),
-                        contentDescription = null,
-                        tint = colors.textTertiary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
-                    Text(
-                        // Read from the build rather than typed here. It was
-                        // hardcoded "1.0.0", so it would have kept claiming
-                        // 1.0.0 on every future release regardless of what was
-                        // actually shipped.
-                        text = stringResource(
-                            R.string.settings_version,
-                            com.pamoja.app.BuildConfig.VERSION_NAME,
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.textTertiary,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.x8))
-            }
-        }
-
-        }
-    }
-}
-
-@Composable
-private fun WidgetChoice(title: String, subtitle: String, onClick: () -> Unit) {
-    val colors = LocalPamojaColors.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(PamojaRadii.md))
-            .background(colors.surface1)
-            .clickable(onClick = onClick)
-            .padding(Spacing.x3),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(PamojaIcons.Smartphone),
-            contentDescription = null,
-            tint = colors.accentPrimary,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(modifier = Modifier.width(Spacing.x3))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.labelLarge, color = colors.textPrimary)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = colors.textSecondary)
-        }
-        Icon(
-            painter = painterResource(PamojaIcons.ChevronRight),
-            contentDescription = null,
-            tint = colors.textTertiary,
-            modifier = Modifier.size(18.dp),
-        )
-    }
-}
-
-private fun requestWidgetPin(
-    context: android.content.Context,
-    provider: Class<out android.appwidget.AppWidgetProvider>,
-): Boolean {
-    val manager = AppWidgetManager.getInstance(context)
-    return manager.isRequestPinAppWidgetSupported && manager.requestPinAppWidget(
-        ComponentName(context, provider),
-        null,
-        null,
-    )
-}
-
-@Composable
-private fun SectionLabel(text: String, color: Color) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-        modifier = Modifier.padding(horizontal = Spacing.x6, vertical = Spacing.x2)
-    )
-}
-
-@Composable
-private fun SettingsRow(
-    @DrawableRes icon: Int,
-    title: String,
-    subtitle: String,
-    iconColor: Color? = null,
-    onClick: () -> Unit
-) {
-    val colors = LocalPamojaColors.current
-    val resolvedIconColor = iconColor ?: colors.accentPrimary
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = Spacing.x4, vertical = Spacing.x4),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.x3)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(PamojaRadii.xs))
-                .background(resolvedIconColor.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = resolvedIconColor,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            // The design gives list-row titles real weight; at body weight the
-            // title and its subtitle read as one grey block.
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.textPrimary
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary
-            )
-        }
-        Icon(
-            painter = painterResource(PamojaIcons.ChevronRight),
-            contentDescription = null,
-            tint = colors.textTertiary,
-            modifier = Modifier.size(16.dp)
+    state.reauthRequired?.let { method ->
+        ReauthDialog(
+            method = method,
+            phoneNumber = state.reauthPhoneNumber,
+            awaitingCode = state.reauthVerificationId != null,
+            busy = state.isLoading,
+            hasError = state.error != null,
+            onGoogle = onReauthGoogle,
+            onPassword = onReauthPassword,
+            onSendCode = onSendReauthCode,
+            onCode = onReauthPhone,
+            onCancel = onCancelReauth,
         )
     }
 }
 
 /**
- * The one-line summary on the Account row.
+ * A row in a settings card: a label, an optional quiet line under it, an
+ * optional value on the right, and a chevron. The kit's ListRow, plus the
+ * second line a few settings need (sign-in methods, export progress).
+ */
+@Composable
+private fun SettingsRow(
+    label: String,
+    onClick: () -> Unit,
+    detail: String? = null,
+    value: String? = null,
+    showDivider: Boolean = true,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 52.dp)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(vertical = 10.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(label, style = Kit.type.bodyStrong.copy(fontWeight = FontWeight.SemiBold))
+                detail?.let { Text(it, style = Kit.type.caption, color = mutedContentColor()) }
+            }
+            value?.let {
+                Text(
+                    it,
+                    style = Kit.type.bodyStrong.copy(fontWeight = FontWeight.Normal),
+                    color = mutedContentColor(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Icon(
+                painter = painterResource(PamojaIcons.ChevronRight),
+                contentDescription = null,
+                tint = mutedContentColor(),
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        if (showDivider) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Kit.colors.line),
+            )
+        }
+    }
+}
+
+/**
+ * System / Light / Dark as three pills. A segmented control rather than a
+ * sheet because there are exactly three and the result shows instantly
+ * behind the control: the screen recolouring is the confirmation.
+ */
+@Composable
+private fun ThemeChoice(selected: ThemePreference, onSelect: (ThemePreference) -> Unit) {
+    val colors = Kit.colors
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(CircleShape)
+            .background(colors.track)
+            .padding(4.dp)
+            .selectableGroup(),
+    ) {
+        ThemePreference.entries.forEach { option ->
+            val isSelected = option == selected
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(CircleShape)
+                    .background(if (isSelected) colors.button else colors.track)
+                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(option) })
+                    // 44dp high with the track's padding clears the 48dp target.
+                    .defaultMinSize(minHeight = 44.dp)
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+            ) {
+                Text(
+                    stringResource(option.labelRes()),
+                    style = Kit.type.buttonSmall,
+                    // Selection is carried by the fill as well as the text
+                    // colour, so it survives being read without colour.
+                    color = if (isSelected) colors.onButton else colors.ink,
+                )
+            }
+        }
+    }
+}
+
+@StringRes
+private fun ThemePreference.labelRes(): Int = when (this) {
+    ThemePreference.System -> R.string.settings_theme_system
+    ThemePreference.Light -> R.string.settings_theme_light
+    ThemePreference.Dark -> R.string.settings_theme_dark
+}
+
+/**
+ * Whether steps are actually reaching us, and how to fix it when they are not.
+ *
+ * This is the single most predictable support question for the app: after
+ * onboarding there was previously no way to see whether Health Connect was
+ * still connected, and revoking it in system settings left the group quietly
+ * seeing zero with nothing on screen to explain why.
+ */
+@Composable
+private fun HealthCard(
+    status: HealthStatus,
+    lastSyncTime: Long,
+    isSyncing: Boolean,
+    showBackground: Boolean,
+    backgroundGranted: Boolean,
+    onSyncNow: () -> Unit,
+    onFix: () -> Unit,
+    onBackground: () -> Unit,
+) {
+    val colors = Kit.colors
+    val (title, body) = when (status) {
+        HealthStatus.Connected -> R.string.settings_health_connected to R.string.settings_health_connected_sub
+        HealthStatus.NotConnected -> R.string.settings_health_not_connected to R.string.settings_health_not_connected_sub
+        HealthStatus.Unavailable -> R.string.settings_health_unavailable to R.string.settings_health_unavailable_sub
+    }
+    KitCard {
+        CardHeader(stringResource(R.string.settings_section_health), detail = lastSyncedLabel(lastSyncTime))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // A dot as well as the wording, so the state is not carried by
+            // colour alone. Lime is the kit's one bright colour: all is well.
+            Box(
+                Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(
+                        when (status) {
+                            HealthStatus.Connected -> colors.pop
+                            HealthStatus.NotConnected -> colors.danger
+                            HealthStatus.Unavailable -> colors.muted
+                        },
+                    ),
+            )
+            Text(stringResource(title), style = Kit.type.bodyStrong)
+        }
+        Text(stringResource(body), style = Kit.type.caption, color = colors.muted)
+        // Syncing is pointless without permission, so the button becomes the
+        // thing that would actually help.
+        if (status == HealthStatus.Connected) {
+            SecondaryButton(
+                stringResource(if (isSyncing) R.string.settings_health_syncing else R.string.settings_health_sync_now),
+                onClick = onSyncNow,
+                loading = isSyncing,
+                size = ButtonSize.Small,
+            )
+        } else {
+            PrimaryButton(
+                stringResource(
+                    if (status == HealthStatus.Unavailable) R.string.settings_health_install else R.string.settings_health_fix,
+                ),
+                onClick = onFix,
+                size = ButtonSize.Small,
+            )
+        }
+        if (showBackground) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.line),
+            )
+            SettingsRow(
+                label = stringResource(R.string.settings_background_steps_title),
+                detail = stringResource(
+                    if (backgroundGranted) R.string.settings_background_steps_on else R.string.settings_background_steps_off,
+                ),
+                onClick = onBackground,
+                showDivider = false,
+            )
+        }
+    }
+}
+
+/**
+ * Deleting the account: what goes, then the word typed to unlock the button.
+ * Lists exactly what deleteAllUserData removes, no more. It deletes
+ * memberships and step entries and decrements member counts; it does not
+ * delete groups this user administers, so nothing here claims it does.
+ */
+@Composable
+private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    var typed by rememberSaveable { mutableStateOf("") }
+    val word = stringResource(R.string.settings_delete_type_word)
+    KitDialog(
+        title = stringResource(R.string.settings_delete_title),
+        body = stringResource(R.string.settings_delete_warning),
+        confirmText = stringResource(R.string.settings_delete_confirm),
+        dismissText = stringResource(R.string.common_cancel),
+        danger = true,
+        confirmEnabled = typed.trim().equals(word, ignoreCase = true),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf(
+                R.string.settings_delete_loses_profile,
+                R.string.settings_delete_loses_history,
+                R.string.settings_delete_loses_groups,
+            ).forEach { res ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(Kit.colors.danger),
+                    )
+                    Text(stringResource(res), style = Kit.type.body)
+                }
+            }
+        }
+        KitTextField(
+            value = typed,
+            onValueChange = { typed = it },
+            label = stringResource(R.string.settings_delete_type_hint),
+            placeholder = word,
+        )
+    }
+}
+
+/**
+ * Proving it is you before the account goes. Google opens its own sheet;
+ * a password is typed here; a phone number runs in two steps, sending the
+ * code and then entering it.
+ */
+@Composable
+private fun ReauthDialog(
+    method: ReauthMethod,
+    phoneNumber: String?,
+    awaitingCode: Boolean,
+    busy: Boolean,
+    hasError: Boolean,
+    onGoogle: () -> Unit,
+    onPassword: (String) -> Unit,
+    onSendCode: () -> Unit,
+    onCode: (String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    var password by rememberSaveable { mutableStateOf("") }
+    var code by rememberSaveable { mutableStateOf("") }
+    KitDialog(
+        title = stringResource(R.string.settings_reauth_title),
+        body = when {
+            method == ReauthMethod.Phone && awaitingCode ->
+                stringResource(R.string.settings_reauth_code_body, phoneNumber.orEmpty())
+            method == ReauthMethod.Phone -> stringResource(R.string.settings_reauth_phone_body)
+            else -> stringResource(R.string.settings_reauth_body)
+        },
+        confirmText = when {
+            method == ReauthMethod.Google -> stringResource(R.string.auth_continue_google)
+            method == ReauthMethod.Phone && !awaitingCode -> stringResource(R.string.settings_reauth_send_code)
+            else -> stringResource(R.string.common_confirm)
+        },
+        dismissText = stringResource(R.string.common_cancel),
+        loading = busy,
+        confirmEnabled = when (method) {
+            ReauthMethod.Google -> true
+            ReauthMethod.Password -> password.isNotBlank()
+            ReauthMethod.Phone -> !awaitingCode || code.length == OTP_LENGTH
+        },
+        onConfirm = {
+            when (method) {
+                ReauthMethod.Google -> onGoogle()
+                ReauthMethod.Password -> onPassword(password)
+                ReauthMethod.Phone -> if (awaitingCode) onCode(code) else onSendCode()
+            }
+        },
+        onDismiss = onCancel,
+    ) {
+        if (method == ReauthMethod.Password) {
+            KitTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = stringResource(R.string.password_label),
+                placeholder = stringResource(R.string.password_placeholder_existing),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = PasswordVisualTransformation(),
+            )
+        }
+        if (method == ReauthMethod.Phone && awaitingCode) {
+            KitTextField(
+                value = code,
+                onValueChange = { new -> code = new.filter { it.isDigit() }.take(OTP_LENGTH) },
+                label = stringResource(R.string.otp_title),
+                error = if (hasError) stringResource(R.string.settings_code_wrong) else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            )
+        }
+    }
+}
+
+/**
+ * The one-line summary on the sign-in methods row.
  *
  * Written to be read at a glance from Settings: an account with a single method
  * is one lost phone away from losing every group, so that case says what to do
@@ -1050,234 +873,6 @@ private fun authMethodsSummary(methods: AuthMethods): String {
             R.string.settings_account_many,
             names.joinToString(stringResource(R.string.account_method_separator)),
         )
-    }
-}
-
-/** Support address, also published on the site and required by Play. */
-private const val SUPPORT_EMAIL = "support@arkayenlabs.com"
-
-/** Suggested name in the save dialog. The user can change it. */
-private const val EXPORT_FILE_NAME = "pamoja-my-data.json"
-
-/**
- * System / Light / Dark, as a segmented control.
- *
- * A segmented control rather than a dialog because there are exactly three
- * options and the result is visible instantly behind the control: choosing Dark
- * and watching the sheet recolour underneath is the confirmation, so a dialog
- * would only get in the way of the feedback.
- */
-@Composable
-private fun ThemeSelector(
-    selected: ThemePreference,
-    onSelect: (ThemePreference) -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-    val shape = RoundedCornerShape(PamojaRadii.md)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.x6)
-            .clip(shape)
-            .background(colors.surface1)
-            .border(1.dp, colors.borderSubtle, shape)
-            .padding(Spacing.x4),
-    ) {
-        Text(
-            text = stringResource(R.string.settings_theme_label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.textPrimary,
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(PamojaRadii.sm))
-                .background(colors.surfaceSunken)
-                .padding(Spacing.x1),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.x1),
-        ) {
-            ThemePreference.entries.forEach { option ->
-                val isSelected = option == selected
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(PamojaRadii.sm))
-                        .background(if (isSelected) colors.accentPrimary else Color.Transparent)
-                        .clickable { onSelect(option) }
-                        // 44dp plus the row padding clears the 48dp target.
-                        .padding(vertical = Spacing.x3),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(option.labelRes()),
-                        style = MaterialTheme.typography.labelLarge,
-                        // Selection is carried by weight as well as colour, so
-                        // it survives being read without colour perception.
-                        color = if (isSelected) colors.textOnBrand else colors.textSecondary,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        Text(
-            text = stringResource(
-                if (selected == ThemePreference.System) R.string.settings_theme_system_sub
-                else R.string.settings_theme_fixed_sub
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.textTertiary,
-        )
-    }
-}
-
-@StringRes
-private fun ThemePreference.labelRes(): Int = when (this) {
-    ThemePreference.System -> R.string.settings_theme_system
-    ThemePreference.Light -> R.string.settings_theme_light
-    ThemePreference.Dark -> R.string.settings_theme_dark
-}
-
-/** Health Connect's package, for the settings deep link and the store fallback. */
-private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
-private const val HEALTH_CONNECT_SETTINGS_ACTION =
-    "androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"
-
-/**
- * Whether steps are actually reaching us, and how to fix it when they are not.
- *
- * This is the single most predictable support question for the app: after
- * onboarding there was previously no way to see whether Health Connect was
- * still connected, and revoking it in system settings left the group quietly
- * seeing zero with nothing on screen to explain why.
- */
-@Composable
-private fun HealthSection(
-    status: HealthStatus,
-    lastSyncTime: Long,
-    isSyncing: Boolean,
-    onSyncNow: () -> Unit,
-    onFix: () -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-    val shape = RoundedCornerShape(PamojaRadii.md)
-
-    val (title, subtitle) = when (status) {
-        HealthStatus.Connected ->
-            R.string.settings_health_connected to R.string.settings_health_connected_sub
-        HealthStatus.NotConnected ->
-            R.string.settings_health_not_connected to R.string.settings_health_not_connected_sub
-        HealthStatus.Unavailable ->
-            R.string.settings_health_unavailable to R.string.settings_health_unavailable_sub
-    }
-
-    val accent = when (status) {
-        HealthStatus.Connected -> colors.statusSuccess
-        HealthStatus.NotConnected -> colors.statusWarning
-        HealthStatus.Unavailable -> colors.textTertiary
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.x6)
-            .clip(shape)
-            .background(colors.surface1)
-            .border(1.dp, colors.borderSubtle, shape)
-            .padding(Spacing.x4),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // A dot as well as the wording, so the state is not carried by
-            // colour alone.
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(RoundedCornerShape(PamojaRadii.xs))
-                    .background(accent)
-            )
-            Spacer(modifier = Modifier.width(Spacing.x3))
-            Text(
-                text = stringResource(title),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textPrimary,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(Spacing.x2))
-
-        Text(
-            text = stringResource(subtitle),
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.textSecondary,
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.x4))
-
-        Text(
-            text = lastSyncedLabel(lastSyncTime),
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.textTertiary,
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.x3))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x3)) {
-            // Syncing is pointless without permission, so the primary action
-            // becomes the thing that would actually help.
-            if (status == HealthStatus.Connected) {
-                Button(
-                    onClick = onSyncNow,
-                    enabled = !isSyncing,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimarySubtle,
-                        contentColor = colors.accentPrimary,
-                        disabledContainerColor = colors.surfaceSunken,
-                        disabledContentColor = colors.textTertiary,
-                    ),
-                ) {
-                    if (isSyncing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            color = colors.textTertiary,
-                            strokeWidth = 2.dp,
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.x2))
-                    }
-                    Text(
-                        text = stringResource(
-                            if (isSyncing) R.string.settings_health_syncing
-                            else R.string.settings_health_sync_now
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            } else {
-                Button(
-                    onClick = onFix,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.accentPrimary,
-                        contentColor = colors.textOnBrand,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(
-                            if (status == HealthStatus.Unavailable) R.string.settings_health_install
-                            else R.string.settings_health_fix
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -1303,3 +898,53 @@ private fun lastSyncedLabel(lastSyncTime: Long): String {
         else -> stringResource(R.string.settings_health_synced_days, days.toInt())
     }
 }
+
+private fun Context.openUri(uri: String) {
+    runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri.toUri())) }
+}
+
+/**
+ * Device, Android version and app version are prefilled because the first
+ * reply to any support mail is otherwise a request for exactly those, which
+ * costs a day for no reason. ACTION_SENDTO with a mailto URI resolves only to
+ * mail apps; a phone with none configured does nothing rather than crashing.
+ */
+private fun Context.openSupportMail(userId: String) {
+    val body = getString(
+        R.string.settings_support_body,
+        android.os.Build.MANUFACTURER,
+        android.os.Build.MODEL,
+        android.os.Build.VERSION.RELEASE,
+        BuildConfig.VERSION_NAME,
+        userId.ifBlank { "-" },
+    )
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = "mailto:".toUri()
+        putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
+        putExtra(Intent.EXTRA_SUBJECT, getString(R.string.settings_support_subject))
+        putExtra(Intent.EXTRA_TEXT, body)
+    }
+    runCatching { startActivity(intent) }
+}
+
+private fun requestWidgetPin(
+    context: Context,
+    provider: Class<out android.appwidget.AppWidgetProvider>,
+): Boolean {
+    val manager = AppWidgetManager.getInstance(context)
+    return manager.isRequestPinAppWidgetSupported && manager.requestPinAppWidget(
+        ComponentName(context, provider),
+        null,
+        null,
+    )
+}
+
+/** Support address, also published on the site and required by Play. */
+private const val SUPPORT_EMAIL = "support@arkayenlabs.com"
+
+/** Suggested name in the save dialog. The user can change it. */
+private const val EXPORT_FILE_NAME = "pamoja-my-data.json"
+
+/** Health Connect's package, for the settings deep link and the store fallback. */
+private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
+private const val HEALTH_CONNECT_SETTINGS_ACTION = "androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"

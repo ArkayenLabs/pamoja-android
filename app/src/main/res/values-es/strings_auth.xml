@@ -70,7 +70,4 @@
     <string name="reset_nothing_body">Revisa el correo no deseado y confirma la dirección. Puedes reenviar el enlace abajo.</string>
     <string name="reset_resend">Reenviar</string>
     <string name="reset_back_to_signin">Volver al inicio de sesión</string>
-    <string name="auth_step_sign_in">Iniciar sesión</string>
-    <string name="auth_step_verify">Verificar</string>
-    <string name="auth_step_reset">Restablecer contraseña</string>
 </resources>

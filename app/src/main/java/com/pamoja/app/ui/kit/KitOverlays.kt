@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 
 /**
@@ -96,9 +97,17 @@ fun KitDialog(
     danger: Boolean = false,
     confirmEnabled: Boolean = true,
     loading: Boolean = false,
+    /**
+     * False once a stray tap outside would throw away something that cost
+     * money, e.g. a verification code already sent. Back still closes it.
+     */
+    dismissOnClickOutside: Boolean = true,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
-    Dialog(onDismissRequest = { if (!loading) onDismiss() }) {
+    Dialog(
+        onDismissRequest = { if (!loading) onDismiss() },
+        properties = DialogProperties(dismissOnClickOutside = dismissOnClickOutside),
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

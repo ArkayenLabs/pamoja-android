@@ -3,61 +3,53 @@ package com.pamoja.app.ui.auth
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
+import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.ui.components.rememberSingleClick
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.FieldShape
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitSheet
+import com.pamoja.app.ui.kit.KitTextField
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
 
 @Composable
 fun PhoneEntryScreen(
@@ -65,14 +57,10 @@ fun PhoneEntryScreen(
     onBack: () -> Unit,
     onCodeSent: () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // LocalActivity rather than casting LocalContext, which throws when the
     // context is wrapped rather than being the Activity itself.
     val activity = LocalActivity.current
-
-    var showCountryPicker by remember { mutableStateOf(false) }
-    var blurError by remember { mutableStateOf<String?>(null) }
 
     // Defaulted from the device rather than hardcoded, so the app is not
     // implicitly single-market.
@@ -92,383 +80,198 @@ fun PhoneEntryScreen(
         }
     }
 
-    val digits = uiState.phoneNumber.length
-    val isComplete = digits in uiState.country.nationalDigits
+    PhoneEntryContent(
+        country = uiState.country,
+        number = uiState.phoneNumber,
+        busy = uiState.busyWith == AuthMethod.Phone,
+        blocked = uiState.busyWith != null,
+        error = uiState.error,
+        onCountry = viewModel::onCountryChange,
+        onNumber = viewModel::onPhoneNumberChange,
+        onSend = { activity?.let(viewModel::sendCode) },
+        onBack = onBack,
+    )
+}
+
+/** Stateless boundary for previews and tests. */
+@Composable
+internal fun PhoneEntryContent(
+    country: Country,
+    number: String,
+    busy: Boolean,
+    blocked: Boolean,
+    error: AppError?,
+    onCountry: (Country) -> Unit,
+    onNumber: (String) -> Unit,
+    onSend: () -> Unit,
+    onBack: () -> Unit,
+) = KitInAppTheme {
+    var showCountryPicker by rememberSaveable { mutableStateOf(false) }
+    var lengthError by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val digits = number.length
+    val isComplete = digits in country.nationalDigits
     // Two messages, not one. digits could fail isComplete by being either
     // side of the country's valid range, and the field has no max-length
     // cap, so someone can type 12 digits into a 10-digit country and see
     // "too short" printed at them. That happened, was reported, and is
     // exactly the kind of copy bug that makes an app look untrustworthy.
-    val lengthErrorMessage = if (digits > uiState.country.nationalDigits.last) {
-        stringResource(R.string.phone_too_long, uiState.country.name)
+    val lengthMessage = if (digits > country.nationalDigits.last) {
+        stringResource(R.string.phone_too_long, country.name)
     } else {
-        stringResource(R.string.phone_too_short, uiState.country.name)
+        stringResource(R.string.phone_too_short, country.name)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(horizontal = Spacing.x6)
-        ) {
-            Spacer(modifier = Modifier.height(Spacing.x2))
-
-            AuthTopBar(onBack = onBack, label = stringResource(R.string.auth_step_sign_in))
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
-            Text(
-                text = stringResource(R.string.phone_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = colors.textPrimary,
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x3))
-
-            Text(
-                text = stringResource(R.string.phone_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x8))
-
-            Text(
-                text = stringResource(R.string.phone_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.textSecondary,
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x2))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.x3),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // ISO code and dial code, never a flag. Emoji are banned product
-                // wide, and this reads correctly to a screen reader.
-                // wrapContentWidth, and fillMaxHeight rather than fillMaxSize.
-                // A Row measures its non-weighted children against the full
-                // width first, so fillMaxSize let this chip take the whole row
-                // and left nothing for the number field beside it.
-                Surface(
-                    onClick = { showCountryPicker = true },
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    color = colors.surfaceInput,
-                    modifier = Modifier
-                        .height(56.dp)
-                        .wrapContentWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = colors.borderDefault,
-                                shape = RoundedCornerShape(PamojaRadii.sm),
-                            )
-                            .fillMaxHeight()
-                            .padding(horizontal = Spacing.x4),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = uiState.country.isoCode,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = colors.textSecondary,
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.x2))
-                        Text(
-                            text = uiState.country.dialCode,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.textPrimary,
-                        )
-                    }
-                }
-
-                OutlinedTextField(
-                    value = uiState.phoneNumber,
-                    onValueChange = {
-                        blurError = null
-                        viewModel.onPhoneNumberChange(it)
-                    },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.phone_placeholder),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.textTertiary,
-                        )
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(PamojaRadii.sm),
-                    singleLine = true,
-                    isError = blurError != null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = colors.accentPrimary,
-                        unfocusedBorderColor = colors.borderDefault,
-                        errorBorderColor = colors.statusDanger,
-                        focusedContainerColor = colors.surfaceInput,
-                        unfocusedContainerColor = colors.surfaceInput,
-                        errorContainerColor = colors.surfaceInput,
-                        cursorColor = colors.accentPrimary,
-                    ),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x3))
-
-            // The local blur message wins, since it is about the number just
-            // typed; a server failure is the fallback.
-            val helper = blurError ?: uiState.error?.authErrorBody()
-            if (helper != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.AlertCircle),
-                        contentDescription = null,
-                        tint = colors.statusDanger,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
-                    Text(
-                        text = helper,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.statusDanger,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x8))
-
-            Button(
+    KitScreen(
+        top = {
+            TopRow(start = {
+                CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+            })
+        },
+        bottom = {
+            PrimaryButton(
+                text = stringResource(if (busy) R.string.phone_requesting_code else R.string.phone_send_code),
                 // Every send is a paid SMS and a step toward Firebase's rate
                 // limit, so a double tap must not become two of them.
                 onClick = rememberSingleClick {
-                    if (!isComplete) {
-                        // Resolved here rather than inside the lambda, since a
-                        // click handler is not a composable scope.
-                        blurError = lengthErrorMessage
-                    } else {
-                        activity?.let(viewModel::sendCode)
-                    }
+                    if (!isComplete) lengthError = lengthMessage else onSend()
                 },
-                enabled = uiState.busyWith == null && uiState.phoneNumber.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = PillShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accentPrimary,
-                    contentColor = colors.textOnBrand,
-                    disabledContainerColor = colors.accentPrimarySubtle,
-                    disabledContentColor = colors.textTertiary,
-                ),
-            ) {
-                if (uiState.busyWith == AuthMethod.Phone) {
-                    CircularProgressIndicator(
-                        color = colors.textOnBrand,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.x2))
+                enabled = !blocked && number.isNotBlank(),
+                loading = busy,
+            )
+        },
+    ) {
+        Text(stringResource(R.string.phone_title), style = Kit.type.headline)
+        Text(stringResource(R.string.phone_subtitle), style = Kit.type.body, color = Kit.colors.muted)
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+            // ISO code and dial code, never a flag: emoji are banned product
+            // wide, and this reads correctly to a screen reader.
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.phone_label_country), style = Kit.type.label)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 56.dp)
+                        .clip(FieldShape)
+                        .background(Kit.colors.field)
+                        .border(1.5.dp, Kit.colors.fieldBorder, FieldShape)
+                        .clickable(role = Role.Button, onClick = { showCountryPicker = true })
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                ) {
+                    Text(country.isoCode, style = Kit.type.caption, color = Kit.colors.muted)
                     Text(
-                        text = stringResource(R.string.phone_requesting_code),
-                        style = MaterialTheme.typography.labelLarge,
+                        country.dialCode,
+                        style = Kit.type.body.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
                     )
-                } else {
-                    Text(text = stringResource(R.string.phone_send_code), style = MaterialTheme.typography.labelLarge)
+                    Icon(
+                        painter = painterResource(PamojaIcons.ChevronRight),
+                        contentDescription = null,
+                        tint = Kit.colors.muted,
+                        modifier = Modifier.size(16.dp).rotate(90f),
+                    )
                 }
             }
+            KitTextField(
+                value = number,
+                onValueChange = {
+                    lengthError = null
+                    onNumber(it)
+                },
+                label = stringResource(R.string.phone_label),
+                placeholder = stringResource(R.string.phone_placeholder),
+                // The length check is about the number just typed, so it wins
+                // over a server failure.
+                error = lengthError ?: error?.authErrorBody(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.weight(1f),
+            )
+        }
 
-            if (uiState.busyWith == AuthMethod.Phone) {
-                Spacer(modifier = Modifier.height(Spacing.x3))
-                Text(
-                    text = stringResource(R.string.phone_security_check),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x10))
+        if (busy) {
+            Text(stringResource(R.string.phone_security_check), style = Kit.type.caption, color = Kit.colors.muted)
         }
     }
 
     if (showCountryPicker) {
         CountryPickerSheet(
-            selected = uiState.country,
+            selected = country,
             onSelect = {
-                viewModel.onCountryChange(it)
-                blurError = null
-                showCountryPicker = false
+                onCountry(it)
+                lengthError = null
             },
             onDismiss = { showCountryPicker = false },
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Every country, searchable by name or dial code. The phone's own country
+ * sits first while nothing is typed, since it is almost always the answer.
+ */
 @Composable
 private fun CountryPickerSheet(
     selected: Country,
     onSelect: (Country) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var query by remember { mutableStateOf("") }
-
+    var query by rememberSaveable { mutableStateOf("") }
     val deviceCountry = remember { Country.fromLocale() }
     val results = remember(query) { Country.search(query) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = colors.surfaceCanvas,
-    ) {
-        Column(modifier = Modifier.padding(horizontal = Spacing.x6)) {
-            Text(
-                text = stringResource(R.string.phone_select_country),
-                style = MaterialTheme.typography.headlineSmall,
-                color = colors.textPrimary,
+    KitSheet(onDismiss = onDismiss, title = stringResource(R.string.phone_select_country)) { close ->
+        KitTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = stringResource(R.string.phone_search_country),
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        val shown = if (query.isBlank()) listOf(deviceCountry) + results.filter { it.isoCode != deviceCountry.isoCode } else results
+        shown.forEach { country ->
+            CountryRow(
+                country = country,
+                isSelected = country.isoCode == selected.isoCode,
+                onClick = { close { onSelect(country) } },
             )
-
-            Spacer(modifier = Modifier.height(Spacing.x4))
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                placeholder = {
-                    Text(
-                        text = stringResource(R.string.phone_search_country),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textTertiary,
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(PamojaIcons.Search),
-                        contentDescription = null,
-                        tint = colors.textTertiary,
-                        modifier = Modifier.size(18.dp),
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(PamojaRadii.sm),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.textPrimary),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colors.accentPrimary,
-                    unfocusedBorderColor = colors.borderDefault,
-                    focusedContainerColor = colors.surfaceInput,
-                    unfocusedContainerColor = colors.surfaceInput,
-                    cursorColor = colors.accentPrimary,
-                ),
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.x4))
-
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                if (query.isBlank()) {
-                    item {
-                        Text(
-                            text = "FROM YOUR DEVICE",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.textTertiary,
-                        )
-                        CountryRow(
-                            country = deviceCountry,
-                            isSelected = deviceCountry.isoCode == selected.isoCode,
-                            onClick = { onSelect(deviceCountry) },
-                        )
-                        Spacer(modifier = Modifier.height(Spacing.x4))
-                        Text(
-                            text = "ALL COUNTRIES",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.textTertiary,
-                        )
-                    }
-                }
-
-                items(results, key = { it.isoCode }) { country ->
-                    CountryRow(
-                        country = country,
-                        isSelected = country.isoCode == selected.isoCode,
-                        onClick = { onSelect(country) },
-                    )
-                }
-
-                item { Spacer(modifier = Modifier.height(Spacing.x10)) }
-            }
         }
     }
 }
 
 @Composable
-private fun CountryRow(
-    country: Country,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-    Surface(
-        onClick = onClick,
+private fun CountryRow(country: Country, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        color = androidx.compose.ui.graphics.Color.Transparent,
+            .defaultMinSize(minHeight = 52.dp)
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onClick)
+            .padding(vertical = 8.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .width(40.dp)
+                .height(24.dp)
+                .clip(FieldShape)
+                .background(Kit.colors.track),
         ) {
-            Box(
-                modifier = Modifier
-                    .width(40.dp)
-                    .height(24.dp)
-                    .background(colors.surfaceSunken, RoundedCornerShape(PamojaRadii.xs)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = country.isoCode,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.textSecondary,
-                )
-            }
-
-            Spacer(modifier = Modifier.width(Spacing.x3))
-
-            Text(
-                text = country.name,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textPrimary,
-                modifier = Modifier.weight(1f),
+            Text(country.isoCode, style = Kit.type.caption.copy(fontWeight = FontWeight.Bold))
+        }
+        Text(
+            country.name,
+            style = Kit.type.bodyStrong.copy(fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold),
+            modifier = Modifier.weight(1f),
+        )
+        Text(country.dialCode, style = Kit.type.body, color = Kit.colors.muted)
+        if (isSelected) {
+            Icon(
+                painter = painterResource(PamojaIcons.Check),
+                contentDescription = stringResource(R.string.common_selected),
+                tint = Kit.colors.ink,
+                modifier = Modifier.size(20.dp),
             )
-
-            Text(
-                text = country.dialCode,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-            )
-
-            if (isSelected) {
-                Spacer(modifier = Modifier.width(Spacing.x3))
-                Icon(
-                    painter = painterResource(PamojaIcons.Check),
-                    contentDescription = stringResource(R.string.common_selected),
-                    tint = colors.accentPrimary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
         }
     }
 }

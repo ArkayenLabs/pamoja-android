@@ -3,7 +3,6 @@
     <string name="create_group_offline_title">आप ऑफ़लाइन हैं</string>
     <string name="create_group_offline_body">समूह बनाने के लिए कनेक्शन चाहिए। तब तक आपकी सेटिंग यहाँ रहेगी।</string>
     <string name="create_group_failed_title">समूह नहीं बन सका</string>
-    <string name="join_shared_goal_title">एक साझा लक्ष्य</string>
     <string name="join_shared_goal_body">सबके कदम मिलकर एक लक्ष्य बनाते हैं। किसी का अपना अलग लक्ष्य नहीं है।</string>
     <string name="hc_icon_desc">कदमों की गिनती</string>
     <string name="hc_title">अपने कदम कनेक्ट करें</string>

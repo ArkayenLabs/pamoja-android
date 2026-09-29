@@ -1,53 +1,49 @@
 package com.pamoja.app.ui.activity
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.ActivityItem
 import com.pamoja.app.domain.model.NotificationCategory
-import com.pamoja.app.ui.components.PamojaConfirmDialog
-import com.pamoja.app.ui.components.PamojaEmptyState
-import com.pamoja.app.ui.components.SkeletonBlock
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.kit.ButtonSize
+import com.pamoja.app.ui.kit.CardShape
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitCard
+import com.pamoja.app.ui.kit.KitDialog
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.KitSkeleton
+import com.pamoja.app.ui.kit.SecondaryButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.Spacing
 
 /**
  * Everything Pamoja has told this person, after the tray forgot it.
@@ -64,200 +60,166 @@ fun ActivityScreen(
     onOpenGroup: (String) -> Unit,
     viewModel: ActivityViewModel = hiltViewModel(),
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showClearConfirm by remember { mutableStateOf(false) }
 
     // Opening the list is what marks it seen.
     LaunchedEffect(Unit) { viewModel.onOpened() }
 
-    if (showClearConfirm) {
-        PamojaConfirmDialog(
-            title = stringResource(R.string.activity_clear_title),
-            body = stringResource(R.string.activity_clear_body),
-            confirmLabel = stringResource(R.string.activity_clear_confirm),
-            onConfirm = {
-                viewModel.clearAll()
-                showClearConfirm = false
-            },
-            onDismiss = { showClearConfirm = false },
-        )
-    }
+    ActivityContent(
+        isLoading = uiState.isLoading,
+        items = uiState.items,
+        onBack = onBack,
+        onOpenGroup = onOpenGroup,
+        onClear = viewModel::clearAll,
+    )
+}
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
+/** Stateless boundary for previews and tests. */
+@Composable
+internal fun ActivityContent(
+    isLoading: Boolean,
+    items: List<ActivityItem>,
+    onBack: () -> Unit,
+    onOpenGroup: (String) -> Unit,
+    onClear: () -> Unit,
+) = KitInAppTheme {
+    var confirmClear by rememberSaveable { mutableStateOf(false) }
+
+    KitScreen(
+        gutter = 20.dp,
+        top = {
+            TopRow(
+                start = {
+                    CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.activity_back_desc), onClick = onBack)
+                },
+                // Only offered when there is something to clear.
+                end = {
+                    if (items.isNotEmpty()) {
+                        SecondaryButton(
+                            stringResource(R.string.activity_clear),
+                            onClick = { confirmClear = true },
+                            size = ButtonSize.Small,
+                        )
+                    }
+                },
+            )
+        },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.x5, vertical = Spacing.x4),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = stringResource(R.string.activity_back_desc),
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp),
+        Text(stringResource(R.string.activity_title), style = Kit.type.headline)
+
+        when {
+            isLoading -> repeat(3) { KitSkeleton(height = 72.dp) }
+
+            items.isEmpty() -> KitCard(spacing = 6.dp) {
+                Icon(
+                    painter = painterResource(PamojaIcons.Bell),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
+                Text(stringResource(R.string.activity_empty_title), style = Kit.type.title)
+                Text(stringResource(R.string.activity_empty_body), style = Kit.type.body, color = Kit.colors.muted)
+            }
+
+            else -> KitCard(spacing = 0.dp, padding = 6.dp) {
+                items.forEachIndexed { index, item ->
+                    ActivityRow(
+                        item = item,
+                        onClick = item.groupId?.let { { onOpenGroup(it) } },
+                        showDivider = index < items.lastIndex,
                     )
                 }
-                Spacer(modifier = Modifier.width(Spacing.x1))
-                Text(
-                    text = stringResource(R.string.activity_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = colors.textPrimary,
-                    modifier = Modifier.weight(1f),
-                )
-                // Only offered when there is something to clear.
-                if (uiState.items.isNotEmpty()) {
-                    TextButton(onClick = { showClearConfirm = true }) {
-                        Text(
-                            text = stringResource(R.string.activity_clear),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = colors.textSecondary,
-                        )
-                    }
-                }
-            }
-
-            when {
-                uiState.isLoading -> Column(
-                    modifier = Modifier.padding(horizontal = Spacing.x6),
-                ) {
-                    repeat(5) {
-                        SkeletonBlock(modifier = Modifier.fillMaxWidth(), height = 64.dp)
-                        Spacer(modifier = Modifier.height(Spacing.x3))
-                    }
-                }
-
-                uiState.isEmpty -> PamojaEmptyState(
-                    icon = PamojaIcons.Bell,
-                    title = stringResource(R.string.activity_empty_title),
-                    body = stringResource(R.string.activity_empty_body),
-                    modifier = Modifier.padding(top = Spacing.x10),
-                )
-
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        horizontal = Spacing.x6,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.x3),
-                ) {
-                    items(uiState.items, key = { it.id }) { item ->
-                        ActivityRow(
-                            item = item,
-                            onClick = item.groupId?.let { { onOpenGroup(it) } },
-                        )
-                    }
-
-                    item { Spacer(modifier = Modifier.height(Spacing.x8)) }
-                }
             }
         }
+    }
+
+    if (confirmClear) {
+        KitDialog(
+            title = stringResource(R.string.activity_clear_title),
+            body = stringResource(R.string.activity_clear_body),
+            confirmText = stringResource(R.string.activity_clear_confirm),
+            dismissText = stringResource(R.string.common_cancel),
+            onConfirm = {
+                confirmClear = false
+                onClear()
+            },
+            onDismiss = { confirmClear = false },
+        )
     }
 }
 
 @Composable
-private fun ActivityRow(
-    item: ActivityItem,
-    onClick: (() -> Unit)?,
-) {
-    val colors = LocalPamojaColors.current
-    val shape = RoundedCornerShape(PamojaRadii.lg)
-    val accent = item.category.accentColor()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            // Unread sits on a lifted surface with a brand border, so the ones
-            // that arrived since the last look are findable without reading
-            // every row. Colour alone would not carry it, hence the border too.
-            .background(if (item.isRead) colors.surface1 else colors.accentPrimarySubtle)
-            .border(
-                width = 1.dp,
-                color = if (item.isRead) colors.borderSubtle else colors.accentPrimary,
-                shape = shape,
-            )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(Spacing.x4),
-        verticalAlignment = Alignment.Top,
-    ) {
-        // The design's icon chip: 40dp, softly rounded, filled with the
-        // category's own tint. Bigger and rounder than a small square, which is
-        // what stops a list of these reading as a settings menu.
-        Box(
+private fun ActivityRow(item: ActivityItem, onClick: (() -> Unit)?, showDivider: Boolean) {
+    val colors = Kit.colors
+    Column {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(PamojaRadii.md))
-                .background(accent.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .clip(CardShape)
+                .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+                .padding(12.dp),
         ) {
-            Icon(
-                painter = painterResource(item.category.icon()),
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(20.dp),
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(colors.iconBackground),
+            ) {
+                Icon(
+                    painter = painterResource(item.category.icon()),
+                    contentDescription = null,
+                    tint = colors.ink,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Unread: a lime dot and a heavier title, so the ones that
+                    // arrived since the last look are findable without colour.
+                    if (!item.isRead) {
+                        Box(
+                            Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(colors.pop),
+                        )
+                    }
+                    Text(
+                        item.title,
+                        style = Kit.type.bodyStrong.copy(fontWeight = if (item.isRead) FontWeight.SemiBold else FontWeight.ExtraBold),
+                    )
+                }
+                Text(item.body, style = Kit.type.caption, color = colors.muted)
+                Text(relativeTime(item.shownAt), style = Kit.type.caption, color = colors.muted)
+            }
+            if (onClick != null) {
+                Icon(
+                    painter = painterResource(PamojaIcons.ChevronRight),
+                    contentDescription = null,
+                    tint = colors.muted,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.width(Spacing.x3))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleSmall,
-                color = colors.textPrimary,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = item.body,
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary,
-            )
-            Spacer(modifier = Modifier.height(Spacing.x2))
-            // Mono caps, per the design. A timestamp is metadata, and setting it
-            // as small caps stops it competing with the sentence above it.
-            Text(
-                text = relativeTime(item.shownAt).uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                color = colors.textTertiary,
-            )
-        }
-
-        if (onClick != null) {
-            Icon(
-                painter = painterResource(PamojaIcons.ChevronRight),
-                contentDescription = null,
-                tint = colors.textTertiary,
-                modifier = Modifier.size(16.dp),
+        if (showDivider) {
+            Box(
+                Modifier
+                    .padding(horizontal = 12.dp)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.line),
             )
         }
     }
 }
 
-@Composable
 private fun NotificationCategory.icon(): Int = when (this) {
     NotificationCategory.ACHIEVEMENT -> PamojaIcons.Trophy
     NotificationCategory.GROUP_ACTIVITY -> PamojaIcons.Users
     NotificationCategory.REMINDER -> PamojaIcons.Footprints
     NotificationCategory.RECAP -> PamojaIcons.Clock
-}
-
-@Composable
-private fun NotificationCategory.accentColor() = when (this) {
-    NotificationCategory.ACHIEVEMENT -> LocalPamojaColors.current.statusSuccess
-    NotificationCategory.GROUP_ACTIVITY -> LocalPamojaColors.current.accentPrimary
-    NotificationCategory.REMINDER -> LocalPamojaColors.current.statusWarning
-    NotificationCategory.RECAP -> LocalPamojaColors.current.textSecondary
 }
 
 /**

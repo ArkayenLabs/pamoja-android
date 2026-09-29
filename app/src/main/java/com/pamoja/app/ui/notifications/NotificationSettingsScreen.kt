@@ -3,7 +3,6 @@ package com.pamoja.app.ui.notifications
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
-
 import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -13,25 +12,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,19 +30,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pamoja.app.R
-import com.pamoja.app.ui.components.NoticeTone
-import com.pamoja.app.ui.components.PamojaNotice
-import com.pamoja.app.ui.theme.LocalPamojaColors
+import com.pamoja.app.ui.kit.ButtonSize
+import com.pamoja.app.ui.kit.CardHeader
+import com.pamoja.app.ui.kit.CircleIconButton
+import com.pamoja.app.ui.kit.FieldShape
+import com.pamoja.app.ui.kit.Kit
+import com.pamoja.app.ui.kit.KitCard
+import com.pamoja.app.ui.kit.KitInAppTheme
+import com.pamoja.app.ui.kit.KitNotice
+import com.pamoja.app.ui.kit.KitScreen
+import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
-import com.pamoja.app.ui.theme.PamojaRadii
-import com.pamoja.app.ui.theme.PillShape
-import com.pamoja.app.ui.theme.Spacing
 import com.pamoja.app.util.NotificationCategory
 
 /**
@@ -69,7 +68,6 @@ fun NotificationSettingsScreen(
     onBack: () -> Unit,
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
 ) {
-    val colors = LocalPamojaColors.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -92,193 +90,170 @@ fun NotificationSettingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Hoisted so all four rows share one lambda rather than allocating four.
-    val openChannelSettings: (NotificationCategory) -> Unit = { category ->
+    NotificationSettingsContent(
+        state = uiState,
+        onBack = onBack,
+        onOpenApp = { context.openAppNotificationSettings() },
         // A device without the per-channel settings screen would otherwise
         // crash. Rare, but this is a settings row, not worth taking the app down.
-        runCatching { context.startActivity(viewModel.settingsIntentFor(category)) }
-    }
+        onOpenCategory = { runCatching { context.startActivity(viewModel.settingsIntentFor(it)) } },
+        onQuietHours = viewModel::setQuietHours,
+    )
+}
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.surfaceApp)
+/** Stateless boundary for previews and tests. */
+@Composable
+internal fun NotificationSettingsContent(
+    state: NotificationSettingsUiState,
+    onBack: () -> Unit,
+    onOpenApp: () -> Unit,
+    onOpenCategory: (NotificationCategory) -> Unit,
+    onQuietHours: (start: Int, end: Int) -> Unit,
+) = KitInAppTheme {
+    KitScreen(
+        gutter = 20.dp,
+        top = {
+            TopRow(start = {
+                CircleIconButton(PamojaIcons.ArrowLeft, stringResource(R.string.common_back), onClick = onBack)
+            })
+        },
     ) {
-        Column(
+        Text(stringResource(R.string.notif_title), style = Kit.type.headline)
+        Text(stringResource(R.string.notif_subtitle), style = Kit.type.body, color = Kit.colors.muted)
+
+        // The OS decision outranks everything on this screen, so it is stated
+        // before the controls it would override.
+        if (!state.systemPermissionGranted) {
+            KitNotice(
+                title = stringResource(R.string.notif_blocked_title),
+                body = stringResource(R.string.notif_blocked_body),
+                danger = true,
+                actions = {
+                    PrimaryButton(stringResource(R.string.notif_blocked_action), onClick = onOpenApp, size = ButtonSize.Small)
+                },
+            )
+        } else if (state.allMuted) {
+            KitNotice(
+                title = stringResource(R.string.notif_all_muted_title),
+                body = stringResource(R.string.notif_all_muted_body),
+            )
+        }
+
+        KitCard(spacing = 0.dp) {
+            CardHeader(stringResource(R.string.notif_section_types))
+            Text(
+                stringResource(R.string.notif_types_hint),
+                style = Kit.type.caption,
+                color = Kit.colors.muted,
+                modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
+            )
+            // Ordered by how much people want them, so the one most likely to
+            // be switched off sits furthest from the one that matters.
+            CategoryRow(NotificationCategory.ACHIEVEMENT, R.string.notif_achievement_title, R.string.notif_achievement_sub, state, onOpenCategory)
+            CategoryRow(NotificationCategory.GROUP_ACTIVITY, R.string.notif_group_title, R.string.notif_group_sub, state, onOpenCategory)
+            CategoryRow(NotificationCategory.RECAP, R.string.notif_recap_title, R.string.notif_recap_sub, state, onOpenCategory)
+            CategoryRow(NotificationCategory.REMINDER, R.string.notif_reminder_title, R.string.notif_reminder_sub, state, onOpenCategory, showDivider = false)
+        }
+
+        KitCard {
+            CardHeader(stringResource(R.string.notif_section_quiet))
+            Text(stringResource(R.string.notif_quiet_body), style = Kit.type.caption, color = Kit.colors.muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TimeField(
+                    label = stringResource(R.string.notif_quiet_from),
+                    minuteOfDay = state.quietStartMinute,
+                    modifier = Modifier.weight(1f),
+                    onPicked = { onQuietHours(it, state.quietEndMinute) },
+                )
+                TimeField(
+                    label = stringResource(R.string.notif_quiet_to),
+                    minuteOfDay = state.quietEndMinute,
+                    modifier = Modifier.weight(1f),
+                    onPicked = { onQuietHours(state.quietStartMinute, it) },
+                )
+            }
+            // Equal times would silence the app permanently, which nobody
+            // means to do by fiddling with a picker.
+            if (state.quietStartMinute == state.quietEndMinute) {
+                Text(stringResource(R.string.notif_quiet_all_day), style = Kit.type.caption, color = Kit.colors.danger)
+            }
+        }
+    }
+}
+
+/**
+ * One category, showing the real state of its Android notification channel.
+ *
+ * Android owns notification-channel state once a channel exists, so this row
+ * reports the real state and opens the one place it can actually be changed.
+ * A switch would imply an in-app toggle and feel broken when Android settings
+ * opened instead.
+ */
+@Composable
+private fun CategoryRow(
+    category: NotificationCategory,
+    @StringRes title: Int,
+    @StringRes subtitle: Int,
+    state: NotificationSettingsUiState,
+    onOpen: (NotificationCategory) -> Unit,
+    showDivider: Boolean = true,
+) {
+    val colors = Kit.colors
+    val enabled = state.isEnabled(category)
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 60.dp)
+                .clickable(role = Role.Button) { onOpen(category) }
+                .padding(vertical = 10.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = Spacing.x4, vertical = Spacing.x2),
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(if (enabled) colors.iconBackground else colors.track),
             ) {
-                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        painter = painterResource(PamojaIcons.ArrowLeft),
-                        contentDescription = stringResource(R.string.common_back),
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.notif_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = colors.textPrimary,
+                Icon(
+                    painter = painterResource(category.icon()),
+                    contentDescription = null,
+                    tint = if (enabled) colors.ink else colors.muted,
+                    modifier = Modifier.size(20.dp),
                 )
             }
-
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(title), style = Kit.type.bodyStrong.copy(fontWeight = FontWeight.SemiBold))
+                // Says what arrives, not just what it is called, so the choice
+                // can be made without switching it on to find out.
+                Text(stringResource(subtitle), style = Kit.type.caption, color = colors.muted)
+            }
+            // On in lime, Off on the track: the word carries it, the colour
+            // only repeats it.
             Text(
-                text = stringResource(R.string.notif_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textSecondary,
-                modifier = Modifier.padding(horizontal = Spacing.x6),
+                stringResource(if (enabled) R.string.notif_status_on else R.string.notif_status_off),
+                style = Kit.type.caption.copy(fontWeight = FontWeight.Bold),
+                color = if (enabled) colors.onPop else colors.muted,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (enabled) colors.pop else colors.track)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
             )
-
-            Spacer(modifier = Modifier.height(Spacing.x5))
-
-            // The OS decision outranks everything on this screen, so it is
-            // stated before the controls it would override.
-            if (!uiState.systemPermissionGranted) {
-                Column(modifier = Modifier.padding(horizontal = Spacing.x6)) {
-                    PamojaNotice(
-                        icon = PamojaIcons.AlertCircle,
-                        title = stringResource(R.string.notif_blocked_title),
-                        body = stringResource(R.string.notif_blocked_body),
-                        tone = NoticeTone.Warning,
-                    )
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-                    Text(
-                        text = stringResource(R.string.notif_blocked_action),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = colors.accentPrimary,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(PamojaRadii.sm))
-                            .clickable { context.openAppNotificationSettings() }
-                            .padding(vertical = Spacing.x3, horizontal = Spacing.x2),
-                    )
-                }
-                Spacer(modifier = Modifier.height(Spacing.x5))
-            } else if (uiState.allMuted) {
-                Column(modifier = Modifier.padding(horizontal = Spacing.x6)) {
-                    PamojaNotice(
-                        icon = PamojaIcons.AlertCircle,
-                        title = stringResource(R.string.notif_all_muted_title),
-                        body = stringResource(R.string.notif_all_muted_body),
-                        tone = NoticeTone.Neutral,
-                    )
-                }
-                Spacer(modifier = Modifier.height(Spacing.x5))
-            }
-
-            SectionLabel(stringResource(R.string.notif_section_types))
-
-            Text(
-                text = stringResource(R.string.notif_types_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textTertiary,
-                modifier = Modifier.padding(
-                    start = Spacing.x6,
-                    end = Spacing.x6,
-                    bottom = Spacing.x3,
-                ),
+            Icon(
+                painter = painterResource(PamojaIcons.ChevronRight),
+                contentDescription = null,
+                tint = colors.muted,
+                modifier = Modifier.size(18.dp),
             )
-
-            Column(
-                modifier = Modifier
+        }
+        if (showDivider) {
+            Box(
+                Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.x6)
-                    .clip(RoundedCornerShape(PamojaRadii.md))
-                    .background(colors.surface1)
-                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
-                    .padding(Spacing.x4),
-                verticalArrangement = Arrangement.spacedBy(Spacing.x5),
-            ) {
-                // Ordered by how much people want them, so the one most likely
-                // to be switched off sits furthest from the one that matters.
-                CategoryToggle(
-                    category = NotificationCategory.ACHIEVEMENT,
-                    title = R.string.notif_achievement_title,
-                    subtitle = R.string.notif_achievement_sub,
-                    enabled = uiState.isEnabled(NotificationCategory.ACHIEVEMENT),
-                    onOpenSettings = openChannelSettings,
-                )
-                CategoryToggle(
-                    category = NotificationCategory.GROUP_ACTIVITY,
-                    title = R.string.notif_group_title,
-                    subtitle = R.string.notif_group_sub,
-                    enabled = uiState.isEnabled(NotificationCategory.GROUP_ACTIVITY),
-                    onOpenSettings = openChannelSettings,
-                )
-                CategoryToggle(
-                    category = NotificationCategory.RECAP,
-                    title = R.string.notif_recap_title,
-                    subtitle = R.string.notif_recap_sub,
-                    enabled = uiState.isEnabled(NotificationCategory.RECAP),
-                    onOpenSettings = openChannelSettings,
-                )
-                CategoryToggle(
-                    category = NotificationCategory.REMINDER,
-                    title = R.string.notif_reminder_title,
-                    subtitle = R.string.notif_reminder_sub,
-                    enabled = uiState.isEnabled(NotificationCategory.REMINDER),
-                    onOpenSettings = openChannelSettings,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(Spacing.x6))
-
-            SectionLabel(stringResource(R.string.notif_section_quiet))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.x6)
-                    .clip(RoundedCornerShape(PamojaRadii.md))
-                    .background(colors.surface1)
-                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(PamojaRadii.md))
-                    .padding(Spacing.x4),
-            ) {
-                Text(
-                    text = stringResource(R.string.notif_quiet_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.textSecondary,
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.x4))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.x3)) {
-                    TimeField(
-                        label = stringResource(R.string.notif_quiet_from),
-                        minuteOfDay = uiState.quietStartMinute,
-                        modifier = Modifier.weight(1f),
-                        onPicked = { viewModel.setQuietHours(it, uiState.quietEndMinute) },
-                    )
-                    TimeField(
-                        label = stringResource(R.string.notif_quiet_to),
-                        minuteOfDay = uiState.quietEndMinute,
-                        modifier = Modifier.weight(1f),
-                        onPicked = { viewModel.setQuietHours(uiState.quietStartMinute, it) },
-                    )
-                }
-
-                // Equal times would silence the app permanently, which nobody
-                // means to do by fiddling with a picker.
-                if (uiState.quietStartMinute == uiState.quietEndMinute) {
-                    Spacer(modifier = Modifier.height(Spacing.x3))
-                    Text(
-                        text = stringResource(R.string.notif_quiet_all_day),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.statusWarning,
-                    )
-                }
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .height(Spacing.x10)
+                    .height(1.dp)
+                    .background(colors.line),
             )
         }
     }
@@ -299,106 +274,7 @@ private fun NotificationCategory.icon(): Int = when (this) {
     NotificationCategory.RECAP -> PamojaIcons.Clock
 }
 
-@Composable
-private fun SectionLabel(text: String) {
-    val colors = LocalPamojaColors.current
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = colors.textTertiary,
-        modifier = Modifier.padding(
-            start = Spacing.x6, end = Spacing.x6, bottom = Spacing.x2
-        ),
-    )
-}
-
-/**
- * One category, showing the real state of its Android notification channel.
- *
- * Android owns notification-channel state once a channel exists, so this row
- * reports the real state and opens the one place it can actually be changed.
- * A switch would imply an in-app toggle and feel broken when Android settings
- * opened instead.
- */
-@Composable
-private fun CategoryToggle(
-    category: NotificationCategory,
-    @StringRes title: Int,
-    @StringRes subtitle: Int,
-    enabled: Boolean,
-    onOpenSettings: (NotificationCategory) -> Unit,
-) {
-    val colors = LocalPamojaColors.current
-
-    // The category's tint follows whether it is on. A muted category showing a
-    // full-colour chip reads as active at a glance, which is the opposite of
-    // what the switch beside it says.
-    val accent = if (enabled) colors.accentPrimary else colors.textTertiary
-    val chipBackground = if (enabled) colors.accentPrimarySubtle else colors.surface2
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onOpenSettings(category) },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(RoundedCornerShape(PamojaRadii.md))
-                .background(chipBackground),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(category.icon()),
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-
-        Spacer(modifier = Modifier.width(Spacing.x3))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(title),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.textPrimary,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                // Says what arrives, not just what it is called, so the choice
-                // can be made without switching it on to find out.
-                text = stringResource(subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textSecondary,
-            )
-        }
-
-        Spacer(modifier = Modifier.width(Spacing.x3))
-
-        Text(
-            text = stringResource(
-                if (enabled) R.string.notif_status_on else R.string.notif_status_off
-            ),
-            style = MaterialTheme.typography.labelMedium,
-            color = if (enabled) colors.accentPrimary else colors.textTertiary,
-            modifier = Modifier
-                .clip(PillShape)
-                .background(if (enabled) colors.accentPrimarySubtle else colors.surface2)
-                .padding(horizontal = Spacing.x3, vertical = Spacing.x2),
-        )
-        Spacer(modifier = Modifier.width(Spacing.x2))
-        Icon(
-            painter = painterResource(PamojaIcons.ChevronRight),
-            contentDescription = null,
-            tint = colors.textTertiary,
-            modifier = Modifier.size(18.dp),
-        )
-    }
-}
-
-/** Tappable time, opening the platform picker so it honours 12/24 hour setting. */
+/** Tappable time, opening the platform picker so it honours the 12/24 hour setting. */
 @Composable
 private fun TimeField(
     label: String,
@@ -406,41 +282,33 @@ private fun TimeField(
     modifier: Modifier = Modifier,
     onPicked: (Int) -> Unit,
 ) {
-    val colors = LocalPamojaColors.current
     val context = LocalContext.current
     val hour = minuteOfDay / 60
     val minute = minuteOfDay % 60
-
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.textTertiary,
-        )
-        Spacer(modifier = Modifier.height(Spacing.x2))
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, style = Kit.type.label)
         Box(
+            contentAlignment = Alignment.CenterStart,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(PamojaRadii.sm))
-                .background(colors.surfaceInput)
-                .border(1.dp, colors.borderDefault, RoundedCornerShape(PamojaRadii.sm))
-                .clickable {
+                .defaultMinSize(minHeight = 56.dp)
+                .clip(FieldShape)
+                .background(Kit.colors.field)
+                .border(1.5.dp, Kit.colors.fieldBorder, FieldShape)
+                .clickable(role = Role.Button) {
                     TimePickerDialog(
                         context,
-                        { _, pickedHour, pickedMinute ->
-                            onPicked(pickedHour * 60 + pickedMinute)
-                        },
+                        { _, pickedHour, pickedMinute -> onPicked(pickedHour * 60 + pickedMinute) },
                         hour,
                         minute,
                         android.text.format.DateFormat.is24HourFormat(context),
                     ).show()
                 }
-                .padding(vertical = Spacing.x3, horizontal = Spacing.x4),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
             Text(
-                text = "%02d:%02d".format(hour, minute),
-                style = MaterialTheme.typography.bodyLarge,
-                color = colors.textPrimary,
+                "%02d:%02d".format(hour, minute),
+                style = Kit.type.body.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
             )
         }
     }

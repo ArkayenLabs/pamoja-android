@@ -2,8 +2,6 @@
     <string name="group_of_target">de %1$s</string>
     <string name="join_invited_to">Te han invitado a</string>
     <string name="join_already_in">Ya estás en</string>
-    <string name="join_members_one">miembro</string>
-    <string name="join_members_other">miembros</string>
     <string name="join_target_label">pasos semanales entre todos</string>
     <string name="join_already_member_title">Ya eres miembro</string>
     <string name="join_already_member_body">Abre el grupo para ver cómo va todo.</string>
@@ -20,14 +18,9 @@
     <string name="join_button">Unirse al grupo</string>
     <string name="join_button_full">Grupo completo</string>
     <string name="settings_privacy_title">Política de privacidad</string>
-    <string name="settings_privacy_subtitle">Cómo tratamos tus datos, incluidos tus pasos</string>
     <string name="settings_terms_title">Condiciones de uso</string>
-    <string name="settings_terms_subtitle">El acuerdo que aceptaste al iniciar sesión</string>
-    <string name="settings_account_actions">Acciones de la cuenta</string>
     <string name="settings_logout_title">Cerrar sesión</string>
-    <string name="settings_logout_subtitle">Salir de tu cuenta en este dispositivo</string>
     <string name="settings_delete_title">Eliminar cuenta</string>
-    <string name="settings_delete_subtitle">Elimina tu perfil y tu historial de pasos para siempre</string>
     <string name="settings_delete_confirm">Eliminar para siempre</string>
     <string name="settings_delete_warning">No se puede deshacer. No podremos recuperar estos datos.</string>
     <string name="settings_delete_loses_profile">Tu perfil, nombre y foto</string>
@@ -43,12 +36,9 @@
     <string name="settings_reauth_phone_body">Por seguridad, enviaremos un código al teléfono de la cuenta antes de eliminarla. Aún no se ha borrado nada.</string>
     <string name="settings_reauth_code_body">Introduce el código enviado a %1$s. Aún no se ha borrado nada.</string>
     <string name="settings_version">Pamoja v%1$s</string>
-    <string name="settings_title">Tú</string>
-    <string name="settings_subtitle">Tu perfil, preferencias y privacidad</string>
     <string name="settings_section_information">Privacidad e información</string>
     <string name="settings_name_fallback">Sin nombre aún</string>
     <string name="settings_rate_title">Valora Pamoja</string>
-    <string name="settings_rate_subtitle">Deja una reseña en Google Play</string>
     <string name="settings_reauth_send_code">Enviar código</string>
     <string name="settings_no_phone">Esta cuenta no tiene un teléfono registrado</string>
     <string name="settings_reauth_failed">No se pudo confirmar tu identidad</string>

@@ -22,8 +22,6 @@
     <string name="paywall_close">Cerrar</string>
     <string name="paywall_title">Pamoja Premium</string>
     <string name="group_sponsor_title">Consigue Premium para este grupo</string>
-    <string name="group_access_premium">Premium</string>
-    <string name="group_access_preview">Vista previa</string>
     <string name="paywall_plan_annual">Anual</string>
     <string name="paywall_plan_monthly">Mensual</string>
     <string name="paywall_period_year">año</string>

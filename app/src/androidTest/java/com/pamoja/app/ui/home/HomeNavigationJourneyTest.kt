@@ -201,7 +201,7 @@ class HomeNavigationJourneyTest {
         compose.waitUntil(timeoutMillis = 15_000) {
             compose.onAllNodesWithText("Notifications").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithText("Notifications").performClick()
+        compose.onNodeWithText("Notifications").performScrollTo().performClick()
 
         val channelHint = "These are your Android notification settings. Tap one to change it."
         compose.waitUntil(timeoutMillis = 15_000) {

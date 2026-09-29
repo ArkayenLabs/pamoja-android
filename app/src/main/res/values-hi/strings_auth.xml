@@ -70,7 +70,4 @@
     <string name="reset_nothing_body">स्पैम फ़ोल्डर देखें और ईमेल पता जाँचें। नीचे से लिंक फिर भेज सकते हैं।</string>
     <string name="reset_resend">फिर भेजें</string>
     <string name="reset_back_to_signin">साइन इन पर वापस जाएँ</string>
-    <string name="auth_step_sign_in">साइन इन</string>
-    <string name="auth_step_verify">पुष्टि करें</string>
-    <string name="auth_step_reset">पासवर्ड रीसेट करें</string>
 </resources>

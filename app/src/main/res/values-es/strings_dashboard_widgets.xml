@@ -1,7 +1,6 @@
 <resources>
     <string name="account_password_changed">Contraseña cambiada</string>
     <string name="settings_licenses_title">Licencias de código abierto</string>
-    <string name="settings_licenses_subtitle">El software en el que se basa Pamoja</string>
     <string name="licenses_title">Licencias de código abierto</string>
     <string name="licenses_link_body">La licencia de este componente está publicada aquí.</string>
     <string name="licenses_open_link">Abrir licencia</string>
@@ -9,7 +8,6 @@
     <string name="licenses_empty_body">Se generan para las versiones de distribución. Instala una para leerlas.</string>
     <string name="activity_title">Novedades</string>
     <string name="activity_back_desc">Atrás</string>
-    <string name="activity_open_desc">Novedades que quizá te perdiste</string>
     <string name="activity_clear">Borrar</string>
     <string name="activity_clear_title">¿Borrar tus novedades?</string>
     <string name="activity_clear_body">Se borra la lista de este teléfono. Tus grupos, pasos e historial no cambian.</string>

@@ -17,12 +17,4 @@
     <string name="create_group_name_required">समूह का नाम रखें</string>
     <string name="create_group_name_too_long">40 या उससे कम अक्षर इस्तेमाल करें</string>
     <string name="group_name_character_count">%1$d/%2$d अक्षर</string>
-    <string name="weekly_goal_custom">अपना लक्ष्य</string>
-    <string name="weekly_goal_custom_title">समूह का अपना लक्ष्य तय करें</string>
-    <string name="weekly_goal_custom_body">पूरे समूह के लिए एक साप्ताहिक कुल, किसी एक व्यक्ति का कोटा नहीं।</string>
-    <string name="weekly_goal_custom_label">समूह का साप्ताहिक कुल</string>
-    <string name="weekly_goal_custom_placeholder">जैसे, 300000</string>
-    <string name="weekly_goal_custom_helper">10,000 से 28,00,000 कदम तक।</string>
-    <string name="weekly_goal_custom_error">10,000 से 28,00,000 के बीच कुल लिखें।</string>
-    <string name="weekly_goal_custom_use">यह लक्ष्य चुनें</string>
 </resources>

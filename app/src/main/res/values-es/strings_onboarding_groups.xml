@@ -17,12 +17,4 @@
     <string name="create_group_name_required">Ponle un nombre al grupo</string>
     <string name="create_group_name_too_long">Usa 40 caracteres o menos</string>
     <string name="group_name_character_count">%1$d/%2$d caracteres</string>
-    <string name="weekly_goal_custom">Personalizada</string>
-    <string name="weekly_goal_custom_title">Personaliza la meta del grupo</string>
-    <string name="weekly_goal_custom_body">Un total semanal para todo el grupo, nunca una cuota por persona.</string>
-    <string name="weekly_goal_custom_label">Total semanal del grupo</string>
-    <string name="weekly_goal_custom_placeholder">p. ej., 300000</string>
-    <string name="weekly_goal_custom_helper">Entre 10.000 y 2.800.000 pasos.</string>
-    <string name="weekly_goal_custom_error">Introduce un total entre 10.000 y 2.800.000.</string>
-    <string name="weekly_goal_custom_use">Usar esta meta</string>
 </resources>

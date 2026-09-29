@@ -15,7 +15,6 @@
     <string name="widget_goal_share">of this week\'s goal</string>
     <string name="widget_connect">Connect your steps in Pamoja</string>
     <string name="settings_widgets_title">Home screen widgets</string>
-    <string name="settings_widgets_subtitle">Your group, you today, or the group streak</string>
     <string name="settings_widgets_picker_title">Choose a widget</string>
     <string name="settings_widgets_group_subtitle">Today\'s faces, the week\'s goal and Nudge</string>
     <string name="settings_widgets_today_subtitle">Your steps, or a cheer to answer</string>

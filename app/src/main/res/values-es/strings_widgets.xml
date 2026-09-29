@@ -13,7 +13,6 @@
     <string name="widget_goal_share">del objetivo de esta semana</string>
     <string name="widget_connect">Conecta tus pasos en Pamoja</string>
     <string name="settings_widgets_title">Widgets de inicio</string>
-    <string name="settings_widgets_subtitle">Tu grupo, tú hoy o la racha del grupo</string>
     <string name="settings_widgets_picker_title">Elige un widget</string>
     <string name="settings_widgets_group_subtitle">Quién ha caminado hoy, el objetivo semanal y Avisar</string>
     <string name="settings_widgets_today_subtitle">Tus pasos, o un aplauso que devolver</string>

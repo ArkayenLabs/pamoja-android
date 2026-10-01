@@ -60,7 +60,8 @@ import kotlinx.coroutines.launch
  * 20 edit profile, 21 account (Google only), 22 the invite preview.
  *
  * `--es caption "..."` draws the screen as a Play Store screenshot instead
- * (see StoreShot).
+ * (see StoreShot). `--ez exportWidgets true` also writes the widget picker
+ * previews (see WidgetPreview.export).
  */
 class GroupPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +72,9 @@ class GroupPreviewActivity : ComponentActivity() {
         val caption = intent.getStringExtra(EXTRA_CAPTION)
         if (caption != null) {
             WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
+        }
+        if (intent.getBooleanExtra(EXTRA_EXPORT_WIDGETS, false)) {
+            WidgetPreview.export(this, widgetSnapshot(), java.io.File(getExternalFilesDir(null), "widget-previews"))
         }
 
         setContent {
@@ -419,6 +423,7 @@ class GroupPreviewActivity : ComponentActivity() {
         const val EXTRA_SCREEN = "screen"
         const val EXTRA_DARK = "dark"
         const val EXTRA_CAPTION = "caption"
+        const val EXTRA_EXPORT_WIDGETS = "exportWidgets"
         const val GROUP = "6413795d-42d0-4f2b-80df-f017a9d32817"
         const val ME = "me"
     }

@@ -6,7 +6,7 @@
     android:minHeight="200dp"
     android:targetCellWidth="4"
     android:targetCellHeight="3"
-    android:previewLayout="@layout/widget_group_progress"
+    android:previewImage="@drawable/widget_preview_group"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

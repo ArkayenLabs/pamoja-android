@@ -6,7 +6,7 @@
     android:minHeight="110dp"
     android:targetCellWidth="2"
     android:targetCellHeight="2"
-    android:previewLayout="@layout/widget_walk_hook"
+    android:previewImage="@drawable/widget_preview_streak"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

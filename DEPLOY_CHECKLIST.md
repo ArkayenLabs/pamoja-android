@@ -35,6 +35,40 @@ in parallel with the backend steps.
 
 ---
 
+## Route chosen 2026-10-01: internal testing while Shipaton is judged
+
+Submissions closed 2026-10-01 and judging has no known end date. The user
+chose to keep going without touching what judges see: they have the
+production build (1.0.12) and its listing.
+
+- **Goes ahead now:** step 2 (rules), step 3 (functions), step 4 (TTL), then
+  the `rebuild` bundle on the **internal testing** track only (step 7's
+  internal list).
+- **Stays frozen until results:** the production track (including 1.0.13),
+  the store listing (icon, screenshots), the trial offer (step 5), RevenueCat,
+  and the web join page (step 6).
+- Checked 2026-10-01 before deploying: live rules are `dev`'s exactly
+  (ruleset created 2026-09-13); the notifications deploy only adds
+  `notifySignalCreated` and `eraseDepartedMemberSignals`, the weekly deploy
+  replaces its 17 functions in place, nothing is deleted; instrumented suite
+  on `4491d68` 153 (1 skipped); functions tests 8 and 46 passed (25 skipped
+  need the emulator and cover Trail and planning, unchanged here).
+- **Step 2 done 2026-10-01 16:22 UTC** by the user: live ruleset
+  `71df964d…` is byte-identical to `rebuild`'s `firestore.rules`. Rules
+  monitor baseline before it: zero denies or errors in six hours. From now
+  on, rolling the rules back breaks only testers on the new app.
+- **Steps 3 and 4 done 2026-10-01:** notifications 16:44 UTC, weekly 16:48
+  UTC (needed `$env:FUNCTIONS_DISCOVERY_TIMEOUT=60` in PowerShell: the CLI's
+  10 s discovery timeout fails on this machine with "User code failed to
+  load"); 27 to 29 functions, none removed, billing untouched; `signals.expireAt`
+  TTL ACTIVE. No function errors; rules 0 denies in the first 34 minutes.
+- **1.1.0 (17) tested by the user 2026-10-02**; feedback fixed in 1.1.1
+  (18), `design/release-builds/pamoja-1.1.1-18-internal.aab`. Upload it to
+  internal testing the same way.
+- Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
+  17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
+  production later.
+
 ## 0. Before anything
 
 - [ ] The user has said the freeze is over.

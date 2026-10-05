@@ -35,7 +35,27 @@ data class SubscriptionPlan(
     val groupCapacity: Int = 1,
     /** Exact store trial period. Null when this package has no free phase. */
     val trial: TrialPeriod? = null,
+    /**
+     * The store's amount in millionths of [currencyCode], only for comparing
+     * plans live (see [annualSavingPercent]), never shown. Zero when unknown.
+     */
+    val priceMicros: Long = 0L,
+    val currencyCode: String = "",
 )
+
+/**
+ * How much [annual] saves against twelve months of [monthly], rounded down so
+ * it never overstates. Worked out from the store's own current amounts each
+ * time, so it cannot drift from the prices shown beside it. Null when either
+ * amount is unknown, the currencies differ, or the saving is under 5%.
+ */
+fun annualSavingPercent(monthly: SubscriptionPlan, annual: SubscriptionPlan): Int? {
+    if (monthly.priceMicros <= 0 || annual.priceMicros <= 0) return null
+    if (monthly.currencyCode.isBlank() || monthly.currencyCode != annual.currencyCode) return null
+    val yearOfMonthly = monthly.priceMicros * 12
+    val percent = ((yearOfMonthly - annual.priceMicros) * 100 / yearOfMonthly).toInt()
+    return percent.takeIf { it >= 5 }
+}
 
 /**
  * Entitlements and purchasing.

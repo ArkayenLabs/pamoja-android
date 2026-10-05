@@ -92,6 +92,8 @@ data class HomeUiState(
     val lastSyncedAt: Long = 0L,
     /** Groups whose ended Premium preview was already offered; null until read. */
     val previewEndSeen: Set<String>? = null,
+    /** Home's first-run coach marks have run; null until read, so they never flash. */
+    val homeTourSeen: Boolean? = null,
 ) {
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty() || hasLoadedPersonalSteps
@@ -246,6 +248,11 @@ class HomeViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(previewEndSeen = seen)
             }
         }
+        viewModelScope.launch {
+            userPreferences.homeTourSeen.collect { seen ->
+                _uiState.value = _uiState.value.copy(homeTourSeen = seen)
+            }
+        }
         // Same source the group screen uses, so the two cannot claim different
         // times for the same figures.
         viewModelScope.launch {
@@ -369,6 +376,12 @@ class HomeViewModel @Inject constructor(
     }
 
     /** Answered either way, the end-of-preview offer is never shown again for [groupId]. */
+    /** Finished or skipped: either way, never shown again on this installation. */
+    fun onHomeTourDone() {
+        _uiState.value = _uiState.value.copy(homeTourSeen = true)
+        viewModelScope.launch { userPreferences.setHomeTourSeen() }
+    }
+
     fun onPreviewEndAnswered(groupId: String) {
         viewModelScope.launch { userPreferences.markPreviewEndSeen(groupId) }
     }

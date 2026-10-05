@@ -135,6 +135,8 @@ class HomeNavigationJourneyTest {
             preferences.setIntroSeen(true)
             preferences.setOnboarded(true)
             preferences.setNotificationPrimerShown()
+            // The first-run coach marks cover Home and take every tap.
+            preferences.setHomeTourSeen()
             preferences.saveLastSyncTime(System.currentTimeMillis())
         }
 

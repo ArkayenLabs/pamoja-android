@@ -23,6 +23,7 @@
     <string name="paywall_title">Pamoja Premium</string>
     <string name="group_sponsor_title">इस समूह के लिए Premium लें</string>
     <string name="paywall_plan_annual">सालाना</string>
+    <string name="paywall_save_percent">%1$d%% की बचत</string>
     <string name="paywall_plan_monthly">मासिक</string>
     <string name="paywall_period_year">वर्ष</string>
     <string name="paywall_period_month">माह</string>

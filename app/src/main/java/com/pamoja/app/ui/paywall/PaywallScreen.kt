@@ -57,6 +57,7 @@ import com.pamoja.app.domain.error.SponsorshipFailure
 import com.pamoja.app.domain.model.BillingPeriod
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.repository.SubscriptionPlan
+import com.pamoja.app.domain.repository.annualSavingPercent
 import com.pamoja.app.domain.repository.TrialPeriod
 import com.pamoja.app.domain.repository.TrialUnit
 import com.pamoja.app.ui.components.toErrorCopy
@@ -83,8 +84,9 @@ import com.pamoja.app.ui.theme.PamojaIcons
  *
  * Deliberately left out of the mockup: family check-ins and video recaps
  * (not in the bundle), an earned discount (offers come later), and any price
- * arithmetic such as "save 30%" or "a month each": the store formats prices
- * per country and they are shown exactly as given.
+ * we would format ourselves such as "a month each": the store formats prices
+ * per country and they are shown exactly as given. The yearly "Save 37%" is
+ * the one comparison, worked out from the store's own amounts each time.
  */
 @Composable
 fun PaywallScreen(
@@ -157,6 +159,10 @@ internal fun PaywallContent(
         )
     }
 
+    // Scrolls only when it has to (a small phone, a large font). When it fits,
+    // a scrollable column still stretches under a drag, which read to a
+    // tester as a page that should not be scrolling.
+    val scroll = rememberScrollState()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -167,7 +173,7 @@ internal fun PaywallContent(
             modifier = Modifier
                 .widthIn(max = MaxContentWidth)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scroll, enabled = scroll.maxValue > 0)
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -393,17 +399,23 @@ private fun Plans(state: PaywallUiState, onSelectPlan: (String) -> Unit) {
             body = stringResource(R.string.paywall_unavailable_body),
         )
         else -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val monthly = state.plans.firstOrNull { it.period == BillingPeriod.Monthly }
             // Yearly first, as drawn; which one starts selected is the
             // ViewModel's (tested) decision, not this layout's.
             state.plans.sortedBy { if (it.period == BillingPeriod.Annual) 0 else 1 }.forEach { plan ->
-                PlanOption(plan, selected = plan.id == state.selectedPlanId, onSelect = { onSelectPlan(plan.id) })
+                val saving = if (plan.period == BillingPeriod.Annual && monthly != null) {
+                    annualSavingPercent(monthly, plan)
+                } else {
+                    null
+                }
+                PlanOption(plan, selected = plan.id == state.selectedPlanId, saving = saving, onSelect = { onSelectPlan(plan.id) })
             }
         }
     }
 }
 
 @Composable
-private fun PlanOption(plan: SubscriptionPlan, selected: Boolean, onSelect: () -> Unit) {
+private fun PlanOption(plan: SubscriptionPlan, selected: Boolean, saving: Int? = null, onSelect: () -> Unit) {
     val colors = Kit.colors
     val shape = RoundedCornerShape(18.dp)
     Row(
@@ -427,10 +439,13 @@ private fun PlanOption(plan: SubscriptionPlan, selected: Boolean, onSelect: () -
             if (selected) Box(Modifier.size(10.dp).clip(CircleShape).background(colors.button))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                stringResource(if (plan.period == BillingPeriod.Annual) R.string.paywall_plan_annual else R.string.paywall_plan_monthly),
-                style = Kit.type.bodyStrong.copy(fontSize = 16.sp, fontWeight = FontWeight.ExtraBold),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(if (plan.period == BillingPeriod.Annual) R.string.paywall_plan_annual else R.string.paywall_plan_monthly),
+                    style = Kit.type.bodyStrong.copy(fontSize = 16.sp, fontWeight = FontWeight.ExtraBold),
+                )
+                saving?.let { SavingTag(stringResource(R.string.paywall_save_percent, it)) }
+            }
             Text(
                 stringResource(if (plan.period == BillingPeriod.Annual) R.string.paywall_per_year else R.string.paywall_per_month),
                 style = Kit.type.caption,
@@ -439,6 +454,20 @@ private fun PlanOption(plan: SubscriptionPlan, selected: Boolean, onSelect: () -
         }
         Text(plan.price, style = Kit.type.bodyStrong.copy(fontSize = 17.sp, fontWeight = FontWeight.ExtraBold))
     }
+}
+
+/** The lime tag on the yearly plan, "Save 37%". Smaller than a PopChip, to sit beside a title. */
+@Composable
+private fun SavingTag(text: String) {
+    Text(
+        text,
+        style = Kit.type.label.copy(fontSize = Kit.type.caption.fontSize),
+        color = Kit.colors.onPop,
+        modifier = Modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(Kit.colors.pop)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    )
 }
 
 /**

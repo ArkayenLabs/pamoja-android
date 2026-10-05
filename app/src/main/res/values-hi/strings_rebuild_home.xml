@@ -59,4 +59,15 @@
     <string name="details_premium_active">चालू</string>
     <string name="details_premium_manage">Premium की जानकारी</string>
     <string name="details_leave_confirm">छोड़ें</string>
+
+    <string name="coach_step_of">%1$d / %2$d</string>
+    <string name="coach_skip">छोड़ें</string>
+    <string name="coach_next">आगे</string>
+    <string name="coach_done">ठीक है</string>
+    <string name="home_tour_week_title">आपका साझा हफ़्ता</string>
+    <string name="home_tour_week_body">सबके कदम यहाँ जुड़ते हैं, एक लक्ष्य की ओर।</string>
+    <string name="home_tour_today_title">आज कौन चला</string>
+    <string name="home_tour_today_body">टिक का मतलब है कि वे चल चुके हैं। जो अभी नहीं चला, उसे याद दिलाएँ।</string>
+    <string name="home_tour_group_title">आपके समूह</string>
+    <string name="home_tour_group_body">समूह बदलने या नया शुरू करने के लिए नाम पर टैप करें।</string>
 </resources>

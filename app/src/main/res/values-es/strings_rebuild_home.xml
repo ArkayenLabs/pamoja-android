@@ -59,4 +59,15 @@
     <string name="details_premium_active">Activo</string>
     <string name="details_premium_manage">Detalles de Premium</string>
     <string name="details_leave_confirm">Salir</string>
+
+    <string name="coach_step_of">%1$d de %2$d</string>
+    <string name="coach_skip">Omitir</string>
+    <string name="coach_next">Siguiente</string>
+    <string name="coach_done">Entendido</string>
+    <string name="home_tour_week_title">Tu semana en grupo</string>
+    <string name="home_tour_week_body">Los pasos de todos se suman aquí, hacia una sola meta.</string>
+    <string name="home_tour_today_title">Quién ha caminado hoy</string>
+    <string name="home_tour_today_body">La marca indica que ya caminó. Avisa a quien todavía no.</string>
+    <string name="home_tour_group_title">Tus grupos</string>
+    <string name="home_tour_group_body">Toca el nombre para cambiar de grupo o crear uno nuevo.</string>
 </resources>

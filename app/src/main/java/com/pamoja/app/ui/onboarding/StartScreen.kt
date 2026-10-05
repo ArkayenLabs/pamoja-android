@@ -1,10 +1,20 @@
 package com.pamoja.app.ui.onboarding
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
@@ -12,17 +22,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
 import com.pamoja.app.domain.model.PamojaGroupId
+import com.pamoja.app.domain.model.User
+import com.pamoja.app.ui.group.MemberStepData
+import com.pamoja.app.ui.home.CheerCard
+import com.pamoja.app.ui.home.TodayCard
 import com.pamoja.app.ui.kit.Avatar
+import com.pamoja.app.ui.kit.ButtonSize
 import com.pamoja.app.ui.kit.CardTone
 import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
@@ -36,11 +57,15 @@ import com.pamoja.app.ui.kit.SecondaryButton
 import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.theme.PamojaIcons
 import com.pamoja.app.util.InviteLink
+import kotlinx.coroutines.launch
 
 /**
- * The first screen of a fresh install: one screen where there used to be two
- * product intros (REBUILD_PLAN.md §6). Asks for nothing; an invite link is the
- * only other way in.
+ * The first screen of a fresh install: three short pages, each one line and a
+ * real piece of the app (the faces, Home's cheer and today cards, the
+ * widgets). One page was too little to say what Pamoja does (tester,
+ * 2026-10-02). Skip on every page but the last; an invite link is the only
+ * other way in, and it is on every page so an invited person never has to
+ * read the tour.
  */
 @Composable
 fun StartScreen(
@@ -58,15 +83,124 @@ fun StartScreen(
 /** Stateless rendering boundary used by visual and interaction tests. */
 @Composable
 internal fun StartContent(onGetStarted: () -> Unit, onHaveInvite: () -> Unit) {
+    val pager = rememberPagerState { START_PAGES }
+    val scope = rememberCoroutineScope()
+    val last = pager.currentPage == START_PAGES - 1
     KitScreen(
+        // The pages run edge to edge so a swipe is not clipped at the margin;
+        // each page and the buttons keep the usual 24dp themselves.
+        gutter = 0.dp,
+        top = {
+            TopRow(
+                modifier = Modifier.padding(horizontal = 24.dp).height(40.dp),
+                end = {
+                    if (!last) SecondaryButton(stringResource(R.string.start_skip), onClick = onGetStarted, size = ButtonSize.Small)
+                },
+            )
+        },
         bottom = {
-            PrimaryButton(stringResource(R.string.start_get_started), onClick = onGetStarted)
-            QuietButton(stringResource(R.string.start_have_invite), onClick = onHaveInvite)
+            Column(
+                Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                PageDots(pager.currentPage, START_PAGES)
+                PrimaryButton(
+                    stringResource(if (last) R.string.start_get_started else R.string.start_next),
+                    onClick = {
+                        if (last) onGetStarted() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
+                    },
+                )
+                QuietButton(stringResource(R.string.start_have_invite), onClick = onHaveInvite)
+            }
         },
     ) {
-        FacesHero()
-        Text(stringResource(R.string.start_headline), style = Kit.type.display)
-        Text(stringResource(R.string.start_body), style = Kit.type.body, color = Kit.colors.muted)
+        HorizontalPager(state = pager, verticalAlignment = Alignment.Top) { page ->
+            Column(
+                Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                when (page) {
+                    0 -> {
+                        FacesHero()
+                        Text(stringResource(R.string.start_headline), style = Kit.type.display)
+                        Text(stringResource(R.string.start_body), style = Kit.type.body, color = Kit.colors.muted)
+                    }
+                    1 -> {
+                        CheersPicture()
+                        Text(stringResource(R.string.start_cheers_headline), style = Kit.type.display)
+                        Text(stringResource(R.string.start_cheers_body), style = Kit.type.body, color = Kit.colors.muted)
+                    }
+                    else -> {
+                        WidgetsPicture()
+                        Text(stringResource(R.string.start_widget_headline), style = Kit.type.display)
+                        Text(stringResource(R.string.start_widget_body), style = Kit.type.body, color = Kit.colors.muted)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private const val START_PAGES = 3
+
+@Composable
+private fun PageDots(current: Int, count: Int) {
+    val description = stringResource(R.string.start_page_desc, current + 1, count)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+            .clearAndSetSemantics { contentDescription = description },
+    ) {
+        repeat(count) { index ->
+            Box(
+                Modifier
+                    .height(6.dp)
+                    .width(if (index == current) 18.dp else 6.dp)
+                    .clip(CircleShape)
+                    .background(if (index == current) Kit.colors.ink else Kit.colors.track),
+            )
+        }
+    }
+}
+
+/**
+ * Home's own Today and cheer cards with sample people, so the picture is the
+ * real thing. Decorative: hidden from TalkBack, and its buttons do nothing.
+ */
+@Composable
+private fun CheersPicture() {
+    val you = "you"
+    val people = listOf(
+        MemberStepData(User(userId = "priya", name = "Priya"), todaySteps = 6_400, weeklySteps = 0),
+        MemberStepData(User(userId = "ramesh", name = "Ramesh"), todaySteps = 4_100, weeklySteps = 0),
+        MemberStepData(User(userId = you, name = "Ravi"), todaySteps = 3_200, weeklySteps = 0),
+        MemberStepData(User(userId = "arjun", name = "Arjun"), todaySteps = 0, weeklySteps = 0),
+        MemberStepData(User(userId = "meera", name = "Meera"), todaySteps = 0, weeklySteps = 0),
+    )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.clearAndSetSemantics {},
+    ) {
+        TodayCard(members = people, currentUserId = you, hasNudged = { false }, onNudge = {})
+        CheerCard(senders = people.take(1), cheeredBack = { false }, onCheerBack = {})
+    }
+}
+
+/**
+ * The group widget as the picker shows it, on the hero lilac. One widget, not
+ * all three: with three the page outgrew a phone and its words went under the
+ * buttons. Decorative.
+ */
+@Composable
+private fun WidgetsPicture() {
+    KitCard(tone = CardTone.Hero, padding = 16.dp) {
+        Image(
+            painter = painterResource(R.drawable.widget_preview_group),
+            contentDescription = null,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

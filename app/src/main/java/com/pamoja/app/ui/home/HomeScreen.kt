@@ -89,6 +89,11 @@ import com.pamoja.app.ui.group.GroupViewModel
 import com.pamoja.app.ui.group.MemberStepData
 import com.pamoja.app.ui.kit.ActionRow
 import com.pamoja.app.ui.kit.Avatar
+import com.pamoja.app.ui.kit.CoachMark
+import com.pamoja.app.ui.kit.CoachMarkHost
+import com.pamoja.app.ui.kit.CoachMarkOverlay
+import com.pamoja.app.ui.kit.coachMarkTarget
+import com.pamoja.app.ui.kit.rememberCoachMarkState
 import com.pamoja.app.ui.kit.ButtonSize
 import com.pamoja.app.ui.kit.CardHeader
 import com.pamoja.app.ui.kit.CardTone
@@ -294,6 +299,8 @@ fun HomeScreen(
         signals = signals,
         onCheer = signalsViewModel::cheer,
         onNudge = signalsViewModel::nudge,
+        showTour = home.homeTourSeen == false,
+        onTourDone = viewModel::onHomeTourDone,
     )
 }
 
@@ -320,9 +327,13 @@ internal fun HomeContent(
     signals: SignalsUiState = SignalsUiState(),
     onCheer: (List<String>) -> Unit = {},
     onNudge: (List<String>) -> Unit = {},
+    /** Home's first-run coach marks; they wait until a group is on screen. */
+    showTour: Boolean = false,
+    onTourDone: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     var showSwitcher by rememberSaveable { mutableStateOf(false) }
+    val coach = rememberCoachMarkState()
     val selectedId = home.selectedGroupId
 
     // The shown group's name comes from its own document when it is here, so
@@ -331,7 +342,13 @@ internal fun HomeContent(
     val shownGroup = groupState.group?.takeIf { it.groupId == selectedId }
         ?: home.groups.firstOrNull { it.groupId == selectedId }
     val inviteInactive = stringResource(R.string.group_invite_inactive)
+    val noGroup = selectedId == null && home.hasLoadedOnce && home.groups.isEmpty()
+    val groupFailed = groupState.fatalError != null && !groupState.hasContent && !groupState.isGroupUnavailable
+    val groupLoading = selectedId == null || groupState.groupId != selectedId || shownGroup == null ||
+        !groupState.hasLoadedMembers
+    val groupShown = !home.showErrorState && !noGroup && !groupFailed && !groupLoading
 
+    CoachMarkHost(coach) {
     Box(Modifier.fillMaxSize()) {
         PullToRefreshBox(
             isRefreshing = home.isRefreshing || groupState.isRefreshing,
@@ -356,14 +373,11 @@ internal fun HomeContent(
                 when {
                     home.showErrorState -> LoadFailed(requireNotNull(home.error), onRetry = onRetryHome)
 
-                    selectedId == null && home.hasLoadedOnce && home.groups.isEmpty() ->
-                        NoGroup(onStartGroup = onStartGroup, onJoinWithLink = onJoinWithLink)
+                    noGroup -> NoGroup(onStartGroup = onStartGroup, onJoinWithLink = onJoinWithLink)
 
-                    groupState.fatalError != null && !groupState.hasContent && !groupState.isGroupUnavailable ->
-                        LoadFailed(requireNotNull(groupState.fatalError), onRetry = onRetryGroup)
+                    groupFailed -> LoadFailed(requireNotNull(groupState.fatalError), onRetry = onRetryGroup)
 
-                    selectedId == null || groupState.groupId != selectedId || shownGroup == null ||
-                        !groupState.hasLoadedMembers -> HomeSkeleton()
+                    groupLoading || shownGroup == null -> HomeSkeleton()
 
                     else -> GroupHome(
                         group = shownGroup,
@@ -389,6 +403,19 @@ internal fun HomeContent(
             }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+
+        if (showTour && groupShown && !showSwitcher) {
+            CoachMarkOverlay(
+                state = coach,
+                marks = listOf(
+                    CoachMark(TOUR_WEEK, stringResource(R.string.home_tour_week_title), stringResource(R.string.home_tour_week_body)),
+                    CoachMark(TOUR_TODAY, stringResource(R.string.home_tour_today_title), stringResource(R.string.home_tour_today_body)),
+                    CoachMark(TOUR_GROUP, stringResource(R.string.home_tour_group_title), stringResource(R.string.home_tour_group_body)),
+                ),
+                onDone = onTourDone,
+            )
+        }
+    }
     }
 
     if (showSwitcher) {
@@ -402,6 +429,10 @@ internal fun HomeContent(
         )
     }
 }
+
+private const val TOUR_WEEK = "week"
+private const val TOUR_TODAY = "today"
+private const val TOUR_GROUP = "group"
 
 @Composable
 private fun HomeTopBar(
@@ -421,6 +452,7 @@ private fun HomeTopBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier
+                        .coachMarkTarget(TOUR_GROUP)
                         .defaultMinSize(minHeight = 48.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .clickable(
@@ -509,13 +541,17 @@ private fun GroupHome(
         )
     }
 
-    WeekCard(group = group, steps = state.combinedWeeklySteps, stale = home.isOffline)
-    TodayCard(
-        members = state.memberStepData,
-        currentUserId = state.currentUserId,
-        hasNudged = { signals.hasSent(SignalKind.NUDGE, it) },
-        onNudge = onNudge,
-    )
+    Box(Modifier.coachMarkTarget(TOUR_WEEK)) {
+        WeekCard(group = group, steps = state.combinedWeeklySteps, stale = home.isOffline)
+    }
+    Box(Modifier.coachMarkTarget(TOUR_TODAY)) {
+        TodayCard(
+            members = state.memberStepData,
+            currentUserId = state.currentUserId,
+            hasNudged = { signals.hasSent(SignalKind.NUDGE, it) },
+            onNudge = onNudge,
+        )
+    }
     YouAndCheers(
         home = home,
         members = state.memberStepData,
@@ -631,7 +667,7 @@ private fun paceLine(pace: WeeklyPace, daysLeft: Int): String? {
 
 /** Who has walked today. Faces first; greyed until they have. */
 @Composable
-private fun TodayCard(
+internal fun TodayCard(
     members: List<MemberStepData>,
     currentUserId: String,
     hasNudged: (String) -> Boolean,
@@ -787,7 +823,7 @@ private fun YouAndCheers(
 
 /** Cheers received today, in lime: a moment from a person, with a way to answer. */
 @Composable
-private fun CheerCard(
+internal fun CheerCard(
     senders: List<MemberStepData>,
     cheeredBack: (String) -> Boolean,
     onCheerBack: (List<String>) -> Unit,

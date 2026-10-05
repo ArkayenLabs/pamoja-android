@@ -50,6 +50,10 @@ class UserPreferences @Inject constructor(
         // Once per installation, like the intro: survives clearAll().
         val KEY_INSTALL_REFERRER_CHECKED = booleanPreferencesKey("install_referrer_checked")
 
+        // Home's first-run coach marks were shown (finished or skipped). Per
+        // installation, like the intro: survives clearAll().
+        val KEY_HOME_TOUR_SEEN = booleanPreferencesKey("home_tour_seen")
+
         // Groups whose ended Premium preview this account was already told about.
         val KEY_PREVIEW_END_SEEN = stringSetPreferencesKey("preview_end_seen_groups")
 
@@ -161,6 +165,13 @@ class UserPreferences @Inject constructor(
 
     suspend fun setInstallReferrerChecked() {
         context.dataStore.edit { it[KEY_INSTALL_REFERRER_CHECKED] = true }
+    }
+
+    /** Whether Home's coach marks have run on this installation. */
+    val homeTourSeen: Flow<Boolean> = context.dataStore.data.map { it[KEY_HOME_TOUR_SEEN] ?: false }
+
+    suspend fun setHomeTourSeen() {
+        context.dataStore.edit { it[KEY_HOME_TOUR_SEEN] = true }
     }
 
     /** Groups whose ended preview has been offered once; never offered twice. */
@@ -334,19 +345,21 @@ class UserPreferences @Inject constructor(
     /**
      * Wipes everything account-scoped, on sign out and on account deletion.
      *
-     * Theme, the completed product introduction and the install referrer
-     * check are deliberately carried across. They describe this installation,
+     * Theme, the completed product introduction, Home's coach marks and the
+     * install referrer check are deliberately carried across. They describe this installation,
      * not the signed-in account. Logging out must not replay first-run education.
      */
     suspend fun clearAll() {
         val theme = context.dataStore.data.map { it[KEY_THEME] }.first()
         val introSeen = context.dataStore.data.map { it[KEY_INTRO_SEEN] }.first()
         val referrerChecked = context.dataStore.data.map { it[KEY_INSTALL_REFERRER_CHECKED] }.first()
+        val tourSeen = context.dataStore.data.map { it[KEY_HOME_TOUR_SEEN] }.first()
         context.dataStore.edit { prefs ->
             prefs.clear()
             theme?.let { prefs[KEY_THEME] = it }
             introSeen?.let { prefs[KEY_INTRO_SEEN] = it }
             referrerChecked?.let { prefs[KEY_INSTALL_REFERRER_CHECKED] = it }
+            tourSeen?.let { prefs[KEY_HOME_TOUR_SEEN] = it }
         }
     }
 

@@ -513,6 +513,7 @@
          groups free members are already in. -->
     <string name="group_sponsor_title">Get Premium for this group</string>
     <string name="paywall_plan_annual">Yearly</string>
+    <string name="paywall_save_percent">Save %1$d%%</string>
     <string name="paywall_plan_monthly">Monthly</string>
     <string name="paywall_period_year">year</string>
     <string name="paywall_period_month">month</string>

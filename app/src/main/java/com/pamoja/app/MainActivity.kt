@@ -36,6 +36,7 @@ import com.pamoja.app.ui.update.UpdateRequiredScreen
 import com.pamoja.app.util.InviteLink
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.WorkManagerScheduler
+import com.pamoja.app.widgets.PamojaWidgetRenderer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -263,6 +264,13 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onResume() {
         super.onResume()
+        // Some launchers (ColorOS, seen on a tester's phone) never deliver the
+        // widget update broadcast to an app that is not allowed to auto-start,
+        // so a placed widget sits on the launcher's loading card. Opening the
+        // app draws them from the stored snapshot and asks for a fresh one if
+        // it is missing or stale. Costs nothing when no widget is placed.
+        PamojaWidgetRenderer.onUpdate(applicationContext)
+        PamojaWidgetRenderer.updateAll(applicationContext)
         if (firebaseAuth.currentUser == null) return
 
         workManagerScheduler.scheduleStepSync()

@@ -227,6 +227,8 @@ private fun Package.toPlan(): SubscriptionPlan? {
         formattedPrice = product.price.formatted,
         trialUnitName = freePhase?.billingPeriod?.unit?.name,
         trialValue = freePhase?.billingPeriod?.value,
+        priceMicros = product.price.amountMicros,
+        currencyCode = product.price.currencyCode,
     )
 }
 
@@ -238,6 +240,8 @@ internal fun mapRevenueCatPlan(
     formattedPrice: String,
     trialUnitName: String?,
     trialValue: Int?,
+    priceMicros: Long = 0L,
+    currencyCode: String = "",
 ): SubscriptionPlan? {
     val period = when (packageType) {
         PackageType.MONTHLY -> BillingPeriod.Monthly
@@ -273,6 +277,8 @@ internal fun mapRevenueCatPlan(
         price = formattedPrice,
         groupCapacity = groupCapacityForProduct(storeProductId),
         trial = trial,
+        priceMicros = priceMicros,
+        currencyCode = currencyCode,
     )
 }
 

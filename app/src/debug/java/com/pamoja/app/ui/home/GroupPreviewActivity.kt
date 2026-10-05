@@ -7,6 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -70,6 +72,7 @@ class GroupPreviewActivity : ComponentActivity() {
         val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 22)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
         val caption = intent.getStringExtra(EXTRA_CAPTION)
+        tour = intent.getBooleanExtra(EXTRA_TOUR, false)
         if (caption != null) {
             WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
         }
@@ -127,11 +130,13 @@ class GroupPreviewActivity : ComponentActivity() {
                             plans = listOf(
                                 com.pamoja.app.domain.repository.SubscriptionPlan(
                                     id = "monthly", storeProductId = "pamoja_premium", price = "Rs 199.00",
+                                    priceMicros = 199_000_000, currencyCode = "INR",
                                     period = com.pamoja.app.domain.model.BillingPeriod.Monthly,
                                     trial = com.pamoja.app.domain.repository.TrialPeriod(7, com.pamoja.app.domain.repository.TrialUnit.Day),
                                 ),
                                 com.pamoja.app.domain.repository.SubscriptionPlan(
                                     id = "annual", storeProductId = "pamoja_premium", price = "Rs 1,499.00",
+                                    priceMicros = 1_499_000_000, currencyCode = "INR",
                                     period = com.pamoja.app.domain.model.BillingPeriod.Annual,
                                     trial = com.pamoja.app.domain.repository.TrialPeriod(7, com.pamoja.app.domain.repository.TrialUnit.Day),
                                 ),
@@ -269,6 +274,9 @@ class GroupPreviewActivity : ComponentActivity() {
         }
     }
 
+    /** `--ez tour true` runs Home's first-run coach marks over screens 1 and 2. */
+    private var tour by androidx.compose.runtime.mutableStateOf(false)
+
     @androidx.compose.runtime.Composable
     private fun Home(home: HomeUiState, group: GroupUiState, pendingCode: String? = null) {
         HomeContent(
@@ -285,6 +293,8 @@ class GroupPreviewActivity : ComponentActivity() {
                 received = listOf(Signal(SignalKind.CHEER, "priya", ME, LocalDate.now().toString())),
                 sent = listOf(Signal(SignalKind.CHEER, ME, "sunita", LocalDate.now().toString())),
             ),
+            showTour = tour,
+            onTourDone = { tour = false },
         )
     }
 
@@ -423,6 +433,7 @@ class GroupPreviewActivity : ComponentActivity() {
         const val EXTRA_SCREEN = "screen"
         const val EXTRA_DARK = "dark"
         const val EXTRA_CAPTION = "caption"
+        const val EXTRA_TOUR = "tour"
         const val EXTRA_EXPORT_WIDGETS = "exportWidgets"
         const val GROUP = "6413795d-42d0-4f2b-80df-f017a9d32817"
         const val ME = "me"

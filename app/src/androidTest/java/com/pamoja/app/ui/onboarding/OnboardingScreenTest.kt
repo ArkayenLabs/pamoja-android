@@ -41,7 +41,29 @@ class OnboardingScreenTest {
     private val groupId = "6413795d-42d0-4f2b-80df-f017a9d32817"
 
     @Test
-    fun startAsksForNothingAndOffersBothWaysIn() {
+    fun startTourHasThreePagesThenGetStarted() {
+        var started = false
+        compose.setContent {
+            KitTheme(dark = false) {
+                StartContent(onGetStarted = { started = true }, onHaveInvite = {})
+            }
+        }
+
+        compose.onNodeWithText("Your people. One weekly goal.").assertIsDisplayed()
+        compose.onNodeWithText("Continue with Google").assertDoesNotExist()
+        compose.onNodeWithText("Get started").assertDoesNotExist()
+        compose.onNodeWithText("Next").performClick()
+        compose.onNodeWithText("Someone noticed your walk").assertIsDisplayed()
+        compose.onNodeWithText("Next").performClick()
+        compose.onNodeWithText("Your group on your home screen").assertIsDisplayed()
+        // The last page has nothing left to skip.
+        compose.onNodeWithText("Skip").assertDoesNotExist()
+        compose.onNodeWithText("Get started").assertHasClickAction().performClick()
+        compose.runOnIdle { assertTrue(started) }
+    }
+
+    @Test
+    fun startCanBeSkippedAndAnInviteNeedsNoTour() {
         var started = false
         var invite = false
         compose.setContent {
@@ -50,13 +72,11 @@ class OnboardingScreenTest {
             }
         }
 
-        compose.onNodeWithText("Your people. One weekly goal.").assertIsDisplayed()
-        compose.onNodeWithText("Continue with Google").assertDoesNotExist()
-        compose.onNodeWithText("Get started").assertHasClickAction().performClick()
         compose.onNodeWithText("I have an invite link").assertHasClickAction().performClick()
+        compose.onNodeWithText("Skip").assertHasClickAction().performClick()
         compose.runOnIdle {
-            assertTrue(started)
             assertTrue(invite)
+            assertTrue(started)
         }
     }
 
@@ -171,8 +191,8 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun startingAGroupAsksOnlyForItsName() {
-        var created: String? = null
+    fun startingAGroupShowsItsSettingsFilledWithDefaults() {
+        var created: com.pamoja.app.ui.group.NewGroup? = null
         compose.setContent {
             KitTheme(dark = false) {
                 CreateGroupContent(
@@ -185,12 +205,23 @@ class OnboardingScreenTest {
             }
         }
 
-        compose.onNodeWithText("Weekly group goal").assertDoesNotExist()
-        compose.onNodeWithText("Max members").assertDoesNotExist()
+        compose.onNodeWithText("Weekly goal").assertIsDisplayed()
+        compose.onNodeWithText("70,000 steps").assertIsDisplayed()
+        compose.onNodeWithText("Member limit").assertIsDisplayed()
         compose.onNodeWithText("Create group").assertIsNotEnabled()
         compose.onNode(hasSetTextAction()).performTextInput("  Morning Walkers  ")
         compose.onNodeWithText("Create group").assertIsEnabled().performClick()
-        compose.runOnIdle { assertEquals("Morning Walkers", created) }
+        compose.runOnIdle {
+            assertEquals(
+                com.pamoja.app.ui.group.NewGroup(
+                    name = "Morning Walkers",
+                    weeklyTarget = 70_000,
+                    maxMemberCap = 10,
+                    weekStart = com.pamoja.app.domain.model.WeekWindow.localeDefault(),
+                ),
+                created,
+            )
+        }
     }
 
     @Test

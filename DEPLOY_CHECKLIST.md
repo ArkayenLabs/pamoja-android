@@ -65,6 +65,18 @@ production build (1.0.12) and its listing.
 - **1.1.0 (17) tested by the user 2026-10-02**; feedback fixed in 1.1.1
   (18), `design/release-builds/pamoja-1.1.1-18-internal.aab`. Upload it to
   internal testing the same way.
+- **Notifications rewrite (`857bc7f`) deployed 2026-10-08 ~06:40 UTC:**
+  `firebase deploy --only functions:notifications` (Bash, with
+  `FUNCTIONS_DISCOVERY_TIMEOUT=60`): 9 updated, `sendScheduledReminders`
+  created (scheduler job `5 * * * *` UTC, ENABLED), none deleted, 30 functions
+  live. From now 1.0.12 and 1.1.x get the new push words (data-only, as
+  before). The CLI warned it could not clean up build images in
+  `gcr.io/.../asia/gcf` (small storage cost; delete there if it grows).
+- **1.1.2 (19)** built 2026-10-08: `design/release-builds/pamoja-1.1.2-19-internal.aab`,
+  same flags as 1.1.1 (`-PpamojaVersionCode=19 -PpamojaVersionName=1.1.2
+  -PtogetherTrailEnabled=true`, sales on). First build that registers
+  `delivery: 2`, so the first to get tray-drawn pushes and scheduled
+  reminders. Not uploaded yet.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
   17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
   production later.

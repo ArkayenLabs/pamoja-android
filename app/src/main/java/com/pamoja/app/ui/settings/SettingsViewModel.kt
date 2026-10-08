@@ -25,12 +25,15 @@ import com.pamoja.app.domain.usecase.SignOutUseCase
 import com.pamoja.app.domain.usecase.StartPhoneVerificationUseCase
 import com.pamoja.app.domain.repository.PhoneVerification
 import com.pamoja.app.domain.repository.PhoneVerificationPurpose
+import com.pamoja.app.util.BackgroundRestrictions
+import com.pamoja.app.util.PhoneMaker
 import com.pamoja.app.util.WorkManagerScheduler
 import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -90,6 +93,8 @@ data class SettingsUiState(
     val healthStatus: HealthStatus = HealthStatus.Connected,
     val backgroundReadSupported: Boolean = false,
     val backgroundReadGranted: Boolean = false,
+    /** A phone maker whose background restriction is worth explaining, until hidden. */
+    val backgroundHelp: PhoneMaker? = null,
     /** Epoch millis of the last successful sync, 0 when it has never happened. */
     val lastSyncTime: Long = 0L,
     val isSyncing: Boolean = false,
@@ -128,6 +133,7 @@ class SettingsViewModel @Inject constructor(
     private val exportUserDataUseCase: ExportUserDataUseCase,
     private val exportFormatter: UserDataExportFormatter,
     private val widgetUpdater: PamojaWidgetUpdater,
+    private val backgroundRestrictions: BackgroundRestrictions,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -172,8 +178,18 @@ class SettingsViewModel @Inject constructor(
                 healthStatus = status,
                 backgroundReadSupported = healthConnectReader.supportsBackgroundRead(),
                 backgroundReadGranted = healthConnectReader.hasBackgroundPermission(),
+                // Re-read on resume too: a Samsung phone made exempt in App
+                // info stops being asked as soon as the person comes back.
+                backgroundHelp = backgroundRestrictions.makerToExplain()
+                    .takeUnless { userPreferences.backgroundHelpDone.first() },
             )
         }
+    }
+
+    /** Hidden for good once opened or hidden: shown once, never a nag. */
+    fun dismissBackgroundHelp() {
+        _uiState.value = _uiState.value.copy(backgroundHelp = null)
+        viewModelScope.launch { userPreferences.setBackgroundHelpDone() }
     }
 
     fun syncNow() {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The card in Settings for phones whose battery manager stops apps in the
+    background (BackgroundRestrictions, NOTIFICATIONS_PLAN.md §2.4). The steps
+    name each maker's own switches as found from the app's App info page;
+    they move between versions, so check them on a real phone when you can.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
+    <string name="bg_help_title">Let Pamoja run in the background</string>
+    <string name="bg_help_body">Your phone can stop Pamoja when it\'s closed. Then your steps sync late and cheers don\'t arrive.</string>
+    <string name="bg_help_steps_coloros">In App info, open Battery usage and turn on Allow auto launch and Allow background activity.</string>
+    <string name="bg_help_steps_miui">In App info, turn on Autostart, then set Battery saver to No restrictions.</string>
+    <string name="bg_help_steps_vivo">In App info, open Battery and allow high background power use.</string>
+    <string name="bg_help_steps_samsung">In App info, open Battery and choose Unrestricted.</string>
+    <string name="bg_help_steps_huawei">In App info, open Battery, then App launch. Turn off Manage automatically and leave all three switches on.</string>
+    <string name="bg_help_open">Open App info</string>
+    <string name="bg_help_hide">Hide</string>
+</resources>

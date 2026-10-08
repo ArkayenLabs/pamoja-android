@@ -6,7 +6,7 @@ the board"). Decisions marked **(user)** need a yes
 before building; everything else is a recommendation. Verify against the code
 before acting, like every doc here.
 
-## 0. Built 2026-10-05 (uncommitted, nothing deployed)
+## 0. Built 2026-10-05 (committed `857bc7f`, nothing deployed)
 
 §1 and §2 below describe the code **before** this work. What changed:
 
@@ -49,9 +49,21 @@ before acting, like every doc here.
   real but smaller: loc keys, no app code (Hilt, DataStore) on the display
   path, always counted as user-visible. **The fix for ColorOS/MIUI is the
   §2.4 background-permission card**, still not built.
-- Not built: §2.4 card, action buttons (impossible with notification
-  messages), §4 ideas 2-7, refreshed widget preview images (they still show
-  "Nudge"; need a device: `GroupPreviewActivity --ez exportWidgets true`).
+- **§2.4 card built 2026-10-08 (uncommitted):** `BackgroundRestrictions`
+  maps `Build.MANUFACTURER` to ColorOS (oppo, realme, oneplus), MIUI
+  (xiaomi, redmi, poco), vivo/iQOO, Samsung, Huawei/Honor; Settings shows one
+  `KitNotice` above Health Connect with that maker's switch names, "Open App
+  info" and "Hide". Either button hides it for good (`backgroundHelpDone`,
+  survives sign-out). Samsung is not asked once Android reports the app
+  exempt from battery optimisation. It opens the app's own App info page, not
+  the makers' hidden auto-start screens (their class names change and newer
+  ones refuse outside apps). The switch names are best knowledge, **not
+  checked on those phones**; es/hi need a native read (hi keeps the English
+  switch names).
+- Widget picker previews re-exported with "Remind" (group widget, light and
+  dark; the other two had no word to change).
+- Not built: action buttons (impossible with notification messages), §4
+  ideas 2-7.
 
 **Deploy when the user says (not before):** functions `notifications`
 codebase first (`firebase deploy --only functions:notifications`; adds

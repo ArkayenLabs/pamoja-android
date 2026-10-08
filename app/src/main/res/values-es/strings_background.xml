@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- See values/strings_background.xml. Setting names follow the phones' Spanish menus as best known; needs a check on a real phone. -->
+<resources>
+    <string name="bg_help_title">Deja que Pamoja funcione en segundo plano</string>
+    <string name="bg_help_body">Tu teléfono puede detener Pamoja cuando está cerrada. Entonces tus pasos se sincronizan tarde y los aplausos no llegan.</string>
+    <string name="bg_help_steps_coloros">En Información de la app, abre Uso de batería y activa Permitir inicio automático y Permitir actividad en segundo plano.</string>
+    <string name="bg_help_steps_miui">En Información de la app, activa Inicio automático y pon Ahorro de batería en Sin restricciones.</string>
+    <string name="bg_help_steps_vivo">En Información de la app, abre Batería y permite un alto consumo en segundo plano.</string>
+    <string name="bg_help_steps_samsung">En Información de la app, abre Batería y elige Sin restricciones.</string>
+    <string name="bg_help_steps_huawei">En Información de la app, abre Batería y luego Inicio de apps. Desactiva Gestionar automáticamente y deja los tres interruptores activados.</string>
+    <string name="bg_help_open">Abrir información de la app</string>
+    <string name="bg_help_hide">Ocultar</string>
+</resources>

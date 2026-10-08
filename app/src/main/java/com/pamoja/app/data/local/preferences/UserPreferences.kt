@@ -53,6 +53,9 @@ class UserPreferences @Inject constructor(
         // installation, like the intro: survives clearAll().
         val KEY_HOME_TOUR_SEEN = booleanPreferencesKey("home_tour_seen")
 
+        // The background-restriction card in Settings, once per installation.
+        val KEY_BACKGROUND_HELP_DONE = booleanPreferencesKey("background_help_done")
+
         // Groups whose ended Premium preview this account was already told about.
         val KEY_PREVIEW_END_SEEN = stringSetPreferencesKey("preview_end_seen_groups")
 
@@ -162,6 +165,13 @@ class UserPreferences @Inject constructor(
 
     suspend fun setHomeTourSeen() {
         context.dataStore.edit { it[KEY_HOME_TOUR_SEEN] = true }
+    }
+
+    /** About this phone, not the account, so it survives sign-out like the tour. */
+    val backgroundHelpDone: Flow<Boolean> = context.dataStore.data.map { it[KEY_BACKGROUND_HELP_DONE] ?: false }
+
+    suspend fun setBackgroundHelpDone() {
+        context.dataStore.edit { it[KEY_BACKGROUND_HELP_DONE] = true }
     }
 
     /** Groups whose ended preview has been offered once; never offered twice. */
@@ -315,12 +325,14 @@ class UserPreferences @Inject constructor(
         val introSeen = context.dataStore.data.map { it[KEY_INTRO_SEEN] }.first()
         val referrerChecked = context.dataStore.data.map { it[KEY_INSTALL_REFERRER_CHECKED] }.first()
         val tourSeen = context.dataStore.data.map { it[KEY_HOME_TOUR_SEEN] }.first()
+        val backgroundHelpDone = context.dataStore.data.map { it[KEY_BACKGROUND_HELP_DONE] }.first()
         context.dataStore.edit { prefs ->
             prefs.clear()
             theme?.let { prefs[KEY_THEME] = it }
             introSeen?.let { prefs[KEY_INTRO_SEEN] = it }
             referrerChecked?.let { prefs[KEY_INSTALL_REFERRER_CHECKED] = it }
             tourSeen?.let { prefs[KEY_HOME_TOUR_SEEN] = it }
+            backgroundHelpDone?.let { prefs[KEY_BACKGROUND_HELP_DONE] = it }
         }
     }
 

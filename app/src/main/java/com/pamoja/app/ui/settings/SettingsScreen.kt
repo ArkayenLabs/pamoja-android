@@ -73,6 +73,7 @@ import com.pamoja.app.ui.kit.CircleIconButton
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
 import com.pamoja.app.ui.kit.KitDialog
+import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSheet
 import com.pamoja.app.ui.kit.KitSkeleton
@@ -84,6 +85,8 @@ import com.pamoja.app.ui.kit.SecondaryButton
 import com.pamoja.app.ui.kit.TopRow
 import com.pamoja.app.ui.kit.mutedContentColor
 import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.util.BackgroundRestrictions
+import com.pamoja.app.util.PhoneMaker
 import com.pamoja.app.widgets.GroupProgressWidgetProvider
 import com.pamoja.app.widgets.TodayStepsWidgetProvider
 import com.pamoja.app.widgets.WalkHookWidgetProvider
@@ -240,6 +243,11 @@ fun SettingsScreen(
                 context.openUri("https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE")
             }
         },
+        onOpenBackgroundHelp = {
+            BackgroundRestrictions.openAppInfo(context)
+            viewModel.dismissBackgroundHelp()
+        },
+        onHideBackgroundHelp = viewModel::dismissBackgroundHelp,
         onBackgroundSteps = {
             if (uiState.backgroundReadGranted) {
                 runCatching { context.startActivity(Intent(HEALTH_CONNECT_SETTINGS_ACTION)) }
@@ -270,6 +278,28 @@ fun SettingsScreen(
     )
 }
 
+/**
+ * Once per installation, on phones whose battery manager stops apps in the
+ * background: what to switch on, and the way to App info, where it is.
+ */
+@Composable
+private fun BackgroundHelpNotice(maker: PhoneMaker, onOpen: () -> Unit, onHide: () -> Unit) {
+    val steps = when (maker) {
+        PhoneMaker.ColorOs -> R.string.bg_help_steps_coloros
+        PhoneMaker.Miui -> R.string.bg_help_steps_miui
+        PhoneMaker.Vivo -> R.string.bg_help_steps_vivo
+        PhoneMaker.Samsung -> R.string.bg_help_steps_samsung
+        PhoneMaker.Huawei -> R.string.bg_help_steps_huawei
+    }
+    KitNotice(
+        title = stringResource(R.string.bg_help_title),
+        body = stringResource(R.string.bg_help_body) + " " + stringResource(steps),
+    ) {
+        PrimaryButton(stringResource(R.string.bg_help_open), onClick = onOpen, size = ButtonSize.Small)
+        SecondaryButton(stringResource(R.string.bg_help_hide), onClick = onHide, size = ButtonSize.Small)
+    }
+}
+
 /** The languages the app is translated into, as each one names itself. */
 private val LANGUAGES = listOf(
     "en-US" to "English (US)",
@@ -296,6 +326,8 @@ internal fun SettingsContent(
     onSyncNow: () -> Unit,
     onFixHealth: () -> Unit,
     onBackgroundSteps: () -> Unit,
+    onOpenBackgroundHelp: () -> Unit,
+    onHideBackgroundHelp: () -> Unit,
     onSupport: () -> Unit,
     onExport: () -> Unit,
     onPrivacy: () -> Unit,
@@ -379,6 +411,10 @@ internal fun SettingsContent(
                     onClick = onSubscription,
                     showDivider = false,
                 )
+            }
+
+            state.backgroundHelp?.let { maker ->
+                BackgroundHelpNotice(maker, onOpen = onOpenBackgroundHelp, onHide = onHideBackgroundHelp)
             }
 
             HealthCard(

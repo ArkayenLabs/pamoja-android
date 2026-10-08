@@ -427,7 +427,7 @@
     <string name="notif_achievement_title">Goals and achievements</string>
     <string name="notif_achievement_sub">Weekly goals, streaks and milestones</string>
     <string name="notif_group_title">Group activity</string>
-    <string name="notif_group_sub">Joins, cheers and nudges</string>
+    <string name="notif_group_sub">Joins, cheers and reminders</string>
     <string name="notif_reminder_title">Step reminders</string>
     <string name="notif_reminder_sub">A reminder while there\'s still time to walk today</string>
     <string name="notif_recap_title">Weekly recap</string>

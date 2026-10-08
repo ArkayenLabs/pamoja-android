@@ -10,6 +10,7 @@ export {
   notifySignalCreated,
   pruneStalePushRegistrations,
   registerPushInstallation,
+  sendScheduledReminders,
   unregisterPushInstallation,
 } from "./notifications.js";
 

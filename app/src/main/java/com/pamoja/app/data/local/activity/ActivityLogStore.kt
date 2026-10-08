@@ -44,20 +44,24 @@ class ActivityLogStore @Inject constructor(
      * Records a notification as shown.
      *
      * Called from the same place that posts to the tray, so the log cannot
-     * drift from what the user actually saw.
+     * drift from what the user actually saw. A push carries its [eventId],
+     * and one already recorded is not recorded again: the same push can be
+     * seen in the tray and then tapped.
      */
     suspend fun record(
         category: NotificationCategory,
         title: String,
         body: String,
         groupId: String?,
+        eventId: String? = null,
     ) {
         if (!category.belongsInUpdates()) return
         context.dataStore.edit { prefs ->
             val existing = parse(prefs[KEY_ACTIVITY_LOG])
+            if (eventId != null && existing.any { it.id == eventId }) return@edit
 
             val item = ActivityItem(
-                id = UUID.randomUUID().toString(),
+                id = eventId ?: UUID.randomUUID().toString(),
                 category = category,
                 title = title,
                 body = body,

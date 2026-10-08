@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- See values/strings_notifications.xml: the push_* names are sent by the server. Needs a native read. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <string name="notif_first_steps_title">आपके कदम जुड़ गए</string>
+    <string name="notif_first_steps_body">आज %1$s कदम, अब %2$s के लिए गिने जा रहे हैं।</string>
+    <string name="notif_first_ready_title">सब तैयार है</string>
+    <string name="notif_first_ready_body">अब से आपकी सैर %1$s के लिए गिनी जाएगी।</string>
+
+    <string name="push_joined_title">%1$s %2$s में शामिल हुए</string>
+    <string name="push_joined_second_body">अब आप दो हैं। साथ चलने का मज़ा ही अलग है।</string>
+    <string name="push_joined_body">अब आप %1$s लोग हैं। अगली सैर पर उनका स्वागत करें।</string>
+    <string name="push_goal_title">%1$s ने कर दिखाया</string>
+    <string name="push_goal_body">इस हफ़्ते सबने मिलकर %1$s कदम चले। शाबाश।</string>
+    <string name="push_cheer_title">%1$s ने आपकी सैर पर शाबाशी दी</string>
+    <string name="push_cheer_body">%1$s। शाबाशी लौटाने के लिए टैप करें।</string>
+    <string name="push_remind_title">%1$s: आज सैर पर चलें?</string>
+    <string name="push_remind_body">%1$s आज चल रहा है। जब हो सके, साथ आइए।</string>
+
+    <string name="push_last_day_title">आख़िरी दिन: %1$s कदम बाकी</string>
+    <string name="push_last_day_body">हर किसी के लगभग %1$s। शाम की एक सैर काफ़ी है।</string>
+    <string name="push_two_days_title">%1$s कदम बाकी</string>
+    <string name="push_two_days_body">दो दिन बचे हैं, हर किसी के लगभग %1$s।</string>
+    <string name="push_streak_title">लगातार %1$s हफ़्ते</string>
+    <string name="push_streak_body">%1$s कदम और, तो %2$s की स्ट्रीक बनी रहेगी।</string>
+    <string name="push_walk_counts_title">आज हर सैर मायने रखती है</string>
+    <string name="push_walk_counts_body">%1$s लक्ष्य से %2$s कदम दूर है।</string>
+    <string name="push_new_week_title">%1$s का नया हफ़्ता</string>
+    <string name="push_new_week_body">पिछला हफ़्ता: %1$s कदम। इस हफ़्ते का लक्ष्य: %2$s।</string>
+    <string name="push_new_week_first_body">इस हफ़्ते का लक्ष्य: %1$s कदम।</string>
+    <string name="push_shield_title">शील्ड ने आपकी स्ट्रीक बचा ली</string>
+    <string name="push_shield_body">%1$s लक्ष्य से चूक गया, पर स्ट्रीक बनी हुई है।</string>
+    <string name="push_solo_title">%1$s को अपने लोग चाहिए</string>
+    <string name="push_solo_body">अपना आमंत्रण भेजें। साझा लक्ष्य निभाना आसान होता है।</string>
+
+    <string name="notif_your_group">आपका समूह</string>
+</resources>

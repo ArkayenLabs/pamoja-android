@@ -31,7 +31,7 @@
         <item quantity="other">Caminó %1$d de %2$d días hasta ahora</item>
     </plurals>
     <string name="social_primer_title">Entérate cuando te aplaudan</string>
-    <string name="social_primer_body">Activa las notificaciones para recibir aplausos y avisos de tu grupo, incluso con Pamoja cerrado.</string>
+    <string name="social_primer_body">Activa las notificaciones para saber cuándo tu grupo te aplaude.</string>
 
     <!-- Group details -->
     <string name="details_weekly_card">Tarjeta semanal</string>

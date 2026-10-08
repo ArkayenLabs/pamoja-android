@@ -8,6 +8,7 @@ import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.util.NotificationCategory
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.WorkManagerScheduler
+import com.pamoja.app.util.isQuietHours
 import com.pamoja.app.util.minuteOfDayToTime
 import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,7 +18,16 @@ import kotlinx.coroutines.runBlocking
 import java.time.LocalTime
 import javax.inject.Inject
 
-/** Receives Pamoja data messages in foreground, background, and cold states. */
+/**
+ * Receives Pamoja pushes while the app is running, and data-only ones always.
+ *
+ * Since 2026-10 the server sends most pushes as notification messages (an
+ * android.notification block with channel, tag and loc keys) to app versions
+ * that registered for them. While the app is in the background FCM draws
+ * those itself and this is never called; MainActivity records them in the
+ * Updates list when they are tapped or still in the tray. In the foreground,
+ * and for every data-only push, they arrive here.
+ */
 @AndroidEntryPoint
 class PamojaFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -56,9 +66,7 @@ class PamojaFirebaseMessagingService : FirebaseMessagingService() {
                 return@runBlocking
             }
 
-            notificationHelper.show(remote.notification)
-            userPreferences.saveLastNotificationTime(System.currentTimeMillis())
-            userPreferences.incrementIgnoredNotifications()
+            notificationHelper.show(notificationHelper.localized(remote), remote.eventId)
             Log.i(TAG, "Remote notification shown [${remote.notification.category}]")
         }
     }
@@ -72,14 +80,11 @@ class PamojaFirebaseMessagingService : FirebaseMessagingService() {
     private suspend fun isQuietGroupActivity(category: NotificationCategory): Boolean {
         if (category != NotificationCategory.GROUP_ACTIVITY) return false
 
-        val now = LocalTime.now()
-        val start = minuteOfDayToTime(userPreferences.quietHoursStartMinute.first())
-        val end = minuteOfDayToTime(userPreferences.quietHoursEndMinute.first())
-        return if (start <= end) {
-            now >= start && now < end
-        } else {
-            now >= start || now < end
-        }
+        return isQuietHours(
+            now = LocalTime.now(),
+            start = minuteOfDayToTime(userPreferences.quietHoursStartMinute.first()),
+            end = minuteOfDayToTime(userPreferences.quietHoursEndMinute.first()),
+        )
     }
 
     private companion object {

@@ -5,6 +5,10 @@
     a stripped licence blob would crash a legally required screen in production
     while every debug build kept working. Named explicitly rather than trusted
     to reference analysis.
+
+    The push_* strings are named only by the server (title_loc_key and
+    body_loc_key), and FCM looks them up by name. Stripped, every push would
+    fall back to the server's English, in release only.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@raw/third_party_licenses,@raw/third_party_license_metadata" />
+    tools:keep="@raw/third_party_licenses,@raw/third_party_license_metadata,@string/push_*" />

@@ -72,7 +72,7 @@
     <string name="home_tour_week_title">Your week together</string>
     <string name="home_tour_week_body">Everyone\'s steps add up here, toward one goal.</string>
     <string name="home_tour_today_title">Who\'s walked today</string>
-    <string name="home_tour_today_body">A tick means they\'ve walked. Nudge anyone who hasn\'t yet.</string>
+    <string name="home_tour_today_body">A tick means they\'ve walked. Remind anyone who hasn\'t yet.</string>
     <string name="home_tour_group_title">Your groups</string>
     <string name="home_tour_group_body">Tap the name to switch groups or start a new one.</string>
 </resources>

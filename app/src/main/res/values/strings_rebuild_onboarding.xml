@@ -7,7 +7,7 @@
     <string name="start_get_started">Get started</string>
     <string name="start_have_invite">I have an invite link</string>
     <string name="start_cheers_headline">Someone noticed your walk</string>
-    <string name="start_cheers_body">Send a cheer when someone walks, or a quick nudge to a friend who hasn\'t yet.</string>
+    <string name="start_cheers_body">Send a cheer when someone walks, or remind a friend who hasn\'t yet.</string>
     <string name="start_widget_headline">Your group on your home screen</string>
     <string name="start_widget_body">See who\'s walked today without opening the app.</string>
     <string name="start_next">Next</string>

@@ -95,7 +95,7 @@ class StepSyncWorkerEmulatorTest {
         context: android.content.Context,
     ) : SmartNotificationHelper(context, ActivityLogStore(context)) {
         val posted = mutableListOf<PamojaNotification>()
-        override fun show(notification: PamojaNotification) { posted += notification }
+        override fun show(notification: PamojaNotification, eventId: String?) { posted += notification }
         override fun mutedCategories() = emptySet<com.pamoja.app.util.NotificationCategory>()
     }
 
@@ -336,18 +336,25 @@ class StepSyncWorkerEmulatorTest {
         )
     }
 
-    /** Notification checks must not depend on visiting the group screen first. */
+    /**
+     * The first sync is confirmed, about a group the user really is in, even
+     * when no group screen was ever opened. Later syncs say nothing: the rest
+     * comes from the server.
+     */
     @Test
-    fun aRunWithNoActiveGroup_selectsAnExistingGroupForNotifications() = runBlocking {
+    fun theFirstSync_confirmsForAnExistingGroup_andLaterSyncsStayQuiet() = runBlocking {
         val user = newUser()
         val group = createGroup(user)
         val preferences = UserPreferences(context)
-
+        // An empty window, so the test cannot land in quiet hours.
+        preferences.saveQuietHours(0, 0)
         assertEquals(null, preferences.activeGroupId.first())
 
-        val result = buildWorker(user, steps = 3_200).doWork()
+        val notifier = RecordingNotifier(context)
+        assertEquals(ListenableWorker.Result.success(), buildWorker(user, 3_200, notifier).doWork())
+        assertEquals(listOf(group.groupId), notifier.posted.map { it.groupId })
 
-        assertEquals(ListenableWorker.Result.success(), result)
-        assertEquals(group.groupId, preferences.activeGroupId.first())
+        assertEquals(ListenableWorker.Result.success(), buildWorker(user, 4_100, notifier).doWork())
+        assertEquals(1, notifier.posted.size)
     }
 }

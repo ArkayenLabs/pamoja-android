@@ -1,5 +1,6 @@
 package com.pamoja.app.util
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -14,6 +16,8 @@ import com.pamoja.app.MainActivity
 import com.pamoja.app.R
 import com.pamoja.app.data.local.activity.ActivityLogStore
 import com.pamoja.app.domain.model.NotificationCategory as DomainNotificationCategory
+import com.pamoja.app.notifications.RemoteNotification
+import com.pamoja.app.notifications.RemoteNotificationParser
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,10 +27,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Posts notifications produced by [SmartNotificationEngine].
+ * Posts notifications: the engine's, the trial reminder, and pushes that
+ * arrive while the app is running. Pushes that arrive while it is not are
+ * drawn by FCM itself, on the same channels.
  *
  * Four separate channels, deliberately. Android lets users disable channels
- * individually, with a single channel, someone annoyed by daily nudges has to
+ * individually, with a single channel, someone annoyed by daily reminders has to
  * mute *everything*, including the group-hit-its-goal moment that is the
  * emotional payoff of the product. Splitting them lets the reminder channel
  * absorb the annoyance while the high-value channels survive.
@@ -56,35 +62,38 @@ open class SmartNotificationHelper @Inject constructor(
     private fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
+        // Names and descriptions are the Settings rows' own strings, so the
+        // two screens agree, in the reader's language. Android renames an
+        // existing channel when these change; it never changes its importance.
         val channels = listOf(
             // Rarely muted, genuinely good news. Worth a vibration.
             channel(
                 id = NotificationCategory.ACHIEVEMENT.channelId,
-                name = "Goals and achievements",
-                description = "When your group hits its weekly goal, and streak milestones.",
+                name = R.string.notif_achievement_title,
+                description = R.string.notif_achievement_sub,
                 importance = NotificationManager.IMPORTANCE_DEFAULT,
                 vibrate = true,
             ),
             // Social news from real people, relevant, so default importance.
             channel(
                 id = NotificationCategory.GROUP_ACTIVITY.channelId,
-                name = "Group activity",
-                description = "When someone joins your group or passes you on the leaderboard.",
+                name = R.string.notif_group_title,
+                description = R.string.notif_group_sub,
                 importance = NotificationManager.IMPORTANCE_DEFAULT,
                 vibrate = false,
             ),
             // The category people mute. Low importance: no sound, no peeking.
             channel(
                 id = NotificationCategory.REMINDER.channelId,
-                name = "Step reminders",
-                description = "Occasional nudges when your group is close to its goal.",
+                name = R.string.notif_reminder_title,
+                description = R.string.notif_reminder_sub,
                 importance = NotificationManager.IMPORTANCE_LOW,
                 vibrate = false,
             ),
             channel(
                 id = NotificationCategory.RECAP.channelId,
-                name = "Weekly recap",
-                description = "A Monday summary of how your group did last week.",
+                name = R.string.notif_recap_title,
+                description = R.string.notif_recap_sub,
                 importance = NotificationManager.IMPORTANCE_LOW,
                 vibrate = false,
             ),
@@ -100,13 +109,13 @@ open class SmartNotificationHelper @Inject constructor(
 
     private fun channel(
         id: String,
-        name: String,
-        description: String,
+        @StringRes name: Int,
+        @StringRes description: Int,
         importance: Int,
         vibrate: Boolean,
     ): NotificationChannel =
-        NotificationChannel(id, name, importance).apply {
-            this.description = description
+        NotificationChannel(id, context.getString(name), importance).apply {
+            this.description = context.getString(description)
             enableVibration(vibrate)
             // Health-adjacent content should not be readable from a locked screen.
             lockscreenVisibility = NotificationCompat.VISIBILITY_PRIVATE
@@ -150,8 +159,12 @@ open class SmartNotificationHelper @Inject constructor(
             putExtra(Settings.EXTRA_CHANNEL_ID, category.channelId)
         }
 
-    /** Posts a notification. No-ops if the user has revoked the permission. */
-    open fun show(notification: PamojaNotification) {
+    /**
+     * Posts a notification. No-ops if the user has revoked the permission.
+     * [eventId] is a push's own id, so the Updates list holds it once however
+     * it is seen (see [recordTrayNotifications]).
+     */
+    open fun show(notification: PamojaNotification, eventId: String? = null) {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
         val builder = NotificationCompat.Builder(context, notification.category.channelId)
@@ -184,10 +197,53 @@ open class SmartNotificationHelper @Inject constructor(
                     title = notification.title,
                     body = notification.body,
                     groupId = notification.groupId,
+                    eventId = eventId,
                 )
             }
         }
     }
+
+    /**
+     * Adds to the Updates list the pushes FCM drew while the app was not
+     * running, which never passed through [show]. Read off the tray, so a
+     * push swiped away before the app was next opened is missed; one that was
+     * tapped is recorded by [recordOpened] instead.
+     */
+    fun recordTrayNotifications() {
+        val delivered = runCatching { notificationManager.activeNotifications }.getOrNull() ?: return
+        delivered.forEach { posted ->
+            val (groupId, eventId) = RemoteNotificationParser.parseTrayTag(posted.tag) ?: return@forEach
+            val category = RemoteNotificationParser.categoryOfChannel(posted.notification.channelId)
+                ?: return@forEach
+            val extras = posted.notification.extras
+            val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: return@forEach
+            val body = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
+            scope.launch {
+                activityLog.record(category.toDomain(), title, body, groupId, eventId)
+            }
+        }
+    }
+
+    /** Records a tapped push, in this phone's language when it has the words. */
+    fun recordOpened(remote: RemoteNotification) {
+        val shown = localized(remote)
+        scope.launch {
+            activityLog.record(
+                category = shown.category.toDomain(),
+                title = shown.title,
+                body = shown.body,
+                groupId = shown.groupId,
+                eventId = remote.eventId,
+            )
+        }
+    }
+
+    /** The push's words from this build's strings, falling back to the server's English. */
+    fun localized(remote: RemoteNotification): PamojaNotification =
+        remote.notification.copy(
+            title = NotificationCopy.pushText(context, remote.title) ?: remote.notification.title,
+            body = NotificationCopy.pushText(context, remote.body) ?: remote.notification.body,
+        )
 
     /**
      * The engine's category as the domain's.

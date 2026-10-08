@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.preferences.UserPreferences
+import com.pamoja.app.notifications.FcmRegistrationManager
 import com.pamoja.app.util.NotificationCategory
 import com.pamoja.app.util.SmartNotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,6 +39,7 @@ data class NotificationSettingsUiState(
 class NotificationSettingsViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     private val notificationHelper: SmartNotificationHelper,
+    private val pushRegistration: FcmRegistrationManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NotificationSettingsUiState())
@@ -91,6 +93,8 @@ class NotificationSettingsViewModel @Inject constructor(
     fun setQuietHours(startMinute: Int, endMinute: Int) {
         viewModelScope.launch {
             userPreferences.saveQuietHours(startMinute, endMinute)
+            // The server holds reminders and tray pushes in quiet hours too.
+            pushRegistration.refresh()
         }
     }
 }

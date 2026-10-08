@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Every notification Pamoja sends (NOTIFICATIONS_PLAN.md §3).
+
+    The push_* names are an API, not just resources: functions-notifications
+    sends them as title_loc_key / body_loc_key, and the phone fills them in
+    from here, in the reader's language. Renaming one breaks every push that
+    names it (the phone then falls back to the server's English). They are
+    kept from the resource shrinker by res/raw/keep.xml, because nothing in
+    the code names them. notification-copy.test.ts in functions-notifications
+    checks the server's English fallbacks against this file.
+
+    Voice: from a person beats from the app, one reason and one number, gentle
+    on a hard day, collective not competitive. No emoji, no em dashes, no "I".
+-->
+<!-- Lint cannot see a name the server sends, hence UnusedResources. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en" tools:ignore="UnusedResources">
+    <!-- On this phone, after the first step sync. -->
+    <string name="notif_first_steps_title">Your steps are in</string>
+    <string name="notif_first_steps_body">%1$s steps today, counting for %2$s now.</string>
+    <string name="notif_first_ready_title">You\'re all set</string>
+    <string name="notif_first_ready_body">Your walks will count for %1$s from now on.</string>
+
+    <!-- Pushes about something a person did. %1$s is a first name, %2$s a group name. -->
+    <string name="push_joined_title">%1$s joined %2$s</string>
+    <string name="push_joined_second_body">There are two of you now. Walks are better with company.</string>
+    <!-- %1$s is the number of members, always 3 or more. -->
+    <string name="push_joined_body">%1$s of you now. Say hi on your next walk.</string>
+    <string name="push_goal_title">%1$s made it</string>
+    <string name="push_goal_body">%1$s steps this week, together. Take a bow.</string>
+    <string name="push_cheer_title">%1$s cheered your walk</string>
+    <string name="push_cheer_body">%1$s. Tap to cheer back.</string>
+    <string name="push_remind_title">%1$s: walk today?</string>
+    <string name="push_remind_body">%1$s is out walking. Join in when you can.</string>
+
+    <!-- Scheduled by the server, at most one a day, never in quiet hours. -->
+    <string name="push_last_day_title">Last day: %1$s steps to go</string>
+    <string name="push_last_day_body">About %1$s each. An evening walk would do it.</string>
+    <string name="push_two_days_title">%1$s steps to go</string>
+    <string name="push_two_days_body">Two days left, about %1$s each.</string>
+    <!-- %1$s is a number of weeks, always 2 or more. -->
+    <string name="push_streak_title">%1$s weeks in a row</string>
+    <string name="push_streak_body">%1$s steps keeps %2$s going this week.</string>
+    <string name="push_walk_counts_title">Every walk counts today</string>
+    <string name="push_walk_counts_body">%1$s is %2$s steps from the goal.</string>
+    <string name="push_new_week_title">New week for %1$s</string>
+    <string name="push_new_week_body">Last week: %1$s steps. This week\'s goal: %2$s.</string>
+    <string name="push_new_week_first_body">This week\'s goal: %1$s steps.</string>
+    <string name="push_shield_title">A shield kept your streak</string>
+    <string name="push_shield_body">%1$s missed the goal, but the streak lives.</string>
+    <string name="push_solo_title">%1$s needs its people</string>
+    <string name="push_solo_body">Send your invite. A shared goal is easier to keep.</string>
+
+    <!-- Stands in for a group with no name. -->
+    <string name="notif_your_group">Your group</string>
+</resources>

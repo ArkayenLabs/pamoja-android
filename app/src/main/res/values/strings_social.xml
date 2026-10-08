@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The social loop: cheers, nudges, day dots, streak and the weekly card (REBUILD_PLAN.md Phase 5). -->
+<!-- The social loop: cheers, reminders ("nudge" on the wire), day dots, streak and the weekly card (REBUILD_PLAN.md Phase 5). -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <!-- Home -->
     <plurals name="home_streak_weeks">
@@ -12,8 +12,8 @@
         <item quantity="one">%1$s, %2$s and %3$d more haven\'t walked yet</item>
         <item quantity="other">%1$s, %2$s and %3$d more haven\'t walked yet</item>
     </plurals>
-    <string name="home_nudge">Nudge</string>
-    <string name="home_nudged">Nudged</string>
+    <string name="home_nudge">Remind</string>
+    <string name="home_nudged">Reminded</string>
     <string name="home_cheer_from_one">%1$s cheered your walk</string>
     <plurals name="home_cheer_from_many">
         <item quantity="one">%1$s and %2$d other cheered you</item>
@@ -28,7 +28,7 @@
         <item quantity="other">Walked %1$d of %2$d days so far</item>
     </plurals>
     <string name="social_primer_title">Hear it when they cheer</string>
-    <string name="social_primer_body">Turn on notifications to get cheers and nudges from your group, even when Pamoja is closed.</string>
+    <string name="social_primer_body">Turn on notifications so you know when your group cheers you on.</string>
 
     <!-- Group details -->
     <string name="details_weekly_card">Weekly card</string>

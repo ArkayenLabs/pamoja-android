@@ -5,7 +5,7 @@
     <string name="widget_group_name">Your group</string>
     <string name="widget_today_name">You today</string>
     <string name="widget_hook_name">Group streak</string>
-    <string name="widget_group_description">Who has walked today and how the week is going. Nudge from your home screen.</string>
+    <string name="widget_group_description">Who has walked today and how the week is going. Remind people from your home screen.</string>
     <string name="widget_today_description">Your steps today, and cheers from your group.</string>
     <string name="widget_hook_description">How many weeks in a row your group has reached its goal.</string>
     <string name="widget_no_group_title">Walk together</string>
@@ -16,7 +16,7 @@
     <string name="widget_connect">Connect your steps in Pamoja</string>
     <string name="settings_widgets_title">Home screen widgets</string>
     <string name="settings_widgets_picker_title">Choose a widget</string>
-    <string name="settings_widgets_group_subtitle">Today\'s faces, the week\'s goal and Nudge</string>
+    <string name="settings_widgets_group_subtitle">Today\'s faces, the week\'s goal and Remind</string>
     <string name="settings_widgets_today_subtitle">Your steps, or a cheer to answer</string>
     <string name="settings_widgets_hook_subtitle">Weeks in a row your group reached its goal</string>
     <string name="settings_widgets_unavailable">Add it from your phone\'s widget picker.</string>

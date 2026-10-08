@@ -27,7 +27,7 @@
         <item quantity="other">अब तक %2$d में से %1$d दिन चले</item>
     </plurals>
     <string name="social_primer_title">शाबाशी मिलते ही जानें</string>
-    <string name="social_primer_body">Pamoja बंद होने पर भी अपने समूह से शाबाशी और याद दिलाने की सूचनाएँ पाने के लिए सूचनाएँ चालू करें।</string>
+    <string name="social_primer_body">सूचनाएँ चालू करें, ताकि पता चले जब आपका समूह आपको शाबाशी दे।</string>
 
     <!-- Group details -->
     <string name="details_weekly_card">साप्ताहिक कार्ड</string>

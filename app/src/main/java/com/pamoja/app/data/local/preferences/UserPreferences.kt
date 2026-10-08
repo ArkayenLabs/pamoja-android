@@ -40,7 +40,6 @@ class UserPreferences @Inject constructor(
         val KEY_ACTIVE_GROUP_ID          = stringPreferencesKey("active_group_id")
         val KEY_STEP_BASELINE_DATE       = stringPreferencesKey("step_baseline_date")
         val KEY_STEP_BASELINE_VALUE      = stringPreferencesKey("step_baseline_value")
-        val KEY_LAST_NOTIFICATION_TIME   = longPreferencesKey("last_notification_time")
 
         // Whether the notification primer has been shown. Not whether the
         // permission was granted, which the OS already knows: this only stops
@@ -60,14 +59,11 @@ class UserPreferences @Inject constructor(
         // Consecutive notifications sent without the user opening one.
         // Drives engagement backoff: if we are noise to someone, continuing to
         // send guarantees a mute or an uninstall.
-        val KEY_CONSECUTIVE_IGNORED      = intPreferencesKey("consecutive_ignored_notifications")
 
         // Last observed leaderboard position + group size. Comparing across
         // syncs is how we detect locally that someone overtook you, without
         // needing a server. Size is stored too: if the group changed size, a
         // rank shift may just be someone joining or leaving, not a real pass.
-        val KEY_LAST_KNOWN_RANK          = intPreferencesKey("last_known_rank")
-        val KEY_LAST_KNOWN_MEMBER_COUNT  = intPreferencesKey("last_known_member_count")
 
         // An invite code from a link or QR that we could not act on yet,
         // usually because the user had not finished onboarding. Held here so
@@ -114,12 +110,6 @@ class UserPreferences @Inject constructor(
     val stepBaselineDate: Flow<String?>  = context.dataStore.data.map { it[KEY_STEP_BASELINE_DATE] }
     val stepBaselineValue: Flow<Long>    = context.dataStore.data.map {
         it[KEY_STEP_BASELINE_VALUE]?.toLongOrNull() ?: 0L
-    }
-    val lastNotificationTime: Flow<Long> = context.dataStore.data.map {
-        it[KEY_LAST_NOTIFICATION_TIME] ?: 0L
-    }
-    val consecutiveIgnoredNotifications: Flow<Int> = context.dataStore.data.map {
-        it[KEY_CONSECUTIVE_IGNORED] ?: 0
     }
     val themePreference: Flow<ThemePreference> = context.dataStore.data.map {
         ThemePreference.fromName(it[KEY_THEME])
@@ -249,31 +239,6 @@ class UserPreferences @Inject constructor(
         return isNew
     }
 
-    /** Called when a notification is posted, assumed ignored until proven otherwise. */
-    suspend fun incrementIgnoredNotifications() {
-        context.dataStore.edit {
-            it[KEY_CONSECUTIVE_IGNORED] = (it[KEY_CONSECUTIVE_IGNORED] ?: 0) + 1
-        }
-    }
-
-    /** Called when the user opens the app from a notification. */
-    suspend fun resetIgnoredNotifications() {
-        context.dataStore.edit { it[KEY_CONSECUTIVE_IGNORED] = 0 }
-    }
-
-    /** 0 means "never recorded", no comparison is made on the first sync. */
-    val lastKnownRank: Flow<Int> = context.dataStore.data.map { it[KEY_LAST_KNOWN_RANK] ?: 0 }
-    val lastKnownMemberCount: Flow<Int> = context.dataStore.data.map {
-        it[KEY_LAST_KNOWN_MEMBER_COUNT] ?: 0
-    }
-
-    suspend fun saveLeaderboardPosition(rank: Int, memberCount: Int) {
-        context.dataStore.edit {
-            it[KEY_LAST_KNOWN_RANK] = rank
-            it[KEY_LAST_KNOWN_MEMBER_COUNT] = memberCount
-        }
-    }
-
     data class PendingInvite(
         val code: String,
         val savedAt: Long,
@@ -336,10 +301,6 @@ class UserPreferences @Inject constructor(
             it[KEY_STEP_BASELINE_DATE]  = date
             it[KEY_STEP_BASELINE_VALUE] = hardwareCount.toString()
         }
-    }
-
-    suspend fun saveLastNotificationTime(timestamp: Long) {
-        context.dataStore.edit { it[KEY_LAST_NOTIFICATION_TIME] = timestamp }
     }
 
     /**

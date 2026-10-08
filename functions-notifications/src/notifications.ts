@@ -1,4 +1,10 @@
-import {FieldValue, Timestamp, getFirestore} from "firebase-admin/firestore";
+import {
+  FieldPath,
+  FieldValue,
+  QueryDocumentSnapshot,
+  Timestamp,
+  getFirestore,
+} from "firebase-admin/firestore";
 import {getMessaging} from "firebase-admin/messaging";
 import {logger} from "firebase-functions/v2";
 import {
@@ -11,10 +17,18 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 
 import {
   PushPayload,
+  Registration,
   SIGNAL_RETENTION_MS,
+  TRAY_DELIVERY_VERSION,
+  buildFcmMessage,
   buildGoalReachedPush,
   buildMemberJoinedPush,
   buildSignalPush,
+  inQuietHours,
+  isMinuteOfDay,
+  isValidTimeZone,
+  localClock,
+  parseRegistration,
   parseSignal,
   walkedOn,
   isValidAppVersion,
@@ -22,11 +36,23 @@ import {
   isValidInstallationId,
   isValidIsoDate,
 } from "./notification-domain.js";
+import {
+  EVENING_HOUR,
+  RECAP_HOUR,
+  ReminderCandidate,
+  addDays,
+  daysLeftIn,
+  groupToday,
+  planReminder,
+} from "./reminders.js";
 
 const APP_PACKAGE = "com.arkayenlabs.pamoja";
 const FUNCTION_REGION = "asia-south1";
 const REGISTRATION_MAX_AGE_MS = 35 * 24 * 60 * 60 * 1_000;
 const MAX_REGISTRATIONS_PER_GROUP = 100;
+const EVENT_TTL_MS = 24 * 60 * 60 * 1_000;
+/** A reminder that lands hours late, at night, is worse than none. */
+const REMINDER_TTL_MS = 3 * 60 * 60 * 1_000;
 const RUNTIME_OPTIONS = {
   maxInstances: 10,
   memory: "256MiB" as const,
@@ -37,6 +63,10 @@ const RUNTIME_OPTIONS = {
 interface PushRegistrationData {
   installationId?: unknown;
   appVersion?: unknown;
+  delivery?: unknown;
+  timeZone?: unknown;
+  quietStartMinute?: unknown;
+  quietEndMinute?: unknown;
 }
 
 export const registerPushInstallation = onCall<PushRegistrationData>(
@@ -57,6 +87,15 @@ export const registerPushInstallation = onCall<PushRegistrationData>(
       );
     }
 
+    // Optional, sent by app versions from 1.1.2: what they can draw, and
+    // the local clock the scheduled reminders need. Absent means an older
+    // build, which keeps getting data-only pushes and no reminders. Merged,
+    // so the server's own reminderSent survives a re-registration; anything
+    // an older build does not send is removed rather than left stale.
+    const {delivery, timeZone, quietStartMinute, quietEndMinute} = request.data ?? {};
+    const optional = (valid: boolean, value: unknown) => valid ? value : FieldValue.delete();
+    const validDelivery = Number.isInteger(delivery) && (delivery as number) > 0 &&
+      (delivery as number) < 100;
     await getFirestore().collection("pushRegistrations")
       .doc(installationId)
       .set({
@@ -64,8 +103,12 @@ export const registerPushInstallation = onCall<PushRegistrationData>(
         userId,
         platform: "android",
         appVersion,
+        delivery: optional(validDelivery, delivery),
+        timeZone: optional(isValidTimeZone(timeZone), timeZone),
+        quietStartMinute: optional(isMinuteOfDay(quietStartMinute), quietStartMinute),
+        quietEndMinute: optional(isMinuteOfDay(quietEndMinute), quietEndMinute),
         updatedAt: FieldValue.serverTimestamp(),
-      });
+      }, {merge: true});
 
     return {registered: true};
   },
@@ -182,12 +225,12 @@ export const notifyGroupGoalReached = onDocumentUpdated(
 );
 
 /**
- * Pushes a cheer or nudge to its recipient, and stamps the expiry that a TTL
- * policy on the signals collection group's expireAt field uses to delete it
- * after two weeks.
+ * Pushes a cheer or reminder ("nudge" on the wire) to its recipient, and
+ * stamps the expiry that a TTL policy on the signals collection group's
+ * expireAt field uses to delete it after two weeks.
  *
- * Nothing is sent if either person has left the group since, and a nudge is
- * dropped if the recipient's own figures already show a walk that day.
+ * Nothing is sent if either person has left the group since, and a reminder
+ * is dropped if the recipient's own figures already show a walk that day.
  */
 export const notifySignalCreated = onDocumentCreated(
   {
@@ -305,35 +348,23 @@ async function sendToUsers(
   const staleBefore = Date.now() - REGISTRATION_MAX_AGE_MS;
   const staleRefs: FirebaseFirestore.DocumentReference[] = [];
   const registrations = snapshot.docs.flatMap((document) => {
-    const userId = stringOrNull(document.get("userId"));
-    const installationId = document.get("installationId");
-    const updatedAt = document.get("updatedAt");
-    const updatedAtMs = updatedAt instanceof Timestamp ? updatedAt.toMillis() : 0;
-
-    if (!userId || !isValidInstallationId(installationId) ||
-        updatedAtMs < staleBefore) {
+    const registration = parseRegistration(document.data());
+    if (!registration || updatedAtMillis(document) < staleBefore) {
       staleRefs.push(document.ref);
       return [];
     }
-    return [{ref: document.ref, userId, installationId}];
+    return [{ref: document.ref, registration}];
   });
   await deleteReferences(staleRefs);
   if (registrations.length === 0) return;
 
+  const nowMs = Date.now();
   const deliveries = await Promise.all(registrations.map(async (registration) => {
     try {
-      await getMessaging().send({
-        fid: registration.installationId,
-        data: {
-          ...payload,
-          recipientUid: registration.userId,
-        },
-        android: {
-          priority: "high",
-          ttl: 24 * 60 * 60 * 1_000,
-          restrictedPackageName: APP_PACKAGE,
-        },
-      });
+      await getMessaging().send(buildFcmMessage(registration.registration, payload, nowMs, {
+        packageName: APP_PACKAGE,
+        ttlMs: EVENT_TTL_MS,
+      }));
       return {registration, error: null};
     } catch (error) {
       return {registration, error};
@@ -362,6 +393,171 @@ async function sendToUsers(
     recipients: registrations.length,
     invalidRegistrations: invalidRefs.length,
   });
+}
+
+/**
+ * The scheduled reminder and weekly recap (reminders.ts), for app versions
+ * that registered a delivery version, a time zone and quiet hours. Runs
+ * hourly; each installation is considered only in the hour its own clock
+ * reads RECAP_HOUR or EVENING_HOUR, and hears at most one a day.
+ */
+export const sendScheduledReminders = onSchedule(
+  {
+    ...RUNTIME_OPTIONS,
+    schedule: "5 * * * *",
+    timeZone: "Etc/UTC",
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const firestore = getFirestore();
+    const nowMs = Date.now();
+    const staleBefore = nowMs - REGISTRATION_MAX_AGE_MS;
+    const candidatesByUser = new Map<string, Promise<ReminderCandidate[]>>();
+    let considered = 0;
+    let sent = 0;
+    let cursor: QueryDocumentSnapshot | undefined;
+
+    while (true) {
+      let query = firestore.collection("pushRegistrations")
+        .where("delivery", ">=", TRAY_DELIVERY_VERSION)
+        .orderBy("delivery")
+        .orderBy(FieldPath.documentId())
+        .limit(300);
+      if (cursor) query = query.startAfter(cursor);
+      const page = await query.get();
+      if (page.empty) break;
+      cursor = page.docs[page.docs.length - 1];
+
+      for (const document of page.docs) {
+        const registration = parseRegistration(document.data());
+        if (!registration?.timeZone || updatedAtMillis(document) < staleBefore) continue;
+        const clock = localClock(nowMs, registration.timeZone);
+        const localHour = Math.floor(clock.minuteOfDay / 60);
+        if (localHour !== RECAP_HOUR && localHour !== EVENING_HOUR) continue;
+        if (inQuietHours(registration, nowMs)) continue;
+        const reminderSent = sentLog(document.get("reminderSent"));
+        if (reminderSent.day === clock.date) continue;
+        considered++;
+
+        let candidates = candidatesByUser.get(registration.userId);
+        if (!candidates) {
+          candidates = loadCandidates(registration, clock.date, nowMs);
+          candidatesByUser.set(registration.userId, candidates);
+        }
+        const plan = planReminder({
+          userId: registration.userId,
+          localHour,
+          phoneToday: clock.date,
+          nowMs,
+          localDateIn: (zone) => localClock(nowMs, zone).date,
+          candidates: await candidates,
+          sent: reminderSent,
+        });
+        if (!plan) continue;
+
+        if (await sendOne(document.ref, registration, plan.push, nowMs)) {
+          sent++;
+          await document.ref.update({
+            reminderSent: {...reminderSent, day: clock.date, [plan.kind]: clock.date},
+          });
+        }
+      }
+    }
+    logger.info("Scheduled reminders completed", {considered, sent});
+  },
+);
+
+/** The user's groups, with what the planner needs, read once per run. */
+async function loadCandidates(
+  registration: Registration,
+  phoneToday: string,
+  nowMs: number,
+): Promise<ReminderCandidate[]> {
+  const firestore = getFirestore();
+  const memberships = await firestore.collection("memberships")
+    .where("userId", "==", registration.userId)
+    .limit(20)
+    .get();
+  const groupIds = memberships.docs
+    .map((document) => stringOrNull(document.get("groupId")))
+    .filter((groupId): groupId is string => groupId !== null && isValidGroupId(groupId));
+  if (groupIds.length === 0) return [];
+  const groups = await firestore.getAll(
+    ...groupIds.map((groupId) => firestore.collection("groups").doc(groupId)),
+  );
+
+  return Promise.all(groups.filter((group) => group.exists).map(async (group) => {
+    const membership = memberships.docs.find((document) => document.get("groupId") === group.id);
+    const base = {
+      groupId: group.id,
+      name: group.get("name"),
+      weeklyTarget: safePositiveInteger(group.get("weeklyTarget")),
+      weeklySteps: safeNonNegativeInteger(group.get("weeklySteps")),
+      weekStart: stringOrEmpty(group.get("weekStart")),
+      weekStartDay: group.get("weekStartDay"),
+      planningTimeZone: group.get("planningTimeZone"),
+      memberCount: safeNonNegativeInteger(group.get("memberCount")),
+      createdAtMs: safeNonNegativeInteger(group.get("createdAt")),
+      streakWeeks: safeNonNegativeInteger(group.get("streakWeeks")),
+      streakThroughWeek: stringOrEmpty(group.get("streakThroughWeek")),
+      lastShieldedWeek: stringOrEmpty(group.get("lastShieldedWeek")),
+      previousWeekTotal: null as number | null,
+    };
+    // Only the recap reads the finished week, and only on the week's first day.
+    const today = groupToday(base, phoneToday, (zone) => localClock(nowMs, zone).date);
+    if (daysLeftIn(base.weekStartDay, today) === 7) {
+      const summary = await group.ref.collection("weeks").doc(addDays(today, -7)).get();
+      if (summary.exists) base.previousWeekTotal = safeNonNegativeInteger(summary.get("totalSteps"));
+    }
+    return {
+      group: base,
+      membership: {
+        weeklySteps: safeNonNegativeInteger(membership?.get("weeklySteps")),
+        weekStart: stringOrEmpty(membership?.get("weekStart")),
+        todaySteps: safeNonNegativeInteger(membership?.get("todaySteps")),
+        todayDate: stringOrEmpty(membership?.get("todayDate")),
+      },
+    };
+  }));
+}
+
+/** Sends one scheduled push; false (and a dead registration removed) when it fails. */
+async function sendOne(
+  ref: FirebaseFirestore.DocumentReference,
+  registration: Registration,
+  push: PushPayload,
+  nowMs: number,
+): Promise<boolean> {
+  try {
+    await getMessaging().send(buildFcmMessage(registration, push, nowMs, {
+      packageName: APP_PACKAGE,
+      ttlMs: REMINDER_TTL_MS,
+    }));
+    return true;
+  } catch (error) {
+    if (isInvalidRegistrationError(error)) {
+      await deleteReferences([ref]);
+    } else {
+      // Not retried: the hour has passed, and a late reminder is no reminder.
+      logger.warn("Scheduled reminder not delivered", {category: push.category});
+    }
+    return false;
+  }
+}
+
+function sentLog(value: unknown): Record<string, string> {
+  if (typeof value !== "object" || value === null) return {};
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter((entry): entry is [string, string] => isValidIsoDate(entry[1])));
+}
+
+function updatedAtMillis(document: FirebaseFirestore.DocumentSnapshot): number {
+  const updatedAt = document.get("updatedAt");
+  return updatedAt instanceof Timestamp ? updatedAt.toMillis() : 0;
+}
+
+function stringOrEmpty(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 async function deleteRegistrationsForUser(userId: string): Promise<void> {

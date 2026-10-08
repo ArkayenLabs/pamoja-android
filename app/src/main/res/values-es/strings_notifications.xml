@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- See values/strings_notifications.xml: the push_* names are sent by the server. Needs a native read. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <string name="notif_first_steps_title">Tus pasos ya llegaron</string>
+    <string name="notif_first_steps_body">%1$s pasos hoy, ya suman para %2$s.</string>
+    <string name="notif_first_ready_title">Todo listo</string>
+    <string name="notif_first_ready_body">Desde ahora, tus caminatas cuentan para %1$s.</string>
+
+    <string name="push_joined_title">%1$s se unió a %2$s</string>
+    <string name="push_joined_second_body">Ya son dos. Caminar acompañado sienta mejor.</string>
+    <string name="push_joined_body">Ya son %1$s. Dale la bienvenida en tu próxima caminata.</string>
+    <string name="push_goal_title">%1$s lo logró</string>
+    <string name="push_goal_body">%1$s pasos esta semana, entre todos. Bien hecho.</string>
+    <string name="push_cheer_title">%1$s aplaudió tu caminata</string>
+    <string name="push_cheer_body">%1$s. Toca para aplaudir también.</string>
+    <string name="push_remind_title">%1$s: ¿caminas hoy?</string>
+    <string name="push_remind_body">%1$s está caminando. Súmate cuando puedas.</string>
+
+    <string name="push_last_day_title">Último día: faltan %1$s pasos</string>
+    <string name="push_last_day_body">Unos %1$s cada uno. Con un paseo esta tarde, listo.</string>
+    <string name="push_two_days_title">Faltan %1$s pasos</string>
+    <string name="push_two_days_body">Quedan dos días, unos %1$s cada uno.</string>
+    <string name="push_streak_title">%1$s semanas seguidas</string>
+    <string name="push_streak_body">Con %1$s pasos más, %2$s sigue en racha.</string>
+    <string name="push_walk_counts_title">Hoy cada paseo cuenta</string>
+    <string name="push_walk_counts_body">A %1$s le faltan %2$s pasos para la meta.</string>
+    <string name="push_new_week_title">Nueva semana para %1$s</string>
+    <string name="push_new_week_body">La semana pasada: %1$s pasos. Meta de esta semana: %2$s.</string>
+    <string name="push_new_week_first_body">Meta de esta semana: %1$s pasos.</string>
+    <string name="push_shield_title">Un escudo salvó tu racha</string>
+    <string name="push_shield_body">%1$s no llegó a la meta, pero la racha sigue.</string>
+    <string name="push_solo_title">%1$s necesita a su gente</string>
+    <string name="push_solo_body">Envía tu invitación. Una meta compartida se cumple mejor.</string>
+
+    <string name="notif_your_group">Tu grupo</string>
+</resources>

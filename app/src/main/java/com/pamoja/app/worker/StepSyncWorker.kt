@@ -22,6 +22,7 @@ import com.pamoja.app.domain.analytics.AnalyticsManager
 import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.SmartNotificationEngine
 import com.pamoja.app.util.NotificationContext
+import com.pamoja.app.util.NotificationCopy
 import com.pamoja.app.util.minuteOfDayToTime
 import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.assisted.Assisted
@@ -235,23 +236,22 @@ class StepSyncWorker @AssistedInject constructor(
         }
     }
 
+    /**
+     * The one notification this phone still decides for itself: confirming
+     * the first sync. Reminders, recaps and everything about other people
+     * come from functions-notifications (NOTIFICATIONS_PLAN.md), so nothing
+     * is read here on any later sync.
+     */
     private suspend fun checkAndTriggerNotification(
         userId: String,
         todaySteps: Long,
         isFirstEverSync: Boolean,
     ) {
+        if (!isFirstEverSync) return
         try {
-            // Frequency, quiet hours, actionable-window and engagement backoff
-            // are all decided inside SmartNotificationEngine, it needs the full
-            // picture to make that call, so we only gather data here.
-            val lastTime = userPreferences.lastNotificationTime.firstOrNull() ?: 0L
-            val currentTime = System.currentTimeMillis()
-
-            // Notifications used to depend on opening a group screen at least
-            // once, because that was the only place activeGroupId was saved.
-            // A person who created or joined a group and stayed on Home could
-            // therefore sync forever without this engine running. Resolve the
-            // preference against current memberships and choose a safe fallback.
+            // Not only the group last opened: a person who created or joined a
+            // group and stayed on Home never saved one. Resolve the preference
+            // against current memberships and choose a safe fallback.
             val groups = getUserGroupsUseCase(userId).firstOrNull().orEmpty()
             if (groups.isEmpty()) {
                 Log.d(TAG, "No groups available. Skipping notification check.")
@@ -259,169 +259,30 @@ class StepSyncWorker @AssistedInject constructor(
             }
             val preferredGroupId = userPreferences.activeGroupId.firstOrNull()
             val group = groups.firstOrNull { it.groupId == preferredGroupId } ?: groups.first()
-            val activeGroupId = group.groupId
-            if (activeGroupId != preferredGroupId) {
-                userPreferences.saveActiveGroupId(activeGroupId)
-            }
 
-            // Ranking comes from the memberships, which carry each member's own
-            // published total. Reading their step documents is no longer possible
-            // and no longer necessary.
-            val memberships = getGroupMembershipsUseCase(activeGroupId).firstOrNull() ?: return
-            if (memberships.isEmpty()) return
-
-            // Calculate statistics
-            val today = LocalDate.now()
-            val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
-            val reportingDate = WeekWindow.todayFor(group)
-            val thisWeek = WeekWindow.startOf(group.startDay, reportingDate)
-
-            // Map members to their weekly step counts
-            data class MemberWeekly(val userId: String, val name: String, val steps: Long)
-            val membersData = memberships.map { membership ->
-                MemberWeekly(
-                    membership.userId,
-                    membership.displayName,
-                    // Only counted when the marker says it is this week. A member
-                    // who has not synced since the rollover carries last week's
-                    // number, and ranking against that would be wrong.
-                    membership.weeklySteps.takeIf { membership.weekStart == thisWeek } ?: 0L,
+            val notice = SmartNotificationEngine.select(
+                NotificationContext(
+                    groupId = group.groupId,
+                    groupName = group.name,
+                    userStepsToday = todaySteps,
+                    isFirstEverSync = true,
+                    now = LocalTime.now(),
+                    // Read from the Android notification channels, which are
+                    // what the user actually sets, here or in system settings.
+                    mutedCategories = smartNotificationHelper.mutedCategories(),
+                    quietStart = minuteOfDayToTime(
+                        userPreferences.quietHoursStartMinute.firstOrNull() ?: (22 * 60)
+                    ),
+                    quietEnd = minuteOfDayToTime(
+                        userPreferences.quietHoursEndMinute.firstOrNull() ?: (8 * 60)
+                    ),
                 )
-            }.sortedByDescending { it.steps }
+            ) ?: return
 
-            // Find ranks and overtake targets
-            val userIndex = membersData.indexOfFirst { it.userId == userId }
-            val userRank = if (userIndex != -1) userIndex + 1 else membersData.size
-            val teamAverage = if (membersData.isNotEmpty()) membersData.map { it.steps }.average().toLong() else 0L
-
-            var stepsToOvertake = 0L
-            var nextMemberName: String? = null
-            if (userIndex > 0) {
-                // Member at index - 1 is the one right ahead
-                val targetMember = membersData[userIndex - 1]
-                stepsToOvertake = (targetMember.steps - (membersData[userIndex].steps)).coerceAtLeast(0L)
-                nextMemberName = targetMember.name
-            }
-
-            var memberBehindName: String? = null
-            var stepsAheadOfMemberBehind = 0L
-            if (userIndex == 0 && membersData.size > 1) {
-                val memberBehind = membersData[1]
-                memberBehindName = memberBehind.name
-                stepsAheadOfMemberBehind =
-                    (membersData[0].steps - memberBehind.steps).coerceAtLeast(0L)
-            }
-
-            val userName = userPreferences.userName.firstOrNull() ?: "there"
-            val weeklyGoal = group.weeklyTarget.toLong()
-            val groupStepsTotal = membersData.sumOf { it.steps }
-            val groupAgeMs = currentTime - group.createdAt
-            val userStepsThisWeek = membersData.firstOrNull { it.userId == userId }?.steps ?: 0L
-
-            // Days remaining in the group's week, inclusive of today. Was
-            // `8 - today.dayOfWeek.value`, which silently assumed Monday and
-            // would have told a Sunday-start group it had one day left on its
-            // first day.
-            val daysLeftInWeek = WeekWindow.daysLeftIn(group.startDay, reportingDate)
-
-            // ── Detect locally that someone overtook this user ───────────────
-            // No server needed: compare our leaderboard position against the one
-            // recorded at the previous sync.
-            //
-            // Guarded on member count being unchanged. If someone joined or left,
-            // everyone's rank shifts without anyone actually being overtaken, and
-            // telling a user "Priya passed you" when Priya simply joined would be
-            // both wrong and discouraging.
-            val previousRank = userPreferences.lastKnownRank.firstOrNull() ?: 0
-            val previousMemberCount = userPreferences.lastKnownMemberCount.firstOrNull() ?: 0
-
-            val overtakenBy: String? = if (
-                previousRank > 0 &&
-                previousMemberCount == membersData.size &&
-                userRank > previousRank &&
-                userIndex > 0
-            ) {
-                // Whoever now sits directly ahead of us is the one who passed.
-                membersData[userIndex - 1].name
-            } else null
-
-            val userJustTookLead =
-                previousRank > 1 &&
-                    previousMemberCount == membersData.size &&
-                    userRank == 1
-
-            userPreferences.saveLeaderboardPosition(userRank, membersData.size)
-
-            val context = NotificationContext(
-                userName = userName,
-                groupId = activeGroupId,
-                groupName = group.name,
-                memberCount = membersData.size,
-                groupAgeMs = groupAgeMs,
-                weeklyGoal = weeklyGoal,
-                groupStepsTotal = groupStepsTotal,
-                userStepsThisWeek = userStepsThisWeek,
-                userStepsToday = todaySteps,
-                daysLeftInWeek = daysLeftInWeek,
-                memberJustAheadName = nextMemberName,
-                stepsToOvertakeMemberAhead = stepsToOvertake,
-                memberWhoJustPassedYouName = overtakenBy,
-                userJustTookLead = userJustTookLead,
-                memberJustBehindName = memberBehindName,
-                stepsAheadOfMemberBehind = stepsAheadOfMemberBehind,
-                // Cross-device joins and group-goal crossings are owned by the
-                // Firestore-triggered FCM path. Supplying them here as well
-                // would produce a second local notification on the syncing phone.
-                isFirstEverSync = isFirstEverSync,
-                // currentStreakDays and streakAtRiskToday are deliberately left
-                // at their defaults, which makes the streak branch in
-                // SmartNotificationEngine unreachable. Nothing records a streak:
-                // there is no per-day goal and no history of past weeks to count
-                // from. Wiring this needs that data to exist first, and the
-                // engine branch is kept because it is what will read it.
-                now = LocalTime.now(),
-                today = today.dayOfWeek,
-                hoursSinceLastNotification =
-                    if (lastTime == 0L) Long.MAX_VALUE
-                    else (currentTime - lastTime) / (60 * 60 * 1000L),
-                consecutiveIgnored = userPreferences.consecutiveIgnoredNotifications.firstOrNull() ?: 0,
-                // Day of year rotates the wording so repeated notification types
-                // don't read identically every time.
-                rotationSeed = today.dayOfYear,
-                // Read from the Android notification channels, which are what
-                // the user actually sets, in our Settings screen or in the
-                // system's. Previously a DataStore copy, which could disagree
-                // with the OS in either direction: a category muted in Android
-                // that the engine still selected and posted into a void, or one
-                // muted here that Android would happily have delivered.
-                mutedCategories = smartNotificationHelper.mutedCategories(),
-                quietStart = minuteOfDayToTime(
-                    userPreferences.quietHoursStartMinute.firstOrNull() ?: (22 * 60)
-                ),
-                quietEnd = minuteOfDayToTime(
-                    userPreferences.quietHoursEndMinute.firstOrNull() ?: (8 * 60)
-                ),
-            )
-
-            val notification = SmartNotificationEngine.select(context)
-            if (notification == null) {
-                Log.d(TAG, "Engine chose to stay silent, nothing worth sending right now.")
-                return
-            }
-
-            smartNotificationHelper.show(notification)
-            userPreferences.saveLastNotificationTime(currentTime)
-            // Optimistically count this as ignored; MainActivity resets the
-            // counter to 0 when the user actually opens from a notification.
-            userPreferences.incrementIgnoredNotifications()
-            // The category, never the title. Several titles interpolate another
-            // group member's first name (SmartNotificationEngine's "$who just
-            // passed you", "$who joined"), and logcat is readable by anyone
-            // holding the device with debugging on and is bundled into
-            // `adb bugreport`. Same rule as the step count above: log that it
-            // happened, never what it said.
-            Log.i(TAG, "Notification sent [${notification.category}]")
-
+            smartNotificationHelper.show(NotificationCopy.render(applicationContext, notice))
+            // The category, never the text: the body names a group, and logcat
+            // is readable with debugging on and bundled into `adb bugreport`.
+            Log.i(TAG, "Notification sent [${notice.category}]")
         } catch (e: Exception) {
             Log.e(TAG, "Error building notification", e)
         }

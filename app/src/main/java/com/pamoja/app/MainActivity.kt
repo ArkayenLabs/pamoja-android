@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.pamoja.app.data.local.install.InstallReferrerReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.notifications.RemoteNotificationParser
 import com.pamoja.app.ui.PamojaNavGraph
 import com.pamoja.app.ui.Screen
 import com.pamoja.app.ui.openGroupHome
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var firebaseAuth: FirebaseAuth
     @Inject lateinit var workManagerScheduler: WorkManagerScheduler
     @Inject lateinit var installReferrerReader: InstallReferrerReader
+    @Inject lateinit var notificationHelper: SmartNotificationHelper
 
     private val updateGate: UpdateGateViewModel by viewModels()
 
@@ -273,6 +275,9 @@ class MainActivity : AppCompatActivity() {
         PamojaWidgetRenderer.updateAll(applicationContext)
         if (firebaseAuth.currentUser == null) return
 
+        // Pushes FCM drew while the app was closed never passed through the
+        // app, so the Updates list picks them up from the tray here.
+        notificationHelper.recordTrayNotifications()
         workManagerScheduler.scheduleStepSync()
 
         lifecycleScope.launch {
@@ -293,12 +298,27 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
 
-        // Notification tap. This is also the only reliable signal that our
-        // notifications are actually landing, so it resets the backoff counter
-        // that would otherwise eventually silence us.
+        // A tray notification FCM drew while the app was in the background.
+        // Its data arrives as extras, and goes through the same strict parser
+        // as a push the app receives itself, recipient check included.
+        val push = RemoteNotificationParser.parse(
+            RemoteNotificationParser.KEYS.mapNotNull { key ->
+                intent.getStringExtra(key)?.let { key to it }
+            }.toMap(),
+        )
+        if (push != null) {
+            // Cleared so a configuration change does not replay the tap.
+            RemoteNotificationParser.KEYS.forEach(intent::removeExtra)
+            if (push.recipientUid == firebaseAuth.currentUser?.uid) {
+                notificationHelper.recordOpened(push)
+                push.notification.groupId?.let { launchTarget.value = LaunchTarget.OpenGroup(it) }
+            }
+            return
+        }
+
+        // A notification the app drew itself.
         val groupId = intent.getStringExtra(SmartNotificationHelper.EXTRA_GROUP_ID)
         if (!groupId.isNullOrBlank()) {
-            lifecycleScope.launch { userPreferences.resetIgnoredNotifications() }
             launchTarget.value = LaunchTarget.OpenGroup(groupId)
             // Cleared so a configuration change does not replay the navigation.
             intent.removeExtra(SmartNotificationHelper.EXTRA_GROUP_ID)

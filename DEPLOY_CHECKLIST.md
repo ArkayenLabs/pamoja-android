@@ -76,7 +76,11 @@ production build (1.0.12) and its listing.
   same flags as 1.1.1 (`-PpamojaVersionCode=19 -PpamojaVersionName=1.1.2
   -PtogetherTrailEnabled=true`, sales on). First build that registers
   `delivery: 2`, so the first to get tray-drawn pushes and scheduled
-  reminders. Not uploaded yet.
+  reminders. Uploaded to internal testing by the user 2026-10-08.
+- **1.1.3 (20)** built 2026-10-08 at `4bbe8b6`:
+  `design/release-builds/pamoja-1.1.3-20-internal.aab`, same flags. Adds the
+  background-restriction card in Settings (ColorOS, MIUI, vivo, Samsung,
+  Huawei/Honor) and the "Remind" widget preview. Not uploaded yet.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
   17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
   production later.

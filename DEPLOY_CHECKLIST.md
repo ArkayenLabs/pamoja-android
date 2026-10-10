@@ -91,7 +91,17 @@ production build (1.0.12) and its listing.
   created or deleted, 30 live, no errors right after. Older builds are
   unaffected (backoff only for delivery 3). Also: notifications follow the
   app's language on Android 12-, Hindi and Spanish widget previews.
-  Not uploaded yet.
+  Not uploaded yet; superseded by 1.1.5.
+- **1.1.5 (22)** built 2026-10-10 at `6a0c4f1`:
+  `design/release-builds/pamoja-1.1.5-22-internal.aab`, same flags
+  (`-PpamojaVersionCode=22 -PpamojaVersionName=1.1.5
+  -PtogetherTrailEnabled=true`). "High five" instead of "Cheer", the new
+  Remind line, and the goal-reached moment (GoalCelebration). Its copy
+  needed `functions:notifications` redeployed from `6a0c4f1`: done
+  2026-10-10 ~11:38 UTC with the user's OK, 10 updated, none created or
+  deleted, 30 live, no errors after. The first try failed with "User code
+  failed to load" while a Gradle build ran; the retry used
+  `FUNCTIONS_DISCOVERY_TIMEOUT=120` on an idle machine. Not uploaded yet.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
   17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
   production later.

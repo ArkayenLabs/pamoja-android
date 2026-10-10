@@ -91,8 +91,8 @@ on a device. 1.1.4 (21) built: `design/release-builds/pamoja-1.1.4-21-internal.a
   `push_quiet_*` once, then nothing until a delivery-3 build reports an open
   (at most every 6 hours, from `onResume`). Builds below delivery 3 are never
   silenced, since they cannot reset the count. Pushes from people never count.
-- **2026-10-10 (uncommitted, needs 1.1.5 and a `functions:notifications`
-  deploy):** "Cheer" became **"High five"** everywhere people see it (user
+- **2026-10-10 (`6a0c4f1`, in 1.1.5; `functions:notifications` deployed
+  ~11:38 UTC):** "Cheer" became **"High five"** everywhere people see it (user
   picked it; "cheered you" is not how people talk, and Fitbit and Nike use
   "Cheer"). Wire value, keys and resource names stay `cheer`. The push body
   no longer names the group but the server still sends it as an argument,

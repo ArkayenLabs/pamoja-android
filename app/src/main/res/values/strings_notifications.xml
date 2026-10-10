@@ -50,6 +50,9 @@
     <string name="push_shield_body">%1$s missed the goal, but the streak lives.</string>
     <string name="push_solo_title">%1$s needs its people</string>
     <string name="push_solo_body">Send your invite. A shared goal is easier to keep.</string>
+    <!-- Once, after 8 scheduled reminders in a row went unopened; then silence until the app is opened. -->
+    <string name="push_quiet_title">We\'ll go quiet for now</string>
+    <string name="push_quiet_body">Your group\'s still here when you want it.</string>
 
     <!-- Stands in for a group with no name. -->
     <string name="notif_your_group">Your group</string>

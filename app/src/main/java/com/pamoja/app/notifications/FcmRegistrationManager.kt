@@ -40,6 +40,14 @@ class FcmRegistrationManager @Inject constructor(
     @Volatile
     private var installationId: String? = null
 
+    /** When this process last told the server the app was opened. */
+    @Volatile
+    private var lastOpenReportMs = 0L
+
+    /** An open seen before FCM gave an installation id; sent with the first upload. */
+    @Volatile
+    private var openPending = false
+
     private val started = AtomicBoolean(false)
 
     @Volatile
@@ -69,7 +77,21 @@ class FcmRegistrationManager @Inject constructor(
     fun onRegistered(installationId: String) {
         if (auth.currentUser == null || installationId.isBlank()) return
         this.installationId = installationId
-        upload(installationId)
+        upload(installationId, opened = openPending)
+        openPending = false
+    }
+
+    /**
+     * Tells the server the person opened the app, which is what resets its
+     * count of unopened reminders (it goes quiet after 8 in a row). Called on
+     * every resume; sent at most every [OPEN_REPORT_GAP_MS]. A registration
+     * alone cannot say this: background step syncs start the process too.
+     */
+    fun reportOpened(nowMs: Long = System.currentTimeMillis()) {
+        if (auth.currentUser == null || nowMs - lastOpenReportMs < OPEN_REPORT_GAP_MS) return
+        lastOpenReportMs = nowMs
+        val known = installationId
+        if (known != null) upload(known, opened = true) else openPending = true
     }
 
     /** Sends the registration again, after quiet hours change. */
@@ -84,11 +106,12 @@ class FcmRegistrationManager @Inject constructor(
         }
     }
 
-    private fun upload(installationId: String) {
+    private fun upload(installationId: String, opened: Boolean = false) {
         scope.launch {
             functions.getHttpsCallable(REGISTER_FUNCTION)
                 .call(
                     mapOf(
+                        "opened" to opened,
                         "installationId" to installationId,
                         "appVersion" to BuildConfig.VERSION_NAME,
                         "delivery" to DELIVERY_VERSION,
@@ -121,8 +144,13 @@ class FcmRegistrationManager @Inject constructor(
          * Updates, so the server may send notification messages and schedule
          * reminders for it. Older builds send nothing here and keep getting
          * data-only pushes, which their own code draws.
+         * 3: it also reports opens ([reportOpened]), so the server may stop
+         * scheduled reminders nobody opens. Never applied to a build that
+         * cannot report, or it would go quiet for good.
          */
-        const val DELIVERY_VERSION = 2
+        const val DELIVERY_VERSION = 3
+
+        const val OPEN_REPORT_GAP_MS = 6 * 60 * 60 * 1000L
         const val REGISTER_FUNCTION = "registerPushInstallation"
         const val UNREGISTER_FUNCTION = "unregisterPushInstallation"
     }

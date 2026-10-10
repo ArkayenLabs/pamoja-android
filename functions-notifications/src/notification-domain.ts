@@ -50,6 +50,8 @@ export const COPY = {
   push_shield_body: "%1$s missed the goal, but the streak lives.",
   push_solo_title: "%1$s needs its people",
   push_solo_body: "Send your invite. A shared goal is easier to keep.",
+  push_quiet_title: "We'll go quiet for now",
+  push_quiet_body: "Your group's still here when you want it.",
 } as const;
 
 export type CopyKey = keyof typeof COPY;
@@ -73,6 +75,13 @@ const MAX_ARG = 60;
  * here and keep getting data-only pushes, exactly as before.
  */
 export const TRAY_DELIVERY_VERSION = 2;
+
+/**
+ * The first app delivery version that reports when the app is opened, so
+ * scheduled reminders may stop when nobody opens them. Never applied to an
+ * older build: it cannot reset the count and would go quiet for good.
+ */
+export const OPENS_DELIVERY_VERSION = 3;
 
 const INSTALLATION_ID_PATTERN = /^[A-Za-z0-9_-]{1,200}$/;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

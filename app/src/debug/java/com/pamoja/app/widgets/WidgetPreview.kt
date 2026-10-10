@@ -84,7 +84,11 @@ object WidgetPreview {
      * device in light mode and once in dark (`adb shell cmd uimode night
      * yes|no`): RemoteViews.apply builds its own context, so it follows the
      * device's night mode, not a configuration context. Dark files get
-     * `_night`; they go to res/drawable-night-nodpi without it.
+     * `_night`; they go to res/drawable-night-nodpi without it. Hindi and
+     * Spanish: the same with `adb shell cmd locale set-app-locales
+     * com.arkayenlabs.pamoja --locales hi|es`, saved as lossless WebP in
+     * drawable-hi-nodpi / drawable-hi-night-nodpi (and es), where a dark
+     * image identical to the light one is left out.
      */
     fun export(context: Context, snapshot: WidgetSnapshot, dir: File) {
         dir.mkdirs()

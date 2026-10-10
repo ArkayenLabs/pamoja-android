@@ -30,6 +30,8 @@ const WALK_COUNTS_GAP_DAYS = 6;
 /** The empty-group invite reminder, on these days after creation only. */
 const SOLO_REMINDER_DAYS = new Set([1, 3, 7]);
 const DAY_MS = 24 * 60 * 60 * 1_000;
+/** Scheduled pushes in a row, unopened, before one last line and silence. */
+export const QUIET_AFTER = 8;
 
 const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 
@@ -64,7 +66,7 @@ export interface ReminderCandidate {
 }
 
 export type ReminderKind =
-  "shield" | "recap" | "streak" | "last-day" | "two-days" | "walk-counts" | "solo";
+  "shield" | "recap" | "streak" | "last-day" | "two-days" | "walk-counts" | "solo" | "going-quiet";
 
 export interface PlannedReminder {
   kind: ReminderKind;
@@ -254,6 +256,34 @@ function evening(
   }
 
   return null;
+}
+
+/**
+ * Honest backoff (NOTIFICATIONS_PLAN.md §4.4). [unopened] counts scheduled
+ * pushes sent since the app was last opened. Below [QUIET_AFTER] the plan
+ * goes out; at it, once, a line saying we will stop; above it, nothing until
+ * the app is opened again. Only for builds that report opens. Pushes from
+ * people (cheers, reminders, joins, goals) never count and never stop.
+ */
+export function applyBackoff(
+  plan: PlannedReminder | null,
+  unopened: number,
+  reportsOpens: boolean,
+  input: {userId: string; today: string},
+): PlannedReminder | null {
+  if (!plan || !reportsOpens || unopened < QUIET_AFTER) return plan;
+  if (unopened > QUIET_AFTER) return null;
+  return {
+    kind: "going-quiet",
+    push: payload({
+      kind: "reminder-going-quiet",
+      identity: `${input.userId}:${input.today}`,
+      category: "REMINDER",
+      groupId: plan.push.groupId,
+      title: {key: "push_quiet_title", args: []},
+      body: {key: "push_quiet_body", args: []},
+    }),
+  };
 }
 
 function rank(priority: number, kind: ReminderKind, push: PushPayload): Ranked {

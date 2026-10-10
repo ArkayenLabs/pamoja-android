@@ -3,9 +3,11 @@ import test from "node:test";
 
 import {
   EVENING_HOUR,
+  QUIET_AFTER,
   RECAP_HOUR,
   ReminderCandidate,
   ReminderGroup,
+  applyBackoff,
   daysLeftIn,
   planReminder,
   weekStartOf,
@@ -152,4 +154,23 @@ test("across groups the most useful reminder wins, and each person-day has one e
   const again = plan(SUNDAY, EVENING_HOUR, [quiet, close]);
   assert.equal(first?.kind, "last-day");
   assert.equal(first?.push.eventId, again?.push.eventId);
+});
+
+test("after eight unopened reminders, one honest line, then silence until the app is opened", () => {
+  const reminder = plan(SUNDAY, EVENING_HOUR, [candidate({weeklySteps: 61_000})]);
+  const today = {userId: "bob", today: SUNDAY};
+
+  assert.equal(applyBackoff(reminder, QUIET_AFTER - 1, true, today), reminder);
+  const last = applyBackoff(reminder, QUIET_AFTER, true, today);
+  assert.equal(last?.kind, "going-quiet");
+  assert.equal(last?.push.title, "We'll go quiet for now");
+  assert.equal(last?.push.body, "Your group's still here when you want it.");
+  assert.equal(last?.push.groupId, GROUP_ID);
+  assert.equal(applyBackoff(reminder, QUIET_AFTER + 1, true, today), null);
+  assert.equal(applyBackoff(null, QUIET_AFTER, true, today), null);
+});
+
+test("a build that cannot report opens is never silenced", () => {
+  const reminder = plan(SUNDAY, EVENING_HOUR, [candidate({weeklySteps: 61_000})]);
+  assert.equal(applyBackoff(reminder, 50, false, {userId: "bob", today: SUNDAY}), reminder);
 });

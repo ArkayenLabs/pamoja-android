@@ -59,8 +59,18 @@ open class SmartNotificationHelper @Inject constructor(
         createChannels()
     }
 
+    /**
+     * Writes the channel names again, in the language chosen now. Android
+     * keeps a channel's name until the app sets it, so after a language
+     * change the system's notification settings would otherwise keep the old
+     * one until the next process start. Importance is never touched.
+     */
+    fun refreshChannelNames() = createChannels()
+
     private fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        // The app's language, not the phone's, below Android 13 too.
+        val words = ContextCompat.getContextForLanguage(context)
 
         // Names and descriptions are the Settings rows' own strings, so the
         // two screens agree, in the reader's language. Android renames an
@@ -68,6 +78,7 @@ open class SmartNotificationHelper @Inject constructor(
         val channels = listOf(
             // Rarely muted, genuinely good news. Worth a vibration.
             channel(
+                words = words,
                 id = NotificationCategory.ACHIEVEMENT.channelId,
                 name = R.string.notif_achievement_title,
                 description = R.string.notif_achievement_sub,
@@ -76,6 +87,7 @@ open class SmartNotificationHelper @Inject constructor(
             ),
             // Social news from real people, relevant, so default importance.
             channel(
+                words = words,
                 id = NotificationCategory.GROUP_ACTIVITY.channelId,
                 name = R.string.notif_group_title,
                 description = R.string.notif_group_sub,
@@ -84,6 +96,7 @@ open class SmartNotificationHelper @Inject constructor(
             ),
             // The category people mute. Low importance: no sound, no peeking.
             channel(
+                words = words,
                 id = NotificationCategory.REMINDER.channelId,
                 name = R.string.notif_reminder_title,
                 description = R.string.notif_reminder_sub,
@@ -91,6 +104,7 @@ open class SmartNotificationHelper @Inject constructor(
                 vibrate = false,
             ),
             channel(
+                words = words,
                 id = NotificationCategory.RECAP.channelId,
                 name = R.string.notif_recap_title,
                 description = R.string.notif_recap_sub,
@@ -108,14 +122,15 @@ open class SmartNotificationHelper @Inject constructor(
     }
 
     private fun channel(
+        words: Context,
         id: String,
         @StringRes name: Int,
         @StringRes description: Int,
         importance: Int,
         vibrate: Boolean,
     ): NotificationChannel =
-        NotificationChannel(id, context.getString(name), importance).apply {
-            this.description = context.getString(description)
+        NotificationChannel(id, words.getString(name), importance).apply {
+            this.description = words.getString(description)
             enableVibration(vibrate)
             // Health-adjacent content should not be readable from a locked screen.
             lockscreenVisibility = NotificationCompat.VISIBILITY_PRIVATE

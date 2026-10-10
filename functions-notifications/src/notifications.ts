@@ -19,6 +19,7 @@ import {
   PushPayload,
   Registration,
   SIGNAL_RETENTION_MS,
+  OPENS_DELIVERY_VERSION,
   TRAY_DELIVERY_VERSION,
   buildFcmMessage,
   buildGoalReachedPush,
@@ -41,6 +42,7 @@ import {
   RECAP_HOUR,
   ReminderCandidate,
   addDays,
+  applyBackoff,
   daysLeftIn,
   groupToday,
   planReminder,
@@ -67,6 +69,7 @@ interface PushRegistrationData {
   timeZone?: unknown;
   quietStartMinute?: unknown;
   quietEndMinute?: unknown;
+  opened?: unknown;
 }
 
 export const registerPushInstallation = onCall<PushRegistrationData>(
@@ -92,7 +95,7 @@ export const registerPushInstallation = onCall<PushRegistrationData>(
     // build, which keeps getting data-only pushes and no reminders. Merged,
     // so the server's own reminderSent survives a re-registration; anything
     // an older build does not send is removed rather than left stale.
-    const {delivery, timeZone, quietStartMinute, quietEndMinute} = request.data ?? {};
+    const {delivery, timeZone, quietStartMinute, quietEndMinute, opened} = request.data ?? {};
     const optional = (valid: boolean, value: unknown) => valid ? value : FieldValue.delete();
     const validDelivery = Number.isInteger(delivery) && (delivery as number) > 0 &&
       (delivery as number) < 100;
@@ -107,6 +110,8 @@ export const registerPushInstallation = onCall<PushRegistrationData>(
         timeZone: optional(isValidTimeZone(timeZone), timeZone),
         quietStartMinute: optional(isMinuteOfDay(quietStartMinute), quietStartMinute),
         quietEndMinute: optional(isMinuteOfDay(quietEndMinute), quietEndMinute),
+        // The person opened the app: scheduled reminders start counting again.
+        ...(opened === true ? {lastOpenedAt: FieldValue.serverTimestamp(), unopenedReminders: 0} : {}),
         updatedAt: FieldValue.serverTimestamp(),
       }, {merge: true});
 
@@ -444,7 +449,7 @@ export const sendScheduledReminders = onSchedule(
           candidates = loadCandidates(registration, clock.date, nowMs);
           candidatesByUser.set(registration.userId, candidates);
         }
-        const plan = planReminder({
+        const planned = planReminder({
           userId: registration.userId,
           localHour,
           phoneToday: clock.date,
@@ -453,12 +458,18 @@ export const sendScheduledReminders = onSchedule(
           candidates: await candidates,
           sent: reminderSent,
         });
+        const unopened = safeNonNegativeInteger(document.get("unopenedReminders"));
+        const plan = applyBackoff(planned, unopened, registration.delivery >= OPENS_DELIVERY_VERSION, {
+          userId: registration.userId,
+          today: clock.date,
+        });
         if (!plan) continue;
 
         if (await sendOne(document.ref, registration, plan.push, nowMs)) {
           sent++;
           await document.ref.update({
             reminderSent: {...reminderSent, day: clock.date, [plan.kind]: clock.date},
+            unopenedReminders: FieldValue.increment(1),
           });
         }
       }

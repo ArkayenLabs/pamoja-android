@@ -31,6 +31,8 @@
     <string name="push_shield_body">%1$s लक्ष्य से चूक गया, पर स्ट्रीक बनी हुई है।</string>
     <string name="push_solo_title">%1$s को अपने लोग चाहिए</string>
     <string name="push_solo_body">अपना आमंत्रण भेजें। साझा लक्ष्य निभाना आसान होता है।</string>
+    <string name="push_quiet_title">अभी के लिए हम चुप रहेंगे</string>
+    <string name="push_quiet_body">आपका समूह यहीं है, जब भी आप लौटना चाहें।</string>
 
     <string name="notif_your_group">आपका समूह</string>
 </resources>

@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.pamoja.app.data.local.install.InstallReferrerReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.notifications.FcmRegistrationManager
 import com.pamoja.app.notifications.RemoteNotificationParser
 import com.pamoja.app.ui.PamojaNavGraph
 import com.pamoja.app.ui.Screen
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var workManagerScheduler: WorkManagerScheduler
     @Inject lateinit var installReferrerReader: InstallReferrerReader
     @Inject lateinit var notificationHelper: SmartNotificationHelper
+    @Inject lateinit var pushRegistration: FcmRegistrationManager
 
     private val updateGate: UpdateGateViewModel by viewModels()
 
@@ -102,6 +104,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // A language change in Settings recreates this activity: rename the
+        // notification channels to match.
+        notificationHelper.refreshChannelNames()
         splashScreen.setKeepOnScreenCondition { !isReadyToShowContent }
         enableEdgeToEdge()
 
@@ -278,6 +283,7 @@ class MainActivity : AppCompatActivity() {
         // Pushes FCM drew while the app was closed never passed through the
         // app, so the Updates list picks them up from the tray here.
         notificationHelper.recordTrayNotifications()
+        pushRegistration.reportOpened()
         workManagerScheduler.scheduleStepSync()
 
         lifecycleScope.launch {

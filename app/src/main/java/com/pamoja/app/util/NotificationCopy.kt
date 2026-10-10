@@ -2,6 +2,7 @@ package com.pamoja.app.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.core.content.ContextCompat
 import com.pamoja.app.R
 import java.text.NumberFormat
 
@@ -17,14 +18,17 @@ object NotificationCopy {
     /** Longer names are cut rather than filling the whole title bar. */
     private const val MAX_GROUP_NAME = 18
 
-    fun render(context: Context, notice: LocalNotice): PamojaNotification {
+    fun render(appContext: Context, notice: LocalNotice): PamojaNotification {
+        // In the app's language, not the phone's: below Android 13 a context
+        // outside an activity carries the phone's (the widgets do the same).
+        val context = ContextCompat.getContextForLanguage(appContext)
         val group = groupLabel(context, notice.message.groupName)
         val (title, body) = when (val message = notice.message) {
             is LocalMessage.StepsIn ->
                 context.getString(R.string.notif_first_steps_title) to
                     context.getString(
                         R.string.notif_first_steps_body,
-                        NumberFormat.getIntegerInstance().format(message.stepsToday),
+                        NumberFormat.getIntegerInstance(context.resources.configuration.locales[0]).format(message.stepsToday),
                         group,
                     )
 
@@ -51,8 +55,9 @@ object NotificationCopy {
      * cannot make the app show an arbitrary resource.
      */
     @SuppressLint("DiscouragedApi")
-    fun pushText(context: Context, text: LocalizedText?): String? {
+    fun pushText(appContext: Context, text: LocalizedText?): String? {
         if (text == null) return null
+        val context = ContextCompat.getContextForLanguage(appContext)
         val id = context.resources.getIdentifier(text.key, "string", context.packageName)
         if (id == 0) return null
         return runCatching { context.getString(id, *text.args.toTypedArray()) }.getOrNull()

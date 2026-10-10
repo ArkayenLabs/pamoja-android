@@ -1,6 +1,7 @@
 package com.pamoja.app.data.local.billing
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -76,11 +77,12 @@ class TrialReminderWorker @AssistedInject constructor(
         val expiresAt = inputData.getLong(TrialReminder.KEY_EXPIRES_AT, 0L)
         if (expiresAt <= System.currentTimeMillis()) return Result.success()
         val date = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(expiresAt))
+        val words = ContextCompat.getContextForLanguage(applicationContext)
         notifications.show(
             PamojaNotification(
                 category = NotificationCategory.REMINDER,
-                title = applicationContext.getString(R.string.trial_reminder_title),
-                body = applicationContext.getString(R.string.trial_reminder_body, date),
+                title = words.getString(R.string.trial_reminder_title),
+                body = words.getString(R.string.trial_reminder_body, date),
                 priority = 60,
                 groupId = null,
                 notificationId = NOTIFICATION_ID,

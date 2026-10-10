@@ -6,6 +6,20 @@ the board"). Decisions marked **(user)** need a yes
 before building; everything else is a recommendation. Verify against the code
 before acting, like every doc here.
 
+**NEXT SESSION, START HERE (updated 2026-10-10).** Committed on `rebuild`
+after `37b66d4`: notifications in the app's language on Android 12-, Hindi
+and Spanish widget previews, and the "go quiet" backoff, both halves (app:
+`FcmRegistrationManager` delivery 3 + `reportOpened()` from
+`MainActivity.onResume`; server: `applyBackoff` / `QUIET_AFTER = 8` in
+reminders.ts, `OPENS_DELIVERY_VERSION = 3`, `opened` resets
+`unopenedReminders` in the register callable, the scheduler increments it).
+Verified: functions tests 26, unit 186, lint 0 errors (117 warnings); not run
+on a device. Next, in order: build 1.1.4 (21) with the 1.1.3 flags; **ask
+before** `firebase deploy --only functions:notifications` (without it a 1.1.4
+build is never silenced, and the deploy changes nothing for older builds);
+user uploads and tests 1.1.4. Production waits for Shipaton (judging to
+~2026-10-13, winners 2026-10-21), then `DEPLOY_CHECKLIST.md`.
+
 ## 0. Built 2026-10-05 (committed `857bc7f`, nothing deployed)
 
 §1 and §2 below describe the code **before** this work. What changed:
@@ -62,8 +76,24 @@ before acting, like every doc here.
   switch names).
 - Widget picker previews re-exported with "Remind" (group widget, light and
   dark; the other two had no word to change).
+- **Language on Android 12 and below fixed 2026-10-08 (uncommitted):** a
+  context outside an activity there carries the phone's language, not the
+  one chosen in the app, so notifications, channel names and FCM's own tray
+  drawing used the phone's. Now each goes through
+  `ContextCompat.getContextForLanguage` (it reads AppCompat's stored choice
+  without an activity; the widgets already used it), including the FCM
+  service's `attachBaseContext`, and channel names are rewritten on each app
+  start. Not checked on a real Android 12 phone.
+- Widget picker previews now also in Hindi and Spanish (lossless WebP in
+  `drawable-hi*-nodpi` / `drawable-es*-nodpi`, 158 KB).
+- **§4.4 honest backoff built 2026-10-10 (not deployed):** the scheduler
+  counts scheduled reminders sent since the app was last opened
+  (`unopenedReminders` on the push registration); at 8 it sends
+  `push_quiet_*` once, then nothing until a delivery-3 build reports an open
+  (at most every 6 hours, from `onResume`). Builds below delivery 3 are never
+  silenced, since they cannot reset the count. Pushes from people never count.
 - Not built: action buttons (impossible with notification messages), §4
-  ideas 2-7.
+  ideas 2, 3, 5-7.
 
 **Deploy when the user says (not before):** functions `notifications`
 codebase first (`firebase deploy --only functions:notifications`; adds
@@ -203,7 +233,7 @@ native speaker read them.
    time.
 3. **Evening group digest for whoever has walked:** "Priya and Ravi walked
    today. Meera hasn't yet." with **Remind Meera**. At most once a day.
-4. **Honest backoff.** After 8 ignored: one last message, "We'll go quiet
+4. **Honest backoff** (built 2026-10-10, see §0). After 8 ignored: one last message, "We'll go quiet
    for now. Your group's still here when you want it.", then silence.
 5. **Celebrate a person in the recap** (never rank): "Meera walked every day
    last week."

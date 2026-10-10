@@ -1,6 +1,8 @@
 package com.pamoja.app.notifications
 
+import android.content.Context
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -37,6 +39,15 @@ class PamojaFirebaseMessagingService : FirebaseMessagingService() {
     @Inject lateinit var userPreferences: UserPreferences
     @Inject lateinit var workManagerScheduler: WorkManagerScheduler
     @Inject lateinit var widgetUpdater: PamojaWidgetUpdater
+
+    /**
+     * FCM draws a notification message with this service as its context, so
+     * this is where the app's chosen language reaches the tray on Android 12
+     * and below, where a service otherwise carries the phone's.
+     */
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(ContextCompat.getContextForLanguage(base))
+    }
 
     override fun onRegistered(installationId: String) {
         registrationManager.onRegistered(installationId)

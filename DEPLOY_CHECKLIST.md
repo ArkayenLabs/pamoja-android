@@ -81,6 +81,16 @@ production build (1.0.12) and its listing.
   `design/release-builds/pamoja-1.1.3-20-internal.aab`, same flags. Adds the
   background-restriction card in Settings (ColorOS, MIUI, vivo, Samsung,
   Huawei/Honor) and the "Remind" widget preview. Not uploaded yet.
+- **1.1.4 (21)** built 2026-10-10 at `57594e0`:
+  `design/release-builds/pamoja-1.1.4-21-internal.aab`, same flags
+  (`-PpamojaVersionCode=21 -PpamojaVersionName=1.1.4
+  -PtogetherTrailEnabled=true`). Supersedes 1.1.3. Registers `delivery: 3`
+  and reports opens, so scheduled reminders go quiet after 8 unopened, but
+  **only once `functions:notifications` is redeployed from `57594e0`**
+  (not done; ask first). Until then the server ignores the open reports and
+  1.1.4 behaves like 1.1.3 for reminders. Also: notifications follow the
+  app's language on Android 12-, Hindi and Spanish widget previews.
+  Not uploaded yet.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
   17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
   production later.

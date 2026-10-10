@@ -14,8 +14,8 @@ and Spanish widget previews, and the "go quiet" backoff, both halves (app:
 reminders.ts, `OPENS_DELIVERY_VERSION = 3`, `opened` resets
 `unopenedReminders` in the register callable, the scheduler increments it).
 Verified: functions tests 26, unit 186, lint 0 errors (117 warnings); not run
-on a device. Next, in order: build 1.1.4 (21) with the 1.1.3 flags; **ask
-before** `firebase deploy --only functions:notifications` (without it a 1.1.4
+on a device. 1.1.4 (21) built: `design/release-builds/pamoja-1.1.4-21-internal.aab`
+(supersedes 1.1.3). Next: **ask before** `firebase deploy --only functions:notifications` (without it a 1.1.4
 build is never silenced, and the deploy changes nothing for older builds);
 user uploads and tests 1.1.4. Production waits for Shipaton (judging to
 ~2026-10-13, winners 2026-10-21), then `DEPLOY_CHECKLIST.md`.

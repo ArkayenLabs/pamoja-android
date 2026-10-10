@@ -85,10 +85,11 @@ production build (1.0.12) and its listing.
   `design/release-builds/pamoja-1.1.4-21-internal.aab`, same flags
   (`-PpamojaVersionCode=21 -PpamojaVersionName=1.1.4
   -PtogetherTrailEnabled=true`). Supersedes 1.1.3. Registers `delivery: 3`
-  and reports opens, so scheduled reminders go quiet after 8 unopened, but
-  **only once `functions:notifications` is redeployed from `57594e0`**
-  (not done; ask first). Until then the server ignores the open reports and
-  1.1.4 behaves like 1.1.3 for reminders. Also: notifications follow the
+  and reports opens, so scheduled reminders go quiet after 8 unopened.
+  `functions:notifications` redeployed from `3695147` (same functions as
+  `57594e0`) on 2026-10-10 ~10:24 UTC with the user's OK: 10 updated, none
+  created or deleted, 30 live, no errors right after. Older builds are
+  unaffected (backoff only for delivery 3). Also: notifications follow the
   app's language on Android 12-, Hindi and Spanish widget previews.
   Not uploaded yet.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode

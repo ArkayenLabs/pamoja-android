@@ -15,9 +15,8 @@ reminders.ts, `OPENS_DELIVERY_VERSION = 3`, `opened` resets
 `unopenedReminders` in the register callable, the scheduler increments it).
 Verified: functions tests 26, unit 186, lint 0 errors (117 warnings); not run
 on a device. 1.1.4 (21) built: `design/release-builds/pamoja-1.1.4-21-internal.aab`
-(supersedes 1.1.3). Next: **ask before** `firebase deploy --only functions:notifications` (without it a 1.1.4
-build is never silenced, and the deploy changes nothing for older builds);
-user uploads and tests 1.1.4. Production waits for Shipaton (judging to
+(supersedes 1.1.3). `functions:notifications` deployed 2026-10-10 ~10:24 UTC
+(user OK). Next: the user uploads and tests 1.1.4. Production waits for Shipaton (judging to
 ~2026-10-13, winners 2026-10-21), then `DEPLOY_CHECKLIST.md`.
 
 ## 0. Built 2026-10-05 (committed `857bc7f`, nothing deployed)
@@ -86,7 +85,7 @@ user uploads and tests 1.1.4. Production waits for Shipaton (judging to
   start. Not checked on a real Android 12 phone.
 - Widget picker previews now also in Hindi and Spanish (lossless WebP in
   `drawable-hi*-nodpi` / `drawable-es*-nodpi`, 158 KB).
-- **§4.4 honest backoff built 2026-10-10 (not deployed):** the scheduler
+- **§4.4 honest backoff built and deployed 2026-10-10:** the scheduler
   counts scheduled reminders sent since the app was last opened
   (`unopenedReminders` on the push registration); at 8 it sends
   `push_quiet_*` once, then nothing until a delivery-3 build reports an open

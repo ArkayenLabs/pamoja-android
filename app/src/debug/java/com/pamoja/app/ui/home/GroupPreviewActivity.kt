@@ -59,7 +59,9 @@ import kotlinx.coroutines.launch
  * 12 Settings, signed in with Google only and steps syncing. The rest of the
  * Lilac move: 13 create account, 14 reset password (sent), 15 phone entry,
  * 16 code entry with a wrong code, 17 updates, 18 licences, 19 notifications,
- * 20 edit profile, 21 account (Google only), 22 the invite preview.
+ * 20 edit profile, 21 account (Google only), 22 the invite preview, 23 the
+ * goal-reached moment (four people; `--ez big true` for six, `--ez animate
+ * false` for its last frame, `--ez sent true` after the high fives).
  *
  * `--es caption "..."` draws the screen as a Play Store screenshot instead
  * (see StoreShot). `--ez exportWidgets true` also writes the widget picker
@@ -69,7 +71,7 @@ class GroupPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 22)
+        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 23)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
         val caption = intent.getStringExtra(EXTRA_CAPTION)
         tour = intent.getBooleanExtra(EXTRA_TOUR, false)
@@ -264,6 +266,12 @@ class GroupPreviewActivity : ComponentActivity() {
                         state = com.pamoja.app.ui.join.JoinUiState(isResolving = false, group = group),
                         onJoin = {}, onOpen = {}, onRetry = {}, onCancel = {},
                     )
+                    23 -> GoalCelebrationContent(
+                        model = celebration(big = intent.getBooleanExtra(EXTRA_BIG, false)),
+                        highFivesSent = intent.getBooleanExtra(EXTRA_SENT, false),
+                        onHighFiveEveryone = {}, onShare = {}, onClose = {},
+                        animate = intent.getBooleanExtra(EXTRA_ANIMATE, true),
+                    )
                     else -> Details(
                         currentUserId = "priya",
                         access = GroupAccessState.Premium(
@@ -379,6 +387,21 @@ class GroupPreviewActivity : ComponentActivity() {
         },
     )
 
+    /** A fixed week, so the preview does not depend on what day it is. */
+    private fun celebration(big: Boolean): CelebrationModel {
+        val people = SAMPLE.map { CelebrationPerson(it.id, it.name.substringBefore(' '), null, it.id == ME) }
+            .sortedWith(compareByDescending<CelebrationPerson> { it.isYou }.thenBy { it.name })
+            .let { all -> if (big) all else all.filter { it.userId in setOf(ME, "meera", "priya", "sunita") } }
+        return CelebrationModel(
+            steps = 70_412,
+            target = 70_000,
+            people = people,
+            streakWeeks = 6,
+            daysToSpare = 2,
+            everyDay = people.filter { it.userId == "meera" },
+        )
+    }
+
     /** The same people as memberships, for the weekly card. */
     private fun memberships(): List<Membership> {
         val week = WeekWindow.startOf(DayOfWeek.MONDAY)
@@ -436,6 +459,9 @@ class GroupPreviewActivity : ComponentActivity() {
         const val EXTRA_DARK = "dark"
         const val EXTRA_CAPTION = "caption"
         const val EXTRA_TOUR = "tour"
+        const val EXTRA_BIG = "big"
+        const val EXTRA_SENT = "sent"
+        const val EXTRA_ANIMATE = "animate"
         const val EXTRA_EXPORT_WIDGETS = "exportWidgets"
         const val GROUP = "6413795d-42d0-4f2b-80df-f017a9d32817"
         const val ME = "me"

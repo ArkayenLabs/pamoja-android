@@ -2,7 +2,7 @@
 <!-- See values/strings_background.xml. The switch names stay in English: these phones' Hindi menu labels are not known here. Needs a native read. -->
 <resources>
     <string name="bg_help_title">Pamoja को बैकग्राउंड में चलने दें</string>
-    <string name="bg_help_body">ऐप बंद होने पर आपका फ़ोन Pamoja को रोक सकता है। तब आपके कदम देर से सिंक होते हैं और शाबाशी नहीं पहुँचती।</string>
+    <string name="bg_help_body">ऐप बंद होने पर आपका फ़ोन Pamoja को रोक सकता है। तब आपके कदम देर से सिंक होते हैं और हाई फाइव नहीं पहुँचते।</string>
     <string name="bg_help_steps_coloros">ऐप जानकारी में Battery usage खोलें और Allow auto launch और Allow background activity चालू करें।</string>
     <string name="bg_help_steps_miui">ऐप जानकारी में Autostart चालू करें, फिर Battery saver को No restrictions पर रखें।</string>
     <string name="bg_help_steps_vivo">ऐप जानकारी में Battery खोलें और बैकग्राउंड में ज़्यादा बैटरी उपयोग की अनुमति दें।</string>

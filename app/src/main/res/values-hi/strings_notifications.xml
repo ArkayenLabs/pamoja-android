@@ -11,10 +11,10 @@
     <string name="push_joined_body">अब आप %1$s लोग हैं। अगली सैर पर उनका स्वागत करें।</string>
     <string name="push_goal_title">%1$s ने कर दिखाया</string>
     <string name="push_goal_body">इस हफ़्ते सबने मिलकर %1$s कदम चले। शाबाश।</string>
-    <string name="push_cheer_title">%1$s ने आपकी सैर पर शाबाशी दी</string>
-    <string name="push_cheer_body">%1$s। शाबाशी लौटाने के लिए टैप करें।</string>
+    <string name="push_cheer_title">%1$s ने हाई फाइव भेजा</string>
+    <string name="push_cheer_body">आज की सैर के लिए। वापस भेजें?</string>
     <string name="push_remind_title">%1$s: आज सैर पर चलें?</string>
-    <string name="push_remind_body">%1$s आज चल रहा है। जब हो सके, साथ आइए।</string>
+    <string name="push_remind_body">आज की हर सैर %1$s के लिए गिनी जाएगी।</string>
 
     <string name="push_last_day_title">आख़िरी दिन: %1$s कदम बाकी</string>
     <string name="push_last_day_body">हर किसी के लगभग %1$s। शाम की एक सैर काफ़ी है।</string>

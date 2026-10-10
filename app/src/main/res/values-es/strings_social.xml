@@ -15,23 +15,23 @@
     </plurals>
     <string name="home_nudge">Avisar</string>
     <string name="home_nudged">Avisado</string>
-    <string name="home_cheer_from_one">%1$s aplaudió tu caminata</string>
+    <string name="home_cheer_from_one">%1$s te chocó los cinco</string>
     <plurals name="home_cheer_from_many">
-        <item quantity="one">%1$s y %2$d persona más te aplaudieron</item>
-        <item quantity="many">%1$s y %2$d personas más te aplaudieron</item>
-        <item quantity="other">%1$s y %2$d personas más te aplaudieron</item>
+        <item quantity="one">%1$s y %2$d persona más te chocaron los cinco</item>
+        <item quantity="many">%1$s y %2$d personas más te chocaron los cinco</item>
+        <item quantity="other">%1$s y %2$d personas más te chocaron los cinco</item>
     </plurals>
-    <string name="home_cheer_back">Aplaudir también</string>
-    <string name="home_cheered">Aplaudido</string>
-    <string name="home_cheer_desc">Aplaudir a %1$s</string>
-    <string name="home_cheered_desc">Aplaudiste a %1$s</string>
+    <string name="home_cheer_back">Chocar los cinco</string>
+    <string name="home_cheered">Enviado</string>
+    <string name="home_cheer_desc">Chocar los cinco con %1$s</string>
+    <string name="home_cheered_desc">Chocaste los cinco con %1$s</string>
     <plurals name="home_days_walked_desc">
         <item quantity="one">Caminó %1$d de %2$d día hasta ahora</item>
         <item quantity="many">Caminó %1$d de %2$d días hasta ahora</item>
         <item quantity="other">Caminó %1$d de %2$d días hasta ahora</item>
     </plurals>
-    <string name="social_primer_title">Entérate cuando te aplaudan</string>
-    <string name="social_primer_body">Activa las notificaciones para saber cuándo tu grupo te aplaude.</string>
+    <string name="social_primer_title">Entérate cuando te choquen los cinco</string>
+    <string name="social_primer_body">Activa las notificaciones para saber cuándo tu grupo te choca los cinco.</string>
 
     <!-- Group details -->
     <string name="details_weekly_card">Tarjeta semanal</string>

@@ -18,9 +18,28 @@
     <string name="activity_time_minutes">Hace %1$d min</string>
     <string name="activity_time_hours">Hace %1$d h</string>
     <string name="activity_time_days">Hace %1$d d</string>
-    <string name="group_celebration_title">Lo habéis logrado juntos.</string>
+    <string name="group_celebration_title">Lo lograron juntos</string>
     <string name="group_celebration_progress">de %1$s pasos juntos</string>
-    <string name="group_celebration_confirm">Ver la semana</string>
+    <plurals name="celebration_days_spare">
+        <item quantity="one">Con %d día de sobra</item>
+        <item quantity="many">Con %d días de sobra</item>
+        <item quantity="other">Con %d días de sobra</item>
+    </plurals>
+    <string name="celebration_last_day">Justo el último día</string>
+    <string name="celebration_first_week">Su primera semana con la meta cumplida</string>
+    <string name="celebration_every_day_you">Caminaste todos los días</string>
+    <string name="celebration_every_day_one">%1$s caminó todos los días</string>
+    <string name="celebration_every_day_two">%1$s y %2$s caminaron todos los días</string>
+    <plurals name="celebration_every_day_many">
+        <item quantity="one">%1$s y %2$d persona más caminaron todos los días</item>
+        <item quantity="many">%1$s y %2$d personas más caminaron todos los días</item>
+        <item quantity="other">%1$s y %2$d personas más caminaron todos los días</item>
+    </plurals>
+    <string name="celebration_every_day_all">Todo el grupo caminó cada día</string>
+    <string name="celebration_high_five_all">Chocar los cinco con todos</string>
+    <string name="celebration_high_fives_sent">Enviado a todos</string>
+    <string name="celebration_share">Compartir la semana</string>
+    <string name="celebration_close">Cerrar</string>
     <string name="edit_group_week_start_planned">Tu plan empieza el %1$s. El día de inicio queda fijo hasta que se aplique.</string>
     <string name="group_leave_title">Salir del grupo</string>
     <string name="group_leave_body">Dejarás la meta y el historial de este grupo. Tus pasos se quedan en tu cuenta y puedes volver con un enlace de invitación.</string>

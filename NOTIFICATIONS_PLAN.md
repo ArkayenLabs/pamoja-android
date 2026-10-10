@@ -91,6 +91,14 @@ on a device. 1.1.4 (21) built: `design/release-builds/pamoja-1.1.4-21-internal.a
   `push_quiet_*` once, then nothing until a delivery-3 build reports an open
   (at most every 6 hours, from `onResume`). Builds below delivery 3 are never
   silenced, since they cannot reset the count. Pushes from people never count.
+- **2026-10-10 (uncommitted, needs 1.1.5 and a `functions:notifications`
+  deploy):** "Cheer" became **"High five"** everywhere people see it (user
+  picked it; "cheered you" is not how people talk, and Fitbit and Nike use
+  "Cheer"). Wire value, keys and resource names stay `cheer`. The push body
+  no longer names the group but the server still sends it as an argument,
+  because builds up to 1.1.4 carry `%1$s` in their copy. Remind's body is now
+  "Any walk today counts for {group}." The Home button is a hand
+  (Material Symbols `front_hand`), filled once sent.
 - Not built: action buttons (impossible with notification messages), §4
   ideas 2, 3, 5-7.
 
@@ -209,7 +217,7 @@ Strings to change (en, es, hi): `home_nudge`, `home_nudged`,
 | Goal close, last day | "Final day. {left} left." / "{each} each. Suspiciously doable." | **Last day: {left} steps to go** / "About {each} each. An evening walk would do it." |
 | Goal close, two days | "{left} steps left." / "{each} each. Two days. Very doable." | **{left} steps to go** / "Two days left, about {each} each." |
 | Cheer received | "{who} cheered your walk" / "{group}" | **{who} cheered your walk** / "{group}. Tap to cheer back." (opens the group with Cheer back) |
-| Nudge received | "{who} nudged you" / "{group} is walking today. Join in?" | **{who}: walk today?** / "{group} is out walking. Join in when you can." |
+| Nudge received | "{who} nudged you" / "{group} is walking today. Join in?" | **{who}: walk today?** / "Any walk today counts for {group}." (was "{group} is out walking...", changed 2026-10-10: it read as if the group was walking) |
 | Monday recap | "New week. Same people." / "{target} steps waiting in {group}." | **New week for {group}** / "Last week: {lastTotal} steps. This week's goal: {target}." |
 | "Your steps count" | "Your steps count today." / "{group} is {left} short. Even a small walk changes it." | **Every walk counts today** / "{group} is {left} steps from the goal." |
 | Low-step day | "{name}, be honest." / "Did the phone stay home, or did you?" and "Your walking shoes asked. I said you were busy..." | **Delete.** It fails our own hard-day test and speaks as "I". If anything: **Fancy a short walk?** / "{group} has walked today. Ten minutes counts." (only when the group has walked) |

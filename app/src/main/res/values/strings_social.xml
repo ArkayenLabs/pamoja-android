@@ -14,21 +14,21 @@
     </plurals>
     <string name="home_nudge">Remind</string>
     <string name="home_nudged">Reminded</string>
-    <string name="home_cheer_from_one">%1$s cheered your walk</string>
+    <string name="home_cheer_from_one">High five from %1$s</string>
     <plurals name="home_cheer_from_many">
-        <item quantity="one">%1$s and %2$d other cheered you</item>
-        <item quantity="other">%1$s and %2$d others cheered you</item>
+        <item quantity="one">High fives from %1$s and %2$d other</item>
+        <item quantity="other">High fives from %1$s and %2$d others</item>
     </plurals>
-    <string name="home_cheer_back">Cheer back</string>
-    <string name="home_cheered">Cheered</string>
-    <string name="home_cheer_desc">Cheer %1$s</string>
-    <string name="home_cheered_desc">Cheered %1$s</string>
+    <string name="home_cheer_back">High five back</string>
+    <string name="home_cheered">Sent</string>
+    <string name="home_cheer_desc">High five %1$s</string>
+    <string name="home_cheered_desc">You sent %1$s a high five</string>
     <plurals name="home_days_walked_desc">
         <item quantity="one">Walked %1$d of %2$d day so far</item>
         <item quantity="other">Walked %1$d of %2$d days so far</item>
     </plurals>
-    <string name="social_primer_title">Hear it when they cheer</string>
-    <string name="social_primer_body">Turn on notifications so you know when your group cheers you on.</string>
+    <string name="social_primer_title">Know when you get a high five</string>
+    <string name="social_primer_body">Turn on notifications so you know when your group sends you a high five.</string>
 
     <!-- Group details -->
     <string name="details_weekly_card">Weekly card</string>

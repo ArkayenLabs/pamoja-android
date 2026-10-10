@@ -29,9 +29,9 @@ data class SignalsUiState(
     val groupId: String = "",
     val sent: List<Signal> = emptyList(),
     val received: List<Signal> = emptyList(),
-    /** Recipients of a send still on its way, so a heart fills on the tap itself. */
+    /** Recipients of a send still on its way, so the hand fills on the tap itself. */
     val sending: Set<Pair<SignalKind, String>> = emptySet(),
-    /** A send failed. Snackbar only; the heart simply stays empty. */
+    /** A send failed. Snackbar only; the hand simply stays empty. */
     val error: AppError? = null,
     /**
      * Explain notifications now: the moment they obviously matter, having just

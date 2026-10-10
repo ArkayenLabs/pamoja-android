@@ -4,7 +4,7 @@
     <string name="widget_today_name">Tú hoy</string>
     <string name="widget_hook_name">Racha del grupo</string>
     <string name="widget_group_description">Quién ha caminado hoy y cómo va la semana. Avisa desde la pantalla de inicio.</string>
-    <string name="widget_today_description">Tus pasos de hoy y los aplausos de tu grupo.</string>
+    <string name="widget_today_description">Tus pasos de hoy y los choques de cinco de tu grupo.</string>
     <string name="widget_hook_description">Cuántas semanas seguidas ha cumplido tu grupo su objetivo.</string>
     <string name="widget_no_group_title">Camina en compañía</string>
     <string name="widget_no_group_body">Crea un grupo o únete en Pamoja</string>
@@ -15,7 +15,7 @@
     <string name="settings_widgets_title">Widgets de inicio</string>
     <string name="settings_widgets_picker_title">Elige un widget</string>
     <string name="settings_widgets_group_subtitle">Quién ha caminado hoy, el objetivo semanal y Avisar</string>
-    <string name="settings_widgets_today_subtitle">Tus pasos, o un aplauso que devolver</string>
+    <string name="settings_widgets_today_subtitle">Tus pasos, o unos cinco que devolver</string>
     <string name="settings_widgets_hook_subtitle">Semanas seguidas en que tu grupo cumplió su objetivo</string>
     <string name="settings_widgets_unavailable">Añádelo desde el selector de widgets de tu teléfono.</string>
     <plurals name="widget_streak_label">

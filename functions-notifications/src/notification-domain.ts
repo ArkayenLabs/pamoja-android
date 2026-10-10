@@ -31,10 +31,12 @@ export const COPY = {
   push_joined_body: "%1$s of you now. Say hi on your next walk.",
   push_goal_title: "%1$s made it",
   push_goal_body: "%1$s steps this week, together. Take a bow.",
-  push_cheer_title: "%1$s cheered your walk",
-  push_cheer_body: "%1$s. Tap to cheer back.",
+  push_cheer_title: "High five from %1$s",
+  // No placeholder any more, but the group is still sent: builds before 1.1.5
+  // carry "%1$s. Tap to cheer back." and would fail to format without it.
+  push_cheer_body: "For your walk today. Send one back?",
   push_remind_title: "%1$s: walk today?",
-  push_remind_body: "%1$s is out walking. Join in when you can.",
+  push_remind_body: "Any walk today counts for %1$s.",
   push_last_day_title: "Last day: %1$s steps to go",
   push_last_day_body: "About %1$s each. An evening walk would do it.",
   push_two_days_title: "%1$s steps to go",

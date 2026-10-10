@@ -6,7 +6,7 @@
     <string name="start_get_started">Empezar</string>
     <string name="start_have_invite">Tengo un enlace de invitación</string>
     <string name="start_cheers_headline">Alguien vio tu caminata</string>
-    <string name="start_cheers_body">Aplaude cuando alguien camina, o avisa a quien todavía no ha salido.</string>
+    <string name="start_cheers_body">Choca los cinco cuando alguien camina, o avisa a quien todavía no ha salido.</string>
     <string name="start_widget_headline">Tu grupo en la pantalla de inicio</string>
     <string name="start_widget_body">Mira quién ha caminado hoy sin abrir la app.</string>
     <string name="start_next">Siguiente</string>

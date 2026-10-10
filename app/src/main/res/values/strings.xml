@@ -427,7 +427,7 @@
     <string name="notif_achievement_title">Goals and achievements</string>
     <string name="notif_achievement_sub">Weekly goals, streaks and milestones</string>
     <string name="notif_group_title">Group activity</string>
-    <string name="notif_group_sub">Joins, cheers and reminders</string>
+    <string name="notif_group_sub">Joins, high fives and reminders</string>
     <string name="notif_reminder_title">Step reminders</string>
     <string name="notif_reminder_sub">A reminder while there\'s still time to walk today</string>
     <string name="notif_recap_title">Weekly recap</string>
@@ -617,9 +617,29 @@
     <!-- Pace badge. Falling short is never phrased as failure: this product's
          copy rule is that it does not shame, and a walking group missing its
          own target is the most ordinary thing in the world. -->
-    <string name="group_celebration_title">You did it together.</string>
+    <!-- The goal-reached moment (GoalCelebration.kt), once per group per week. -->
+    <string name="group_celebration_title">You did it together</string>
     <string name="group_celebration_progress">of %1$s steps together</string>
-    <string name="group_celebration_confirm">See the week</string>
+    <!-- Whole days of the week left after today. -->
+    <plurals name="celebration_days_spare">
+        <item quantity="one">With %d day to spare</item>
+        <item quantity="other">With %d days to spare</item>
+    </plurals>
+    <string name="celebration_last_day">Right on the last day</string>
+    <string name="celebration_first_week">Your first goal week together</string>
+    <!-- Walked every day of the week so far. Names are first names. -->
+    <string name="celebration_every_day_you">You walked every day</string>
+    <string name="celebration_every_day_one">%1$s walked every day</string>
+    <string name="celebration_every_day_two">%1$s and %2$s walked every day</string>
+    <plurals name="celebration_every_day_many">
+        <item quantity="one">%1$s and %2$d other walked every day</item>
+        <item quantity="other">%1$s and %2$d others walked every day</item>
+    </plurals>
+    <string name="celebration_every_day_all">Everyone walked every day</string>
+    <string name="celebration_high_five_all">High five everyone</string>
+    <string name="celebration_high_fives_sent">High fives sent</string>
+    <string name="celebration_share">Share the week</string>
+    <string name="celebration_close">Close</string>
     <!-- Was a hardcoded "$daysLeft days left" in GroupScreen, which rendered
          "1 days left" on the last day of every week. -->
     <plurals name="group_days_left">

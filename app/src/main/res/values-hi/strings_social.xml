@@ -13,21 +13,21 @@
     </plurals>
     <string name="home_nudge">याद दिलाएँ</string>
     <string name="home_nudged">याद दिलाया</string>
-    <string name="home_cheer_from_one">%1$s ने आपकी सैर पर शाबाशी दी</string>
+    <string name="home_cheer_from_one">%1$s ने हाई फाइव भेजा</string>
     <plurals name="home_cheer_from_many">
-        <item quantity="one">%1$s और %2$d और ने शाबाशी दी</item>
-        <item quantity="other">%1$s और %2$d और ने शाबाशी दी</item>
+        <item quantity="one">%1$s और %2$d और ने हाई फाइव भेजा</item>
+        <item quantity="other">%1$s और %2$d और ने हाई फाइव भेजा</item>
     </plurals>
-    <string name="home_cheer_back">शाबाशी लौटाएँ</string>
-    <string name="home_cheered">शाबाशी दी</string>
-    <string name="home_cheer_desc">%1$s को शाबाशी दें</string>
-    <string name="home_cheered_desc">%1$s को शाबाशी दी</string>
+    <string name="home_cheer_back">हाई फाइव लौटाएँ</string>
+    <string name="home_cheered">भेजा गया</string>
+    <string name="home_cheer_desc">%1$s को हाई फाइव भेजें</string>
+    <string name="home_cheered_desc">%1$s को हाई फाइव भेजा</string>
     <plurals name="home_days_walked_desc">
         <item quantity="one">अब तक %2$d में से %1$d दिन चले</item>
         <item quantity="other">अब तक %2$d में से %1$d दिन चले</item>
     </plurals>
-    <string name="social_primer_title">शाबाशी मिलते ही जानें</string>
-    <string name="social_primer_body">सूचनाएँ चालू करें, ताकि पता चले जब आपका समूह आपको शाबाशी दे।</string>
+    <string name="social_primer_title">हाई फाइव मिलते ही जानें</string>
+    <string name="social_primer_body">सूचनाएँ चालू करें, ताकि पता चले जब आपका समूह आपको हाई फाइव भेजे।</string>
 
     <!-- Group details -->
     <string name="details_weekly_card">साप्ताहिक कार्ड</string>

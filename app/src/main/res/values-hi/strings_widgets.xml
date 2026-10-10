@@ -4,7 +4,7 @@
     <string name="widget_today_name">आप आज</string>
     <string name="widget_hook_name">समूह का सिलसिला</string>
     <string name="widget_group_description">आज किसने चला और हफ़्ता कैसा चल रहा है। होम स्क्रीन से ही याद दिलाएँ।</string>
-    <string name="widget_today_description">आज आपके कदम, और आपके समूह की शाबाशी।</string>
+    <string name="widget_today_description">आज आपके कदम, और आपके समूह के हाई फाइव।</string>
     <string name="widget_hook_description">आपके समूह ने लगातार कितने हफ़्ते अपना लक्ष्य पूरा किया।</string>
     <string name="widget_no_group_title">साथ चलें</string>
     <string name="widget_no_group_body">Pamoja में समूह बनाएँ या जुड़ें</string>
@@ -15,7 +15,7 @@
     <string name="settings_widgets_title">होम स्क्रीन विजेट</string>
     <string name="settings_widgets_picker_title">विजेट चुनें</string>
     <string name="settings_widgets_group_subtitle">आज किसने चला, हफ़्ते का लक्ष्य और याद दिलाएँ</string>
-    <string name="settings_widgets_today_subtitle">आपके कदम, या लौटाने को शाबाशी</string>
+    <string name="settings_widgets_today_subtitle">आपके कदम, या लौटाने को हाई फाइव</string>
     <string name="settings_widgets_hook_subtitle">लगातार कितने हफ़्ते समूह ने लक्ष्य पूरा किया</string>
     <string name="settings_widgets_unavailable">फ़ोन के विजेट विकल्प से जोड़ें।</string>
     <!-- Shown from a streak of two only, so "one" never meets 0 or 1. -->

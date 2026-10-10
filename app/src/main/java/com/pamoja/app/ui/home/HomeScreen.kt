@@ -144,6 +144,7 @@ fun HomeScreen(
     onOpenInvite: (String) -> Unit,
     onSessionExpired: () -> Unit,
     onOpenPaywall: (String) -> Unit,
+    onOpenWeeklyCard: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     groupViewModel: GroupViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel(),
@@ -265,11 +266,20 @@ fun HomeScreen(
         )
     }
 
-    if (groupState.showGoalCelebration) {
+    val celebration = if (groupState.showGoalCelebration) celebrationModel(groupState) else null
+    celebration?.let { model ->
+        val others = model.people.filterNot { it.isYou }.map { it.userId }
         GoalCelebration(
-            steps = groupState.combinedWeeklySteps,
-            target = groupState.group?.weeklyTarget ?: 0,
-            onDismiss = groupViewModel::dismissGoalCelebration,
+            model = model,
+            highFivesSent = others.isNotEmpty() && others.all { signals.hasSent(SignalKind.CHEER, it) },
+            onHighFiveEveryone = {
+                signalsViewModel.cheer(others.filterNot { signals.hasSent(SignalKind.CHEER, it) })
+            },
+            onShare = {
+                groupViewModel.dismissGoalCelebration()
+                onOpenWeeklyCard(groupState.groupId)
+            },
+            onClose = groupViewModel::dismissGoalCelebration,
         )
     }
 
@@ -988,7 +998,7 @@ private fun CheerButton(name: String, cheered: Boolean, onClick: () -> Unit) {
             .clearAndSetSemantics { contentDescription = description },
     ) {
         Icon(
-            painter = painterResource(if (cheered) PamojaIcons.HeartFilled else PamojaIcons.Heart),
+            painter = painterResource(if (cheered) PamojaIcons.HighFiveSent else PamojaIcons.HighFive),
             contentDescription = null,
             tint = Kit.colors.ink,
             modifier = Modifier.size(20.dp),
@@ -1143,22 +1153,3 @@ private fun PreviewEnded(groupName: String, onSeePremium: () -> Unit, onDismiss:
     )
 }
 
-/** Once per group per week. A moment, not confetti. */
-@Composable
-private fun GoalCelebration(steps: Long, target: Int, onDismiss: () -> Unit) {
-    KitDialog(
-        title = stringResource(R.string.group_celebration_title),
-        confirmText = stringResource(R.string.group_celebration_confirm),
-        onConfirm = onDismiss,
-        onDismiss = onDismiss,
-    ) {
-        KitCard(tone = CardTone.Hero, spacing = 4.dp) {
-            Text("%,d".format(steps), style = Kit.type.bigNumber.copy(fontSize = 52.sp, lineHeight = 52.sp))
-            Text(
-                stringResource(R.string.group_celebration_progress, "%,d".format(target)),
-                style = Kit.type.label,
-                color = mutedContentColor(),
-            )
-        }
-    }
-}

@@ -18,9 +18,26 @@
     <string name="activity_time_minutes">%1$d मिनट पहले</string>
     <string name="activity_time_hours">%1$d घंटे पहले</string>
     <string name="activity_time_days">%1$d दिन पहले</string>
-    <string name="group_celebration_title">आपने मिलकर कर दिखाया।</string>
+    <string name="group_celebration_title">आपने मिलकर कर दिखाया</string>
     <string name="group_celebration_progress">मिलकर %1$s कदमों में से</string>
-    <string name="group_celebration_confirm">हफ़्ता देखें</string>
+    <plurals name="celebration_days_spare">
+        <item quantity="one">%d दिन पहले ही</item>
+        <item quantity="other">%d दिन पहले ही</item>
+    </plurals>
+    <string name="celebration_last_day">ठीक आख़िरी दिन</string>
+    <string name="celebration_first_week">मिलकर पहला लक्ष्य पूरा</string>
+    <string name="celebration_every_day_you">आप हर दिन चले</string>
+    <string name="celebration_every_day_one">%1$s हर दिन चले</string>
+    <string name="celebration_every_day_two">%1$s और %2$s हर दिन चले</string>
+    <plurals name="celebration_every_day_many">
+        <item quantity="one">%1$s और %2$d और हर दिन चले</item>
+        <item quantity="other">%1$s और %2$d और हर दिन चले</item>
+    </plurals>
+    <string name="celebration_every_day_all">सब हर दिन चले</string>
+    <string name="celebration_high_five_all">सबको हाई फाइव भेजें</string>
+    <string name="celebration_high_fives_sent">सबको भेजा गया</string>
+    <string name="celebration_share">हफ़्ता शेयर करें</string>
+    <string name="celebration_close">बंद करें</string>
     <string name="edit_group_week_start_planned">आपकी योजना %1$s से शुरू होगी। लागू होने तक हफ़्ते का शुरुआती दिन तय रहेगा।</string>
     <string name="group_leave_title">समूह छोड़ें</string>
     <string name="group_leave_body">आप इस समूह के लक्ष्य और इतिहास से बाहर हो जाएँगे। आपके कदम आपके खाते में रहेंगे, और आमंत्रण लिंक से फिर जुड़ सकते हैं।</string>

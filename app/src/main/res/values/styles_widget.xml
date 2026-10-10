@@ -26,7 +26,7 @@
         <item name="android:textColor">@color/widget_on_button</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
-        <!-- "Aplaudir también" does not fit a 2x2 tile at 14sp. Shrinks to
+        <!-- "Chocar los cinco" does not fit a 2x2 tile at 14sp. Shrinks to
              fit one line rather than wrap and clip, as it first did. -->
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:autoSizeMinTextSize">10sp</item>

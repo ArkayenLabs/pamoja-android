@@ -134,8 +134,8 @@ test("signal pushes fit the app's limits and share one event per recipient and d
   assert.equal(fromAlice.eventId, fromCarol.eventId);
   assert.notEqual(fromAlice.eventId, nudge.eventId);
   assert.equal(nudge.title, "Carol: walk today?");
-  assert.equal(nudge.body, "Sharma Family is out walking. Join in when you can.");
-  assert.equal(fromCarol.body, "Sharma Family. Tap to cheer back.");
+  assert.equal(nudge.body, "Any walk today counts for Sharma Family.");
+  assert.equal(fromCarol.body, "For your walk today. Send one back?");
 });
 
 const REGISTRATION = {
@@ -163,7 +163,7 @@ function cheer() {
 test("a build that registered for it gets a tray message, with the data kept for older parsers", () => {
   const message = buildFcmMessage(REGISTRATION, cheer(), EVENING_IST, OPTIONS);
 
-  assert.equal(message.data.title, "Alice cheered your walk");
+  assert.equal(message.data.title, "High five from Alice");
   assert.equal(message.data.recipientUid, "bob");
   assert.equal(message.data.titleLocKey, "push_cheer_title");
   assert.equal(message.data.titleLocArg1, "Alice");

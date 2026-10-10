@@ -28,10 +28,10 @@
     <string name="push_joined_body">%1$s of you now. Say hi on your next walk.</string>
     <string name="push_goal_title">%1$s made it</string>
     <string name="push_goal_body">%1$s steps this week, together. Take a bow.</string>
-    <string name="push_cheer_title">%1$s cheered your walk</string>
-    <string name="push_cheer_body">%1$s. Tap to cheer back.</string>
+    <string name="push_cheer_title">High five from %1$s</string>
+    <string name="push_cheer_body">For your walk today. Send one back?</string>
     <string name="push_remind_title">%1$s: walk today?</string>
-    <string name="push_remind_body">%1$s is out walking. Join in when you can.</string>
+    <string name="push_remind_body">Any walk today counts for %1$s.</string>
 
     <!-- Scheduled by the server, at most one a day, never in quiet hours. -->
     <string name="push_last_day_title">Last day: %1$s steps to go</string>

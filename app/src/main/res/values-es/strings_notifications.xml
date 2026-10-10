@@ -11,10 +11,10 @@
     <string name="push_joined_body">Ya son %1$s. Dale la bienvenida en tu próxima caminata.</string>
     <string name="push_goal_title">%1$s lo logró</string>
     <string name="push_goal_body">%1$s pasos esta semana, entre todos. Bien hecho.</string>
-    <string name="push_cheer_title">%1$s aplaudió tu caminata</string>
-    <string name="push_cheer_body">%1$s. Toca para aplaudir también.</string>
+    <string name="push_cheer_title">%1$s te choca los cinco</string>
+    <string name="push_cheer_body">Por tu caminata de hoy. ¿Se los devuelves?</string>
     <string name="push_remind_title">%1$s: ¿caminas hoy?</string>
-    <string name="push_remind_body">%1$s está caminando. Súmate cuando puedas.</string>
+    <string name="push_remind_body">Cualquier caminata de hoy cuenta para %1$s.</string>
 
     <string name="push_last_day_title">Último día: faltan %1$s pasos</string>
     <string name="push_last_day_body">Unos %1$s cada uno. Con un paseo esta tarde, listo.</string>

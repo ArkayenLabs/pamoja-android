@@ -54,8 +54,9 @@ object PamojaIcons {
     @DrawableRes val Search = R.drawable.ic_search
     @DrawableRes val Close = R.drawable.ic_x
     @DrawableRes val Flame = R.drawable.ic_flame
-    @DrawableRes val Heart = R.drawable.ic_heart
-    @DrawableRes val HeartFilled = R.drawable.ic_heart_filled
+    /** Material Symbols "front_hand": a high five, outlined to send, filled once sent. */
+    @DrawableRes val HighFive = R.drawable.ic_hand
+    @DrawableRes val HighFiveSent = R.drawable.ic_hand_filled
     @DrawableRes val TrendingUp = R.drawable.ic_trending_up
     @DrawableRes val Notification = R.drawable.ic_notification
 

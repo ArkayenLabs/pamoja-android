@@ -47,7 +47,7 @@
     <string name="notif_achievement_title">Metas y logros</string>
     <string name="notif_achievement_sub">Meta semanal lograda, rachas y etapas</string>
     <string name="notif_group_title">Actividad del grupo</string>
-    <string name="notif_group_sub">Nuevos miembros, aplausos y avisos</string>
+    <string name="notif_group_sub">Nuevos miembros, choques de cinco y avisos</string>
     <string name="notif_reminder_title">Recordatorios para caminar</string>
     <string name="notif_reminder_sub">Un recordatorio cuando aún hay tiempo para caminar hoy</string>
     <string name="notif_recap_title">Resumen semanal</string>

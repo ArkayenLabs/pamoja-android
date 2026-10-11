@@ -99,7 +99,7 @@ on a device. 1.1.4 (21) built: `design/release-builds/pamoja-1.1.4-21-internal.a
   because builds up to 1.1.4 carry `%1$s` in their copy. Remind's body is now
   "Any walk today counts for {group}." The Home button is a hand
   (Material Symbols `front_hand`), filled once sent.
-- **§4.5 and §4.6 built 2026-10-11 (uncommitted, not deployed):** the Monday
+- **§4.5 and §4.6 built and deployed 2026-10-11 (`7f6587d`, ~05:45 UTC):** the Monday
   recap names someone who walked all seven days last week ("Meera walked
   every day last week"), or says "You walked every day" to each of them;
   with several, the one named turns over by week. Never a rank. Milestones:

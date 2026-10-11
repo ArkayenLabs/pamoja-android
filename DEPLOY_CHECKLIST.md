@@ -102,7 +102,7 @@ production build (1.0.12) and its listing.
   deleted, 30 live, no errors after. The first try failed with "User code
   failed to load" while a Gradle build ran; the retry used
   `FUNCTIONS_DISCOVERY_TIMEOUT=120` on an idle machine. Not uploaded yet.
-- **`getInvitePreview` created 2026-10-11, about 05:30 UTC** (`functions:notifications`
+- **`getInvitePreview` created 2026-10-11, about 05:10 UTC** (`functions:notifications`
   from `5f6acf8`, user's OK): 1 created, 10 updated, none deleted, 31 live.
   A call without App Check returns 401; no errors after. Nothing uses it
   until a build with the invite-before-sign-in screen ships.

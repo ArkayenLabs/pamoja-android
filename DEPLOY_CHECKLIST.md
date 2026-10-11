@@ -102,6 +102,10 @@ production build (1.0.12) and its listing.
   deleted, 30 live, no errors after. The first try failed with "User code
   failed to load" while a Gradle build ran; the retry used
   `FUNCTIONS_DISCOVERY_TIMEOUT=120` on an idle machine. Not uploaded yet.
+- **`getInvitePreview` created 2026-10-11 ~06:00 UTC** (`functions:notifications`
+  from `5f6acf8`, user's OK): 1 created, 10 updated, none deleted, 31 live.
+  A call without App Check returns 401; no errors after. Nothing uses it
+  until a build with the invite-before-sign-in screen ships.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
   17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
   production later.

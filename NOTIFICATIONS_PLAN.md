@@ -99,8 +99,19 @@ on a device. 1.1.4 (21) built: `design/release-builds/pamoja-1.1.4-21-internal.a
   because builds up to 1.1.4 carry `%1$s` in their copy. Remind's body is now
   "Any walk today counts for {group}." The Home button is a hand
   (Material Symbols `front_hand`), filled once sent.
+- **§4.5 and §4.6 built 2026-10-11 (uncommitted, not deployed):** the Monday
+  recap names someone who walked all seven days last week ("Meera walked
+  every day last week"), or says "You walked every day" to each of them;
+  with several, the one named turns over by week. Never a rank. Milestones:
+  4 and 10 goal weeks in a row are told on the recap morning instead of the
+  recap (a shield used last week still wins); a group's first goal ever gets
+  "First goal, done" instead of "{group} made it" (no earlier `weeks/` doc
+  with `goalHit`). First shield used was already told by `push_shield_*`.
+  New keys `push_first_goal_*`, `push_milestone_*`, `push_recap_named_body`,
+  `push_recap_you_body` in en/es/hi; older apps fall back to the server's
+  English. Needs `functions:notifications` deployed.
 - Not built: action buttons (impossible with notification messages), §4
-  ideas 2, 3, 5-7.
+  ideas 2, 3, 7.
 
 **Deploy when the user says (not before):** functions `notifications`
 codebase first (`firebase deploy --only functions:notifications`; adds

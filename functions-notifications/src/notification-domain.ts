@@ -52,6 +52,12 @@ export const COPY = {
   push_shield_body: "%1$s missed the goal, but the streak lives.",
   push_solo_title: "%1$s needs its people",
   push_solo_body: "Send your invite. A shared goal is easier to keep.",
+  push_first_goal_title: "First goal, done",
+  push_first_goal_body: "%1$s made it: %2$s steps together.",
+  push_milestone_title: "%1$s weeks in a row",
+  push_milestone_body: "%1$s has met its goal %2$s weeks running. That's a habit now.",
+  push_recap_named_body: "%1$s walked every day last week. This week's goal: %2$s.",
+  push_recap_you_body: "You walked every day last week. This week's goal: %1$s.",
   push_quiet_title: "We'll go quiet for now",
   push_quiet_body: "Your group's still here when you want it.",
 } as const;
@@ -192,14 +198,21 @@ export function buildGoalReachedPush(input: {
   weekStart: string;
   groupName: unknown;
   finalSteps: number;
+  /** The group has never met its goal before: said once, as its own moment. */
+  first?: boolean;
 }): PushPayload {
+  const name = shortGroupName(input.groupName);
   return payload({
     kind: "goal-reached",
     identity: `${input.groupId}:${input.weekStart}`,
     category: "ACHIEVEMENT",
     groupId: input.groupId,
-    title: {key: "push_goal_title", args: [shortGroupName(input.groupName)]},
-    body: {key: "push_goal_body", args: [formatNumber(input.finalSteps)]},
+    title: input.first ?
+      {key: "push_first_goal_title", args: []} :
+      {key: "push_goal_title", args: [name]},
+    body: input.first ?
+      {key: "push_first_goal_body", args: [name, formatNumber(input.finalSteps)]} :
+      {key: "push_goal_body", args: [formatNumber(input.finalSteps)]},
   });
 }
 

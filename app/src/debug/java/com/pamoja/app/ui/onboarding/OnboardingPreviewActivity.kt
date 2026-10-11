@@ -36,6 +36,7 @@ class OnboardingPreviewActivity : ComponentActivity() {
                         name = "Ravi Sharma", onNameChange = {}, nameError = null,
                         isAdult = false, onAdultChange = {},
                         isLoading = false, isOffline = false, errorBody = null, onSubmit = {},
+                        onChoosePhoto = {},
                     )
                     6 -> CreateGroupContent(isLoading = false, isOffline = false, errorBody = null, onCreate = {}, onBack = {})
                     else -> HealthConnectContent(permState = PermState.UNKNOWN, onPrimary = {}, onSkip = {})

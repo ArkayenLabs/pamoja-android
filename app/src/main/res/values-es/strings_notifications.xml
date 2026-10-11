@@ -31,6 +31,12 @@
     <string name="push_shield_body">%1$s no llegó a la meta, pero la racha sigue.</string>
     <string name="push_solo_title">%1$s necesita a su gente</string>
     <string name="push_solo_body">Envía tu invitación. Una meta compartida se cumple mejor.</string>
+    <string name="push_first_goal_title">Primera meta, lograda</string>
+    <string name="push_first_goal_body">%1$s lo logró: %2$s pasos juntos.</string>
+    <string name="push_milestone_title">%1$s semanas seguidas</string>
+    <string name="push_milestone_body">%1$s ha cumplido su meta %2$s semanas seguidas. Ya es un hábito.</string>
+    <string name="push_recap_named_body">%1$s caminó todos los días la semana pasada. Meta de esta semana: %2$s.</string>
+    <string name="push_recap_you_body">Caminaste todos los días la semana pasada. Meta de esta semana: %1$s.</string>
     <string name="push_quiet_title">Haremos una pausa con los avisos</string>
     <string name="push_quiet_body">Tu grupo sigue aquí cuando quieras volver.</string>
 

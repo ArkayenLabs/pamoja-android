@@ -9,6 +9,7 @@ import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.usecase.CreateUserUseCase
+import com.pamoja.app.domain.usecase.UpdateAvatarUseCase
 import com.pamoja.app.domain.analytics.AnalyticsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +45,7 @@ data class OnboardingUiState(
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val createUserUseCase: CreateUserUseCase,
+    private val updateAvatarUseCase: UpdateAvatarUseCase,
     private val userPreferences: UserPreferences,
     private val firebaseAuth: FirebaseAuth,          // injected to check existing session
     private val analyticsManager: AnalyticsManager,
@@ -83,11 +85,15 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Creates the profile, then attaches [photoUri] (already cropped) if one
+     * was chosen. The photo is best effort: a failed upload must not stop
+     * someone joining their group, and Edit profile can add it later.
+     */
     fun createProfile(
         name: String,
-        age: Int?,
-        height: Float?,
-        weight: Float?
+        photoUri: String? = null,
+        showPhotoInGroups: Boolean = false,
     ) {
         viewModelScope.launch {
             // copy, not a fresh state, or isOffline resets to false on submit
@@ -108,14 +114,13 @@ class OnboardingViewModel @Inject constructor(
 
             val user = User(
                 userId = userId,
-                name   = name,
-                age    = age,
-                height = height,
-                weight = weight
+                name = name,
+                showPhotoInGroups = showPhotoInGroups,
             )
             val createResult = createUserUseCase(user)
             createResult.fold(
                 onSuccess = {
+                    photoUri?.let { updateAvatarUseCase(user, it) }
                     userPreferences.saveUserId(userId)
                     userPreferences.saveUserName(name)
                     userPreferences.setOnboarded(true)

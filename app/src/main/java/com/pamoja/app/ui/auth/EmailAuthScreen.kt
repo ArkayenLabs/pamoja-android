@@ -71,7 +71,7 @@ internal fun EmailSignUpContent(
 
     // Each problem shows once there is something typed to be wrong, so an
     // empty form is not a wall of red; the button stays off until all is well.
-    val nameError = nameTooLong.takeIf { name.trim().length > 50 }
+    val nameError = nameTooLong.takeIf { name.trim().length > com.pamoja.app.domain.model.User.MAX_NAME_LENGTH }
     val emailError = emailInvalid.takeIf {
         email.isNotBlank() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
     }

@@ -2,7 +2,7 @@
     <string name="profile_name_label">Nombre</string>
     <string name="profile_name_placeholder">¿Cómo te llamamos?</string>
     <string name="profile_name_required">Tu grupo necesita un nombre para reconocerte</string>
-    <string name="profile_name_too_long">Usa 50 caracteres o menos</string>
+    <string name="profile_name_too_long">Usa 40 caracteres o menos</string>
     <string name="profile_offline_title">Sin conexión</string>
     <string name="profile_offline_body">Necesitas conexión para crear tu perfil. Tus respuestas se guardarán aquí mientras tanto.</string>
     <string name="profile_failed_title">No se pudo guardar tu perfil</string>

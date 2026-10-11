@@ -41,7 +41,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -203,6 +205,10 @@ internal fun GoalCelebrationContent(
     }
 
     val colors = Kit.colors
+    // Short windows (small phones, landscape) get a smaller stage, so the
+    // words and the two buttons are not all below the fold.
+    val windowHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val stage = if (windowHeight < COMPACT_BELOW) StageSize.Compact else StageSize.Regular
     Box(Modifier.fillMaxSize().background(colors.page)) {
         Column(
             modifier = Modifier
@@ -221,7 +227,7 @@ internal fun GoalCelebrationContent(
                     modifier = Modifier.graphicsLayer { alpha = reveal.value },
                 )
             }
-            Stage(model.people, ring.value, gather.value, pulse.value)
+            Stage(model.people, ring.value, gather.value, pulse.value, stage)
 
             val shown = if (ring.value >= 1f) {
                 model.steps
@@ -230,7 +236,7 @@ internal fun GoalCelebrationContent(
             }
             Text(
                 "%,d".format(shown),
-                style = Kit.type.bigNumber.copy(fontSize = 52.sp, lineHeight = 56.sp),
+                style = Kit.type.bigNumber.copy(fontSize = stage.number, lineHeight = stage.number * 1.08f),
                 color = colors.ink,
             )
             Text(
@@ -241,7 +247,7 @@ internal fun GoalCelebrationContent(
 
             Column(
                 modifier = Modifier
-                    .padding(top = 24.dp)
+                    .padding(top = stage.gap)
                     .graphicsLayer {
                         alpha = reveal.value
                         translationY = (1f - reveal.value) * 16.dp.toPx()
@@ -304,21 +310,21 @@ internal fun GoalCelebrationContent(
 
 /** The ring, the lime pulse as it closes, and the faces moving in to meet inside it. */
 @Composable
-private fun Stage(people: List<CelebrationPerson>, ring: Float, gather: Float, pulse: Float) {
+private fun Stage(people: List<CelebrationPerson>, ring: Float, gather: Float, pulse: Float, stage: StageSize) {
     val colors = Kit.colors
     val shown = if (people.size > MAX_FACES) people.take(MAX_FACES - 1) else people
     val extra = people.size - shown.size
     val slots = shown.size + if (extra > 0) 1 else 0
 
     BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth().height(272.dp),
+        modifier = Modifier.fillMaxWidth().height(stage.height),
         contentAlignment = Alignment.Center,
     ) {
-        val spreadX = (maxWidth / 2 - FACE / 2).coerceAtMost(150.dp)
+        val spreadX = (maxWidth / 2 - stage.face / 2).coerceAtMost(150.dp)
         if (pulse > 0f && pulse < 1f) {
             Box(
                 Modifier
-                    .size(RING)
+                    .size(stage.ring)
                     .graphicsLayer {
                         scaleX = 1f + 0.3f * pulse
                         scaleY = 1f + 0.3f * pulse
@@ -329,11 +335,11 @@ private fun Stage(people: List<CelebrationPerson>, ring: Float, gather: Float, p
         }
         Box(
             Modifier
-                .size(RING)
+                .size(stage.ring)
                 .graphicsLayer { alpha = gather }
                 .background(colors.hero, CircleShape),
         )
-        Canvas(Modifier.size(RING)) {
+        Canvas(Modifier.size(stage.ring)) {
             val stroke = 14.dp.toPx()
             val inset = stroke / 2
             val arcSize = Size(size.width - stroke, size.height - stroke)
@@ -348,8 +354,8 @@ private fun Stage(people: List<CelebrationPerson>, ring: Float, gather: Float, p
             // overlapping row in its middle.
             val angle = -PI / 2 + 2 * PI * i / slots + PI / 7
             val apartX = spreadX * cos(angle).toFloat()
-            val apartY = 112.dp * sin(angle).toFloat()
-            val togetherX = OVERLAP * (i - (slots - 1) / 2f)
+            val apartY = stage.spreadY * sin(angle).toFloat()
+            val togetherX = stage.overlap * (i - (slots - 1) / 2f)
             val x = lerp(apartX, togetherX, gather)
             val y = lerp(apartY, 0.dp, gather)
             Box(Modifier.offset { IntOffset(x.roundToPx(), y.roundToPx()) }) {
@@ -359,12 +365,12 @@ private fun Stage(people: List<CelebrationPerson>, ring: Float, gather: Float, p
                         name = person.name,
                         photoUrl = person.photoUrl,
                         seed = person.userId,
-                        size = FACE,
+                        size = stage.face,
                         modifier = Modifier.background(colors.page, CircleShape).padding(2.dp),
                     )
                 } else {
                     Box(
-                        Modifier.size(FACE).background(colors.page, CircleShape).padding(2.dp)
+                        Modifier.size(stage.face).background(colors.page, CircleShape).padding(2.dp)
                             .background(colors.iconBackground, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -412,6 +418,19 @@ private fun lerp(from: Dp, to: Dp, fraction: Float): Dp = from + (to - from) * f
 /** Where the ring starts: close, so the closing is what you watch. */
 private const val START = 0.9f
 private const val MAX_FACES = 5
-private val FACE = 44.dp
-private val OVERLAP = 34.dp
-private val RING = 220.dp
+/** Window heights below this get [StageSize.Compact]: a 360x640 phone, any landscape phone. */
+private val COMPACT_BELOW = 700.dp
+
+/** The stage's measures: the ring, the faces, how far apart they start, the number. */
+private enum class StageSize(
+    val ring: Dp,
+    val height: Dp,
+    val face: Dp,
+    val overlap: Dp,
+    val spreadY: Dp,
+    val number: androidx.compose.ui.unit.TextUnit,
+    val gap: Dp,
+) {
+    Regular(ring = 220.dp, height = 272.dp, face = 44.dp, overlap = 34.dp, spreadY = 112.dp, number = 52.sp, gap = 24.dp),
+    Compact(ring = 156.dp, height = 192.dp, face = 36.dp, overlap = 28.dp, spreadY = 78.dp, number = 40.sp, gap = 14.dp),
+}

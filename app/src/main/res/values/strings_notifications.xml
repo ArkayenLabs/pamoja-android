@@ -50,6 +50,15 @@
     <string name="push_shield_body">%1$s missed the goal, but the streak lives.</string>
     <string name="push_solo_title">%1$s needs its people</string>
     <string name="push_solo_body">Send your invite. A shared goal is easier to keep.</string>
+    <!-- The first week a group ever meets its goal, instead of push_goal_*. %1$s is the group, %2$s the steps. -->
+    <string name="push_first_goal_title">First goal, done</string>
+    <string name="push_first_goal_body">%1$s made it: %2$s steps together.</string>
+    <!-- Recap morning after 4 or 10 goal weeks in a row. %1$s is a number of weeks; in the body %1$s is the group. -->
+    <string name="push_milestone_title">%1$s weeks in a row</string>
+    <string name="push_milestone_body">%1$s has met its goal %2$s weeks running. That\'s a habit now.</string>
+    <!-- Recap naming someone who walked all seven days last week; never a ranking. -->
+    <string name="push_recap_named_body">%1$s walked every day last week. This week\'s goal: %2$s.</string>
+    <string name="push_recap_you_body">You walked every day last week. This week\'s goal: %1$s.</string>
     <!-- Once, after 8 scheduled reminders in a row went unopened; then silence until the app is opened. -->
     <string name="push_quiet_title">We\'ll go quiet for now</string>
     <string name="push_quiet_body">Your group\'s still here when you want it.</string>

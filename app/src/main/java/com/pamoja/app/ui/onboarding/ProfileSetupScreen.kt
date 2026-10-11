@@ -1,5 +1,10 @@
 package com.pamoja.app.ui.onboarding
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -7,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -19,6 +26,9 @@ import com.pamoja.app.ui.kit.KitNotice
 import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitTextField
 import com.pamoja.app.ui.kit.PrimaryButton
+import com.pamoja.app.ui.profile.PhotoCropScreen
+import com.pamoja.app.ui.profile.PhotoPickerAvatar
+import com.pamoja.app.ui.profile.ShowPhotoInGroupsRow
 
 /**
  * The name step every new account passes through (REBUILD_PLAN.md §6).
@@ -39,12 +49,20 @@ fun ProfileSetupScreen(
     val context = LocalContext.current
     var name by rememberSaveable { mutableStateOf("") }
     var isAdult by rememberSaveable { mutableStateOf(false) }
+    // Optional, as decided for the rebuild: a name, and a photo if you like.
+    // Held as the cropped local file until the profile exists to attach it to.
+    var photoUri by rememberSaveable { mutableStateOf<String?>(null) }
+    var showPhoto by rememberSaveable { mutableStateOf(false) }
+    var pendingCropUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri -> uri?.let { pendingCropUri = it.toString() } }
 
     val nameRequired = stringResource(R.string.profile_name_required)
     val nameTooLong = stringResource(R.string.profile_name_too_long)
     val nameError = when {
         name.isBlank() -> nameRequired
-        name.trim().length > 50 -> nameTooLong
+        name.trim().length > com.pamoja.app.domain.model.User.MAX_NAME_LENGTH -> nameTooLong
         else -> null
     }
 
@@ -61,6 +79,18 @@ fun ProfileSetupScreen(
     }
     LaunchedEffect(Unit) { viewModel.onProfileSetupStarted() }
 
+    pendingCropUri?.let { uri ->
+        PhotoCropScreen(
+            sourceUri = uri,
+            onCancel = { pendingCropUri = null },
+            onCropped = { cropped ->
+                pendingCropUri = null
+                photoUri = cropped
+            },
+        )
+        return
+    }
+
     ProfileSetupContent(
         name = name,
         onNameChange = { name = it },
@@ -71,8 +101,14 @@ fun ProfileSetupScreen(
         isOffline = uiState.isOffline,
         errorBody = uiState.error?.toErrorCopy()?.body(context),
         onSubmit = {
-            viewModel.createProfile(name = name.trim(), age = null, height = null, weight = null)
+            viewModel.createProfile(name = name.trim(), photoUri = photoUri, showPhotoInGroups = showPhoto)
         },
+        photoUri = photoUri,
+        onChoosePhoto = {
+            photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        },
+        showPhoto = showPhoto,
+        onShowPhotoChange = { showPhoto = it },
     )
 }
 
@@ -88,6 +124,11 @@ internal fun ProfileSetupContent(
     isOffline: Boolean,
     errorBody: String?,
     onSubmit: () -> Unit,
+    photoUri: String? = null,
+    /** Null hides the photo (tests and previews that only exercise the name). */
+    onChoosePhoto: (() -> Unit)? = null,
+    showPhoto: Boolean = false,
+    onShowPhotoChange: (Boolean) -> Unit = {},
 ) {
     var touched by rememberSaveable { mutableStateOf(false) }
     KitScreen(
@@ -102,6 +143,17 @@ internal fun ProfileSetupContent(
     ) {
         Text(stringResource(R.string.name_step_title), style = Kit.type.headline)
         Text(stringResource(R.string.name_step_body), style = Kit.type.body, color = Kit.colors.muted)
+        onChoosePhoto?.let { choose ->
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                PhotoPickerAvatar(
+                    name = name,
+                    photoUrl = photoUri,
+                    isUploading = false,
+                    enabled = !isLoading,
+                    onChoose = choose,
+                )
+            }
+        }
         KitTextField(
             value = name,
             onValueChange = {
@@ -114,6 +166,9 @@ internal fun ProfileSetupContent(
             error = nameError.takeIf { touched },
             enabled = !isLoading,
         )
+        if (photoUri != null) {
+            ShowPhotoInGroupsRow(checked = showPhoto, onCheckedChange = onShowPhotoChange, enabled = !isLoading)
+        }
         CheckRow(
             checked = isAdult,
             onCheckedChange = onAdultChange,

@@ -1,4 +1,5 @@
 import {
+  LocText,
   PushPayload,
   WALKED_MIN_STEPS,
   formatNumber,
@@ -29,6 +30,8 @@ export const EVENING_HOUR = 18;
 const WALK_COUNTS_GAP_DAYS = 6;
 /** The empty-group invite reminder, on these days after creation only. */
 const SOLO_REMINDER_DAYS = new Set([1, 3, 7]);
+/** Streak lengths told as a milestone on the recap morning, instead of the recap. */
+export const MILESTONE_WEEKS = new Set([4, 10]);
 const DAY_MS = 24 * 60 * 60 * 1_000;
 /** Scheduled pushes in a row, unopened, before one last line and silence. */
 export const QUIET_AFTER = 8;
@@ -51,6 +54,8 @@ export interface ReminderGroup {
   lastShieldedWeek: string;
   /** Total of the finished previous week, when its summary exists. */
   previousWeekTotal: number | null;
+  /** Current members who walked all seven days of the finished previous week. */
+  previousWeekEveryDay: ReadonlyArray<{userId: string; name: string}>;
 }
 
 export interface ReminderMembership {
@@ -66,7 +71,8 @@ export interface ReminderCandidate {
 }
 
 export type ReminderKind =
-  "shield" | "recap" | "streak" | "last-day" | "two-days" | "walk-counts" | "solo" | "going-quiet";
+  "shield" | "milestone" | "recap" | "streak" | "last-day" | "two-days" | "walk-counts" | "solo" |
+  "going-quiet";
 
 export interface PlannedReminder {
   kind: ReminderKind;
@@ -154,6 +160,20 @@ function morning(candidate: ReminderCandidate, today: string, userId: string): R
     }));
   }
 
+  // The finalizer has counted last week by now (the shield line above needs
+  // the same), so a streak through last week is the one to mark.
+  if (group.streakThroughWeek === previousWeek && MILESTONE_WEEKS.has(group.streakWeeks)) {
+    const weeks = String(group.streakWeeks);
+    return rank(80, "milestone", payload({
+      kind: "reminder-milestone",
+      identity,
+      category: "ACHIEVEMENT",
+      groupId: group.groupId,
+      title: {key: "push_milestone_title", args: [weeks]},
+      body: {key: "push_milestone_body", args: [name, weeks]},
+    }));
+  }
+
   const lastTotal = group.previousWeekTotal ??
     (group.weekStart === previousWeek ? group.weeklySteps : null);
   const target = formatNumber(group.weeklyTarget);
@@ -164,11 +184,36 @@ function morning(candidate: ReminderCandidate, today: string, userId: string): R
     groupId: group.groupId,
     title: {key: "push_new_week_title", args: [name]},
     shortenTitleArg: 0,
-    // "Last week: 0 steps" reads as a telling-off; say only the new goal.
-    body: lastTotal && lastTotal > 0 ?
-      {key: "push_new_week_body", args: [formatNumber(lastTotal), target]} :
-      {key: "push_new_week_first_body", args: [target]},
+    body: recapBody(group, userId, previousWeek, lastTotal, target),
   }));
+}
+
+/**
+ * Celebrates a person, never a rank (NOTIFICATIONS_PLAN.md §4.5): someone who
+ * walked every day last week, by name, or "you" for each of them. With
+ * several, the one named turns over week by week rather than always being
+ * the same person.
+ */
+function recapBody(
+  group: ReminderGroup,
+  userId: string,
+  previousWeek: string,
+  lastTotal: number | null,
+  target: string,
+): LocText {
+  const everyDay = group.previousWeekEveryDay;
+  if (everyDay.some((person) => person.userId === userId)) {
+    return {key: "push_recap_you_body", args: [target]};
+  }
+  const others = [...everyDay].sort((a, b) => a.userId.localeCompare(b.userId));
+  if (others.length > 0) {
+    const turn = [...previousWeek].reduce((sum, char) => sum + char.charCodeAt(0), 0) % others.length;
+    return {key: "push_recap_named_body", args: [others[turn].name, target]};
+  }
+  // "Last week: 0 steps" reads as a telling-off; say only the new goal.
+  return lastTotal && lastTotal > 0 ?
+    {key: "push_new_week_body", args: [formatNumber(lastTotal), target]} :
+    {key: "push_new_week_first_body", args: [target]};
 }
 
 function evening(

@@ -31,6 +31,12 @@
     <string name="push_shield_body">%1$s लक्ष्य से चूक गया, पर स्ट्रीक बनी हुई है।</string>
     <string name="push_solo_title">%1$s को अपने लोग चाहिए</string>
     <string name="push_solo_body">अपना आमंत्रण भेजें। साझा लक्ष्य निभाना आसान होता है।</string>
+    <string name="push_first_goal_title">पहला लक्ष्य पूरा</string>
+    <string name="push_first_goal_body">%1$s ने कर दिखाया: मिलकर %2$s कदम।</string>
+    <string name="push_milestone_title">लगातार %1$s हफ़्ते</string>
+    <string name="push_milestone_body">%1$s ने लगातार %2$s हफ़्ते लक्ष्य पूरा किया। अब यह आदत बन गई है।</string>
+    <string name="push_recap_named_body">%1$s पिछले हफ़्ते हर दिन चले। इस हफ़्ते का लक्ष्य: %2$s।</string>
+    <string name="push_recap_you_body">आप पिछले हफ़्ते हर दिन चले। इस हफ़्ते का लक्ष्य: %1$s।</string>
     <string name="push_quiet_title">अभी के लिए हम चुप रहेंगे</string>
     <string name="push_quiet_body">आपका समूह यहीं है, जब भी आप लौटना चाहें।</string>
 

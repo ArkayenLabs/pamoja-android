@@ -232,7 +232,7 @@
     <string name="profile_name_label">Name</string>
     <string name="profile_name_placeholder">What should we call you?</string>
     <string name="profile_name_required">Your group needs something to call you</string>
-    <string name="profile_name_too_long">Use 50 characters or fewer</string>
+    <string name="profile_name_too_long">Use 40 characters or fewer</string>
     <string name="profile_offline_title">You\'re offline</string>
     <string name="profile_offline_body">Setting up your profile needs a connection. Your answers stay here until you\'re back.</string>
     <string name="profile_failed_title">Couldn\'t save your profile</string>

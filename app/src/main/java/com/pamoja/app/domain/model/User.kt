@@ -21,4 +21,13 @@ data class User(
      * is not there to fetch, rather than there but politely ignored.
      */
     val showPhotoInGroups: Boolean = false,
-)
+) {
+    companion object {
+        /**
+         * The longest name the profile rule accepts (`firestore.rules`,
+         * users: `name.size() <= 40`). The screens said 50 until 2026-10-11,
+         * so a 41 to 50 character name failed on Continue with a generic error.
+         */
+        const val MAX_NAME_LENGTH = 40
+    }
+}

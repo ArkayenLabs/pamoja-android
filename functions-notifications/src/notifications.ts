@@ -216,6 +216,13 @@ export const notifyGroupGoalReached = onDocumentUpdated(
     const recipients = memberSnapshot.docs
       .map((document) => stringOrNull(document.get("userId")))
       .filter((candidate): candidate is string => candidate !== null);
+    // This week is not finalized yet, so any goal week on record is an
+    // earlier one. Single-field equality: served by the automatic index.
+    const earlierGoal = await getFirestore().collection("groups").doc(groupId)
+      .collection("weeks")
+      .where("goalHit", "==", true)
+      .limit(1)
+      .get();
 
     await sendToUsers(
       recipients,
@@ -224,6 +231,7 @@ export const notifyGroupGoalReached = onDocumentUpdated(
         weekStart,
         groupName: after.name,
         finalSteps: afterSteps,
+        first: earlierGoal.empty,
       }),
     );
   },
@@ -513,12 +521,16 @@ async function loadCandidates(
       streakThroughWeek: stringOrEmpty(group.get("streakThroughWeek")),
       lastShieldedWeek: stringOrEmpty(group.get("lastShieldedWeek")),
       previousWeekTotal: null as number | null,
+      previousWeekEveryDay: [] as Array<{userId: string; name: string}>,
     };
     // Only the recap reads the finished week, and only on the week's first day.
     const today = groupToday(base, phoneToday, (zone) => localClock(nowMs, zone).date);
     if (daysLeftIn(base.weekStartDay, today) === 7) {
       const summary = await group.ref.collection("weeks").doc(addDays(today, -7)).get();
-      if (summary.exists) base.previousWeekTotal = safeNonNegativeInteger(summary.get("totalSteps"));
+      if (summary.exists) {
+        base.previousWeekTotal = safeNonNegativeInteger(summary.get("totalSteps"));
+        base.previousWeekEveryDay = await everyDayWalkers(group.id, summary.get("contributions"));
+      }
     }
     return {
       group: base,
@@ -530,6 +542,32 @@ async function loadCandidates(
       },
     };
   }));
+}
+
+/**
+ * Current members who walked all seven days of a finished week, with the
+ * first name they show in the group. Someone who has since left is redacted
+ * from the summary already, and has no membership to name them by.
+ */
+async function everyDayWalkers(
+  groupId: string,
+  contributions: unknown,
+): Promise<Array<{userId: string; name: string}>> {
+  if (!Array.isArray(contributions)) return [];
+  const userIds = contributions
+    .filter((value) => value?.walkedDays === 127)
+    .map((value) => stringOrNull(value?.userId))
+    .filter((userId): userId is string => userId !== null)
+    .slice(0, 20);
+  if (userIds.length === 0) return [];
+  const firestore = getFirestore();
+  const memberships = await firestore.getAll(
+    ...userIds.map((userId) => firestore.collection("memberships").doc(`${userId}_${groupId}`)),
+  );
+  return memberships.flatMap((membership, index) => {
+    const name = stringOrNull(membership.get("displayName"))?.trim().split(/\s+/)[0];
+    return membership.exists && name ? [{userId: userIds[index], name: name.slice(0, 40)}] : [];
+  });
 }
 
 /** Sends one scheduled push; false (and a dead registration removed) when it fails. */

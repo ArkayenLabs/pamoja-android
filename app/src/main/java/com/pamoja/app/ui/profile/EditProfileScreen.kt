@@ -128,7 +128,7 @@ internal fun EditProfileContent(
     val nameTooLong = stringResource(R.string.profile_name_too_long)
     val nameError = when {
         state.name.isBlank() -> nameRequired
-        state.name.trim().length > 50 -> nameTooLong
+        state.name.trim().length > com.pamoja.app.domain.model.User.MAX_NAME_LENGTH -> nameTooLong
         else -> null
     }
     val ready = !state.isLoading && state.loadError == null
@@ -179,50 +179,14 @@ internal fun EditProfileContent(
                     )
                 }
 
-                // Still the photo picker, not the camera permission: Android's
-                // picker runs outside the app and returns one image, so there is
-                // no READ_MEDIA_IMAGES to request and no permanently-denied state.
-                val canPickPhoto = !state.isUploadingPhoto && !state.isOffline
-                Box(Modifier.align(Alignment.CenterHorizontally)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Avatar(name = state.name, photoUrl = state.photoUrl, size = 112.dp)
-                        if (state.isUploadingPhoto) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(28.dp),
-                                color = Kit.colors.ink,
-                                strokeWidth = 2.5.dp,
-                            )
-                        }
-                    }
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .offset(x = 6.dp, y = 6.dp)
-                            .size(46.dp)
-                            .clip(CircleShape)
-                            .background(Kit.colors.page)
-                            .padding(3.dp)
-                            .clip(CircleShape)
-                            .background(Kit.colors.button)
-                            .clickable(enabled = canPickPhoto, role = Role.Button, onClick = onChoosePhoto),
-                    ) {
-                        Icon(
-                            painter = painterResource(PamojaIcons.Camera),
-                            // The spinner is the only visual sign of an upload
-                            // and says nothing to a screen reader; this does.
-                            contentDescription = stringResource(
-                                when {
-                                    state.isUploadingPhoto -> R.string.profile_edit_photo_uploading
-                                    state.photoUrl.isNullOrBlank() -> R.string.profile_edit_photo_add
-                                    else -> R.string.profile_edit_photo_change
-                                },
-                            ),
-                            tint = Kit.colors.onButton,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
+                PhotoPickerAvatar(
+                    name = state.name,
+                    photoUrl = state.photoUrl,
+                    isUploading = state.isUploadingPhoto,
+                    enabled = !state.isUploadingPhoto && !state.isOffline,
+                    onChoose = onChoosePhoto,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
 
                 KitTextField(
                     value = state.name,
@@ -238,30 +202,14 @@ internal fun EditProfileContent(
                 // someone with no avatar whether to share it is a question about
                 // nothing.
                 if (!state.photoUrl.isNullOrBlank()) {
-                    KitCard {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(stringResource(R.string.profile_show_photo_title), style = Kit.type.bodyStrong)
-                                Text(stringResource(R.string.profile_show_photo_sub), style = Kit.type.caption, color = Kit.colors.muted)
-                            }
-                            Switch(
-                                checked = state.showPhotoInGroups,
-                                onCheckedChange = onShowPhoto,
-                                // Offline it would appear to work and then
-                                // silently revert, which for a privacy control is
-                                // the wrong kind of surprise.
-                                enabled = !state.isUpdatingPhotoPrivacy && !state.isOffline,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Kit.colors.onButton,
-                                    checkedTrackColor = Kit.colors.button,
-                                    checkedBorderColor = Kit.colors.button,
-                                    uncheckedThumbColor = Kit.colors.muted,
-                                    uncheckedTrackColor = Kit.colors.track,
-                                    uncheckedBorderColor = Kit.colors.fieldBorder,
-                                ),
-                            )
-                        }
-                    }
+                    ShowPhotoInGroupsRow(
+                        checked = state.showPhotoInGroups,
+                        onCheckedChange = onShowPhoto,
+                        // Offline it would appear to work and then silently
+                        // revert, which for a privacy control is the wrong kind
+                        // of surprise.
+                        enabled = !state.isUpdatingPhotoPrivacy && !state.isOffline,
+                    )
                 }
 
                 state.saveError?.takeIf { !state.isOffline }?.let {
@@ -272,6 +220,98 @@ internal fun EditProfileContent(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Your photo with a camera button on its corner, which opens the picker. Shared
+ * by Edit profile and the sign-up name step. Still the photo picker, not the
+ * camera permission: Android's picker runs outside the app and returns one
+ * image, so there is no READ_MEDIA_IMAGES to request and no permanently-denied
+ * state.
+ */
+@Composable
+internal fun PhotoPickerAvatar(
+    name: String,
+    photoUrl: String?,
+    isUploading: Boolean,
+    enabled: Boolean,
+    onChoose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier) {
+        Box(contentAlignment = Alignment.Center) {
+            Avatar(name = name, photoUrl = photoUrl, size = 112.dp)
+            if (isUploading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp),
+                    color = Kit.colors.ink,
+                    strokeWidth = 2.5.dp,
+                )
+            }
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 6.dp, y = 6.dp)
+                .size(46.dp)
+                .clip(CircleShape)
+                .background(Kit.colors.page)
+                .padding(3.dp)
+                .clip(CircleShape)
+                .background(Kit.colors.button)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onChoose),
+        ) {
+            Icon(
+                painter = painterResource(PamojaIcons.Camera),
+                // The spinner is the only visual sign of an upload and says
+                // nothing to a screen reader; this does.
+                contentDescription = stringResource(
+                    when {
+                        isUploading -> R.string.profile_edit_photo_uploading
+                        photoUrl.isNullOrBlank() -> R.string.profile_edit_photo_add
+                        else -> R.string.profile_edit_photo_change
+                    },
+                ),
+                tint = Kit.colors.onButton,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+/**
+ * Whether your photo is shown in your groups. Shown only once there is a
+ * photo: asking someone with no avatar whether to share it is a question about
+ * nothing. Off by default (User.showPhotoInGroups).
+ */
+@Composable
+internal fun ShowPhotoInGroupsRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean,
+) {
+    KitCard {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.profile_show_photo_title), style = Kit.type.bodyStrong)
+                Text(stringResource(R.string.profile_show_photo_sub), style = Kit.type.caption, color = Kit.colors.muted)
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Kit.colors.onButton,
+                    checkedTrackColor = Kit.colors.button,
+                    checkedBorderColor = Kit.colors.button,
+                    uncheckedThumbColor = Kit.colors.muted,
+                    uncheckedTrackColor = Kit.colors.track,
+                    uncheckedBorderColor = Kit.colors.fieldBorder,
+                ),
+            )
         }
     }
 }

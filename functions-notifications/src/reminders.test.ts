@@ -36,6 +36,7 @@ function group(overrides: Partial<ReminderGroup> = {}): ReminderGroup {
     streakThroughWeek: "",
     lastShieldedWeek: "",
     previousWeekTotal: null,
+    previousWeekEveryDay: [],
     ...overrides,
   };
 }
@@ -173,4 +174,49 @@ test("after eight unopened reminders, one honest line, then silence until the ap
 test("a build that cannot report opens is never silenced", () => {
   const reminder = plan(SUNDAY, EVENING_HOUR, [candidate({weeklySteps: 61_000})]);
   assert.equal(applyBackoff(reminder, 50, false, {userId: "bob", today: SUNDAY}), reminder);
+});
+
+const LAST_MONDAY = "2026-09-28";
+
+test("four and ten weeks in a row are told as a milestone, other lengths are not", () => {
+  const four = plan(MONDAY, RECAP_HOUR, [candidate({streakWeeks: 4, streakThroughWeek: LAST_MONDAY})]);
+  assert.equal(four?.kind, "milestone");
+  assert.equal(four?.push.title, "4 weeks in a row");
+  assert.equal(four?.push.body, "bama has met its goal 4 weeks running. That's a habit now.");
+  const ten = plan(MONDAY, RECAP_HOUR, [candidate({streakWeeks: 10, streakThroughWeek: LAST_MONDAY})]);
+  assert.equal(ten?.kind, "milestone");
+  const five = plan(MONDAY, RECAP_HOUR, [candidate({streakWeeks: 5, streakThroughWeek: LAST_MONDAY})]);
+  assert.equal(five?.kind, "recap");
+  // A streak that ended before last week is no milestone now.
+  const stale = plan(MONDAY, RECAP_HOUR, [candidate({streakWeeks: 4, streakThroughWeek: "2026-09-21"})]);
+  assert.equal(stale?.kind, "recap");
+});
+
+test("a shield used last week is still told before a milestone", () => {
+  const reminder = plan(MONDAY, RECAP_HOUR, [
+    candidate({streakWeeks: 4, streakThroughWeek: LAST_MONDAY, lastShieldedWeek: LAST_MONDAY}),
+  ]);
+  assert.equal(reminder?.kind, "shield");
+});
+
+test("the recap names someone who walked every day, or says you did", () => {
+  const meera = {userId: "meera", name: "Meera"};
+  const named = plan(MONDAY, RECAP_HOUR, [candidate({previousWeekTotal: 64_000, previousWeekEveryDay: [meera]})]);
+  assert.equal(named?.kind, "recap");
+  assert.equal(named?.push.body, "Meera walked every day last week. This week's goal: 70,000.");
+  const you = plan(MONDAY, RECAP_HOUR, [
+    candidate({previousWeekTotal: 64_000, previousWeekEveryDay: [meera, {userId: "bob", name: "Bob"}]}),
+  ]);
+  assert.equal(you?.push.body, "You walked every day last week. This week's goal: 70,000.");
+  const nobody = plan(MONDAY, RECAP_HOUR, [candidate({previousWeekTotal: 64_000})]);
+  assert.equal(nobody?.push.body, "Last week: 64,000 steps. This week's goal: 70,000.");
+});
+
+test("with several who walked every day, the one named turns over by week", () => {
+  const everyDay = [{userId: "meera", name: "Meera"}, {userId: "ravi", name: "Ravi"}];
+  const thisWeek = plan(MONDAY, RECAP_HOUR, [candidate({previousWeekEveryDay: everyDay})]);
+  const nextWeek = plan("2026-10-12", RECAP_HOUR, [
+    candidate({weekStart: "2026-10-12", previousWeekEveryDay: everyDay}),
+  ], {}, NOW + 7 * DAY);
+  assert.notEqual(thisWeek?.push.body, nextWeek?.push.body);
 });

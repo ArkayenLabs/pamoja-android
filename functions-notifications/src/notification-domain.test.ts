@@ -196,3 +196,15 @@ test("registrations and clocks are read defensively", () => {
   assert.equal(inQuietHours(REGISTRATION, MIDNIGHT_IST), true);
   assert.equal(inQuietHours(REGISTRATION, EVENING_IST), false);
 });
+
+test("the first goal a group ever meets is told as its own moment", () => {
+  const first = buildGoalReachedPush({
+    groupId: GROUP_ID, weekStart: "2026-10-05", groupName: "bama", finalSteps: 70_000, first: true,
+  });
+  assert.equal(first.title, "First goal, done");
+  assert.equal(first.body, "bama made it: 70,000 steps together.");
+  const later = buildGoalReachedPush({groupId: GROUP_ID, weekStart: "2026-10-05", groupName: "bama", finalSteps: 70_000});
+  assert.equal(later.title, "bama made it");
+  // Same event either way, so a retry never sends both.
+  assert.equal(first.eventId, later.eventId);
+});

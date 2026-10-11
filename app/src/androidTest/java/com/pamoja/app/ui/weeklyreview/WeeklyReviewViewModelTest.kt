@@ -293,6 +293,7 @@ class WeeklyReviewViewModelTest {
 
         override suspend fun removeMember(groupId: String, userId: String): Result<Unit> = notUsed()
         override suspend fun deleteGroup(groupId: String): Result<Unit> = notUsed()
+        override suspend fun getInviteSummary(code: String): Result<com.pamoja.app.domain.model.InviteSummary> = notUsed()
         override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> =
             notUsed()
 

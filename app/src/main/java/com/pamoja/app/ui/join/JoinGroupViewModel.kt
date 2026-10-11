@@ -40,6 +40,9 @@ data class JoinUiState(
 
     /** Set on success, or immediately when they were already a member. */
     val joinedGroupId: String? = null,
+
+    /** First name of whoever started the group; only the signed-out preview knows it. */
+    val startedBy: String? = null,
 ) {
     /** Joining is only offered when it can actually succeed. */
     val canJoin: Boolean

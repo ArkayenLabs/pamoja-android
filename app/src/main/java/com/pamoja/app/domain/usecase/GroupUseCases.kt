@@ -3,6 +3,7 @@ package com.pamoja.app.domain.usecase
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.InviteSummary
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.PamojaGroupId
 import com.pamoja.app.domain.model.StepGoal
@@ -126,6 +127,22 @@ data class InvitePreview(
     val isAlreadyMember: Boolean,
     val isFull: Boolean,
 )
+
+/**
+ * The invite before sign-in: name, size, goal and who started it, from the
+ * server (the group itself cannot be read without an account). Only a
+ * well-formed group ID is sent anywhere.
+ */
+class GetInviteSummaryUseCase @Inject constructor(
+    private val groupRepository: GroupRepository
+) {
+    suspend operator fun invoke(code: String): Result<InviteSummary> {
+        if (!PamojaGroupId.isValid(code)) {
+            return Result.failure(AppError.Validation(ValidationField.InviteCodeMalformed))
+        }
+        return groupRepository.getInviteSummary(code)
+    }
+}
 
 /**
  * Resolves an invite without joining anything.

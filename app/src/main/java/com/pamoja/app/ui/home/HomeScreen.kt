@@ -141,7 +141,8 @@ fun HomeScreen(
     onInvite: (String) -> Unit,
     onStartGroup: () -> Unit,
     onJoinWithLink: () -> Unit,
-    onOpenInvite: (String) -> Unit,
+    /** The code, and whether to join on arrival (accepted before sign-in). */
+    onOpenInvite: (String, Boolean) -> Unit,
     onSessionExpired: () -> Unit,
     onOpenPaywall: (String) -> Unit,
     onOpenWeeklyCard: (String) -> Unit,
@@ -206,13 +207,14 @@ fun HomeScreen(
     }
 
     // A first-run invite (someone who signed up from a link and has no group
-    // yet) opens its preview straight away. With groups already, it waits
-    // below as a choice rather than taking over the screen.
+    // yet) opens its preview straight away, and so does one already accepted
+    // before sign-in, which then joins by itself. Otherwise, with groups
+    // already, it waits below as a choice rather than taking over the screen.
     LaunchedEffect(pending.pendingCode, home.hasLoadedOnce, home.groups.isEmpty()) {
         val code = pending.pendingCode ?: return@LaunchedEffect
-        if (home.hasLoadedOnce && home.groups.isEmpty()) {
+        if (home.hasLoadedOnce && (home.groups.isEmpty() || pending.accepted)) {
             joinViewModel.markPendingInviteOpened()
-            onOpenInvite(code)
+            onOpenInvite(code, pending.accepted)
         }
     }
 
@@ -302,7 +304,7 @@ fun HomeScreen(
         onJoinWithLink = onJoinWithLink,
         onOpenPendingInvite = { code ->
             joinViewModel.markPendingInviteOpened()
-            onOpenInvite(code)
+            onOpenInvite(code, false)
         },
         onDismissPendingInvite = joinViewModel::dismissPendingInvite,
         onConnectSteps = connectSteps,

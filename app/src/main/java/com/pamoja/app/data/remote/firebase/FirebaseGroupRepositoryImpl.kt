@@ -12,6 +12,7 @@ import com.pamoja.app.data.remote.model.UserDto
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.InviteSummary
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.GroupRepository
@@ -596,6 +597,22 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getInviteSummary(code: String): Result<InviteSummary> {
+        return try {
+            val data = functions
+                .getHttpsCallable(INVITE_PREVIEW_FUNCTION)
+                .call(mapOf("code" to code))
+                .await()
+                .getData()
+            inviteSummaryFrom(code, data)?.let { Result.success(it) }
+                ?: Result.failure(AppError.NotFound("Invite preview had no group"))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
     override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> {
         return try {
             groupsCollection.document(groupId)
@@ -644,5 +661,6 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
 
     private companion object {
         const val DELETE_GROUP_FUNCTION = "deleteGroup"
+        const val INVITE_PREVIEW_FUNCTION = "getInvitePreview"
     }
 }

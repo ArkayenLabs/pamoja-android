@@ -202,8 +202,12 @@ Phase 8 can start. It needs nothing from the backend.
 Published by hand in the **website** repo; it is not on the auto-redeploy path
 (`.github/workflows/redeploy-website.yml` watches only the three legal pages).
 
-- [ ] Copy `web/join-landing.html` from `rebuild` into the website repo's join
-      route and deploy (Vercel).
+- [ ] Port `web/join-landing.html` from `rebuild` (Lilac since 2026-10-11)
+      into the website repo's join route, and replace `/pamoja-invite-og.png`
+      with `web/og/pamoja-invite-og.png`, then deploy (Vercel). The live page
+      is the site's own copy and was still terracotta on 2026-10-11, with no
+      `intent://` button. Details: `web/DEPLOY.md`, "The invite page and its
+      link preview".
 - [ ] `curl -s https://www.arkayenlabs.com/pamoja/join/test123 | grep -c "intent://"`
       prints 1 or more.
 - [ ] On a phone with the app: the link opens the app. Without it: Play opens
@@ -227,9 +231,12 @@ Only after steps 2 and 3 are live and watched.
 - [ ] Launcher icon and splash are Lilac on `rebuild` (done 2026-09-29).
       With the release, upload `design/store-listing/pamoja-icon-512.png` as
       the Play Store icon (regenerate: `python tools/launcher_icon.py`), and
-      replace the phone screenshots with the five Lilac ones in
-      `design/store-listing/` (1080x1920, 24-bit PNG; the old terracotta set
-      is in `terracotta/`). Replace the feature graphic too if it shows the
+      replace the phone screenshots with the six Lilac ones in
+      `design/store-listing/` (1080x1920, 24-bit PNG, regenerated 2026-10-11
+      with Remind, High five and the goal moment; the 2026-09-29 set, which
+      still said Nudge and Cheer, is in `2026-09-29/`, the terracotta set in
+      `terracotta/`). Captions go through `adb shell`, which re-splits them:
+      quote twice, `--es caption "'Your people. One weekly goal.'"`. Replace the feature graphic too if it shows the
       old look.
 - [ ] Internal track, real phones, both themes:
   - [ ] Sign in with Google (first tap works), phone, email.

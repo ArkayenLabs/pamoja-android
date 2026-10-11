@@ -1,6 +1,6 @@
 # Pamoja — Play Data Safety reconciliation
 
-Updated 19 September 2026 against the combined release source. This replaces the August answer sheet, whose claims about local-only notifications and no billing data are obsolete. This file is preparation, not evidence that the live Play form has been updated.
+Updated 11 October 2026 for the `rebuild` app (1.1.x); the 19 September rows still hold for 1.0.12. This replaces the August answer sheet, whose claims about local-only notifications and no billing data are obsolete. This file is preparation, not evidence that the live Play form has been updated.
 
 ## Collection inventory
 
@@ -16,7 +16,12 @@ Updated 19 September 2026 against the combined release source. This replaces the
 | Crash logs / diagnostics | Firebase Crashlytics release crash reporting | Provider retention; no intentional raw health payload |
 | Device/installation IDs | Firebase Analytics, Crashlytics, Installations, FCM and App Check | Push registration is active functionality, not a future placeholder |
 | Planning and commitments | Firebase scheduled shared goals, answers and personal Trail commitments | Current group members see shared planning; Trail source details remain private |
-| Completion card/export | Locally generated and sent only to the app/location selected through Android | No automatic transmission; completion card omits member/group identities and source health history |
+| High fives and reminders (1.1) | Firestore `groups/{id}/signals`: type, sender, recipient, group, date; FCM push to the recipient | Readable by sender and recipient only; deleted by TTL ~14 days; erased when either leaves the group. Likely Play category: "Other in-app messages" (user to user), decide when filling the form |
+| Walked days, streaks, shields (1.1) | Membership `walkedDays` (days with 1,000+ steps); server-computed group streak and shields; finished weeks keep each member's total and walked days | Visible to group members; fitness information |
+| Reminder scheduling (1.1) | Push registration: time zone, quiet hours, reminders sent, last app open, unopened count | Server only; not shown to anyone; time zone is not precise location |
+| Invite preview (1.1) | `getInvitePreview` returns group name, member count and limit, goal, starter's first name to anyone holding the link, before sign-in | App Check enforced; no member names, photos or steps |
+| Install referrer (1.1) | Play Install Referrer carries the invite code into the app on first launch | Read once, on device |
+| Completion card/export | Locally generated and sent only to the app/location selected through Android | No automatic transmission; completion card omits member/group identities and source health history. The 1.1 weekly card does show the group name, totals and celebrated members' first names and shared photos |
 
 For Play's “shared” answers, apply its definitions rather than treating every provider transmission as advertising sharing. Service-provider processing and expected user-initiated sharing have specific exceptions. Review the actual integrations before selecting these exceptions. Do not reuse the previous blanket “Health data never reaches any third party” claim: Firebase processes it for the app and selected group members receive product-visible totals.
 

@@ -54,6 +54,42 @@ declared apex could never verify.
 and always returns the same page; the app reads the code from the URL, the page
 itself does not.
 
+## The invite page and its link preview (redesigned 2026-10-11, not live)
+
+The live join page and its preview image were still **terracotta** on
+2026-10-11 (checked: `og:image` is `https://www.arkayenlabs.com/pamoja-invite-og.png`,
+an orange and green card with "GROUP INVITE" in caps; WhatsApp shows it for
+every invite link). The site renders **its own copy** of the join page, not
+`join-landing.html`: the live HTML was 48 KB of site layout with no
+`intent://` button, so the 2026-09-28 Install Referrer change never reached it.
+
+To publish (website repo, after the Shipaton freeze):
+
+1. Replace `/pamoja-invite-og.png` with `web/og/pamoja-invite-og.png`
+   (1200x630, Lilac). Same URL, so no meta tag changes. Regenerate it after
+   editing `web/og/pamoja-invite-og.html`:
+
+   ```bash
+   cd web/og && "/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu --hide-scrollbars --window-size=1200,630 --virtual-time-budget=8000 --screenshot="$(pwd -W)/pamoja-invite-og.png" "file:///$(pwd -W)/pamoja-invite-og.html"
+   ```
+
+2. Port `join-landing.html` to the site's join route: the Lilac card, the
+   `og:` tags in its head, and its script (the `intent://` button that
+   carries the invite through a Play install). Keep the security rule at the
+   top of that file: the page never shows anything about the group.
+3. WhatsApp caches previews per URL for a while. Check a fresh link, e.g.
+   one with a new group ID, or use Facebook's Sharing Debugger to refetch.
+
+Verify:
+
+```bash
+curl -s https://www.arkayenlabs.com/pamoja/join/test123 | grep -c "intent://"
+curl -s https://www.arkayenlabs.com/pamoja-invite-og.png -o /tmp/og.png && python -c "from PIL import Image; print(Image.open('/tmp/og.png').getpixel((5,5)))"
+```
+
+The first prints 1 or more; the second prints `(207, 198, 255)`, the Lilac
+ground, not the old cream.
+
 ## The deletion page's website-repo work — done, verified live 2026-08-24
 
 Added 2026-08-20, and as of 2026-08-24 all three pieces below are confirmed

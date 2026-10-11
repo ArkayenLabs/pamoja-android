@@ -62,8 +62,13 @@ sealed class Screen(val route: String) {
     }
 
     /** Invite preview. Resolves a code and asks before joining anything. */
-    object JoinPreview : Screen("join/{code}") {
-        fun createRoute(code: String) = "join/$code"
+    object JoinPreview : Screen("join/{code}?auto={auto}") {
+        /** [auto]: Join group was already tapped before sign-in, so join on arrival. */
+        fun createRoute(code: String, auto: Boolean = false) = if (auto) "join/$code?auto=true" else "join/$code"
+    }
+    /** The invite before sign-in: what the group is, then sign in to join it. */
+    object Invited : Screen("invited/{code}") {
+        fun createRoute(code: String) = "invited/$code"
     }
     /** Paste or scan an invite while signed in, from the group switcher. */
     object JoinWithLink : Screen("join_with_link")

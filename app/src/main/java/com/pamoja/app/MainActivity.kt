@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.pamoja.app.data.local.install.InstallReferrerReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.domain.model.ThemePreference
+import com.pamoja.app.domain.model.PamojaGroupId
 import com.pamoja.app.notifications.FcmRegistrationManager
 import com.pamoja.app.notifications.RemoteNotificationParser
 import com.pamoja.app.ui.PamojaNavGraph
@@ -232,6 +233,13 @@ class MainActivity : AppCompatActivity() {
                                 // setup. Home consumes it once the account can
                                 // resolve and join a group safely.
                                 userPreferences.savePendingInviteCode(t.code)
+                                // Signed out: first show what the invite is,
+                                // then ask them to sign in (REBUILD_PLAN.md §6).
+                                if (firebaseAuth.currentUser == null && PamojaGroupId.isValid(t.code)) {
+                                    navController.navigate(Screen.Invited.createRoute(t.code)) {
+                                        launchSingleTop = true
+                                    }
+                                }
                             }
                             launchTarget.value = null
                         }

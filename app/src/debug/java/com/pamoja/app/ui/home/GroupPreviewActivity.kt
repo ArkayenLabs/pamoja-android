@@ -61,7 +61,8 @@ import kotlinx.coroutines.launch
  * 16 code entry with a wrong code, 17 updates, 18 licences, 19 notifications,
  * 20 edit profile, 21 account (Google only), 22 the invite preview, 23 the
  * goal-reached moment (four people; `--ez big true` for six, `--ez animate
- * false` for its last frame, `--ez sent true` after the high fives).
+ * false` for its last frame, `--ez sent true` after the high fives), 24 the
+ * invite before sign-in ("Started by" chip, signed-out buttons).
  *
  * `--es caption "..."` draws the screen as a Play Store screenshot instead
  * (see StoreShot). `--ez exportWidgets true` also writes the widget picker
@@ -71,7 +72,7 @@ class GroupPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 23)
+        val screen = intent.getIntExtra(EXTRA_SCREEN, 1).coerceIn(1, 24)
         val dark = intent.getBooleanExtra(EXTRA_DARK, false)
         val caption = intent.getStringExtra(EXTRA_CAPTION)
         tour = intent.getBooleanExtra(EXTRA_TOUR, false)
@@ -265,6 +266,11 @@ class GroupPreviewActivity : ComponentActivity() {
                     22 -> com.pamoja.app.ui.join.JoinGroupContent(
                         state = com.pamoja.app.ui.join.JoinUiState(isResolving = false, group = group),
                         onJoin = {}, onOpen = {}, onRetry = {}, onCancel = {},
+                    )
+                    24 -> com.pamoja.app.ui.join.JoinGroupContent(
+                        state = com.pamoja.app.ui.join.JoinUiState(isResolving = false, group = group, startedBy = "Ravi"),
+                        onJoin = {}, onOpen = {}, onRetry = {}, onCancel = {},
+                        signedOut = true,
                     )
                     23 -> GoalCelebrationContent(
                         model = celebration(big = intent.getBooleanExtra(EXTRA_BIG, false)),

@@ -1,0 +1,84 @@
+<!doctype html>
+<!--
+  Source of pamoja-invite-og.png, the image WhatsApp, Telegram and others show
+  for an invite link (og:image on the join page). Lilac, as the app since the
+  2026 rebuild; the old image was terracotta.
+
+  Rendered at exactly 1200x630 with a headless browser (see web/DEPLOY.md,
+  "The invite link preview image"). The composition is centred because some
+  apps crop the preview to a square.
+
+  It must stay generic: the same image is served for every invite, so it can
+  never name a group or a person.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@700&family=Figtree:wght@500;600&display=block" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; }
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: #cfc6ff;
+      color: #16132b;
+      font-family: "Figtree", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+    }
+    .icon {
+      width: 128px;
+      height: 128px;
+      border-radius: 36px;
+      border: 6px solid #f6f4fb;
+      display: block;
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-family: "Familjen Grotesk", sans-serif;
+      font-weight: 700;
+      font-size: 72px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      max-width: 980px;
+      margin: 0 0 18px;
+    }
+    p {
+      font-size: 30px;
+      font-weight: 500;
+      color: #3e3960;
+      margin: 0 0 34px;
+    }
+    .seats { display: flex; gap: 14px; }
+    .seat {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 4px solid #16132b;
+      box-sizing: border-box;
+    }
+    .seat.in { background: #16132b; }
+    .seat.lime { background: #d4f75a; }
+  </style>
+</head>
+<body>
+  <img class="icon" src="pamoja-icon-512.png" alt="" />
+  <h1>You've been invited<br />to walk together</h1>
+  <p>One weekly step goal, shared with your group.</p>
+  <div class="seats" aria-hidden="true">
+    <span class="seat in"></span>
+    <span class="seat in"></span>
+    <span class="seat in"></span>
+    <span class="seat in"></span>
+    <span class="seat lime"></span>
+    <span class="seat"></span>
+  </div>
+</body>
+</html>

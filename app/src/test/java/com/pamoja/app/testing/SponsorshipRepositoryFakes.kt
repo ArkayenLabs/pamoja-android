@@ -97,6 +97,7 @@ class SponsorshipGroupRepository(
     ): Result<Unit> = unexpected()
     override suspend fun removeMember(groupId: String, userId: String): Result<Unit> = unexpected()
     override suspend fun deleteGroup(groupId: String): Result<Unit> = unexpected()
+    override suspend fun getInviteSummary(code: String): Result<com.pamoja.app.domain.model.InviteSummary> = unexpected()
     override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> = unexpected()
     override suspend fun publishWeeklyTotal(
         groupId: String,

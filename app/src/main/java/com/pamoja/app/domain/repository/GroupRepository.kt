@@ -89,6 +89,12 @@ interface GroupRepository {
     /** Permanently removes an admin-owned group and all group-scoped records. */
     suspend fun deleteGroup(groupId: String): Result<Unit>
 
+    /**
+     * What an invite shows before sign-in, from the server: the group cannot
+     * be read without an account. [AppError.NotFound] when it leads nowhere.
+     */
+    suspend fun getInviteSummary(code: String): Result<com.pamoja.app.domain.model.InviteSummary>
+
     /** Points the group at an already-uploaded photo, or clears it when blank. */
     suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit>
 

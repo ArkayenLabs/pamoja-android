@@ -74,6 +74,8 @@ class UserPreferences @Inject constructor(
         // choice instead of silently losing it or forcing it into a later session.
         val KEY_PENDING_INVITE_CODE      = stringPreferencesKey("pending_invite_code")
         val KEY_PENDING_INVITE_SAVED_AT  = longPreferencesKey("pending_invite_saved_at")
+        /** Join group was tapped on the invite before sign-in: join on arrival, no second tap. */
+        val KEY_PENDING_INVITE_ACCEPTED  = booleanPreferencesKey("pending_invite_accepted")
 
         // A property of this phone, not of the account, which is why it is the
         // one key that survives clearAll(). See the note there.
@@ -252,6 +254,7 @@ class UserPreferences @Inject constructor(
     data class PendingInvite(
         val code: String,
         val savedAt: Long,
+        val accepted: Boolean = false,
     )
 
     val pendingInvite: Flow<PendingInvite?> = context.dataStore.data.map { preferences ->
@@ -262,16 +265,19 @@ class UserPreferences @Inject constructor(
             // had no timestamp. Resurfacing an unknowably old invitation is
             // exactly the surprise this record now prevents.
             savedAt = preferences[KEY_PENDING_INVITE_SAVED_AT] ?: 0L,
+            accepted = preferences[KEY_PENDING_INVITE_ACCEPTED] == true,
         )
     }
 
     suspend fun savePendingInviteCode(
         code: String,
         savedAt: Long = System.currentTimeMillis(),
+        accepted: Boolean = false,
     ) {
         context.dataStore.edit {
             it[KEY_PENDING_INVITE_CODE] = code
             it[KEY_PENDING_INVITE_SAVED_AT] = savedAt
+            it[KEY_PENDING_INVITE_ACCEPTED] = accepted
         }
     }
 
@@ -279,6 +285,7 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit {
             it.remove(KEY_PENDING_INVITE_CODE)
             it.remove(KEY_PENDING_INVITE_SAVED_AT)
+            it.remove(KEY_PENDING_INVITE_ACCEPTED)
         }
     }
 

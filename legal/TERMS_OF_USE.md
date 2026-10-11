@@ -1,6 +1,6 @@
 # Terms of Use. Pamoja
 
-**Last updated: 19 September 2026**
+**Last updated: 11 October 2026**
 **Effective date: 19 September 2026**
 
 > ⚠️ **Not legal advice, and not yet reviewed by a lawyer.** All placeholders are
@@ -20,7 +20,7 @@ We may update these Terms from time to time. Material changes will be notified i
 
 ## 2. Eligibility
 
-You must be at least **18 years old** to use Pamoja.
+You must be at least **18 years old** to use Pamoja. You confirm this when you create your profile.
 
 Pamoja is not directed at children. We do not knowingly collect data from anyone under 18. If we learn that we have, we will delete the account and its data.
 
@@ -57,7 +57,8 @@ Pamoja requires an account. You can create one with **Google**, your **phone num
 
 - Anyone who has your group's invite link or code can request to join that group, subject to the group's member limit. **Treat invite links as private and share them only with people you intend to invite.**
 - An invite link stops working once a group is full, and works again if a place frees up.
-- **When you join a group, other members of that group can see your display name, your daily step count, your weekly step total, and your ranking.** Do not join a group if you are not comfortable sharing this.
+- Anyone who opens your group's invite link in the Pamoja app can see, before joining, the group's name, its number of members and member limit, its weekly goal and the first name of the person who started it.
+- **When you join a group, other members of that group can see your display name, your daily step count, your weekly step total, your ranking, and which days of the week you walked.** Do not join a group if you are not comfortable sharing this.
 - Your age, height, and weight, if provided, are **never** shown to other members.
 - Choose a display name and group names that are not offensive, misleading, or infringing, and that do not contain another person's personal information.
 
@@ -72,6 +73,7 @@ You agree not to:
 - Use automated systems to access the service in a way that sends more requests than a human could reasonably produce
 - Resell, sublicense, or commercially exploit the app without our written permission
 - Impersonate any person or misrepresent your affiliation with anyone
+- Use high fives, reminders, names or photos to harass, pressure or embarrass anyone
 
 We may suspend or terminate accounts that violate these Terms, without notice.
 
@@ -96,7 +98,7 @@ Any trial duration, eligibility and subsequent charge are stated in the purchase
 
 **What is free and what Premium adds**
 
-Step tracking, synchronization, group leaderboards and exporting your personal app data are free. A Premium plan supports the number of groups shown in its Google Play purchase sheet. Every current member of a covered group receives its group benefits; members do not each need to buy the plan. The app shows the available paid features and group capacity before checkout. These can include full weekly review history and trends, scheduled weekly planning and the Together Trail. A purchase does not make a member the group organizer. When the current plan has no open group spot, the subscriber can confirm moving coverage or choose an available higher-capacity plan.
+Step tracking, synchronization, group leaderboards and exporting your personal app data are free. A Premium plan supports the number of groups shown in its Google Play purchase sheet. Every current member of a covered group receives its group benefits; members do not each need to buy the plan. The app shows the available paid features and group capacity before checkout. These can include streak shields, full weekly history and trends, and, in earlier app versions, scheduled weekly planning and the Together Trail. A purchase does not make a member the group organizer. When the current plan has no open group spot, the subscriber can confirm moving coverage or choose an available higher-capacity plan.
 
 **Together Trail and planning**
 

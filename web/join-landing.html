@@ -6,8 +6,8 @@
   SECURITY: this page is DELIBERATELY "dumb". It must NEVER fetch or display
   any group information, not the group name, not the member count, not who
   is in it. Anyone on the internet can open this URL without authenticating,
-  so anything rendered here is public. All group details are resolved inside
-  the app, after the user is authenticated.
+  so anything rendered here is public. The app shows what the invite is
+  (getInvitePreview, behind App Check), never this page.
 
   It is also marked noindex so invite URLs never appear in search results.
 
@@ -26,120 +26,172 @@
 
   Only the code from this page's own URL goes into those links, and only if
   it has the shape of a group ID. Nothing is fetched.
+
+  Design (2026-10-11): the app's own invite card, Lilac, Familjen Grotesk and
+  Figtree, light and dark. The live site renders its own copy of this page;
+  port this one there (web/DEPLOY.md). The link preview image is
+  /pamoja-invite-og.png, from web/og/.
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#f6f4fb" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121026" media="(prefers-color-scheme: dark)" />
   <title>You've been invited to a Pamoja group</title>
+  <meta name="description" content="One weekly step goal, shared with your group. Open the invite in Pamoja." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Pamoja" />
+  <meta property="og:title" content="You've been invited to a Pamoja group" />
+  <meta property="og:description" content="One weekly step goal, shared with your group. Open the invite in Pamoja." />
+  <meta property="og:image" content="https://www.arkayenlabs.com/pamoja-invite-og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Pamoja invite: you've been invited to walk together" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://www.arkayenlabs.com/pamoja-invite-og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@700&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    /* Lilac, the app's palette since the 2026 rebuild (REBUILD_PLAN.md §5). */
+    /* The app's Lilac tokens (ui/kit/KitColors.kt). */
     :root {
-      --bg: #f6f4fb;
-      --card: #ffffff;
-      --text: #16132b;
+      --page: #f6f4fb;
+      --hero: #cfc6ff;
+      --on-hero: #16132b;
+      --chip: rgba(255, 255, 255, 0.55);
+      --ink: #16132b;
       --muted: #5a5670;
-      --mark: #cfc6ff;
-      --on-mark: #16132b;
       --button: #16132b;
       --on-button: #ffffff;
-      --border: #e7e3f2;
+      --pop: #d4f75a;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #121026;
-        --card: #1d1a36;
-        --text: #f4f2ff;
+        --page: #121026;
+        --hero: #2b2555;
+        --on-hero: #f4f2ff;
+        --chip: rgba(255, 255, 255, 0.10);
+        --ink: #f4f2ff;
         --muted: #b4aed3;
-        --mark: #2b2555;
-        --on-mark: #f4f2ff;
         --button: #cfc6ff;
         --on-button: #16132b;
-        --border: #2c2848;
       }
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; }
     body {
-      margin: 0;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Figtree", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
+      display: flex;
+      justify-content: center;
     }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 40px 28px;
-      max-width: 420px;
+    main {
       width: 100%;
-      text-align: center;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      max-width: 440px;
+      min-height: 100vh;
+      padding: 24px 24px 28px;
+      display: flex;
+      flex-direction: column;
     }
-    .mark {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 24px;
-      border-radius: 20px;
-      background: var(--mark);
+    .hero {
+      background: var(--hero);
+      color: var(--on-hero);
+      border-radius: 28px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .wordmark { font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+    .seats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .seat {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--on-hero);
+    }
+    .seat.in { background: var(--on-hero); }
+    .lead { font-weight: 600; font-size: 18px; margin: 0; }
+    h1 {
+      font-family: "Familjen Grotesk", system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 44px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      background: var(--chip);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .body { color: var(--muted); font-size: 16px; line-height: 1.5; margin: 20px 0 0; }
+    .actions { margin-top: auto; padding-top: 32px; display: flex; flex-direction: column; gap: 6px; }
+    .btn {
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .mark svg { width: 32px; height: 32px; stroke: var(--on-mark); }
-    h1 { font-size: 24px; line-height: 1.25; margin: 0 0 12px; font-weight: 800; }
-    p { font-size: 16px; line-height: 1.55; color: var(--muted); margin: 0 0 28px; }
-    .btn {
-      display: inline-block;
+      min-height: 56px;
+      border-radius: 999px;
       background: var(--button);
       color: var(--on-button);
-      text-decoration: none;
       font-weight: 700;
-      font-size: 16px;
-      padding: 15px 32px;
-      border-radius: 999px;
-      transition: opacity .2s ease;
+      font-size: 17px;
+      text-decoration: none;
     }
-    .btn:hover { opacity: .9; }
-    .hint { font-size: 13px; color: var(--muted); margin: 20px 0 0; }
-    .hint a { color: var(--muted); }
-    .ios { display: none; }
-    .brand { font-size: 12px; color: var(--muted); margin-top: 28px; }
-    .brand a { color: var(--muted); }
+    .btn:focus-visible { outline: 3px solid var(--pop); outline-offset: 3px; }
+    .quiet {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+    }
+    .ios { display: none; color: var(--muted); font-size: 14px; text-align: center; margin: 4px 0 0; }
+    footer { margin-top: 18px; text-align: center; font-size: 12px; color: var(--muted); }
+    footer a { color: var(--muted); }
   </style>
 </head>
 <body>
-  <main class="card">
-    <div class="mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
-        <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
-        <path d="M16 17h4"/><path d="M4 13h4"/>
-      </svg>
+  <main>
+    <section class="hero" aria-labelledby="title">
+      <div class="wordmark">pamoja</div>
+      <div class="seats" aria-hidden="true">
+        <span class="seat in"></span><span class="seat in"></span><span class="seat in"></span>
+        <span class="seat"></span><span class="seat"></span><span class="seat"></span>
+      </div>
+      <p class="lead">You've been invited to</p>
+      <h1 id="title">a walking group</h1>
+      <div class="chips">
+        <span class="chip">One weekly goal</span>
+        <span class="chip">Steps add up together</span>
+      </div>
+    </section>
+
+    <p class="body">Everyone's steps add up to one goal. Nobody has a target of their own. Open the invite in Pamoja to see who's in it.</p>
+
+    <div class="actions">
+      <a class="btn" id="open" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">Open the invite</a>
+      <a class="quiet" id="play" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">Get Pamoja on Google Play</a>
+      <p class="ios" id="ios">Pamoja is on Android for now.</p>
     </div>
 
-    <h1>You've been invited to a Pamoja group</h1>
-    <p>Pamoja is one weekly step goal you share with your group. Get the app to see your invite.</p>
-
-    <a class="btn" id="open" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">
-      Open the invite
-    </a>
-
-    <p class="hint">Button not working? <a id="play" href="https://play.google.com/store/apps/details?id=com.arkayenlabs.pamoja">Get Pamoja on Google Play</a>, then open this link again.</p>
-    <p class="hint ios" id="ios">Pamoja is on Android for now.</p>
-
-    <p class="brand">
-      An <a href="https://www.arkayenlabs.com">Arkayen Labs</a> product ·
+    <footer>
+      An <a href="https://www.arkayenlabs.com">Arkayen Labs</a> app ·
       <a href="https://www.arkayenlabs.com/privacy/pamoja">Privacy</a> ·
       <a href="https://www.arkayenlabs.com/terms/pamoja">Terms</a>
-    </p>
+    </footer>
   </main>
   <script>
     (function () {

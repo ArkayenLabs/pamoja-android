@@ -248,12 +248,12 @@ private data class Face(val name: String, val x: Int, val y: Int, val size: Int)
  */
 @Composable
 fun EnterInviteScreen(
-    onContinue: () -> Unit,
+    onContinue: (String) -> Unit,
     onBack: () -> Unit,
     viewModel: WelcomeViewModel = hiltViewModel(),
 ) {
     EnterInviteContent(
-        onSubmit = { code -> viewModel.continueWithInvite(code, onContinue) },
+        onSubmit = { code -> viewModel.continueWithInvite(code) { onContinue(code) } },
         onBack = onBack,
     )
 }

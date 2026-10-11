@@ -13,6 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -51,11 +54,23 @@ fun JoinGroupScreen(
     code: String,
     onJoined: (String) -> Unit,
     onCancel: () -> Unit,
+    /** Join group was already tapped on this invite before sign-in. */
+    autoJoin: Boolean = false,
     viewModel: JoinGroupViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(code) { viewModel.resolve(code) }
+
+    // Once, and only when joining can work: a full group, an existing
+    // membership or no connection stays on the preview, which explains it.
+    var autoJoinTried by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(uiState.canJoin) {
+        if (autoJoin && !autoJoinTried && uiState.canJoin) {
+            autoJoinTried = true
+            viewModel.join()
+        }
+    }
 
     LaunchedEffect(uiState.joinedGroupId) {
         uiState.joinedGroupId?.let { groupId ->
@@ -82,6 +97,8 @@ internal fun JoinGroupContent(
     onOpen: () -> Unit,
     onRetry: () -> Unit,
     onCancel: () -> Unit,
+    /** Before sign-in ([InvitedScreen]): no groups to go back to yet. */
+    signedOut: Boolean = false,
 ) {
     val context = LocalContext.current
     val group = state.group
@@ -94,7 +111,10 @@ internal fun JoinGroupContent(
                     // Cancel stays reachable in every state, including the dead
                     // ends, so nobody is stuck on an invite that will never work.
                     PrimaryButton(stringResource(R.string.common_try_again), onClick = onRetry)
-                    QuietButton(stringResource(R.string.common_back_to_groups), onClick = onCancel)
+                    QuietButton(
+                        stringResource(if (signedOut) R.string.common_not_now else R.string.common_back_to_groups),
+                        onClick = onCancel,
+                    )
                 }
                 state.isAlreadyMember -> {
                     PrimaryButton(stringResource(R.string.join_open_group), onClick = onOpen)
@@ -136,6 +156,7 @@ internal fun JoinGroupContent(
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         HeroChip(pluralStringResource(R.plurals.member_count, group.memberCount, group.memberCount))
                         HeroChip("${NumberFormat.getIntegerInstance().format(group.weeklyTarget)} ${stringResource(R.string.join_target_label)}")
+                        state.startedBy?.let { HeroChip(stringResource(R.string.join_started_by, it)) }
                     }
                 }
                 Text(stringResource(R.string.join_shared_goal_body), style = Kit.type.body, color = Kit.colors.muted)

@@ -304,6 +304,8 @@
     <string name="join_invited_to">You\'ve been invited to</string>
     <string name="join_already_in">You\'re already in</string>
     <string name="join_target_label">steps a week, together</string>
+    <!-- On the invite before sign-in. %1$s is a first name. -->
+    <string name="join_started_by">Started by %1$s</string>
     <string name="join_already_member_title">You\'re already a member</string>
     <string name="join_already_member_body">Nothing to do. Open the group to see how everyone is doing.</string>
     <string name="join_full_title">This group is full</string>

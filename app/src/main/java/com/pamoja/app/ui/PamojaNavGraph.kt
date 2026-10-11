@@ -31,6 +31,7 @@ import com.pamoja.app.ui.auth.PhoneEntryScreen
 import com.pamoja.app.ui.group.CreateGroupScreen
 import com.pamoja.app.ui.group.GroupDetailsScreen
 import com.pamoja.app.ui.join.JoinGroupScreen
+import com.pamoja.app.ui.join.InvitedScreen
 import com.pamoja.app.ui.join.JoinWithLinkScreen
 import com.pamoja.app.ui.weeklyreview.WeeklyReviewScreen
 import com.pamoja.app.ui.home.HomeScreen
@@ -82,10 +83,37 @@ fun PamojaNavGraph(
 
         composable(Screen.EnterInvite.route) {
             EnterInviteScreen(
-                onContinue = {
-                    navController.navigate(Screen.AuthGraph.route) { launchSingleTop = true }
+                onContinue = { code ->
+                    navController.navigate(Screen.Invited.createRoute(code)) {
+                        popUpTo(Screen.EnterInvite.route) { inclusive = true }
+                    }
                 },
                 onBack = { navController.popBackStack() },
+            )
+        }
+
+        // The invite before sign-in. "Join group" goes on to sign-in with the
+        // decision kept; "Not now" goes back, the invite still waiting.
+        composable(
+            route = Screen.Invited.route,
+            arguments = listOf(navArgument("code") { type = NavType.StringType }),
+        ) { entry ->
+            val code = entry.arguments?.getString("code").orEmpty()
+            val leave = {
+                if (!navController.popBackStack()) {
+                    navController.navigate(Screen.AuthGraph.route) {
+                        popUpTo(Screen.Invited.route) { inclusive = true }
+                    }
+                }
+            }
+            InvitedScreen(
+                code = code,
+                onJoin = {
+                    navController.navigate(Screen.AuthGraph.route) {
+                        popUpTo(Screen.Invited.route) { inclusive = true }
+                    }
+                },
+                onNotNow = { leave() },
             )
         }
 
@@ -246,8 +274,8 @@ fun PamojaNavGraph(
                 onJoinWithLink = {
                     navController.navigate(Screen.JoinWithLink.route) { launchSingleTop = true }
                 },
-                onOpenInvite = { code ->
-                    navController.navigate(Screen.JoinPreview.createRoute(code)) { launchSingleTop = true }
+                onOpenInvite = { code, auto ->
+                    navController.navigate(Screen.JoinPreview.createRoute(code, auto)) { launchSingleTop = true }
                 },
                 onOpenPaywall = { groupId -> navController.navigate(Screen.Paywall.createRoute(groupId)) },
                 onSessionExpired = {
@@ -449,11 +477,15 @@ fun PamojaNavGraph(
 
         composable(
             route = Screen.JoinPreview.route,
-            arguments = listOf(navArgument("code") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("code") { type = NavType.StringType },
+                navArgument("auto") { type = NavType.BoolType; defaultValue = false },
+            )
         ) { backStackEntry ->
             val code = backStackEntry.arguments?.getString("code").orEmpty()
             JoinGroupScreen(
                 code = code,
+                autoJoin = backStackEntry.arguments?.getBoolean("auto") == true,
                 onJoined = { groupId ->
                     // Connection is requested only now, when a real group gives
                     // the permission a clear purpose. The preview is removed so

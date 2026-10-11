@@ -15,6 +15,8 @@ import javax.inject.Inject
 data class PendingInviteUiState(
     /** Code waiting for the person to explicitly resume or dismiss. */
     val pendingCode: String? = null,
+    /** Join group was already tapped on the invite before sign-in. */
+    val accepted: Boolean = false,
 )
 
 internal object PendingInvitePolicy {
@@ -51,7 +53,7 @@ class CreateOrJoinViewModel @Inject constructor(
             when {
                 stored == null -> Unit
                 PendingInvitePolicy.isFresh(stored.savedAt, System.currentTimeMillis()) -> {
-                    _uiState.value = PendingInviteUiState(pendingCode = stored.code)
+                    _uiState.value = PendingInviteUiState(pendingCode = stored.code, accepted = stored.accepted)
                 }
                 else -> userPreferences.clearPendingInviteCode()
             }

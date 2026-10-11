@@ -162,8 +162,9 @@ internal fun ProfileSetupContent(
             },
             label = stringResource(R.string.profile_name_label),
             placeholder = stringResource(R.string.profile_name_placeholder),
-            // Only after typing: a prefilled or untouched field is not an error yet.
-            error = nameError.takeIf { touched },
+            // An empty untouched field is not an error yet, but a prefilled
+            // name that is too long is: otherwise Continue is simply grey.
+            error = nameError.takeIf { touched || name.isNotBlank() },
             enabled = !isLoading,
         )
         if (photoUri != null) {

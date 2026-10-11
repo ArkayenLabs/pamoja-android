@@ -3,6 +3,7 @@
     <string name="join_invited_to">आपको आमंत्रित किया गया है</string>
     <string name="join_already_in">आप पहले से शामिल हैं</string>
     <string name="join_target_label">हर हफ़्ते मिलकर कदम</string>
+    <string name="invited_sign_in_instead">देखने के लिए साइन इन करें</string>
     <string name="join_started_by">%1$s ने शुरू किया</string>
     <string name="join_already_member_title">आप पहले से सदस्य हैं</string>
     <string name="join_already_member_body">सबकी प्रगति देखने के लिए समूह खोलें।</string>

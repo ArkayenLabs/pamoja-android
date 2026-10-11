@@ -115,6 +115,21 @@ class SocialRulesEmulatorTest {
         assertEquals(alice.uid, received.single().fromUserId)
     }
 
+    /** The data export's queries: everything you sent or received, across days. */
+    @Test
+    fun theExportReadsEverySignalYouSentOrReceived() = runBlocking {
+        val (group, alice, bob) = pair()
+        signalsOf(alice).send(group.groupId, SignalKind.CHEER, alice.uid, listOf(bob.uid), today).getOrThrow()
+        signalsOf(bob).send(group.groupId, SignalKind.NUDGE, bob.uid, listOf(alice.uid), today).getOrThrow()
+
+        val forAlice = exportSignals(alice.firestore, alice.uid, listOf(group.groupId))
+        val forBob = exportSignals(bob.firestore, bob.uid, listOf(group.groupId))
+
+        assertEquals(2, forAlice[group.groupId]?.size)
+        assertEquals(2, forBob[group.groupId]?.size)
+        assertEquals(setOf(SignalKind.CHEER, SignalKind.NUDGE), forAlice[group.groupId]?.map { it.kind }?.toSet())
+    }
+
     /**
      * Private to the two people involved. A list of who was nudged is a list
      * of who is falling behind, and nobody else in the group gets to read it.

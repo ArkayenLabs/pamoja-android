@@ -3,6 +3,7 @@
     <string name="join_invited_to">Te han invitado a</string>
     <string name="join_already_in">Ya estás en</string>
     <string name="join_target_label">pasos semanales entre todos</string>
+    <string name="invited_sign_in_instead">Inicia sesión para verla</string>
     <string name="join_started_by">Creado por %1$s</string>
     <string name="join_already_member_title">Ya eres miembro</string>
     <string name="join_already_member_body">Abre el grupo para ver cómo va todo.</string>

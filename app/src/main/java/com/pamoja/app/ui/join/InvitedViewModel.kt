@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pamoja.app.data.local.connectivity.ConnectivityObserver
 import com.pamoja.app.data.local.preferences.UserPreferences
+import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.usecase.GetInviteSummaryUseCase
@@ -62,10 +63,21 @@ class InvitedViewModel @Inject constructor(
                     )
                 },
                 onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(isResolving = false, resolveError = error.toAppError())
+                    _uiState.value = _uiState.value.copy(isResolving = false, resolveError = forSignedOut(error.toAppError()))
                 },
             )
         }
+    }
+
+    /**
+     * Nobody is signed in here, so "your session expired" or "you don't have
+     * access" would be nonsense. Those come back when App Check refuses the
+     * call (a modified phone, an emulator); they read as a plain failure, and
+     * the screen offers signing in, where the signed-in preview still works.
+     */
+    private fun forSignedOut(error: AppError): AppError = when (error) {
+        is AppError.SessionExpired, is AppError.PermissionDenied -> AppError.Unknown(error.message ?: "", error)
+        else -> error
     }
 
     fun retry() {

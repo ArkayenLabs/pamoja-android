@@ -114,6 +114,11 @@ fun PamojaNavGraph(
                     }
                 },
                 onNotNow = { leave() },
+                onSignIn = {
+                    navController.navigate(Screen.AuthGraph.route) {
+                        popUpTo(Screen.Invited.route) { inclusive = true }
+                    }
+                },
             )
         }
 

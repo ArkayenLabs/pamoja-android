@@ -184,6 +184,8 @@ class FirebaseUserRepositoryImpl @Inject constructor(
                     )
                 }
 
+            val signals = exportSignals(firestore, userId, memberships.map { it.groupId })
+
             Result.success(
                 UserDataExport(
                     user = user,
@@ -192,6 +194,7 @@ class FirebaseUserRepositoryImpl @Inject constructor(
                     steps = steps,
                     pushRegistrations = pushRegistrations,
                     adventures = adventureExporter.export(userId, memberships.map { it.groupId }),
+                    signals = signals,
                     exportedAt = System.currentTimeMillis(),
                 )
             )
@@ -311,3 +314,20 @@ class FirebaseUserRepositoryImpl @Inject constructor(
         }
     }
 }
+
+/**
+ * The high fives and reminders [userId] sent or received, per group, for the
+ * data export. The signals list rule allows a query on either side as long as
+ * it is this account (SocialRulesEmulatorTest checks exactly these queries).
+ */
+internal suspend fun exportSignals(
+    firestore: FirebaseFirestore,
+    userId: String,
+    groupIds: List<String>,
+): Map<String, List<com.pamoja.app.domain.model.Signal>> =
+    groupIds.distinct().associateWith { groupId ->
+        val collection = firestore.collection("groups").document(groupId).collection("signals")
+        listOf("fromUserId", "toUserId").flatMap { field ->
+            collection.whereEqualTo(field, userId).get().await().documents.mapNotNull { it.toSignal() }
+        }.sortedBy { it.date }
+    }.filterValues { it.isNotEmpty() }

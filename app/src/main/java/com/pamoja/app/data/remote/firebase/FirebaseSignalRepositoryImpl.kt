@@ -74,19 +74,20 @@ class FirebaseSignalRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun DocumentSnapshot.toSignal(): Signal? {
-        val kind = SignalKind.fromWire(getString("kind").orEmpty()) ?: return null
-        return Signal(
-            kind = kind,
-            fromUserId = getString("fromUserId") ?: return null,
-            toUserId = getString("toUserId") ?: return null,
-            date = getString("date") ?: return null,
-        )
-    }
-
     companion object {
         /** The ID the rules require: one per sender, recipient, kind and day. */
         fun idOf(date: String, kind: SignalKind, fromUserId: String, toUserId: String) =
             "${date}_${kind.wire}_${fromUserId}_$toUserId"
     }
+}
+
+/** A signal document, or null when any field is missing or unknown. Also read by the data export. */
+internal fun DocumentSnapshot.toSignal(): Signal? {
+    val kind = SignalKind.fromWire(getString("kind").orEmpty()) ?: return null
+    return Signal(
+        kind = kind,
+        fromUserId = getString("fromUserId") ?: return null,
+        toUserId = getString("toUserId") ?: return null,
+        date = getString("date") ?: return null,
+    )
 }

@@ -16,6 +16,8 @@ fun InvitedScreen(
     code: String,
     onJoin: () -> Unit,
     onNotNow: () -> Unit,
+    /** To sign-in with the invite kept, but not yet accepted. */
+    onSignIn: () -> Unit,
     viewModel: InvitedViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -27,5 +29,6 @@ fun InvitedScreen(
         onRetry = viewModel::retry,
         onCancel = onNotNow,
         signedOut = true,
+        onSignInInstead = onSignIn,
     )
 }

@@ -99,6 +99,8 @@ internal fun JoinGroupContent(
     onCancel: () -> Unit,
     /** Before sign-in ([InvitedScreen]): no groups to go back to yet. */
     signedOut: Boolean = false,
+    /** Before sign-in, when the invite could not load: go on and see it signed in. */
+    onSignInInstead: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val group = state.group
@@ -111,10 +113,16 @@ internal fun JoinGroupContent(
                     // Cancel stays reachable in every state, including the dead
                     // ends, so nobody is stuck on an invite that will never work.
                     PrimaryButton(stringResource(R.string.common_try_again), onClick = onRetry)
-                    QuietButton(
-                        stringResource(if (signedOut) R.string.common_not_now else R.string.common_back_to_groups),
-                        onClick = onCancel,
-                    )
+                    // A dead invite stays dead after signing in; anything else
+                    // the signed-in preview can still load.
+                    val signIn = onSignInInstead.takeIf { signedOut && state.resolveError !is AppError.NotFound }
+                    when {
+                        signIn != null -> QuietButton(stringResource(R.string.invited_sign_in_instead), onClick = signIn)
+                        else -> QuietButton(
+                            stringResource(if (signedOut) R.string.common_not_now else R.string.common_back_to_groups),
+                            onClick = onCancel,
+                        )
+                    }
                 }
                 state.isAlreadyMember -> {
                     PrimaryButton(stringResource(R.string.join_open_group), onClick = onOpen)

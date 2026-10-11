@@ -22,4 +22,9 @@ data class UserDataExport(
     /** Epoch millis the export was produced. */
     val exportedAt: Long,
     val adventures: List<AdventureExportRecord> = emptyList(),
+    /**
+     * High fives and reminders you sent or received, by group ID. Kept only
+     * about 14 days on the server, so this is what exists on export day.
+     */
+    val signals: Map<String, List<Signal>> = emptyMap(),
 )

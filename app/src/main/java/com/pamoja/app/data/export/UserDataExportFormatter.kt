@@ -1,5 +1,7 @@
 package com.pamoja.app.data.export
 
+import com.pamoja.app.domain.model.Signal
+import com.pamoja.app.domain.model.SignalKind
 import com.pamoja.app.domain.model.UserDataExport
 import org.json.JSONArray
 import org.json.JSONObject
@@ -106,6 +108,18 @@ class UserDataExportFormatter @Inject constructor() {
             }
         })
 
+        root.put("high_fives_and_reminders", JSONArray().apply {
+            exportedSignalRows(export.user.userId, export.signals).forEach { row ->
+                put(JSONObject().apply {
+                    put("group_id", row.groupId)
+                    put("type", row.type)
+                    put("direction", row.direction)
+                    put("other_member_id", row.otherUserId)
+                    put("date", row.date)
+                })
+            }
+        })
+
         // Indented, because a person opening this file should be able to read
         // it. Machine readability is not the only requirement.
         return root.toString(2)
@@ -118,6 +132,34 @@ class UserDataExportFormatter @Inject constructor() {
 
     private companion object {
         /** Bump when the shape changes, so an old file stays interpretable. */
-        const val FORMAT_VERSION = 3
+        const val FORMAT_VERSION = 4
     }
 }
+
+/** One high five or reminder in the export, from the exporting person's side. */
+internal data class ExportedSignalRow(
+    val groupId: String,
+    /** "high_five" or "reminder": what people see, not the wire value. */
+    val type: String,
+    /** "sent" or "received". */
+    val direction: String,
+    val otherUserId: String,
+    val date: String,
+)
+
+internal fun exportedSignalRows(userId: String, signals: Map<String, List<Signal>>): List<ExportedSignalRow> =
+    signals.flatMap { (groupId, list) ->
+        list.map { signal ->
+            val sent = signal.fromUserId == userId
+            ExportedSignalRow(
+                groupId = groupId,
+                type = when (signal.kind) {
+                    SignalKind.CHEER -> "high_five"
+                    SignalKind.NUDGE -> "reminder"
+                },
+                direction = if (sent) "sent" else "received",
+                otherUserId = if (sent) signal.toUserId else signal.fromUserId,
+                date = signal.date,
+            )
+        }
+    }.sortedWith(compareBy({ it.date }, { it.groupId }))

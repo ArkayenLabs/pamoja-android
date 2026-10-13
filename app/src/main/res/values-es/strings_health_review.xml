@@ -29,6 +29,5 @@
     <string name="group_unavailable_title">Este grupo ya no está disponible</string>
     <string name="group_unavailable_body">Puede que se haya eliminado o que ya no seas miembro.</string>
     <string name="group_invite_inactive">El enlace de invitación de este grupo ya no está activo.</string>
-    <string name="weekly_review_entry_title">Resumen semanal</string>
     <string name="weekly_review_title">Resumen semanal</string>
 </resources>

@@ -29,6 +29,5 @@
     <string name="group_unavailable_title">यह समूह अब उपलब्ध नहीं है</string>
     <string name="group_unavailable_body">शायद समूह मिटा दिया गया है या आप अब सदस्य नहीं हैं।</string>
     <string name="group_invite_inactive">इस समूह का आमंत्रण लिंक अब सक्रिय नहीं है।</string>
-    <string name="weekly_review_entry_title">साप्ताहिक समीक्षा</string>
     <string name="weekly_review_title">साप्ताहिक समीक्षा</string>
 </resources>

@@ -248,6 +248,16 @@ internal fun GroupDetailsContent(
                         )
                     }
 
+                    // Out in the open, not inside Premium: last week is free to
+                    // everyone, and older weeks are marked inside the review.
+                    KitCard(padding = 6.dp, spacing = 0.dp) {
+                        ListRow(
+                            stringResource(R.string.details_past_weeks),
+                            onClick = onOpenReview,
+                            showDivider = false,
+                        )
+                    }
+
                     MembersCard(
                         state = state,
                         onMemberOptions = { memberSheet = it },
@@ -484,12 +494,6 @@ private fun PremiumCard(
             },
             onClick = { if (access.hasCircleAccess) explainShields = true else onOpenPaywall() },
             leadingIcon = if (access.hasCircleAccess) null else PamojaIcons.Lock,
-            showDivider = false,
-        )
-        // Always open: last week is free, the rest is marked inside.
-        ListRow(
-            stringResource(R.string.weekly_review_entry_title),
-            onClick = onOpenReview,
             showDivider = false,
         )
         if (sponsor) {

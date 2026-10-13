@@ -23,6 +23,8 @@
     <string name="home_steps_title">Tus pasos</string>
     <string name="home_connect_body">Permite Health Connect para que tus pasos cuenten para el grupo.</string>
     <string name="home_connect_action">Conectar</string>
+    <string name="home_last_week">La semana pasada</string>
+    <string name="home_last_week_value">%1$s de %2$s</string>
     <string name="home_week_range">%1$s a %2$s</string>
     <string name="home_not_synced">Sin sincronizar</string>
     <string name="home_invite_to">Invitar a %1$s</string>

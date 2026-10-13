@@ -76,6 +76,7 @@ import com.pamoja.app.R
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.domain.error.AppError
 import com.pamoja.app.domain.model.Group
+import com.pamoja.app.domain.model.GroupWeekSummary
 import com.pamoja.app.domain.model.SignalKind
 import com.pamoja.app.domain.model.WalkedDays
 import com.pamoja.app.domain.model.WeekWindow
@@ -110,6 +111,7 @@ import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSheet
 import com.pamoja.app.ui.kit.KitSkeleton
 import com.pamoja.app.ui.kit.LightKitColors
+import com.pamoja.app.ui.kit.ListRow
 import com.pamoja.app.ui.kit.PersonRow
 import com.pamoja.app.ui.kit.PopChip
 import com.pamoja.app.ui.kit.PrimaryButton
@@ -146,15 +148,19 @@ fun HomeScreen(
     onSessionExpired: () -> Unit,
     onOpenPaywall: (String) -> Unit,
     onOpenWeeklyCard: (String) -> Unit,
+    onOpenWeeklyReview: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     groupViewModel: GroupViewModel = hiltViewModel(),
     joinViewModel: CreateOrJoinViewModel = hiltViewModel(),
     signalsViewModel: GroupSignalsViewModel = hiltViewModel(),
+    lastWeekViewModel: LastWeekViewModel = hiltViewModel(),
 ) {
     val home by viewModel.uiState.collectAsStateWithLifecycle()
     val groupState by groupViewModel.uiState.collectAsStateWithLifecycle()
     val signals by signalsViewModel.uiState.collectAsStateWithLifecycle()
     val pending by joinViewModel.uiState.collectAsStateWithLifecycle()
+    val lastWeek by lastWeekViewModel.lastWeek.collectAsStateWithLifecycle()
+    LaunchedEffect(groupState.group) { lastWeekViewModel.watch(groupState.group) }
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -313,6 +319,8 @@ fun HomeScreen(
         onNudge = signalsViewModel::nudge,
         showTour = home.homeTourSeen == false,
         onTourDone = viewModel::onHomeTourDone,
+        lastWeek = lastWeek,
+        onOpenLastWeek = onOpenWeeklyReview,
     )
 }
 
@@ -342,6 +350,9 @@ internal fun HomeContent(
     /** Home's first-run coach marks; they wait until a group is on screen. */
     showTour: Boolean = false,
     onTourDone: () -> Unit = {},
+    /** The shown group's last finished week, when there is one. */
+    lastWeek: GroupWeekSummary? = null,
+    onOpenLastWeek: (String) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     var showSwitcher by rememberSaveable { mutableStateOf(false) }
@@ -403,6 +414,8 @@ internal fun HomeContent(
                         signals = signals.takeIf { it.groupId == shownGroup.groupId } ?: SignalsUiState(),
                         onCheer = onCheer,
                         onNudge = onNudge,
+                        lastWeek = lastWeek,
+                        onOpenLastWeek = { onOpenLastWeek(shownGroup.groupId) },
                         onInvite = {
                             if (!shownGroup.inviteLinkActive) {
                                 scope.launch { snackbar.showSnackbar(inviteInactive) }
@@ -528,6 +541,8 @@ private fun GroupHome(
     onCheer: (List<String>) -> Unit,
     onNudge: (List<String>) -> Unit,
     onInvite: () -> Unit,
+    lastWeek: GroupWeekSummary? = null,
+    onOpenLastWeek: () -> Unit = {},
 ) {
     val context = LocalContext.current
     if (home.isOffline) {
@@ -555,6 +570,15 @@ private fun GroupHome(
 
     Box(Modifier.coachMarkTarget(TOUR_WEEK)) {
         WeekCard(group = group, steps = state.combinedWeeklySteps, stale = home.isOffline)
+    }
+    // Only the week just finished, and only this group's: an older summary
+    // (a week nobody synced) is not "last week", and a switch must never show
+    // the previous group's.
+    val previousWeek = WeekWindow.startOf(group.startDay, WeekWindow.todayFor(group)).let {
+        java.time.LocalDate.parse(it).minusWeeks(1).toString()
+    }
+    lastWeek?.takeIf { it.groupId == group.groupId && it.weekStart == previousWeek }?.let { week ->
+        LastWeekRow(week, onOpen = onOpenLastWeek)
     }
     Box(Modifier.coachMarkTarget(TOUR_TODAY)) {
         TodayCard(
@@ -656,6 +680,31 @@ private fun WeekCard(group: Group, steps: Long, stale: Boolean) {
                 Text(stringResource(R.string.home_shield_used), style = Kit.type.label, color = mutedContentColor())
             }
         }
+    }
+}
+
+/**
+ * Last week at a glance, one tap from its full review. Free: the last week is
+ * every member's; only older weeks need Premium (and the review says so).
+ */
+@Composable
+private fun LastWeekRow(week: GroupWeekSummary, onOpen: () -> Unit) {
+    KitCard(padding = 6.dp, spacing = 0.dp) {
+        ListRow(
+            label = stringResource(R.string.home_last_week),
+            value = stringResource(
+                R.string.home_last_week_value,
+                "%,d".format(week.totalSteps),
+                "%,d".format(week.targetSteps),
+            ),
+            leadingIcon = when {
+                week.goalHit -> PamojaIcons.Check
+                week.shielded -> PamojaIcons.ShieldCheck
+                else -> null
+            },
+            onClick = onOpen,
+            showDivider = false,
+        )
     }
 }
 

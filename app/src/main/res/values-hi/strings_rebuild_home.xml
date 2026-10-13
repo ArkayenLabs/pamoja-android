@@ -23,6 +23,8 @@
     <string name="home_steps_title">आपके कदम</string>
     <string name="home_connect_body">Health Connect जोड़ें ताकि आपके कदम समूह में गिने जाएँ।</string>
     <string name="home_connect_action">जोड़ें</string>
+    <string name="home_last_week">पिछला हफ़्ता</string>
+    <string name="home_last_week_value">%2$s में से %1$s</string>
     <string name="home_week_range">%1$s से %2$s</string>
     <string name="home_not_synced">सिंक नहीं हुआ</string>
     <string name="home_invite_to">%1$s में बुलाएँ</string>

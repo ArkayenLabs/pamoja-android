@@ -290,7 +290,7 @@ Only after steps 2 and 3 are live and watched.
 - **Pre-sign-in invite preview callable** (Phase 3): never built. The invite
   preview works after sign-in; nothing to deploy.
 - **Pamoja-owned invite domain**: links stay on `www.arkayenlabs.com/pamoja/join`
-  until pamojaa.com is bought (three edits, REBUILD_PLAN Phase 3).
+  until joinpamoja.com is bought (decided 2026-10-13; three edits, REBUILD_PLAN Phase 3).
 - **Terms, Privacy, Play Data Safety** for dropping age/height/weight: Phase 8.
   Check before Release B whether the privacy policy covers cheers and nudges
   (who sent what to whom, kept 14 days).

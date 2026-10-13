@@ -34,6 +34,7 @@
     <string name="social_primer_body">Activa las notificaciones para saber cuándo tu grupo te choca los cinco.</string>
 
     <!-- Group details -->
+    <string name="details_past_weeks">Semanas anteriores</string>
     <string name="details_weekly_card">Tarjeta semanal</string>
 
     <!-- Weekly card -->

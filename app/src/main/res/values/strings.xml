@@ -296,7 +296,6 @@
     <string name="group_unavailable_title">This group is no longer available</string>
     <string name="group_unavailable_body">It may have been deleted, or you may no longer be a member.</string>
     <string name="group_invite_inactive">This group\'s invite link is no longer active.</string>
-    <string name="weekly_review_entry_title">Weekly review</string>
     <string name="weekly_review_title">Weekly review</string>
     <string name="group_of_target">of %1$s</string>
 

@@ -273,6 +273,7 @@ fun PamojaNavGraph(
                 },
                 onInvite = { groupId -> navController.navigate(Screen.Invite.createRoute(groupId)) },
                 onOpenWeeklyCard = { groupId -> navController.navigate(Screen.WeeklyCard.createRoute(groupId)) },
+                onOpenWeeklyReview = { groupId -> navController.navigate(Screen.WeeklyReview.createRoute(groupId)) },
                 onStartGroup = {
                     navController.navigate(Screen.CreateGroup.route) { launchSingleTop = true }
                 },

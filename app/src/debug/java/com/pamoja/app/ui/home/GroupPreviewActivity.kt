@@ -311,6 +311,13 @@ class GroupPreviewActivity : ComponentActivity() {
             ),
             showTour = tour,
             onTourDone = { tour = false },
+            // Missed, and a shield kept the streak, as the week card above says.
+            lastWeek = com.pamoja.app.domain.model.GroupWeekSummary(
+                groupId = GROUP, weekStart = lastWeekStart,
+                weekEnd = LocalDate.parse(lastWeekStart).plusDays(6).toString(),
+                targetSteps = 70_000, totalSteps = 61_300, memberCount = 6, activeMemberCount = 6,
+                contributions = emptyList(), finalizedAtEpochMillis = 0L, shielded = true,
+            ),
         )
     }
 

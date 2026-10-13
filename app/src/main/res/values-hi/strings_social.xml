@@ -30,6 +30,7 @@
     <string name="social_primer_body">सूचनाएँ चालू करें, ताकि पता चले जब आपका समूह आपको हाई फाइव भेजे।</string>
 
     <!-- Group details -->
+    <string name="details_past_weeks">पिछले हफ़्ते</string>
     <string name="details_weekly_card">साप्ताहिक कार्ड</string>
 
     <!-- Weekly card -->

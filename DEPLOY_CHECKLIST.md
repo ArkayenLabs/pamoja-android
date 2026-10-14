@@ -62,7 +62,17 @@ change only what git says they change:
   the logs after; rules 0 denies in the first 15 minutes.
 - Rollback, if needed: rules history in the console (the previous release is
   `71df964d…`), functions by redeploying a codebase from `30405d3`.
-- Next: step 4 (push) on the user's word, then step 5 (build).
+- **Step 4 done 2026-10-14 ~14:15 UTC:** `rebuild` and `release/1.0` pushed
+  to GitHub (new branches; `dev` not moved, so the legal pages are not
+  republished yet: that is step 8).
+- **Step 5 done 2026-10-14:** full device suite on `4d2c1b3`: 194, 193
+  passed, 1 skipped (the usual), 0 failures. Bundle 1.1.6 (23) at
+  `4d2c1b3`: `design/release-builds/pamoja-1.1.6-23-internal.aab`, release,
+  sales on, Trail sync on, signed with the upload key (`EC:3F…`), 13.9 MB.
+  Production 35 minutes after the rules deploy: 115 allows, 0 denies, no
+  function errors.
+- Next: step 6 (the user uploads 1.1.6 to internal testing and runs the
+  phone test below) with step 7 in parallel.
 
 **Phone test for step 6** (release build from Play, both themes): sign in
 (Google first tap, phone); a two-person group: High five and Remind arrive as

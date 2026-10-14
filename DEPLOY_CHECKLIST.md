@@ -9,6 +9,57 @@ the user (or on their explicit go-ahead), one at a time, in this order.
 
 ---
 
+## Production route (written 2026-10-14; Shipaton is over, release planned 2026-10-15)
+
+The freeze ended 2026-10-14 (results out, Pamoja did not place). The rules,
+functions and TTL from steps 2 to 4 below have been live since 2026-10-01;
+what is left is the security review, O1, the app and the store. Each step
+still waits for the user's word.
+
+**1.0.13 (Release A) is skipped.** It existed to put the minimum-version gate
+on installs before the rebuild; 1.1.6 carries the same gate
+(`FirebaseAppConfigRepositoryImpl`, `min_supported_version_code`), and every
+1.0.12 user who updates gets it from 1.1.6. Leave Remote Config unset.
+
+| # | Step | Who | Notes |
+|---|---|---|---|
+| 1 | Commit: the security review (staged, its own commit), then O1 + the delete-dialog line | Claude, on the user's word | |
+| 2 | `firebase deploy --only firestore:rules,firestore:indexes` | Claude, on the user's OK | Watch Rules Deny/Error for 30 min (baseline 0). The index is `removed.userId`, collection group. |
+| 3 | `functions:notifications`, then `functions:weekly-history`, then `functions:billing` (`FUNCTIONS_DISCOVERY_TIMEOUT=60`) | Claude, on the user's OK | Answer No to any deletion prompt. `cleanUpDeletedGroup` is the one new function. |
+| 4 | Push `rebuild` and `release/1.0` | Claude, on the user's OK, only after 2 and 3 | The review is a disclosure until both are live. |
+| 5 | Full instrumented suite + lint once, then the bundle: `./gradlew bundleRelease -PpamojaVersionCode=23 -PpamojaVersionName=1.1.6 -PtogetherTrailEnabled=true` (sales on via `local.properties`) | Claude, when the user says build | Copy to `design/release-builds/pamoja-1.1.6-23.aab`. |
+| 6 | Upload 1.1.6 to **internal testing** and test on a real phone (list below) | User | Nothing after 1.1.2 has been on a phone yet. |
+| 7 | Play Console, in parallel with 6: Data safety against `legal/DATA_SAFETY.md`; store listing from `design/store-listing/listing-1.1.md` (icon 512, six screenshots, feature graphic, short/full text, What's new); the 7-day free trial on the Premium base plan(s) | User | Listing changes go through review too; publish them with the release so 1.0.12 users never see Lilac screenshots of an app they don't have yet. |
+| 8 | Legal pages live: fast-forward `dev` to `rebuild` and push (`dev` is an ancestor, checked 2026-10-14). The push to `dev` triggers `redeploy-website.yml`, which republishes privacy, terms and deletion pages; Android CI also runs | Claude, on the user's OK | The drafts have not been read by a lawyer (user's call). |
+| 9 | Website repo (not on this machine): Lilac join page + `web/og/pamoja-invite-og.png` (step 6 below), O2 (debug key out of `assetlinks.json`) and O3 (strip the group ID from Vercel Analytics) if the user says yes | User, or Claude with that repo open | |
+| 10 | Promote the tested internal release to **production, staged**: 20% first, then 50%, then 100% a day or two apart, watching the triggers at the end of this file | User | Play review of an update usually takes hours, sometimes longer: "publish tomorrow" means submitted tomorrow. Managed publishing lets the listing and the app go live together. |
+| 11 | Tag what 1.0.12 was built from (`git tag v1.0.12-prod 4be3a80`) once confirmed, and `v1.1.6` on the bundle's commit | Claude, on the user's word | |
+
+**Checked read-only against production on 2026-10-14**, so steps 2 and 3
+change only what git says they change:
+- Live Firestore rules are ruleset `71df964d…` (2026-10-01 16:22 UTC),
+  identical to `HEAD`'s `firestore.rules` apart from comment emoji encoding.
+- Live index config = the two composite indexes in the file plus the
+  `signals.expireAt` TTL override, which was set with gcloud and was missing
+  from `firestore.indexes.json`. **It is now in the file, copied exactly:**
+  without it, `firestore:indexes` would have offered to delete the TTL.
+  The only addition is `removed.userId`.
+- Live functions: billing 3, notifications 11, weekly-history 17, matching
+  the local exports exactly except `cleanUpDeletedGroup` (new). Nothing is
+  deleted by the deploy.
+
+**Phone test for step 6** (release build from Play, both themes): sign in
+(Google first tap, phone); a two-person group: High five and Remind arrive as
+pushes; the goal moment; the invite link before sign-in, sign-in, then the
+automatic join; a fresh install from the link (Install Referrer); remove the
+second person, check their link shows "You can't rejoin", let them back in
+and rejoin; Last week on Home; widgets; Health Connect permission and a sync;
+weekly card share; data export; paywall with a license tester (prices, the
+trial once it exists, purchase, restore); delete a throwaway account (the
+subscription line shows). R8 was narrowed, so every flow on the release build.
+
+---
+
 ## What changes, and why the order matters
 
 | Piece | Changes from `dev` (what production runs) | Safe for 1.0.12? |

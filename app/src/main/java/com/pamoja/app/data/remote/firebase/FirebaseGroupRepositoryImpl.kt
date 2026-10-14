@@ -14,6 +14,7 @@ import com.pamoja.app.domain.error.ValidationField
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.InviteSummary
 import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.model.RemovedMember
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.repository.GroupRepository
 import com.pamoja.app.util.InviteLink
@@ -545,11 +546,12 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun removeMember(groupId: String, userId: String): Result<Unit> {
+    override suspend fun removeMember(groupId: String, userId: String, keepOut: Boolean): Result<Unit> {
         return try {
             val groupRef = groupsCollection.document(groupId)
             val membershipRef = firestore.collection("memberships")
                 .document("${userId}_$groupId")
+            val removedRef = removedCollection(groupId).document(userId)
 
             firestore.runTransaction { transaction ->
                 val groupSnapshot = transaction.get(groupRef)
@@ -575,9 +577,69 @@ class FirebaseGroupRepositoryImpl @Inject constructor(
                 }
 
                 transaction.delete(membershipRef)
+
+                // In the same commit, so there is no moment when they are out
+                // of the group but the link still lets them back in.
+                if (keepOut) {
+                    transaction.set(
+                        removedRef,
+                        mapOf(
+                            "userId" to userId,
+                            "displayName" to membershipSnapshot.getString("displayName").orEmpty().take(100),
+                            "removedAt" to FieldValue.serverTimestamp(),
+                        ),
+                    )
+                }
             }.await()
 
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
+    private fun removedCollection(groupId: String) =
+        groupsCollection.document(groupId).collection("removed")
+
+    override fun observeRemovedMembers(groupId: String): Flow<List<RemovedMember>> = callbackFlow {
+        val listener = removedCollection(groupId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error.toFirebaseAppError())
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
+                trySend(
+                    snapshot.documents
+                        .map { doc ->
+                            RemovedMember(
+                                userId = doc.id,
+                                displayName = doc.getString("displayName").orEmpty(),
+                                removedAt = doc.getTimestamp("removedAt")?.toDate()?.time ?: 0L,
+                            )
+                        }
+                        .sortedByDescending { it.removedAt },
+                )
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun letBackIn(groupId: String, userId: String): Result<Unit> {
+        return try {
+            removedCollection(groupId).document(userId).delete().await()
+            Result.success(Unit)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            Result.failure(e.toFirebaseAppError())
+        }
+    }
+
+    override suspend fun isRemovedFrom(groupId: String, userId: String): Result<Boolean> {
+        return try {
+            Result.success(removedCollection(groupId).document(userId).get().await().exists())
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             Result.failure(e.toFirebaseAppError())
         }

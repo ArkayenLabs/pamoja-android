@@ -9,6 +9,8 @@
     <string name="join_already_member_body">सबकी प्रगति देखने के लिए समूह खोलें।</string>
     <string name="join_full_title">यह समूह भरा हुआ है</string>
     <string name="join_full_body">%1$d सदस्यों की सीमा पूरी है। एडमिन से जगह बनाने को कहें या अपना समूह बनाएँ।</string>
+    <string name="join_removed_title">आप इस समूह में दोबारा नहीं जुड़ सकते</string>
+    <string name="join_removed_body">एडमिन ने आपको हटा दिया है। सिर्फ़ वही आपको वापस आने दे सकते हैं।</string>
     <string name="join_offline_title">आप ऑफ़लाइन हैं</string>
     <string name="join_offline_body">जुड़ने के लिए कनेक्शन चाहिए। लौटने पर आमंत्रण काम करेगा।</string>
     <string name="join_failed_title">शामिल नहीं हो सके</string>
@@ -28,6 +30,7 @@
     <string name="settings_delete_loses_profile">आपकी प्रोफ़ाइल, नाम और फ़ोटो</string>
     <string name="settings_delete_loses_history">कदमों का पूरा इतिहास</string>
     <string name="settings_delete_loses_groups">हर समूह में आपकी सदस्यता</string>
+    <string name="settings_delete_subscription">खाता हटाने से Google Play सदस्यता रद्द नहीं होती। पहले Play Store में इसे रद्द करें।</string>
     <string name="settings_delete_type_hint">पुष्टि के लिए DELETE लिखें</string>
     <string name="settings_delete_type_word">DELETE</string>
     <string name="settings_logout_confirm_title">साइन आउट करें?</string>

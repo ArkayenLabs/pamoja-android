@@ -807,6 +807,8 @@ private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 }
             }
         }
+        // A subscription bills through Play, not through this account.
+        Text(stringResource(R.string.settings_delete_subscription), style = Kit.type.caption, color = Kit.colors.muted)
         KitTextField(
             value = typed,
             onValueChange = { typed = it },

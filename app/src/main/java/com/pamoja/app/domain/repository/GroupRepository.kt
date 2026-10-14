@@ -2,6 +2,7 @@ package com.pamoja.app.domain.repository
 
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.model.RemovedMember
 import com.pamoja.app.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -78,13 +79,25 @@ interface GroupRepository {
     ): Result<Unit>
 
     /**
-     * Removes another member, as the admin.
+     * Removes a member: another one as the admin, or yourself when leaving.
      *
      * Transactional for the same reason leaving is: the membership document and
      * the group's `memberCount` have to move together or the count drifts and
      * the cap stops meaning anything.
+     *
+     * [keepOut] also lists them in the group's removed list in the same commit,
+     * so the group's link no longer lets them back in. Only the admin may.
      */
-    suspend fun removeMember(groupId: String, userId: String): Result<Unit>
+    suspend fun removeMember(groupId: String, userId: String, keepOut: Boolean): Result<Unit>
+
+    /** The admin's view of who they removed, newest first. */
+    fun observeRemovedMembers(groupId: String): Flow<List<RemovedMember>>
+
+    /** Takes someone off the removed list, so the link works for them again. */
+    suspend fun letBackIn(groupId: String, userId: String): Result<Unit>
+
+    /** Whether the admin removed [userId] from [groupId] and has not let them back in. */
+    suspend fun isRemovedFrom(groupId: String, userId: String): Result<Boolean>
 
     /** Permanently removes an admin-owned group and all group-scoped records. */
     suspend fun deleteGroup(groupId: String): Result<Unit>

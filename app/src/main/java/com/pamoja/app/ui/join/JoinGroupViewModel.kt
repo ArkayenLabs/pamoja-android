@@ -30,6 +30,9 @@ data class JoinUiState(
     val isAlreadyMember: Boolean = false,
     val isFull: Boolean = false,
 
+    /** The admin removed them; the link no longer lets them in. */
+    val isRemoved: Boolean = false,
+
     /** Could not resolve the invite at all. */
     val resolveError: AppError? = null,
 
@@ -46,7 +49,7 @@ data class JoinUiState(
 ) {
     /** Joining is only offered when it can actually succeed. */
     val canJoin: Boolean
-        get() = group != null && !isAlreadyMember && !isFull && !isJoining && !isOffline
+        get() = group != null && !isAlreadyMember && !isFull && !isRemoved && !isJoining && !isOffline
 }
 
 /**
@@ -101,6 +104,7 @@ class JoinGroupViewModel @Inject constructor(
                         group = preview.group,
                         isAlreadyMember = preview.isAlreadyMember,
                         isFull = preview.isFull,
+                        isRemoved = preview.isRemoved,
                     )
                     // The pending code has done its job. Cleared here so a dead
                     // invite cannot re-trigger this screen on every launch.

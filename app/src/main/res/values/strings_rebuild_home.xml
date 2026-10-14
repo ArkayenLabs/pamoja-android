@@ -50,6 +50,9 @@
     <string name="details_joined">Joined %1$s</string>
     <string name="details_member_options_desc">Options for %1$s</string>
     <string name="details_remove_member">Remove from group</string>
+    <string name="details_removed_title">Removed</string>
+    <string name="details_removed_on">Removed %1$s</string>
+    <string name="details_let_back_in">Let back in</string>
     <string name="details_settings_title">Group settings</string>
     <string name="details_goal">Weekly goal</string>
     <string name="details_goal_value">%1$s steps</string>

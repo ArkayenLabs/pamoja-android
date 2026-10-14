@@ -324,7 +324,7 @@ class MembershipIntegrityRulesEmulatorTest {
         val bob = newUser()
         groupsOf(bob).joinGroup(group.groupId, bob.uid).getOrThrow()
 
-        groupsOf(bob).removeMember(group.groupId, bob.uid).getOrThrow()
+        groupsOf(bob).removeMember(group.groupId, bob.uid, keepOut = false).getOrThrow()
 
         assertEquals(1L, memberCount(alice, group.groupId))
         assertFalse(membershipRef(alice, bob.uid, group.groupId).get().await().exists())
@@ -338,7 +338,7 @@ class MembershipIntegrityRulesEmulatorTest {
         val bob = newUser()
         groupsOf(bob).joinGroup(group.groupId, bob.uid).getOrThrow()
 
-        groupsOf(alice).removeMember(group.groupId, bob.uid).getOrThrow()
+        groupsOf(alice).removeMember(group.groupId, bob.uid, keepOut = true).getOrThrow()
 
         assertEquals(1L, memberCount(alice, group.groupId))
     }

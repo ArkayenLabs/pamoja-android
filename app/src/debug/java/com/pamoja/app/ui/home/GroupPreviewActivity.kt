@@ -62,7 +62,9 @@ import kotlinx.coroutines.launch
  * 20 edit profile, 21 account (Google only), 22 the invite preview, 23 the
  * goal-reached moment (four people; `--ez big true` for six, `--ez animate
  * false` for its last frame, `--ez sent true` after the high fives), 24 the
- * invite before sign-in ("Started by" chip, signed-out buttons).
+ * invite before sign-in ("Started by" chip, signed-out buttons). `--ez removed
+ * true` shows 22 as someone the admin removed. Screen 5 (the admin) also lists
+ * one removed person.
  *
  * `--es caption "..."` draws the screen as a Play Store screenshot instead
  * (see StoreShot). `--ez exportWidgets true` also writes the widget picker
@@ -264,7 +266,11 @@ class GroupPreviewActivity : ComponentActivity() {
                         onChangePassword = { _, _ -> }, onSendPhoneCode = {}, onConfirmPhoneCode = {}, onMessageShown = {},
                     )
                     22 -> com.pamoja.app.ui.join.JoinGroupContent(
-                        state = com.pamoja.app.ui.join.JoinUiState(isResolving = false, group = group),
+                        state = com.pamoja.app.ui.join.JoinUiState(
+                            isResolving = false,
+                            group = group,
+                            isRemoved = intent.getBooleanExtra(EXTRA_REMOVED, false),
+                        ),
                         onJoin = {}, onOpen = {}, onRetry = {}, onCancel = {},
                     )
                     24 -> com.pamoja.app.ui.join.JoinGroupContent(
@@ -336,6 +342,11 @@ class GroupPreviewActivity : ComponentActivity() {
                 ),
                 currentUserId = currentUserId,
                 access = access,
+                removed = listOf(
+                    com.pamoja.app.domain.model.RemovedMember(
+                        userId = "kofi", displayName = "Kofi", removedAt = System.currentTimeMillis() - 2 * 86_400_000L,
+                    ),
+                ),
             ),
             onBack = {}, onInvite = {}, onOpenReview = {}, onOpenPaywall = {},
             onSaveName = {}, onSaveGoal = {}, onSaveCap = {}, onSaveWeekStart = {},
@@ -475,6 +486,7 @@ class GroupPreviewActivity : ComponentActivity() {
         const val EXTRA_BIG = "big"
         const val EXTRA_SENT = "sent"
         const val EXTRA_ANIMATE = "animate"
+        const val EXTRA_REMOVED = "removed"
         const val EXTRA_EXPORT_WIDGETS = "exportWidgets"
         const val GROUP = "6413795d-42d0-4f2b-80df-f017a9d32817"
         const val ME = "me"

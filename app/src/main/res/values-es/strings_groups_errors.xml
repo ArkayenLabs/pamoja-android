@@ -15,7 +15,7 @@
     <string name="edit_group_members">Miembros</string>
     <string name="edit_group_member_admin">Administrador</string>
     <string name="edit_group_remove_title">¿Eliminar miembro?</string>
-    <string name="edit_group_remove_body">%1$s saldrá del grupo y sus pasos dejarán de contar para la meta. Puedes volver a invitar a esta persona.</string>
+    <string name="edit_group_remove_body">%1$s saldrá del grupo y sus pasos dejarán de contar para la meta. No podrá volver a unirse hasta que se lo permitas.</string>
     <string name="edit_group_remove_confirm">Eliminar</string>
     <string name="edit_group_photo">Foto del grupo</string>
     <string name="edit_group_photo_change">Cambiar</string>

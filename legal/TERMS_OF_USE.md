@@ -1,6 +1,6 @@
 # Terms of Use. Pamoja
 
-**Last updated: 11 October 2026**
+**Last updated: 14 October 2026**
 **Effective date: 19 September 2026**
 
 > ⚠️ **Not legal advice, and not yet reviewed by a lawyer.** All placeholders are
@@ -57,6 +57,7 @@ Pamoja requires an account. You can create one with **Google**, your **phone num
 
 - Anyone who has your group's invite link or code can request to join that group, subject to the group's member limit. **Treat invite links as private and share them only with people you intend to invite.**
 - An invite link stops working once a group is full, and works again if a place frees up.
+- A group's admin can remove a member. Someone who was removed can't rejoin with that group's invite link or code unless the admin lets them back in.
 - Anyone who opens your group's invite link in the Pamoja app can see, before joining, the group's name, its number of members and member limit, its weekly goal and the first name of the person who started it.
 - **When you join a group, other members of that group can see your display name, your daily step count, your weekly step total, your ranking, and which days of the week you walked.** Do not join a group if you are not comfortable sharing this.
 - Your age, height, and weight, if provided, are **never** shown to other members.

@@ -124,6 +124,7 @@ fun GroupDetailsScreen(
         },
         onRemovePhoto = viewModel::removePhoto,
         onRemoveMember = viewModel::removeMember,
+        onLetBackIn = viewModel::letBackIn,
         onLeave = viewModel::leaveGroup,
         onDelete = viewModel::deleteGroup,
         onRetry = viewModel::retry,
@@ -155,6 +156,7 @@ internal fun GroupDetailsContent(
     onActionErrorShown: () -> Unit,
     subscriptionSalesEnabled: Boolean = BillingIdentity.isSalesEnabled,
     onOpenWeeklyCard: () -> Unit = {},
+    onLetBackIn: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
@@ -162,6 +164,7 @@ internal fun GroupDetailsContent(
     var sheet by rememberSaveable { mutableStateOf<DetailSheet?>(null) }
     var memberSheet by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmRemove by rememberSaveable { mutableStateOf<String?>(null) }
+    var removedSheet by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmLeave by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
 
@@ -263,6 +266,10 @@ internal fun GroupDetailsContent(
                         onMemberOptions = { memberSheet = it },
                     )
 
+                    if (state.isAdmin && state.removed.isNotEmpty()) {
+                        RemovedCard(state = state, onOptions = { removedSheet = it })
+                    }
+
                     if (state.isAdmin) {
                         KitCard(spacing = 0.dp, padding = 18.dp) {
                             CardHeader(stringResource(R.string.details_settings_title), Modifier.padding(bottom = 6.dp))
@@ -348,6 +355,18 @@ internal fun GroupDetailsContent(
                 danger = true,
                 enabled = !state.isOffline,
                 onClick = { close { confirmRemove = member.userId } },
+            )
+        }
+    }
+
+    // Gone from the list (let back in elsewhere) means nothing to act on.
+    removedSheet?.let { userId -> state.removed.firstOrNull { it.userId == userId } }?.let { person ->
+        KitSheet(onDismiss = { removedSheet = null }, title = person.displayName) { close ->
+            ActionRow(
+                stringResource(R.string.details_let_back_in),
+                icon = PamojaIcons.Users,
+                enabled = !state.isOffline,
+                onClick = { close { onLetBackIn(person.userId) } },
             )
         }
     }
@@ -442,6 +461,35 @@ private fun MembersCard(state: GroupDetailsUiState, onMemberOptions: (String) ->
                         enabled = state.removingMemberId != member.userId,
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Admin only, and only when there is someone in it: the people they removed,
+ * who the group's link no longer lets in, each with a way back.
+ */
+@Composable
+private fun RemovedCard(state: GroupDetailsUiState, onOptions: (String) -> Unit) {
+    val datePattern = remember { DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMM") }
+    KitCard(spacing = 2.dp) {
+        CardHeader(stringResource(R.string.details_removed_title), Modifier.padding(bottom = 6.dp))
+        state.removed.forEach { person ->
+            PersonRow(
+                name = person.displayName,
+                photoUrl = null,
+                seed = person.userId,
+                detail = person.removedAt.takeIf { it > 0L }?.let {
+                    stringResource(R.string.details_removed_on, DateFormat.format(datePattern, Date(it)).toString())
+                },
+            ) {
+                CircleIconButton(
+                    icon = PamojaIcons.More,
+                    contentDescription = stringResource(R.string.details_member_options_desc, person.displayName),
+                    onClick = { onOptions(person.userId) },
+                    enabled = state.lettingBackInId != person.userId,
+                )
             }
         }
     }

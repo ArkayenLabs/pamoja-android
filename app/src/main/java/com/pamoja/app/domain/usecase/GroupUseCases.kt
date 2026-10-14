@@ -6,6 +6,7 @@ import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.InviteSummary
 import com.pamoja.app.domain.model.Membership
 import com.pamoja.app.domain.model.PamojaGroupId
+import com.pamoja.app.domain.model.RemovedMember
 import com.pamoja.app.domain.model.StepGoal
 import com.pamoja.app.domain.model.User
 import com.pamoja.app.domain.model.WalkedDays
@@ -126,6 +127,8 @@ data class InvitePreview(
     val group: Group,
     val isAlreadyMember: Boolean,
     val isFull: Boolean,
+    /** The admin removed them and has not let them back in. */
+    val isRemoved: Boolean = false,
 )
 
 /**
@@ -165,10 +168,16 @@ class ResolveInviteUseCase @Inject constructor(
         val isAlreadyMember =
             groupRepository.getMembership(userId, group.groupId).getOrNull() != null
 
+        // Said before they tap Join, rather than as a refused join. A failed
+        // check is not proof either way; the rules still refuse the join.
+        val isRemoved = !isAlreadyMember &&
+            groupRepository.isRemovedFrom(group.groupId, userId).getOrDefault(false)
+
         return Result.success(
             InvitePreview(
                 group = group,
                 isAlreadyMember = isAlreadyMember,
+                isRemoved = isRemoved,
                 // Being a member already means the cap is irrelevant: they are
                 // inside it. Otherwise a full group they belong to would show
                 // as a dead end instead of offering the way in.
@@ -375,7 +384,8 @@ class LeaveGroupUseCase @Inject constructor(
     suspend operator fun invoke(group: Group): Result<Unit> {
         val user = getCurrentUserUseCase() ?: return Result.failure(AppError.SessionExpired())
         if (group.adminId == user.userId) return Result.failure(AppError.PermissionDenied())
-        return groupRepository.removeMember(group.groupId, user.userId)
+        // Leaving never keeps anyone out: they can come back with the link.
+        return groupRepository.removeMember(group.groupId, user.userId, keepOut = false)
     }
 }
 
@@ -396,7 +406,26 @@ class RemoveGroupMemberUseCase @Inject constructor(
         if (memberId.isBlank()) {
             return Result.failure(AppError.Validation(ValidationField.DisplayNameMissing))
         }
-        return groupRepository.removeMember(group.groupId, memberId)
+        // Kept out too, or the same link lets them straight back in.
+        return groupRepository.removeMember(group.groupId, memberId, keepOut = true)
+    }
+}
+
+/** The admin's list of people they removed. Refused by the rules for anyone else. */
+class ObserveRemovedMembersUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    operator fun invoke(groupId: String): Flow<List<RemovedMember>> =
+        groupRepository.observeRemovedMembers(groupId)
+}
+
+/** Lets a removed person use the group's link again. Admin only. */
+class LetMemberBackInUseCase @Inject constructor(
+    private val groupRepository: GroupRepository,
+) {
+    suspend operator fun invoke(group: Group, editorId: String, userId: String): Result<Unit> {
+        if (group.adminId != editorId) return Result.failure(AppError.PermissionDenied())
+        return groupRepository.letBackIn(group.groupId, userId)
     }
 }
 

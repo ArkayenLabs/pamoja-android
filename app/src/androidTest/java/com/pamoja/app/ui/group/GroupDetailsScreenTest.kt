@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -16,6 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.GroupAccessState
 import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.model.RemovedMember
 import com.pamoja.app.domain.model.ThemePreference
 import com.pamoja.app.ui.kit.KitTheme
 import org.junit.Assert.assertEquals
@@ -96,12 +98,37 @@ class GroupDetailsScreenTest {
         compose.runOnIdle { assertTrue(deleted) }
     }
 
+    @Test
+    fun theAdminSeesWhoTheyRemovedAndCanLetThemBackIn() {
+        var letBackIn: String? = null
+        val removed = listOf(RemovedMember(userId = "removed-uid", displayName = "Kofi", removedAt = 0L))
+        setContent(currentUserId = ADMIN, removed = removed, onLetBackIn = { letBackIn = it })
+
+        compose.onNodeWithText("Removed").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Options for Kofi").performScrollTo().performClick()
+        compose.onNodeWithText("Let back in").performClick()
+
+        compose.runOnIdle { assertEquals("removed-uid", letBackIn) }
+    }
+
+    @Test
+    fun aMemberNeverSeesTheRemovedList() {
+        // The rules refuse the list to anyone but the admin; the screen must
+        // not draw one from stale state either.
+        val removed = listOf(RemovedMember(userId = "removed-uid", displayName = "Kofi", removedAt = 0L))
+        setContent(currentUserId = MEMBER, removed = removed)
+
+        compose.onNodeWithText("Kofi").assertDoesNotExist()
+    }
+
     private fun setContent(
         currentUserId: String,
         onOpenPaywall: () -> Unit = {},
         onSaveGoal: (Int) -> Unit = {},
         onLeave: () -> Unit = {},
         onDelete: () -> Unit = {},
+        removed: List<RemovedMember> = emptyList(),
+        onLetBackIn: (String) -> Unit = {},
     ) {
         compose.setContent {
             KitTheme(dark = false) {
@@ -111,6 +138,7 @@ class GroupDetailsScreenTest {
                         members = members,
                         currentUserId = currentUserId,
                         access = GroupAccessState.Free,
+                        removed = removed,
                     ),
                     onBack = {},
                     onInvite = {},
@@ -129,6 +157,7 @@ class GroupDetailsScreenTest {
                     onRetry = {},
                     onActionErrorShown = {},
                     subscriptionSalesEnabled = true,
+                    onLetBackIn = onLetBackIn,
                 )
             }
         }

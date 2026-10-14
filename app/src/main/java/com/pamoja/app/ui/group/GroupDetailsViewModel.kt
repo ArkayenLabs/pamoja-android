@@ -9,13 +9,16 @@ import com.pamoja.app.domain.error.toAppError
 import com.pamoja.app.domain.model.Group
 import com.pamoja.app.domain.model.GroupAccessState
 import com.pamoja.app.domain.model.Membership
+import com.pamoja.app.domain.model.RemovedMember
 import com.pamoja.app.domain.usecase.DeleteGroupUseCase
 import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetGroupMembershipsUseCase
 import com.pamoja.app.domain.usecase.GetGroupUseCase
 import com.pamoja.app.domain.usecase.GetMembershipUseCase
 import com.pamoja.app.domain.usecase.LeaveGroupUseCase
+import com.pamoja.app.domain.usecase.LetMemberBackInUseCase
 import com.pamoja.app.domain.usecase.ObserveGroupAccessUseCase
+import com.pamoja.app.domain.usecase.ObserveRemovedMembersUseCase
 import com.pamoja.app.domain.usecase.RemoveGroupMemberUseCase
 import com.pamoja.app.domain.usecase.RemoveGroupPhotoUseCase
 import com.pamoja.app.domain.usecase.UpdateGroupPhotoUseCase
@@ -43,6 +46,9 @@ data class GroupDetailsUiState(
     /** One-shot: a setting was saved, so its sheet can close. */
     val settingsSaved: Boolean = false,
     val removingMemberId: String? = null,
+    /** Admin only: people they removed, who the link no longer lets in. */
+    val removed: List<RemovedMember> = emptyList(),
+    val lettingBackInId: String? = null,
     val isUploadingPhoto: Boolean = false,
     val isLeaving: Boolean = false,
     val isDeleting: Boolean = false,
@@ -88,6 +94,8 @@ class GroupDetailsViewModel @Inject constructor(
     private val removeGroupPhotoUseCase: RemoveGroupPhotoUseCase,
     private val leaveGroupUseCase: LeaveGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
+    private val observeRemovedMembersUseCase: ObserveRemovedMembersUseCase,
+    private val letMemberBackInUseCase: LetMemberBackInUseCase,
     connectivityObserver: ConnectivityObserver,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -99,6 +107,7 @@ class GroupDetailsViewModel @Inject constructor(
 
     private var observeJob: Job? = null
     private var accessJob: Job? = null
+    private var removedJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -163,7 +172,29 @@ class GroupDetailsViewModel @Inject constructor(
                         ),
                         fatalError = null,
                     )
+                    watchRemovedWhileAdmin(group.adminId == _uiState.value.currentUserId)
                 }
+        }
+    }
+
+    /**
+     * Only the admin may read the removed list, so it is watched only while
+     * this person is the admin (a handover can change that mid-screen).
+     */
+    private fun watchRemovedWhileAdmin(isAdmin: Boolean) {
+        if (isAdmin == (removedJob != null)) return
+        removedJob?.cancel()
+        removedJob = null
+        if (!isAdmin) {
+            _uiState.value = _uiState.value.copy(removed = emptyList())
+            return
+        }
+        removedJob = viewModelScope.launch {
+            observeRemovedMembersUseCase(groupId)
+                // A list nobody else can see; failing to load it is not worth
+                // a screen error, and the rules still keep those people out.
+                .catch { emit(emptyList()) }
+                .collect { _uiState.value = _uiState.value.copy(removed = it) }
         }
     }
 
@@ -220,6 +251,20 @@ class GroupDetailsViewModel @Inject constructor(
             val result = removeGroupMemberUseCase(group, state.currentUserId, memberId)
             _uiState.value = _uiState.value.copy(
                 removingMemberId = null,
+                actionError = result.exceptionOrNull()?.toAppError(),
+            )
+        }
+    }
+
+    fun letBackIn(userId: String) {
+        val state = _uiState.value
+        val group = state.group ?: return
+        if (state.lettingBackInId != null || state.isOffline) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(lettingBackInId = userId, actionError = null)
+            val result = letMemberBackInUseCase(group, state.currentUserId, userId)
+            _uiState.value = _uiState.value.copy(
+                lettingBackInId = null,
                 actionError = result.exceptionOrNull()?.toAppError(),
             )
         }
@@ -285,6 +330,7 @@ class GroupDetailsViewModel @Inject constructor(
     private fun finish() {
         observeJob?.cancel()
         accessJob?.cancel()
+        removedJob?.cancel()
         _uiState.value = _uiState.value.copy(isLeaving = false, isDeleting = false, isGone = true)
     }
 

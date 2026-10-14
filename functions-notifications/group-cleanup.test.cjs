@@ -7,6 +7,8 @@
 // Account deletion by a group's last member deletes the group document from
 // the app, which until 2026-10-13 left its photo, subcollections, access and
 // billing projections and any orphaned memberships behind (2026-10-13 review).
+// Also the account half of removal (2026-10-14): a deleted account's entries
+// in groups' removed lists, which carry its name, go with it.
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 
@@ -22,6 +24,7 @@ const {getFirestore} = require('firebase-admin/firestore');
 const {getStorage} = require('firebase-admin/storage');
 initializeApp({projectId: project, storageBucket: `${project}.appspot.com`});
 const {cleanUpDeletedGroup} = require('./lib/group-admin.js');
+const {cleanupPushRegistrationsOnUserDelete} = require('./lib/notifications.js');
 
 const db = getFirestore();
 const bucket = getStorage().bucket();
@@ -75,4 +78,18 @@ test('a group deleted from the app is cleaned up, and nothing of another group i
 test('a malformed group id does nothing', async () => {
   await cleanUpDeletedGroup.run({params: {groupId: 'not-a-group'}});
   assert.equal((await db.doc('deletedGroups/not-a-group').get()).exists, false);
+});
+
+test('a deleted account takes its removal entries with it, and nobody else\'s', async () => {
+  const entry = (userId) => ({userId, displayName: 'Bob', removedAt: new Date()});
+  await db.doc(`groups/${GONE}/removed/gone-user`).set(entry('gone-user'));
+  await db.doc(`groups/${KEPT}/removed/gone-user`).set(entry('gone-user'));
+  await db.doc(`groups/${KEPT}/removed/still-here`).set(entry('still-here'));
+
+  await cleanupPushRegistrationsOnUserDelete.run({params: {userId: 'gone-user'}});
+
+  assert.equal((await db.doc(`groups/${GONE}/removed/gone-user`).get()).exists, false);
+  assert.equal((await db.doc(`groups/${KEPT}/removed/gone-user`).get()).exists, false);
+  // The pair: someone else's entry still keeps them out.
+  assert.equal((await db.doc(`groups/${KEPT}/removed/still-here`).get()).exists, true);
 });

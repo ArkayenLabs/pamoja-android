@@ -92,7 +92,7 @@ class GroupIntegrityRulesEmulatorTest {
         assertEquals(2L, field(alice, group.groupId, "memberCount"))
 
         // The pair: actually leaving.
-        groupsOf(bob).removeMember(group.groupId, bob.uid).getOrThrow()
+        groupsOf(bob).removeMember(group.groupId, bob.uid, keepOut = false).getOrThrow()
         assertEquals(1L, field(alice, group.groupId, "memberCount"))
     }
 
@@ -149,7 +149,7 @@ class GroupIntegrityRulesEmulatorTest {
         val (group, alice, bob) = pair(cap = 2)
         assertEquals(false, field(alice, group.groupId, "inviteLinkActive"))
 
-        groupsOf(bob).removeMember(group.groupId, bob.uid).getOrThrow()
+        groupsOf(bob).removeMember(group.groupId, bob.uid, keepOut = false).getOrThrow()
 
         assertEquals(true, field(alice, group.groupId, "inviteLinkActive"))
     }

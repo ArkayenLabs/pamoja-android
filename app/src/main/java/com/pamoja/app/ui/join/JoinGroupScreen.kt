@@ -40,6 +40,7 @@ import com.pamoja.app.ui.kit.KitScreen
 import com.pamoja.app.ui.kit.KitSkeleton
 import com.pamoja.app.ui.kit.PrimaryButton
 import com.pamoja.app.ui.kit.QuietButton
+import com.pamoja.app.ui.kit.SecondaryButton
 import java.text.NumberFormat
 
 /**
@@ -128,6 +129,8 @@ internal fun JoinGroupContent(
                     PrimaryButton(stringResource(R.string.join_open_group), onClick = onOpen)
                     QuietButton(stringResource(R.string.common_not_now), onClick = onCancel)
                 }
+                // Nothing to offer but the way out; the notice says why.
+                state.isRemoved -> SecondaryButton(stringResource(R.string.common_back_to_groups), onClick = onCancel)
                 else -> {
                     PrimaryButton(
                         stringResource(if (state.isFull) R.string.join_button_full else R.string.join_button),
@@ -173,6 +176,10 @@ internal fun JoinGroupContent(
                     state.isAlreadyMember -> KitNotice(
                         title = stringResource(R.string.join_already_member_title),
                         body = stringResource(R.string.join_already_member_body),
+                    )
+                    state.isRemoved -> KitNotice(
+                        title = stringResource(R.string.join_removed_title),
+                        body = stringResource(R.string.join_removed_body),
                     )
                     state.isFull -> KitNotice(
                         title = stringResource(R.string.join_full_title),

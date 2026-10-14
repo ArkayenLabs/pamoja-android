@@ -228,6 +228,34 @@ Look for `verified` next to `www.arkayenlabs.com`.
 | `09:82:DF:6F…` | local **debug** keystore | So App Links work while developing |
 | `EC:3F:F2:8C…` | **upload** keystore | So a release APK built locally and sideloaded behaves like a real one. Without it, sideloaded release builds fail link verification and Google sign-in together, which looks like two unrelated bugs |
 
+## Waiting on the user (SECURITY_REVIEW.md O2 and O3, prepared 2026-10-14)
+
+Neither is decided; both are website-repo changes, so they ship with the
+Lilac join page.
+
+**O2, the debug fingerprint.** The table above says keep all three; the
+security review recommends dropping `09:82:DF:6F…` from the live file
+(checked 2026-10-14: it is this machine's `~/.android/debug.keystore`, and
+the live file still lists it). Cost: debug builds stop opening invite links
+directly. Production (`50:EE…`) and sideloaded release builds (`EC:3F…`) are
+unaffected. If the user says yes, remove it from `web/assetlinks.json` here
+and from the website's `/.well-known/assetlinks.json`, and fix the table.
+
+**O3, the group ID in Vercel Analytics.** The live site loads
+`@vercel/analytics/react` 2.0.1 (seen in the page source 2026-10-14), so
+every invite visit records `/pamoja/join/<group id>`, and the group ID is
+the join key. If the user says yes, in the website repo's `<Analytics />`:
+
+    <Analytics
+      beforeSend={(event) => ({
+        ...event,
+        url: event.url.replace(/\/pamoja\/join\/[^/?#]+/, '/pamoja/join/[code]'),
+      })}
+    />
+
+Invite opens are still counted, as one path. Check afterwards in Vercel >
+Analytics that no new path carries an ID.
+
 ## If the legal pages stop updating
 
 The publishing chain has two parts in two repos. When a change does not appear:

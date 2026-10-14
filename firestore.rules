@@ -653,6 +653,34 @@ service cloud.firestore {
                     && isNearToday(request.resource.data.date);
     }
 
+    // People the group's admin removed (2026-10-14). The invite key is the
+    // group ID, which never changes, so until this a removed person tapped the
+    // same link and was back in, seeing everyone's names, photos and daily
+    // steps again. The memberships create rule refuses anyone listed here; the
+    // admin takes them off the list to let them back in.
+    //
+    // Keyed by the removed person's uid, so the get rule authorises on the ID
+    // and never reads resource.data (the join preview reads a document that is
+    // usually missing). The name is kept only so the admin's list can show it;
+    // functions-notifications erases the entry when that account is deleted.
+    match /groups/{groupId}/removed/{userId} {
+      allow get: if isSelf(userId) || isGroupAdmin(groupId);
+      allow list: if isGroupAdmin(groupId);
+
+      // Written in the same transaction as the removal. Update as well as
+      // create so a repeated removal is not refused by a leftover entry.
+      allow create, update: if isGroupAdmin(groupId)
+                            && userId != request.auth.uid
+                            && request.resource.data.keys().hasOnly(['userId', 'displayName', 'removedAt'])
+                            && request.resource.data.userId == userId
+                            && request.resource.data.displayName is string
+                            && request.resource.data.displayName.size() <= 100
+                            && request.resource.data.removedAt == request.time;
+
+      // "Let back in". Never the removed person themselves.
+      allow delete: if isGroupAdmin(groupId);
+    }
+
     // ------------------------------------------------------------ memberships
 
     match /memberships/{membershipId} {
@@ -782,6 +810,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
                     && membershipId == request.auth.uid + '_' + request.resource.data.groupId
                     && request.resource.data.userId == request.auth.uid
+                    // Not someone the admin removed. See groups/{id}/removed.
+                    && !exists(/databases/$(database)/documents/groups/$(request.resource.data.groupId)/removed/$(request.auth.uid))
                     && request.resource.data.keys().hasOnly([
                          'userId', 'groupId', 'displayName', 'role',
                          'canEditTarget', 'photoUrl', 'joinedAt', 'weeklySteps',

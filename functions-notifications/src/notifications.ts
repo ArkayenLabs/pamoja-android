@@ -328,6 +328,10 @@ export const eraseDepartedMemberSignals = onDocumentDeleted(
  * the payer's own billing projection, which only its owner could ever read.
  * The canonical billingAccounts record stays: a subscription keeps billing in
  * Play after the account is gone, and its webhooks still need it.
+ *
+ * Also any group's entry saying an admin removed this person: it carries
+ * their name, and a deleted account's uid can never sign in again, so the
+ * entry no longer keeps anyone out.
  */
 export const cleanupPushRegistrationsOnUserDelete = onDocumentDeleted(
   {
@@ -338,6 +342,7 @@ export const cleanupPushRegistrationsOnUserDelete = onDocumentDeleted(
   async (event) => {
     await deleteRegistrationsForUser(event.params.userId);
     await getFirestore().collection("billingViews").doc(event.params.userId).delete();
+    await deleteRemovalEntriesForUser(event.params.userId);
   },
 );
 
@@ -631,6 +636,18 @@ function stringOrEmpty(value: unknown): string {
 async function deleteRegistrationsForUser(userId: string): Promise<void> {
   while (true) {
     const snapshot = await getFirestore().collection("pushRegistrations")
+      .where("userId", "==", userId)
+      .limit(400)
+      .get();
+    if (snapshot.empty) return;
+    await deleteReferences(snapshot.docs.map((document) => document.ref));
+  }
+}
+
+/** Needs the collection-group index on removed.userId (firestore.indexes.json). */
+async function deleteRemovalEntriesForUser(userId: string): Promise<void> {
+  while (true) {
+    const snapshot = await getFirestore().collectionGroup("removed")
       .where("userId", "==", userId)
       .limit(400)
       .get();

@@ -95,7 +95,10 @@ class SponsorshipGroupRepository(
         canMembersEditTarget: Boolean,
         weekStartDay: String,
     ): Result<Unit> = unexpected()
-    override suspend fun removeMember(groupId: String, userId: String): Result<Unit> = unexpected()
+    override suspend fun removeMember(groupId: String, userId: String, keepOut: Boolean): Result<Unit> = unexpected()
+    override fun observeRemovedMembers(groupId: String): Flow<List<com.pamoja.app.domain.model.RemovedMember>> = unexpected()
+    override suspend fun letBackIn(groupId: String, userId: String): Result<Unit> = unexpected()
+    override suspend fun isRemovedFrom(groupId: String, userId: String): Result<Boolean> = unexpected()
     override suspend fun deleteGroup(groupId: String): Result<Unit> = unexpected()
     override suspend fun getInviteSummary(code: String): Result<com.pamoja.app.domain.model.InviteSummary> = unexpected()
     override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> = unexpected()

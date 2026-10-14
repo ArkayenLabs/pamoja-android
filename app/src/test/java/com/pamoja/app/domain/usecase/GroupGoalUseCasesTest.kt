@@ -26,6 +26,8 @@ class GroupGoalUseCasesTest {
         val group = Group(groupId = "group", adminId = "organizer")
         assertTrue(leave(group).isSuccess)
         assertEquals("group" to "member", repository.removedMember)
+        // Leaving never keeps anyone out of the group's link.
+        assertEquals(false, repository.keptOut)
         repository.removedMember = null
         auth.currentUser = User(userId = "organizer")
         assertTrue(leave(group).exceptionOrNull() is AppError.PermissionDenied)
@@ -33,6 +35,22 @@ class GroupGoalUseCasesTest {
         auth.currentUser = null
         assertTrue(leave(group).exceptionOrNull() is AppError.SessionExpired)
         assertNull(repository.removedMember)
+    }
+
+    @Test
+    fun `the admin removing someone keeps them out, and only the admin lets them back in`() = runTest {
+        val repository = RecordingGroupRepository()
+        val group = Group(groupId = "group", adminId = "organizer")
+
+        assertTrue(RemoveGroupMemberUseCase(repository)(group, "organizer", "member").isSuccess)
+        assertEquals("group" to "member", repository.removedMember)
+        assertEquals(true, repository.keptOut)
+
+        val letBackIn = LetMemberBackInUseCase(repository)
+        assertTrue(letBackIn(group, "member", "member").exceptionOrNull() is AppError.PermissionDenied)
+        assertNull(repository.letBackIn)
+        assertTrue(letBackIn(group, "organizer", "member").isSuccess)
+        assertEquals("group" to "member", repository.letBackIn)
     }
 
     @Test
@@ -276,6 +294,8 @@ class GroupGoalUseCasesTest {
 
     private class RecordingGroupRepository : GroupRepository {
         var removedMember: Pair<String, String>? = null
+        var keptOut: Boolean? = null
+        var letBackIn: Pair<String, String>? = null
         var createdGroup: Group? = null
         var settingsWrite: SettingsWrite? = null
         var deletedGroupId: String? = null
@@ -319,10 +339,19 @@ class GroupGoalUseCasesTest {
         override suspend fun updateMemberCap(groupId: String, cap: Int): Result<Unit> = unexpected()
         override suspend fun updateWeeklyTarget(groupId: String, target: Int): Result<Unit> = unexpected()
         override suspend fun deactivateInviteLink(groupId: String): Result<Unit> = unexpected()
-        override suspend fun removeMember(groupId: String, userId: String): Result<Unit> {
+        override suspend fun removeMember(groupId: String, userId: String, keepOut: Boolean): Result<Unit> {
             removedMember = groupId to userId
+            keptOut = keepOut
             return Result.success(Unit)
         }
+        override fun observeRemovedMembers(groupId: String): Flow<List<com.pamoja.app.domain.model.RemovedMember>> =
+            error("unused")
+        override suspend fun letBackIn(groupId: String, userId: String): Result<Unit> {
+            letBackIn = groupId to userId
+            return Result.success(Unit)
+        }
+        override suspend fun isRemovedFrom(groupId: String, userId: String): Result<Boolean> =
+            Result.success(false)
         override suspend fun deleteGroup(groupId: String): Result<Unit> {
             deletedGroupId = groupId
             return Result.success(Unit)

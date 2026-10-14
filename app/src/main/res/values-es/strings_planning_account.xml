@@ -9,6 +9,8 @@
     <string name="join_already_member_body">Abre el grupo para ver cómo va todo.</string>
     <string name="join_full_title">Este grupo está completo</string>
     <string name="join_full_body">Ha alcanzado el límite de %1$d miembros. Pide al administrador que haga sitio o crea otro grupo.</string>
+    <string name="join_removed_title">No puedes volver a este grupo</string>
+    <string name="join_removed_body">El administrador te quitó del grupo. Solo esa persona puede dejarte volver.</string>
     <string name="join_offline_title">Sin conexión</string>
     <string name="join_offline_body">Necesitas conexión para unirte. La invitación seguirá disponible cuando vuelvas.</string>
     <string name="join_failed_title">No se pudo entrar</string>
@@ -28,6 +30,7 @@
     <string name="settings_delete_loses_profile">Tu perfil, nombre y foto</string>
     <string name="settings_delete_loses_history">Todo tu historial de pasos</string>
     <string name="settings_delete_loses_groups">Tu pertenencia a todos los grupos</string>
+    <string name="settings_delete_subscription">Eliminar tu cuenta no cancela una suscripción de Google Play. Cancélala antes en Play Store.</string>
     <string name="settings_delete_type_hint">Escribe DELETE para confirmar</string>
     <string name="settings_delete_type_word">DELETE</string>
     <string name="settings_logout_confirm_title">¿Cerrar sesión?</string>

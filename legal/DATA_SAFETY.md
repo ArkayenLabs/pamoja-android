@@ -1,12 +1,12 @@
 # Pamoja — Play Data Safety reconciliation
 
-Updated 11 October 2026 for the `rebuild` app (1.1.x); the 19 September rows still hold for 1.0.12. This replaces the August answer sheet, whose claims about local-only notifications and no billing data are obsolete. This file is preparation, not evidence that the live Play form has been updated.
+Updated 14 October 2026 for the `rebuild` app (1.1.x); the 19 September rows still hold for 1.0.12. This replaces the August answer sheet, whose claims about local-only notifications and no billing data are obsolete. This file is preparation, not evidence that the live Play form has been updated.
 
 ## Collection inventory
 
 | Data | Actual use / recipient | User control / visibility |
 |---|---|---|
-| Name and account user ID | Firebase Auth/Firestore; group membership; account ID also used for RevenueCat identity | Name/ID on group membership records; email/phone are not shown to group members |
+| Name and account user ID | Firebase Auth/Firestore; group membership; account ID also used for RevenueCat identity; a group's removed list (name, ID, time) when its admin removes someone (1.1.6+) | Name/ID on group membership records; email/phone are not shown to group members; the removed list is visible to the group's admin only and erased with the account |
 | Email / phone | Firebase Authentication for selected sign-in method | Required for the chosen method; alternative methods exist |
 | Photos | Firebase Storage profile/group images | Optional; profile group sharing defaults off |
 | Fitness / step information | Firebase daily totals and dates; Trail aggregate time windows, joining baselines, credited deltas, revisions and sync timestamps | Health permission optional; joining a Trail is explicit; group totals and leaderboards visible to members; private Trail source records restricted |

@@ -15,7 +15,7 @@
     <string name="edit_group_members">सदस्य</string>
     <string name="edit_group_member_admin">एडमिन</string>
     <string name="edit_group_remove_title">सदस्य को हटाएँ?</string>
-    <string name="edit_group_remove_body">%1$s को समूह से हटा दिया जाएगा और उसके कदम लक्ष्य में नहीं गिने जाएँगे। उसे फिर से आमंत्रित किया जा सकता है।</string>
+    <string name="edit_group_remove_body">%1$s को समूह से हटा दिया जाएगा और उसके कदम लक्ष्य में नहीं गिने जाएँगे। जब तक आप वापस आने न दें, दोबारा जुड़ना संभव नहीं होगा।</string>
     <string name="edit_group_remove_confirm">हटाएँ</string>
     <string name="edit_group_photo">समूह की फ़ोटो</string>
     <string name="edit_group_photo_change">बदलें</string>

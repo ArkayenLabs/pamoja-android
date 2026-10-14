@@ -46,6 +46,9 @@
     <string name="details_joined">Se unió el %1$s</string>
     <string name="details_member_options_desc">Opciones para %1$s</string>
     <string name="details_remove_member">Quitar del grupo</string>
+    <string name="details_removed_title">Quitados del grupo</string>
+    <string name="details_removed_on">Se quitó el %1$s</string>
+    <string name="details_let_back_in">Dejar volver</string>
     <string name="details_settings_title">Ajustes del grupo</string>
     <string name="details_goal">Meta semanal</string>
     <string name="details_goal_value">%1$s pasos</string>

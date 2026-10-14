@@ -56,7 +56,7 @@
     <string name="edit_group_members">Members</string>
     <string name="edit_group_member_admin">Admin</string>
     <string name="edit_group_remove_title">Remove member?</string>
-    <string name="edit_group_remove_body">%1$s will be taken out of this group and their steps will stop counting towards its goal. They can be invited back.</string>
+    <string name="edit_group_remove_body">%1$s will be taken out of this group and their steps will stop counting towards its goal. They can\'t rejoin until you let them back in.</string>
     <string name="edit_group_remove_confirm">Remove</string>
     <!-- ── §6b group size states ───────────────────────────────────────
          A group of one is the most common shape a new group has, and it is
@@ -310,6 +310,8 @@
     <string name="join_already_member_body">Nothing to do. Open the group to see how everyone is doing.</string>
     <string name="join_full_title">This group is full</string>
     <string name="join_full_body">It has reached its limit of %1$d members. Ask the admin to make room, or start a group of your own.</string>
+    <string name="join_removed_title">You can\'t rejoin this group</string>
+    <string name="join_removed_body">The admin removed you. Only they can let you back in.</string>
     <string name="join_offline_title">You\'re offline</string>
     <string name="join_offline_body">Joining needs a connection. This invite will still work once you\'re back.</string>
     <string name="join_failed_title">Couldn\'t join</string>
@@ -331,6 +333,7 @@
     <string name="settings_delete_loses_profile">Your profile, name and photo</string>
     <string name="settings_delete_loses_history">Every step you have recorded, all time</string>
     <string name="settings_delete_loses_groups">Your place in every group you have joined</string>
+    <string name="settings_delete_subscription">Deleting your account won\'t cancel a Google Play subscription. Cancel it in the Play Store first.</string>
     <string name="settings_delete_type_hint">Type DELETE to confirm</string>
     <string name="settings_delete_type_word">DELETE</string>
     <string name="settings_logout_confirm_title">Sign out?</string>

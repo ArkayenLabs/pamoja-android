@@ -87,7 +87,7 @@ opens the photo for anyone who has it. Privacy rests on who can read the URL.
 
 | # | Severity | Where | What | Suggested |
 |---|---|---|---|---|
-| O1 | Medium | product + rules | Removing a member is not durable: they can rejoin at once with the same link (the group ID), and `inviteLinkActive` is checked only by the app. With #2 fixed, each real rejoin still pushes "joined" to everyone. | A removal list (`groups/{id}/removed/{uid}`) that the membership create rule refuses, written by Remove member. Needs your call on whether an admin can undo it. |
+| O1 | Medium | product + rules | Removing a member is not durable: they can rejoin at once with the same link (the group ID), and `inviteLinkActive` is checked only by the app. With #2 fixed, each real rejoin still pushes "joined" to everyone. | **Decided and built 2026-10-14 (user: yes, with undo).** `groups/{id}/removed/{uid}` written by the admin's removal in the same transaction; the membership create rule refuses anyone listed; only the admin lists it and lets people back in ("Removed" in Group details); the invite preview says so before Join; erased with the removed person's account (`cleanupPushRegistrationsOnUserDelete`, collection-group index). Leaving keeps nobody out. Only removals made from 1.1.6 on are kept out, and a removed person with a second account can still join (and be removed again). Tests: `RemovedMembersRulesEmulatorTest` (7, in pairs), `GroupDetailsScreenTest` (2), `group-cleanup.test.cjs` (account pair), `GroupGoalUseCasesTest`. |
 | O2 | Low | `web/assetlinks.json` and the live file | The middle fingerprint (`09:82:DF…`) is this machine's debug keystore. An app signed with it cannot install beside the Play app, but production links should not trust a debug key. | Remove it from the live file after judging (debug builds then stop verifying invite links). |
 | O3 | Low | live join page | Vercel Analytics records page paths, and an invite path carries the group ID. Our own dashboard, so low. | A `beforeSend` that strips the ID, on the website repo (not on this machine). |
 | O4 | Low | design | Steps are self-reported from Health Connect, so a member can claim up to the caps (300k a day): a fake goal week, streak and shields. | Accepted; inherent to client-reported steps. |
@@ -97,7 +97,7 @@ opens the photo for anyone who has it. Privacy rests on who can read the URL.
 | O8 | Info | Firebase console | Not checkable from code: App Check enforcement on Firestore and Storage (callables enforce it in code), API key restrictions, Auth email enumeration protection, SMS region policy, a billing budget alert. | Please read these out, or check them. |
 | O9 | Info | git | Local refs `refs/codex/snapshots/*` (not branches) contain a committed `functions-notifications/node_modules/`. `git push origin rebuild release/1.0` does not send them; `--mirror` would. History on the branches is clean (no keys, tokens or passwords). | Delete those refs if they are no longer needed. |
 | O10 | Info | rules groups `get` | The group photo URL is on the group document, so anyone signed in with the invite sees it, like a chat group's icon on an invite. | Accepted. |
-| O11 | Low | app copy | The in-app delete dialog does not say that deleting the account does not cancel a Google Play subscription (the web deletion page does). | One line in the dialog, in en, es and hi. |
+| O11 | Low | app copy | The in-app delete dialog does not say that deleting the account does not cancel a Google Play subscription (the web deletion page does). | Done 2026-10-14: `settings_delete_subscription`, en, es and hi, always shown. |
 
 ## Scope
 
@@ -165,10 +165,13 @@ leave, removal and account deletion commit the same shapes), and the rules
 package passes with `rebuild`'s real repositories. 1.0.12 itself was not run
 against the new rules.
 
-1. `firebase deploy --only firestore:rules`
+1. `firebase deploy --only firestore:rules,firestore:indexes` (the index is
+   the collection-group `removed.userId` override for O1's erasure; it builds
+   in the background and nothing reads it until the functions deploy)
 2. `$env:FUNCTIONS_DISCOVERY_TIMEOUT=60`, then
    `firebase deploy --only functions:notifications,functions:weekly-history,functions:billing`
-   (notifications: `cleanUpDeletedGroup` is new, plus #6, #9, #17; weekly:
+   (notifications: `cleanUpDeletedGroup` is new, plus #6, #9, #17 and O1's
+   erasure on account deletion; weekly:
    #1; billing: the dependency update only).
 3. Then the app (1.1.6).
 4. Only then push.

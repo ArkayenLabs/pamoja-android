@@ -1,6 +1,6 @@
 # Privacy Policy — Pamoja
 
-**Last updated: 11 October 2026**
+**Last updated: 14 October 2026**
 
 ## 1. Who operates Pamoja
 
@@ -47,6 +47,8 @@ Firebase Crashlytics records crash stack traces and device/app diagnostics in re
 Notifications can be generated on the device or delivered through Firebase Cloud Messaging. Push registration associates an installation with your account and app version. For scheduled reminders and the weekly recap, it also stores your time zone and quiet hours, which reminders were sent recently, when you last opened the app and how many scheduled reminders went unopened since. If several in a row go unopened, we send one last note and then stop scheduled reminders until you open the app again. Notification preferences, quiet hours and Android permission control delivery. Notifications can contain group activity; lock-screen visibility is also controlled by your Android settings.
 
 When you send a high five or a reminder to another member, we store its type, who sent it, to whom, in which group and on which day. Only the sender and the recipient can read it, and the recipient may receive a notification about it. These records are deleted automatically after about 14 days; the deletion itself can take up to a day longer.
+
+If a group's admin removes you, the group keeps your name, your account ID and the time in a list only its admin can see, so that the group's invite link cannot add you back. It is deleted when the admin lets you back in, when the group is deleted, or when you delete your account.
 
 ## 6. Background work and local storage
 

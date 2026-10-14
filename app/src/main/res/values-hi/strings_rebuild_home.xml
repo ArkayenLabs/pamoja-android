@@ -46,6 +46,9 @@
     <string name="details_joined">%1$s को जुड़े</string>
     <string name="details_member_options_desc">%1$s के विकल्प</string>
     <string name="details_remove_member">समूह से हटाएँ</string>
+    <string name="details_removed_title">हटाए गए लोग</string>
+    <string name="details_removed_on">%1$s को हटाया गया</string>
+    <string name="details_let_back_in">वापस आने दें</string>
     <string name="details_settings_title">समूह सेटिंग</string>
     <string name="details_goal">हफ़्ते का लक्ष्य</string>
     <string name="details_goal_value">%1$s कदम</string>

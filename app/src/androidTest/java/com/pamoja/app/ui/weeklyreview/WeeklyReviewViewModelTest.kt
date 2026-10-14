@@ -291,7 +291,10 @@ class WeeklyReviewViewModelTest {
             weekStartDay: String,
         ): Result<Unit> = notUsed()
 
-        override suspend fun removeMember(groupId: String, userId: String): Result<Unit> = notUsed()
+        override suspend fun removeMember(groupId: String, userId: String, keepOut: Boolean): Result<Unit> = notUsed()
+        override fun observeRemovedMembers(groupId: String): Flow<List<com.pamoja.app.domain.model.RemovedMember>> = notUsed()
+        override suspend fun letBackIn(groupId: String, userId: String): Result<Unit> = notUsed()
+        override suspend fun isRemovedFrom(groupId: String, userId: String): Result<Boolean> = notUsed()
         override suspend fun deleteGroup(groupId: String): Result<Unit> = notUsed()
         override suspend fun getInviteSummary(code: String): Result<com.pamoja.app.domain.model.InviteSummary> = notUsed()
         override suspend fun updateGroupPhoto(groupId: String, photoUrl: String): Result<Unit> =

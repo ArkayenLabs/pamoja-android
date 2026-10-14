@@ -13,6 +13,7 @@ import {
 import {
   buildGroupWeekSummary,
   datesInWeek,
+  isCurrentWeekStart,
   isNormalWeekRollover,
   isValidGroupId,
   redactUserFromContributions,
@@ -135,6 +136,12 @@ export const finalizeCompletedGroupWeek = onDocumentUpdated(
     const previousWeekStart = before.weekStart;
     const nextWeekStart = after.weekStart;
     if (!isNormalWeekRollover(previousWeekStart, nextWeekStart)) return;
+    // Only a week that has ended: the marker has to have moved to a week that
+    // has begun, by the server's clock rather than a member's.
+    if (!isCurrentWeekStart(nextWeekStart, Date.now())) {
+      logger.warn("Skipped weekly summary for a week marker outside the current week");
+      return;
+    }
 
     const groupId = event.params.groupId;
     if (!isValidGroupId(groupId)) {

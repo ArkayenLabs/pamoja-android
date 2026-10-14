@@ -6,6 +6,7 @@ import {
   buildGoalReachedPush,
   inQuietHours,
   localClock,
+  mayPushGoal,
   parseRegistration,
   buildSignalPush,
   parseSignal,
@@ -207,4 +208,14 @@ test("the first goal a group ever meets is told as its own moment", () => {
   assert.equal(later.title, "bama made it");
   // Same event either way, so a retry never sends both.
   assert.equal(first.eventId, later.eventId);
+});
+
+test("a group hears its goal once a week, however often the step cache crosses it", () => {
+  // Nothing claimed yet, or last week's claim: this crossing pushes.
+  assert.equal(mayPushGoal({}, "2026-10-12", "event-1"), true);
+  assert.equal(mayPushGoal({week: "2026-10-05", eventId: "event-0"}, "2026-10-12", "event-1"), true);
+  // A member writing the cache under the goal and back over it: no second push.
+  assert.equal(mayPushGoal({week: "2026-10-12", eventId: "event-1"}, "2026-10-12", "event-2"), false);
+  // The same event redelivered after a failed send keeps its claim.
+  assert.equal(mayPushGoal({week: "2026-10-12", eventId: "event-1"}, "2026-10-12", "event-1"), true);
 });

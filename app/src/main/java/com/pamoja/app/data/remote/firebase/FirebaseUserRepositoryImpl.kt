@@ -1,6 +1,7 @@
 package com.pamoja.app.data.remote.firebase
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import com.pamoja.app.data.remote.model.GroupDto
 import com.pamoja.app.data.remote.model.MembershipDto
 import com.pamoja.app.data.remote.model.StepEntryDto
@@ -228,16 +229,21 @@ class FirebaseUserRepositoryImpl @Inject constructor(
                 // read and the transaction. The security rule re-checks that
                 // the incoming admin genuinely holds a membership, so the worst
                 // case is a rejected write, not a group handed to a stranger.
-                val successorId: String? = runCatching {
-                    membershipsCollection
-                        .whereEqualTo("groupId", groupId)
-                        .get()
-                        .await()
-                        .documents
-                        .filter { it.getString("userId") != userId }
-                        .minByOrNull { it.getLong("joinedAt") ?: Long.MAX_VALUE }
-                        ?.getString("userId")
-                }.getOrNull()
+                //
+                // From the server, and allowed to fail. This was runCatching
+                // with getOrNull(), so a read that failed (or a cache that never
+                // held the roster) looked exactly like "nobody to inherit", and
+                // the branch below then deleted the group with its members still
+                // in it. A failure now stops the deletion before anything is
+                // removed, and the person can try again.
+                val successorId: String? = membershipsCollection
+                    .whereEqualTo("groupId", groupId)
+                    .get(Source.SERVER)
+                    .await()
+                    .documents
+                    .filter { it.getString("userId") != userId }
+                    .minByOrNull { it.getLong("joinedAt") ?: Long.MAX_VALUE }
+                    ?.getString("userId")
 
                 firestore.runTransaction { transaction ->
                     val groupSnapshot = transaction.get(groupRef)
@@ -309,6 +315,8 @@ class FirebaseUserRepositoryImpl @Inject constructor(
             usersCollection.document(userId).delete().await()
 
             Result.success(Unit)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             Result.failure(e.toFirebaseAppError())
         }

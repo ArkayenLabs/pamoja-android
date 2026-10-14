@@ -46,7 +46,6 @@ object AnalyticsEvent {
  */
 object AnalyticsParam {
     const val GROUP_ID = "group_id"
-    const val GROUP_NAME = "group_name"
     const val TARGET = "target"
     const val REASON = "reason"
     const val TIMESTAMP = "timestamp"

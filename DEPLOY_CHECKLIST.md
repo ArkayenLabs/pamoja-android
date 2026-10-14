@@ -114,6 +114,15 @@ production build (1.0.12) and its listing.
 - Bundle: `design/release-builds/pamoja-1.1.0-17-internal.aab`, versionCode
   17, "1.1.0", sales on, Trail sync on. 17 does not block 1.0.13 (16) on
   production later.
+- **Security review fixes, 2026-10-13: NOT deployed, waiting for the user's
+  OK.** See `SECURITY_REVIEW.md` "Deploy". Rules first
+  (`firebase deploy --only firestore:rules`), then
+  `functions:notifications` (creates `cleanUpDeletedGroup`, updates the goal
+  push and the user-delete cleanup), `functions:weekly-history` (finalizer
+  clock check) and `functions:billing` (dependency update only), each with
+  `FUNCTIONS_DISCOVERY_TIMEOUT=60`. They change what 1.0.12 users hit; they
+  are meant to be compatible (see the review). Push to GitHub only after both
+  are live: the review describes holes that are open until then.
 
 ## 0. Before anything
 

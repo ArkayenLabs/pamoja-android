@@ -80,10 +80,9 @@ class FirebaseAnalyticsManager @Inject constructor(
 
     // ── Groups ──────────────────────────────────────────────────────────────────
 
-    override fun logGroupCreated(groupId: String, groupName: String) {
+    override fun logGroupCreated(groupId: String) {
         logEvent(AnalyticsEvent.GROUP_CREATED, mapOf(
             AnalyticsParam.GROUP_ID to groupId,
-            AnalyticsParam.GROUP_NAME to groupName
         ))
     }
 

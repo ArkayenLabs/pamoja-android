@@ -1,5 +1,6 @@
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
+import {onDocumentDeleted} from "firebase-functions/v2/firestore";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 
 import {isValidGroupId} from "./notification-domain.js";
@@ -67,22 +68,68 @@ export const deleteGroup = onCall<DeleteGroupData>(
       );
     }
 
-    await removeBillingReferences(groupId);
-    await deleteMemberships(groupId);
-
-    const childCollections = await groupRef.listCollections();
-    for (const childCollection of childCollections) {
-      await firestore.recursiveDelete(childCollection);
-    }
-
-    await getStorage().bucket().deleteFiles({
-      prefix: `group_avatars/${groupId}/`,
-    });
-
+    await markDeleted(groupId);
+    await finishGroupDeletion(groupId);
     await groupRef.delete();
     return {deleted: true};
   },
 );
+
+/**
+ * Finishes a group's deletion however the document went.
+ *
+ * deleteGroup above does this before removing the document. Account deletion
+ * by a group's last member deletes the document from the app instead, and
+ * until 2026-10-13 that left the group photo in Storage, the group's
+ * subcollections, its access and billing projections, and any memberships
+ * still pointing at it. Every step is idempotent, so after deleteGroup this
+ * costs a few empty reads.
+ */
+export const cleanUpDeletedGroup = onDocumentDeleted(
+  {
+    document: "groups/{groupId}",
+    region: FUNCTION_REGION,
+    maxInstances: 10,
+    memory: "256MiB",
+    timeoutSeconds: 120,
+    retry: true,
+  },
+  async (event) => {
+    const groupId = event.params.groupId;
+    if (!isValidGroupId(groupId)) return;
+    await markDeleted(groupId);
+    await finishGroupDeletion(groupId);
+  },
+);
+
+/**
+ * A tombstone, read by the groups create rule. A group id is the permanent
+ * invite key in every link and QR code ever shared, so without one anyone who
+ * knew a deleted group's id could create a new group under it and receive
+ * its old invites. Holds the id and when, nothing about anyone.
+ */
+async function markDeleted(groupId: string): Promise<void> {
+  await getFirestore().collection("deletedGroups").doc(groupId).set({
+    deletedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+async function finishGroupDeletion(groupId: string): Promise<void> {
+  const firestore = getFirestore();
+  const groupRef = firestore.collection("groups").doc(groupId);
+
+  await removeBillingReferences(groupId);
+  await deleteMemberships(groupId);
+
+  const childCollections = await groupRef.listCollections();
+  for (const childCollection of childCollections) {
+    await firestore.recursiveDelete(childCollection);
+  }
+
+  await getStorage().bucket().deleteFiles({
+    prefix: `group_avatars/${groupId}/`,
+  });
+}
 
 async function removeBillingReferences(groupId: string): Promise<void> {
   const firestore = getFirestore();
@@ -120,8 +167,10 @@ async function removeBillingReferences(groupId: string): Promise<void> {
       transaction.set(viewRef, {
         sponsoredGroupId: remainingGroupIds[0] ?? null,
         sponsoredGroupIds: remainingGroupIds,
+        // ?? null: an absent field reads as undefined, which Firestore
+        // refuses, and that would abort the whole deletion.
         groupLeaseValidUntil: remainingGroupIds.length > 0 ?
-          view.get("groupLeaseValidUntil") : null,
+          view.get("groupLeaseValidUntil") ?? null : null,
         updatedAt: FieldValue.serverTimestamp(),
       }, {merge: true});
     }

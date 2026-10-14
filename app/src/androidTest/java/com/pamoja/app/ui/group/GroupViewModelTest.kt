@@ -714,7 +714,7 @@ class GroupViewModelTest {
         override fun logHealthConnectPermissionDenied() = Unit
         override fun logHealthConnectSkipped() = Unit
         override fun logHomeScreenReached() = Unit
-        override fun logGroupCreated(groupId: String, groupName: String) = Unit
+        override fun logGroupCreated(groupId: String) = Unit
         override fun logGroupJoined(groupId: String) = Unit
         override fun logGroupScreenViewed(groupId: String) = Unit
         override fun logInviteScreenViewed(groupId: String) = Unit

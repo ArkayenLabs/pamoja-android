@@ -66,8 +66,8 @@ interface AnalyticsManager {
 
     // ── Groups ──────────────────────────────────────────────────────────────────
 
-    /** A new group was created. */
-    fun logGroupCreated(groupId: String, groupName: String)
+    /** A new group was created. Never its name: that is whatever people typed. */
+    fun logGroupCreated(groupId: String)
 
     /** User successfully joined a group. */
     fun logGroupJoined(groupId: String)

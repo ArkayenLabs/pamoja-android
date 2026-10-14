@@ -208,7 +208,8 @@ class StepSyncWorker @AssistedInject constructor(
                         LocalDate.parse(WeekWindow.startOf(group.startDay, reportingDate)),
                     ),
                     reportingDate = reportingDate,
-                ).onFailure { Log.w(TAG, "Own total not published for ${group.groupId}", it) }
+                    // Never the group id in a log: it is the group's join key.
+                ).onFailure { Log.w(TAG, "Own total not published", it) }
 
                 // The group's cached total, recomputed from what every member has
                 // published onto their own membership. A member who has not synced
@@ -229,7 +230,7 @@ class StepSyncWorker @AssistedInject constructor(
                     groupTotal,
                     group.startDay,
                     reportingDate,
-                ).onFailure { Log.w(TAG, "Weekly total not published for ${group.groupId}", it) }
+                ).onFailure { Log.w(TAG, "Weekly total not published", it) }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Weekly totals refresh failed", e)

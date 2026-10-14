@@ -73,6 +73,26 @@ export function isNormalWeekRollover(
     gapDays % DAYS_PER_WEEK === 0;
 }
 
+/**
+ * Whether `weekStart` can be the start of a member's current week by the
+ * server's clock: not after today anywhere on Earth (UTC+14, an hour of
+ * drift), not before last week began anywhere. firestore.rules holds client
+ * writes of the marker to the same window (isRecentWeekStart).
+ *
+ * The rollover check above is only about the gap between two markers, so on
+ * its own a marker a week ahead finalized this week early, and each later one
+ * finalized a week that had not happened as missed: the streak broken and
+ * shields spent, permanently, since finalized weeks are immutable. A marker
+ * decades back created one history week per write.
+ */
+export function isCurrentWeekStart(weekStart: unknown, nowMs: number): boolean {
+  const start = parseIsoDate(weekStart);
+  if (!start) return false;
+  const hour = 60 * 60 * 1_000;
+  return start.getTime() < nowMs + 15 * hour &&
+    start.getTime() > nowMs - 9 * 24 * hour;
+}
+
 export function datesInWeek(weekStart: string): string[] {
   const start = parseIsoDate(weekStart);
   if (!start) return [];

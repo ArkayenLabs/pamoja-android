@@ -216,6 +216,22 @@ export function buildGoalReachedPush(input: {
   });
 }
 
+/**
+ * Whether a goal crossing may push, given the group's server-owned claim.
+ * Once per group per week: the step cache it fires on is written by members,
+ * and before 2026-10-13 a member could write it under the goal and back over
+ * as often as they liked, buzzing every phone in the group each time (the
+ * tray tag replaces the notification but alerts again). A redelivery of the
+ * event that made the claim keeps it, so a failed send is still retried.
+ */
+export function mayPushGoal(
+  claim: {week?: unknown; eventId?: unknown},
+  weekStart: string,
+  eventId: string,
+): boolean {
+  return claim.week !== weekStart || claim.eventId === eventId;
+}
+
 /** "nudge" stays the wire value; people see "Remind" (NOTIFICATIONS_PLAN.md §3). */
 export type SignalKind = "cheer" | "nudge";
 

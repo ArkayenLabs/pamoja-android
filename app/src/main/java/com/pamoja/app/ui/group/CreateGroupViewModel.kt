@@ -92,7 +92,7 @@ class CreateGroupViewModel @Inject constructor(
                         isLoading = false,
                         createdGroupId = group.groupId,
                     )
-                    analyticsManager.logGroupCreated(group.groupId, name)
+                    analyticsManager.logGroupCreated(group.groupId)
 
                     // A group is created with no cached weekly total, and Home
                     // draws no progress at all until one exists. Without this

@@ -29,6 +29,7 @@ import {
   isMinuteOfDay,
   isValidTimeZone,
   localClock,
+  mayPushGoal,
   parseRegistration,
   parseSignal,
   walkedOn,
@@ -209,6 +210,18 @@ export const notifyGroupGoalReached = onDocumentUpdated(
     const crossedGoal = target > 0 && beforeSteps < target && afterSteps >= target;
     if (!isValidIsoDate(weekStart) || !stepsIncreased || !crossedGoal) return;
 
+    // Server-owned: no client rule lists either key.
+    const groupRef = getFirestore().collection("groups").doc(groupId);
+    const claimed = await getFirestore().runTransaction(async (transaction) => {
+      const current = await transaction.get(groupRef);
+      if (!current.exists) return false;
+      const claim = {week: current.get("goalPushWeek"), eventId: current.get("goalPushEventId")};
+      if (!mayPushGoal(claim, weekStart, event.id)) return false;
+      transaction.update(groupRef, {goalPushWeek: weekStart, goalPushEventId: event.id});
+      return true;
+    });
+    if (!claimed) return;
+
     const memberSnapshot = await getFirestore().collection("memberships")
       .where("groupId", "==", groupId)
       .limit(20)
@@ -310,7 +323,12 @@ export const eraseDepartedMemberSignals = onDocumentDeleted(
   },
 );
 
-/** Removes server-only delivery identifiers when the profile is erased. */
+/**
+ * Removes server-only delivery identifiers when the profile is erased, and
+ * the payer's own billing projection, which only its owner could ever read.
+ * The canonical billingAccounts record stays: a subscription keeps billing in
+ * Play after the account is gone, and its webhooks still need it.
+ */
 export const cleanupPushRegistrationsOnUserDelete = onDocumentDeleted(
   {
     ...RUNTIME_OPTIONS,
@@ -319,6 +337,7 @@ export const cleanupPushRegistrationsOnUserDelete = onDocumentDeleted(
   },
   async (event) => {
     await deleteRegistrationsForUser(event.params.userId);
+    await getFirestore().collection("billingViews").doc(event.params.userId).delete();
   },
 );
 

@@ -62,7 +62,7 @@ object InviteLink {
                 .substringBefore('?')
                 .substringBefore('#')
                 .trim('/')
-                .takeIf { it.isNotBlank() && !it.contains('/') }
+                .takeIf(::isCodeShaped)
         }
 
         // https(://)www.arkayenlabs.com/pamoja/join/{code}, scheme optional
@@ -82,8 +82,20 @@ object InviteLink {
 
         return path.removePrefix(PATH_PREFIX)
             .trim('/')
-            .takeIf { it.isNotBlank() && !it.contains('/') }
+            .takeIf(::isCodeShaped)
     }
+
+    /**
+     * Letters, digits, `-` and `_`, as a group UUID or a future short code is.
+     *
+     * Refusing only `/` (the August 2026 fix) still let through spaces, `%`,
+     * `&` and anything else a link can carry, and the code goes straight into
+     * a navigation route and into DataStore, where a bad one is replayed after
+     * sign-in. Nothing that is not code-shaped gets that far now.
+     */
+    fun isCodeShaped(code: String): Boolean = CODE_SHAPE.matches(code)
+
+    private val CODE_SHAPE = Regex("[A-Za-z0-9_-]{1,64}")
 
     /** True if [raw] is any recognised Pamoja invite link. */
     fun isInviteLink(raw: String?): Boolean = parseCode(raw) != null

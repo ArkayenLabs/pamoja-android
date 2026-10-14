@@ -27,6 +27,7 @@ import com.pamoja.app.domain.repository.PhoneVerification
 import com.pamoja.app.domain.repository.PhoneVerificationPurpose
 import com.pamoja.app.util.BackgroundRestrictions
 import com.pamoja.app.util.PhoneMaker
+import com.pamoja.app.util.SmartNotificationHelper
 import com.pamoja.app.util.WorkManagerScheduler
 import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -133,6 +134,7 @@ class SettingsViewModel @Inject constructor(
     private val exportUserDataUseCase: ExportUserDataUseCase,
     private val exportFormatter: UserDataExportFormatter,
     private val widgetUpdater: PamojaWidgetUpdater,
+    private val notificationHelper: SmartNotificationHelper,
     private val backgroundRestrictions: BackgroundRestrictions,
 ) : ViewModel() {
 
@@ -320,6 +322,7 @@ class SettingsViewModel @Inject constructor(
                 onSuccess = {
                     userPreferences.clearAll()
                     widgetUpdater.clear()
+                    notificationHelper.clearShown()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isSignedOut = true
@@ -343,6 +346,7 @@ class SettingsViewModel @Inject constructor(
                 onSuccess = {
                     userPreferences.clearAll()
                     widgetUpdater.clear()
+                    notificationHelper.clearShown()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isSignedOut = true

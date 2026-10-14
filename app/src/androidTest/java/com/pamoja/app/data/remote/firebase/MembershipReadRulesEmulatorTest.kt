@@ -163,8 +163,10 @@ class MembershipReadRulesEmulatorTest {
             }.first { it.groupId == group.groupId }
         }
 
+        // The current week, as the sync publishes it: the rules refuse a group
+        // week marker that is neither this week's nor last week's.
         FirebaseGroupRepositoryImpl(bob.firestore)
-            .publishWeeklyTotal(group.groupId, 12_345L, "2026-08-31")
+            .publishWeeklyTotal(group.groupId, 12_345L, java.time.LocalDate.now().toString())
             .getOrThrow()
 
         val result = withTimeout(10_000) { updatedGroup.await() }
@@ -177,9 +179,9 @@ class MembershipReadRulesEmulatorTest {
      * `joinGroup()` reads the joiner's own membership before creating it, to
      * make a repeated join idempotent, so that read happens against a document
      * that does not exist and while the caller is not yet a member of anything.
-     * That is why `get` stays a bare isSignedIn(): a condition touching
-     * resource.data would raise an evaluation error on the missing document and
-     * refuse every join.
+     * That is why `get` authorises on the document ID and never on
+     * resource.data: a condition touching resource.data would raise an
+     * evaluation error on the missing document and refuse every join.
      */
     @Test
     fun aNewcomerCanStillJoin() = runBlocking {

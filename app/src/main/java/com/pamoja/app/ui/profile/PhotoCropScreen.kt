@@ -331,6 +331,9 @@ private fun cropToCache(
 
     val cropped = Bitmap.createBitmap(source, left, top, size, size)
 
+    // Only the newest crop is ever uploaded. The older ones were copies of a
+    // face left behind in cache, one per crop, until 2026-10-13.
+    context.cacheDir.listFiles { old -> old.name.startsWith("avatar_crop_") }?.forEach { it.delete() }
     val file = File(context.cacheDir, "avatar_crop_${System.currentTimeMillis()}.jpg")
     FileOutputStream(file).use { out ->
         cropped.compress(Bitmap.CompressFormat.JPEG, CROP_QUALITY, out)

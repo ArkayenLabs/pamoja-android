@@ -266,4 +266,24 @@ class StepAggregationEmulatorTest {
 
         assertEquals(7_000L, mine.sumOf { it.stepCount })
     }
+
+    /**
+     * A step entry is for a real day. The ID was pinned to `{uid}_{date}` but
+     * the date itself was free, so an account could write any number of
+     * documents that nothing ever reads (2026-10-13 review).
+     */
+    @Test
+    fun aStepEntryMustBeForARealDay() = runBlocking {
+        val user = newUser()
+
+        val junk = runCatching {
+            user.firestore.collection("steps").document("${user.uid}_not-a-day")
+                .set(mapOf("userId" to user.uid, "date" to "not-a-day", "stepCount" to 10L))
+                .await()
+        }
+        assertTrue("A step entry for a date that is not a day must be refused, got $junk", junk.isFailure)
+
+        // The pair: the sync's own write.
+        record(user, LocalDate.now(), 4_000)
+    }
 }

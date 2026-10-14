@@ -99,6 +99,27 @@ service cloud.firestore {
         && request.time < day + duration.value(37, 'h');
     }
 
+    // An ISO date that can be the start of somebody's current or last week
+    // right now: not after today anywhere on Earth, not before last week
+    // began anywhere. The group's weekStart is what the weekly finalizer keys
+    // on (functions-weekly), and until 2026-10-13 any member could write any
+    // date there: a future one finalized this week early and every later week
+    // as missed, breaking the streak and spending its shields, and an ancient
+    // one created a history week per write. Call after isIsoDate(value).
+    function isRecentWeekStart(value) {
+      let parts = value.split('-');
+      let day = timestamp.date(int(parts[0]), int(parts[1]), int(parts[2]));
+      return day < request.time + duration.value(15, 'h')
+        && day > request.time - duration.value(9, 'd');
+    }
+
+    // The values WeekWindow writes: a DayOfWeek name, or blank on groups
+    // created before the start day could be chosen.
+    function isWeekStartDay(value) {
+      return value in ['', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY',
+                       'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    }
+
     // A photoUrl is rendered by Coil on every other member's device, so an
     // arbitrary URL here is an attacker-chosen fetch from each viewer's phone:
     // their IP, their approximate location and the moment they opened the
@@ -164,6 +185,25 @@ service cloud.firestore {
       // The creator must be the admin, must start as the only member, and the
       // caps must be sane. Stops absurd or forged groups being created.
       allow create: if isSignedIn()
+                    // GroupDto's fields and no others (1.0.x writes a subset).
+                    // Any member's phone downloads this document on every
+                    // change, so an open key set let a creator park up to a
+                    // megabyte of anything on all of them.
+                    && request.resource.data.keys().hasOnly([
+                         'groupId', 'name', 'adminId', 'weeklyTarget',
+                         'dailyPerPersonTarget', 'maxMemberCap', 'memberCount',
+                         'canMembersEditTarget', 'inviteLink', 'inviteLinkActive',
+                         'createdAt', 'weeklySteps', 'weekStart', 'weekStartDay',
+                         'photoUrl', 'planningTimeZone', 'plannedWeekStart',
+                         'streakWeeks', 'streakThroughWeek', 'streakShields',
+                         'lastShieldedWeek'
+                       ])
+                    && request.resource.data.get('groupId', groupId) == groupId
+                    // A deleted group's id is still the invite key in every
+                    // link and QR code it ever shared; nobody may take it over.
+                    // functions-notifications writes the tombstone.
+                    && !exists(/databases/$(database)/documents/deletedGroups/$(groupId))
+                    && isWeekStartDay(request.resource.data.get('weekStartDay', ''))
                     && request.resource.data.adminId == request.auth.uid
                     && request.resource.data.memberCount == 1
                     && request.resource.data.maxMemberCap >= 2
@@ -243,12 +283,30 @@ service cloud.firestore {
         //     with absolute writes they both computed the same value, the first
         //     commit won, and the second was refused for "not increasing" a
         //     count it had read correctly a moment earlier.
+        //
+        //     !exists() as well since 2026-10-13. getAfter() alone is also true
+        //     for somebody who is ALREADY a member, whose old membership is
+        //     still there after the commit, so any member could raise the
+        //     count by one per write until the group read as full and nobody
+        //     could join it. The joiner's membership must be new.
+        //
+        //     The invite flag may only close, and only when this join fills
+        //     the group, which is the one thing joinGroup() writes it for. It
+        //     was free, so a joiner could switch the invite off for everyone
+        //     after them, and the app refuses to join a group whose invite is
+        //     off.
         (
           isSignedIn()
           && onlyChanged(['memberCount', 'inviteLinkActive'])
           && request.resource.data.memberCount == resource.data.memberCount + 1
           && request.resource.data.memberCount <= resource.data.maxMemberCap
+          && !exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
           && getAfter(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId)).data.userId == request.auth.uid
+          && (
+               request.resource.data.get('inviteLinkActive', true) == resource.data.get('inviteLinkActive', true)
+               || (request.resource.data.inviteLinkActive == false
+                   && request.resource.data.memberCount >= resource.data.maxMemberCap)
+             )
         )
         ||
         // --- Case B: the admin edits group settings. adminId can never change.
@@ -286,6 +344,9 @@ service cloud.firestore {
           && request.resource.data.name is string
           && request.resource.data.name.size() > 0
           && request.resource.data.name.size() <= 40
+          // The server's reminders and finalizer read both of these.
+          && isWeekStartDay(request.resource.data.get('weekStartDay', ''))
+          && request.resource.data.get('inviteLinkActive', true) is bool
           // Keep an already-saved boundary stable until the promise is applied.
           && (request.resource.data.get('weekStartDay', '') == resource.data.get('weekStartDay', '')
             || !exists(/databases/$(database)/documents/groups/$(groupId)/planningSummary/current)
@@ -321,11 +382,18 @@ service cloud.firestore {
         //     group. Group size is not a paid feature either (see PlanLimits,
         //     where the size paywall was deliberately removed), so there is no
         //     revenue boundary here for an admin to move.
+        //
+        //     A leaver may reopen the invite (a slot just freed) but never
+        //     close it; that was free too until 2026-10-13.
         (
           isSignedIn()
           && onlyChanged(['memberCount', 'inviteLinkActive'])
           && request.resource.data.memberCount == resource.data.memberCount - 1
           && request.resource.data.memberCount >= 0
+          && (
+               request.resource.data.get('inviteLinkActive', true) == true
+               || request.resource.data.get('inviteLinkActive', true) == resource.data.get('inviteLinkActive', true)
+             )
           && (
                (
                  exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
@@ -359,6 +427,10 @@ service cloud.firestore {
           && request.resource.data.weeklySteps >= 0
           && request.resource.data.weeklySteps <= 42000000
           && isIsoDate(request.resource.data.weekStart)
+          // The finalizer closes the week this marker moves away from, so it
+          // has to be a week that is current or just ended. See
+          // isRecentWeekStart.
+          && isRecentWeekStart(request.resource.data.weekStart)
           && exists(/databases/$(database)/documents/memberships/$(request.auth.uid + '_' + groupId))
         )
         ||
@@ -617,7 +689,20 @@ service cloud.firestore {
       // touching resource.data would raise an evaluation error there and break
       // every join. The ID is "{uid}_{groupId}", so reading one already means
       // knowing both, which is a far cry from enumerating the collection.
-      allow get: if isSignedIn();
+      //
+      // Bare isSignedIn() was still too wide, and stopped being it on
+      // 2026-10-13. The group document names its adminId and anyone holding
+      // the invite may read that document, so anyone with a forwarded link
+      // could read the starter's membership: name, photo and live step
+      // figures, without joining. Now: your own membership, or one in a group
+      // you are in (which `list` already shows you). Authorised on the ID,
+      // never resource.data, for the reason above. UIDs are alphanumeric and
+      // group ids are UUIDs, so the split is exact.
+      allow get: if isSignedIn()
+                 && (
+                      membershipId.split('_')[0] == request.auth.uid
+                      || isGroupMember(membershipId.split('_')[1])
+                    );
 
       // Queries. A list rule is NOT evaluated against fetched documents: it is
       // checked against what the query itself constrains, so it may only refer
@@ -688,9 +773,28 @@ service cloud.firestore {
       // createdAt rather than a bare dereference, because groups written before
       // that field existed decode as 0 and a missing field raises an evaluation
       // error rather than yielding false.
+      //
+      // The key set is MembershipDto's (1.0.x writes a subset), because every
+      // member's leaderboard downloads this document: an open key set let a
+      // joiner park a megabyte on all of them. Only the group's admin may
+      // carry the admin role and target permission, which nothing authorises
+      // on but which other members' apps display.
       allow create: if isSignedIn()
                     && membershipId == request.auth.uid + '_' + request.resource.data.groupId
                     && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'userId', 'groupId', 'displayName', 'role',
+                         'canEditTarget', 'photoUrl', 'joinedAt', 'weeklySteps',
+                         'weekStart', 'todaySteps', 'todayDate', 'walkedDays',
+                         'walkedWeekStart'
+                       ])
+                    && (
+                         (request.resource.data.get('role', 'member') == 'member'
+                           && request.resource.data.get('canEditTarget', false) == false)
+                         ||
+                         getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                           .data.adminId == request.auth.uid
+                       )
                     && request.resource.data.get('displayName', '') is string
                     && request.resource.data.get('displayName', '').size() <= 100
                     && request.resource.data.get('photoUrl', '') is string
@@ -775,10 +879,27 @@ service cloud.firestore {
                     && isIsoDateOrBlank(request.resource.data.get('todayDate', ''))
                     && validWalkedDays();
 
+      // Removing yourself has to bring the group's count down in the same
+      // commit, unless the group is gone (or going in this commit) or the count
+      // is already zero. Those are the only shapes leaving, account deletion
+      // and handover ever take. Until 2026-10-13 a bare self-delete was
+      // allowed, so anyone holding an invite could join, delete their own
+      // membership, join again, and walk the count to the cap with nobody in
+      // the group: closed to every real joiner, with a "joined" push to every
+      // member on each lap. Case A's increment is matched here by the
+      // decrement.
+      function leavesTheCountRight(groupId) {
+        let group = /databases/$(database)/documents/groups/$(groupId);
+        return !existsAfter(group)
+          || get(group).data.get('memberCount', 0) <= 0
+          || getAfter(group).data.get('memberCount', 0) == get(group).data.get('memberCount', 0) - 1;
+      }
+
       // Remove yourself, or the group admin may remove anyone.
       allow delete: if isSignedIn()
                     && (
-                         resource.data.userId == request.auth.uid
+                         (resource.data.userId == request.auth.uid
+                           && leavesTheCountRight(resource.data.groupId))
                          || isGroupAdmin(resource.data.groupId)
                        );
     }
@@ -886,6 +1007,10 @@ service cloud.firestore {
       // silently denies every write.
       allow create, update: if isSignedIn()
                             && stepId == request.auth.uid + '_' + request.resource.data.date
+                            // Only real days. The server reads steps by
+                            // {uid}_{date} for real dates, so anything else
+                            // was an unbounded pile of documents nothing reads.
+                            && isIsoDate(request.resource.data.date)
                             && request.resource.data.userId == request.auth.uid
                             && request.resource.data.stepCount is int
                             && request.resource.data.stepCount >= 0

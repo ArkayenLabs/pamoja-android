@@ -6,6 +6,7 @@ import {
   MAX_GROUP_TARGET_STEPS,
   buildGroupWeekSummary,
   datesInWeek,
+  isCurrentWeekStart,
   isNormalWeekRollover,
   isValidGroupId,
   redactUserFromContributions,
@@ -26,6 +27,24 @@ test("normal rollover accepts whole weeks and rejects malformed transitions", ()
   assert.equal(isNormalWeekRollover("2026-08-17", "2026-08-23"), false);
   assert.equal(isNormalWeekRollover("2026-02-30", "2026-03-09"), false);
   assert.equal(isNormalWeekRollover("not-a-date", "2026-08-24"), false);
+});
+
+test("only a week that has begun by the server's clock can close the one before", () => {
+  // Tuesday 2026-10-13, 10:00 UTC.
+  const now = Date.UTC(2026, 9, 13, 10);
+  // This week, and last week (a late sync still publishes it).
+  assert.equal(isCurrentWeekStart("2026-10-12", now), true);
+  assert.equal(isCurrentWeekStart("2026-10-05", now), true);
+  // Tomorrow is already today in UTC+14, so a week may start there.
+  assert.equal(isCurrentWeekStart("2026-10-14", now), true);
+  // A week ahead: finalizing would close this week early, then every later one as missed.
+  assert.equal(isCurrentWeekStart("2026-10-19", now), false);
+  assert.equal(isCurrentWeekStart("2027-10-11", now), false);
+  // Far back: one junk history week per write.
+  assert.equal(isCurrentWeekStart("2026-09-28", now), false);
+  assert.equal(isCurrentWeekStart("1900-01-01", now), false);
+  assert.equal(isCurrentWeekStart("not-a-date", now), false);
+  assert.equal(isCurrentWeekStart(undefined, now), false);
 });
 
 test("datesInWeek stays correct across month and year boundaries", () => {

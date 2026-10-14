@@ -52,7 +52,9 @@ class CreateOrJoinViewModel @Inject constructor(
             val stored = userPreferences.pendingInvite.first()
             when {
                 stored == null -> Unit
-                PendingInvitePolicy.isFresh(stored.savedAt, System.currentTimeMillis()) -> {
+                // isCodeShaped also drops a code an older build saved unchecked.
+                PendingInvitePolicy.isFresh(stored.savedAt, System.currentTimeMillis()) &&
+                    InviteLink.isCodeShaped(stored.code) -> {
                     _uiState.value = PendingInviteUiState(pendingCode = stored.code, accepted = stored.accepted)
                 }
                 else -> userPreferences.clearPendingInviteCode()
@@ -77,9 +79,9 @@ class CreateOrJoinViewModel @Inject constructor(
     fun normalise(rawLinkOrCode: String): String {
         InviteLink.parseCode(rawLinkOrCode)?.let { return it }
         val bare = rawLinkOrCode.trim()
-        // A bare invite code, hand-typed. Anything with a slash or whitespace is
-        // a pasted link that parseCode has already refused, not a code.
-        return if (bare.none { it == '/' || it.isWhitespace() }) bare else ""
+        // A bare invite code, hand-typed. Anything else is a pasted link that
+        // parseCode has already refused, not a code.
+        return if (InviteLink.isCodeShaped(bare)) bare else ""
     }
 
     /**

@@ -14,8 +14,14 @@ service firebase.storage {
     match /avatars/{userId}/profile.jpg {
 
       // Readable by any signed-in user, because group members see each
-      // other's avatars on the leaderboard. Not public: an unauthenticated
-      // URL would make every avatar in the app scrapable.
+      // other's avatars on the leaderboard.
+      //
+      // This governs SDK reads only. The photoUrl stored on memberships is a
+      // getDownloadUrl() link carrying its own token, and that link opens the
+      // photo for anyone who has it, signed in or not (this comment claimed
+      // the opposite until 2026-10-13). What keeps a photo private is who can
+      // read the URL: members of the groups it is shown in, and only when the
+      // owner chose to show it.
       allow read: if request.auth != null;
 
       allow write: if request.auth != null

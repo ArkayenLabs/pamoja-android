@@ -67,6 +67,14 @@ open class SmartNotificationHelper @Inject constructor(
      */
     fun refreshChannelNames() = createChannels()
 
+    /**
+     * Removes everything this app has in the tray, on sign-out and account
+     * deletion. Pushes name other people ("High five from Ravi") and their
+     * groups, and they would otherwise stay on a phone that has been handed
+     * to someone else.
+     */
+    fun clearShown() = notificationManager.cancelAll()
+
     private fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         // The app's language, not the phone's, below Android 13 too.

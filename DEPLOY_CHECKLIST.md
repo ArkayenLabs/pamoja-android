@@ -48,6 +48,22 @@ change only what git says they change:
   the local exports exactly except `cleanUpDeletedGroup` (new). Nothing is
   deleted by the deploy.
 
+**Steps 1 to 3 done 2026-10-14 with the user's OK:**
+- Committed `a4693cb` (security review) and `25fcf57` (O1, O11, release prep).
+- Rules + indexes from `25fcf57` released 13:56 UTC: live ruleset
+  `5f7ca95b…` is byte-identical to `firestore.rules`; `signals.expireAt` TTL
+  still ACTIVE; `removed.userId` (collection and collection group) READY.
+  Baseline before: 1,254 allows, 0 denies or errors in 24 hours.
+- Functions: notifications 14:01 UTC (1 created, `cleanUpDeletedGroup`; 11
+  updated; none deleted), weekly-history 14:04 (17 updated), billing 14:06
+  (3 updated). 32 live. Non-interactive deploys need `--force` when a new
+  function retries on failure; it also skips the deletion prompt, so check
+  live against local exports first (done: nothing to delete). No errors in
+  the logs after; rules 0 denies in the first 15 minutes.
+- Rollback, if needed: rules history in the console (the previous release is
+  `71df964d…`), functions by redeploying a codebase from `30405d3`.
+- Next: step 4 (push) on the user's word, then step 5 (build).
+
 **Phone test for step 6** (release build from Play, both themes): sign in
 (Google first tap, phone); a two-person group: High five and Remind arrive as
 pushes; the goal moment; the invite link before sign-in, sign-in, then the

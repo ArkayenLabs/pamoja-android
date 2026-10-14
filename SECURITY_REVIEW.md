@@ -1,8 +1,8 @@
 # Security review, 2026-10-13
 
-> **Do not push this file, or the branch, before the fixes below are deployed.**
-> The repository is public and production still runs the rules and functions
-> these findings describe. Order: deploy rules, then functions, then push.
+> **Deployed 2026-10-14** (rules and indexes 13:56 UTC, functions 14:01 to
+> 14:06 UTC, from `25fcf57`), so the push no longer discloses open holes. The
+> app half ships in 1.1.6.
 
 **Agreed with the user on 2026-10-13: before the next build (1.1.6), review
 the whole app for security, every part, however small.** Done on `rebuild`

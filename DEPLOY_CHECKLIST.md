@@ -71,8 +71,9 @@ change only what git says they change:
   sales on, Trail sync on, signed with the upload key (`EC:3F…`), 13.9 MB.
   Production 35 minutes after the rules deploy: 115 allows, 0 denies, no
   function errors.
-- Next: step 6 (the user uploads 1.1.6 to internal testing and runs the
-  phone test below) with step 7 in parallel.
+- **Step 6 started:** the user uploaded 1.1.6 (23) to internal testing on
+  2026-10-14; the phone test below is still to do.
+- Next: the phone test, step 7 in parallel, then steps 8 to 11.
 
 **Phone test for step 6** (release build from Play, both themes): sign in
 (Google first tap, phone); a two-person group: High five and Remind arrive as

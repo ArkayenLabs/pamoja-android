@@ -102,6 +102,29 @@ change only what git says they change:
   in the save path reads Firestore, so the document is unknown: production
   has no per-request rules logs. Finding it needs Firestore Data Access
   audit logs switched on briefly (the user's call).
+- **1.1.7 (24) built 2026-10-20 at `517e405`** (replaces 1.1.6 for the
+  production route): `design/release-builds/pamoja-1.1.7-24-internal.aab`,
+  13.9 MB, upload key (`EC:3F…`), `-PpamojaVersionCode=24
+  -PpamojaVersionName=1.1.7 -PtogetherTrailEnabled=true`, sales on.
+  Before it: device suite on `517e405` 194 (193 + 1 skipped; one
+  `HomeNavigationJourneyTest` failure was the AVD's Pictures folder full of
+  old journey screenshots, passed 4/4 after clearing it), unit 201 per
+  variant, lint 0 errors (117 warnings). Next: the user uploads it to
+  internal testing and updates from Play; Claude reruns the phone test over
+  adb; then steps 7 to 11 with 1.1.7 in place of 1.1.6.
+- **1.1.7 (24) on internal, phone-tested 2026-10-20** (installed from Play
+  11:51 IST, vivo I2301): both copy fixes seen on the device;
+  `ACCESS_ADSERVICES_ATTRIBUTION` gone; app link still verified. Home,
+  last week, review, weekly card both weeks + share sheet, invite screen,
+  invite link, group switch and back, paywall (Play prices, no trial line:
+  no offer yet), Settings and every sub-page, Manage subscription, export
+  (picker, cancelled), light and dark, three widgets. No crash, no rules
+  denials and no function errors from 06:20 UTC on. Logged only: Firestore
+  "No setter/field" warnings for `shieldsStarted`, `shieldProgress`
+  (deliberately absent from GroupDto) and `goalHit` on GroupWeekSummaryDto.
+  Still for the user: sign-in, pushes and two-person flows, remove and let
+  back in, invite before sign-in and fresh install, license-tester purchase
+  and restore, Health Connect grant, account deletion.
 - Next: the phone test, step 7 in parallel, then steps 8 to 11.
 
 **Phone test for step 6** (release build from Play, both themes): sign in

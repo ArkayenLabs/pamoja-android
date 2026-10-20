@@ -27,6 +27,11 @@
         <item quantity="one">Walked %1$d of %2$d day so far</item>
         <item quantity="other">Walked %1$d of %2$d days so far</item>
     </plurals>
+    <!-- A finished week: the same as above without "so far". -->
+    <plurals name="week_days_walked_desc">
+        <item quantity="one">Walked %1$d of %2$d day</item>
+        <item quantity="other">Walked %1$d of %2$d days</item>
+    </plurals>
     <string name="social_primer_title">Know when you get a high five</string>
     <string name="social_primer_body">Turn on notifications so you know when your group sends you a high five.</string>
 
@@ -57,6 +62,7 @@
         <item quantity="other">%d walks</item>
     </plurals>
     <string name="weekly_card_walks_label">this week, together</string>
+    <string name="weekly_card_walks_label_finished">that week, together</string>
     <plurals name="weekly_card_more">
         <item quantity="one">and %d more</item>
         <item quantity="other">and %d more</item>

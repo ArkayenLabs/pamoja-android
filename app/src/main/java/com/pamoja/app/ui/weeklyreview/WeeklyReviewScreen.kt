@@ -214,7 +214,7 @@ private fun Members(week: GroupWeekSummary, members: Map<String, WeeklyReviewMem
                         DayDots(
                             days = List(7) { WalkedDays.walked(mask, it) },
                             description = pluralStringResource(
-                                R.plurals.home_days_walked_desc, 7, WalkedDays.count(mask), 7,
+                                R.plurals.week_days_walked_desc, 7, WalkedDays.count(mask), 7,
                             ),
                         )
                     }

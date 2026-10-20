@@ -33,6 +33,9 @@
         tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
         tools:node="remove" />
+    <!-- Same source, same reason: ad attribution reporting, which we never use. -->
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
+        tools:node="remove" />
 
     <!-- Required so Android allows our app to talk to the Health Connect app -->
     <queries>

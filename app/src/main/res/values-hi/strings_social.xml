@@ -26,6 +26,10 @@
         <item quantity="one">अब तक %2$d में से %1$d दिन चले</item>
         <item quantity="other">अब तक %2$d में से %1$d दिन चले</item>
     </plurals>
+    <plurals name="week_days_walked_desc">
+        <item quantity="one">%2$d में से %1$d दिन चले</item>
+        <item quantity="other">%2$d में से %1$d दिन चले</item>
+    </plurals>
     <string name="social_primer_title">हाई फाइव मिलते ही जानें</string>
     <string name="social_primer_body">सूचनाएँ चालू करें, ताकि पता चले जब आपका समूह आपको हाई फाइव भेजे।</string>
 
@@ -56,6 +60,7 @@
         <item quantity="other">%d सैर</item>
     </plurals>
     <string name="weekly_card_walks_label">इस हफ़्ते, साथ मिलकर</string>
+    <string name="weekly_card_walks_label_finished">उस हफ़्ते, साथ मिलकर</string>
     <plurals name="weekly_card_more">
         <item quantity="one">और %d</item>
         <item quantity="other">और %d</item>

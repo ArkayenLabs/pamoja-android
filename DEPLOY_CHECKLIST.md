@@ -73,6 +73,35 @@ change only what git says they change:
   function errors.
 - **Step 6 started:** the user uploaded 1.1.6 (23) to internal testing on
   2026-10-14; the phone test below is still to do.
+- **Phone test, part 1 (2026-10-19, Claude over adb; vivo I2301, Android 15,
+  1.1.6 (23) from Play):** no crash anywhere. Passed: Home, Last week and its
+  review, Past weeks, group switcher, paywall with Play prices (no trial
+  yet: no offer), weekly card both weeks and share, invite screen, invite
+  link opening the app (app link verified), Settings and every sub-page,
+  data export (all sections incl. `high_fives_and_reminders`), light and
+  dark, three widgets drawing and following the active group. Found:
+  the past-week card says "this week, together" (`weekly_card_walks_label`);
+  finished weeks read "Walked N of 7 days so far" to screen readers
+  (`home_days_walked_desc` reused in WeeklyReviewScreen). Both fixed the
+  same day, uncommitted, for the next build (`weekly_card_walks_label_finished`,
+  `week_days_walked_desc`, en/es/hi). Still for the
+  user: sign-in, pushes and the two-person flows, remove and let back in,
+  invite before sign-in and fresh install, license-tester purchase and
+  restore, Health Connect grant, account deletion.
+- **Checked 2026-10-20 (Claude):** 1.1.6 permissions equal production
+  1.0.12's (Health Connect unchanged, so no new Play declaration);
+  `ACCESS_ADSERVICES_ATTRIBUTION` removed for 1.1.7 like AD_ID (answer "No"
+  to the Advertising ID question). Backend = git, no function errors since
+  the 10-14 deploy; Trail callables' 400s are the same before and after it.
+  Remote Config empty. Health Connect on the phone totals 7 steps today
+  (Google Fit, then the phone itself), the same as Pamoja. Lint 0 errors.
+- **Open, not blocking:** saving the data export (Settings > Export > Save)
+  causes 1 to 2 rules-denied single-document GETs in production, 3 of 3
+  times; cancelling the picker causes none (2 of 2), nor does any other
+  step replayed. The file is complete and nothing visible fails. Nothing
+  in the save path reads Firestore, so the document is unknown: production
+  has no per-request rules logs. Finding it needs Firestore Data Access
+  audit logs switched on briefly (the user's call).
 - Next: the phone test, step 7 in parallel, then steps 8 to 11.
 
 **Phone test for step 6** (release build from Play, both themes): sign in
@@ -374,12 +403,11 @@ Only after steps 2 and 3 are live and watched.
 
 ## Not part of this deploy
 
-- **Pre-sign-in invite preview callable** (Phase 3): never built. The invite
-  preview works after sign-in; nothing to deploy.
+- ~~**Pre-sign-in invite preview callable**~~: built after all
+  (`getInvitePreview`, deployed 2026-10-11, in 1.1.6).
 - **Pamoja-owned invite domain**: links stay on `www.arkayenlabs.com/pamoja/join`
   until joinpamoja.com is bought (decided 2026-10-13; three edits, REBUILD_PLAN Phase 3).
 - **Terms, Privacy, Play Data Safety** for dropping age/height/weight: Phase 8.
-  Check before Release B whether the privacy policy covers cheers and nudges
-  (who sent what to whom, kept 14 days).
+  (The privacy drafts cover high fives and reminders since 2026-10-11.)
 - `CODEX-CHECKLIST.md` has 92 unchecked items, many visibly stale (it lists
   RevenueCat setup as open while sales are live). Not a gate for this deploy.

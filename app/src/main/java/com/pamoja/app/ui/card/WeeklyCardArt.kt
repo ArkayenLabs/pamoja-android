@@ -195,7 +195,9 @@ private fun WeeklyCardArt(state: WeeklyCardUiState) {
             Tile(
                 icon = PamojaIcons.Footprints,
                 value = pluralStringResource(R.plurals.weekly_card_walks, state.walks, state.walks),
-                label = stringResource(R.string.weekly_card_walks_label),
+                label = stringResource(
+                    if (state.finished) R.string.weekly_card_walks_label_finished else R.string.weekly_card_walks_label,
+                ),
                 container = c.accent, content = c.onAccent, muted = c.onAccent,
                 modifier = Modifier.weight(1f),
             )

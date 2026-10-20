@@ -175,3 +175,25 @@ against the new rules.
    #1; billing: the dependency update only).
 3. Then the app (1.1.6).
 4. Only then push.
+
+## Shipped APK check, 2026-10-20
+
+The Play-delivered 1.1.6 (23) APKs, pulled from a phone, read with REA 6.4.0
+and jadx-headless-mcp 0.7.1 (static only; tools in `C:\Users\balaj\tools\rea`,
+not in the repo). Play adds its own integrity wrapper
+(`com.pairip.application.Application`, `CHECK_LICENSE`).
+- Not debuggable, no cleartext traffic. Exported: `MainActivity` (launcher,
+  `https://www.arkayenlabs.com/pamoja/join`, `pamoja://join`) and library
+  components behind system permissions, plus Firebase Auth's two redirect
+  activities and Health Connect's SDK service, as upstream ships them.
+- R8: all seven `toObject()` DTOs and all five Workers keep their class,
+  field and getter names (checked on `MembershipDto` and `GroupDto`).
+- Strings: only the keys meant to be public (Firebase API key, RevenueCat
+  public SDK key, project ID). No emulator host or `useEmulator` from our
+  code; `http://localhost` and "emulators" come from the Firebase SDK.
+- Backups exclude shared prefs, DataStore and databases; widget photos are
+  in the cache dir.
+- Permissions worth a decision: `ACCESS_ADSERVICES_ATTRIBUTION` (from
+  `play-services-measurement-api`) still ships although `AD_ID` and
+  `ACCESS_ADSERVICES_AD_ID` are removed; `USE_BIOMETRIC` / `USE_FINGERPRINT`
+  come from `androidx.credentials` (biometric 1.1.0), unused by the app.

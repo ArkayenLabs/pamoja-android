@@ -30,6 +30,11 @@
         <item quantity="many">Caminó %1$d de %2$d días hasta ahora</item>
         <item quantity="other">Caminó %1$d de %2$d días hasta ahora</item>
     </plurals>
+    <plurals name="week_days_walked_desc">
+        <item quantity="one">Caminó %1$d de %2$d día</item>
+        <item quantity="many">Caminó %1$d de %2$d días</item>
+        <item quantity="other">Caminó %1$d de %2$d días</item>
+    </plurals>
     <string name="social_primer_title">Entérate cuando te choquen los cinco</string>
     <string name="social_primer_body">Activa las notificaciones para saber cuándo tu grupo te choca los cinco.</string>
 
@@ -62,6 +67,7 @@
         <item quantity="other">%d caminatas</item>
     </plurals>
     <string name="weekly_card_walks_label">esta semana, juntos</string>
+    <string name="weekly_card_walks_label_finished">esa semana, juntos</string>
     <plurals name="weekly_card_more">
         <item quantity="one">y %d más</item>
         <item quantity="many">y %d más</item>

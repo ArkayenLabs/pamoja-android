@@ -123,8 +123,66 @@ change only what git says they change:
   "No setter/field" warnings for `shieldsStarted`, `shieldProgress`
   (deliberately absent from GroupDto) and `goalHit` on GroupWeekSummaryDto.
   Still for the user: sign-in, pushes and two-person flows, remove and let
-  back in, invite before sign-in and fresh install, license-tester purchase
-  and restore, Health Connect grant, account deletion.
+  back in, invite before sign-in and fresh install, Health Connect grant,
+  account deletion.
+- **License-tester purchase on 1.1.7, 2026-10-20 06:50 UTC (Claude, user's
+  go-ahead):** Monthly for Morning Walkers; the Play sheet read "Test card,
+  always approves ... You will not be charged" (₹200/5 min). Play then asked
+  to review purchase verification (left on its existing value) and offered
+  Play Points (Not now). Group details: Premium "Active", shields "0 ready";
+  full history unlocked; Premium details "This group has Premium". Backend:
+  `revenuecatWebhook` 200 and `activateCircleSponsorship` 200 at 06:52;
+  "Refresh subscription status" ran `getCirclePurchaseContext` (200 x2) and
+  kept it active. No errors, no rules denials, no crash. The test
+  subscription renews every 5 minutes up to 6 times, then lapses: Premium
+  switching off about half an hour later is expected. No trial line (no
+  offer created). Nit: the review's "Earlier weeks" list also holds last
+  week on purpose (a picker); the heading could read "Weeks".
+- **Production bundle 1.1.7 (25), built 2026-10-20 at `a7f570c`** (the user
+  wanted production separate from internal; nothing under `app/` changed
+  since the tested `517e405`): `design/release-builds/pamoja-1.1.7-25-production.aab`,
+  upload key `EC:3F…`, same flags. 1.1.5 and 1.1.6 bundles moved to the
+  Recycle Bin. Legal pages: `dev` fast-forwarded to `a7f570c` and pushed
+  2026-10-20 07:30 UTC; the first site rebuild fetched GitHub's cached copy
+  (raw CDN, ~5 min) and still showed 19 September, so the redeploy was
+  re-run by hand (workflow_dispatch) at 07:42. Lesson: re-run it a few
+  minutes after a push if the pages do not change. **Still not live after
+  that second run** (pages say 19 September; Vercel accepted both hooks,
+  201): the website project's build or hook needs checking in Vercel.
+- **Play Console, 2026-10-20 (Claude in the user's Chrome, user's OK):**
+  "Incomplete advertising ID declaration" blocked review although the form
+  said No. Cause: version 1 (1.0, June) still active on Closed testing
+  (Alpha), whose permissions include `com.google.android.gms.permission.AD_ID`
+  and both ADSERVICES ones. Re-saved the declaration as No; replaced Alpha
+  with 24 (1.1.7); the issue cleared. Production release 25 (1.1.7) saved
+  with the release notes, 1.0.12 not included, staged rollout 20% (Play
+  counts 8 active installs). Publishing overview: 8 changes (production,
+  Alpha, 6 store listing), managed publishing on. **Submitted for review
+  2026-10-20 ~08:10 UTC** at the user's word ("Changes in review"; Play's
+  quick checks run first). With managed publishing on, nothing goes live
+  until the user clicks Publish after approval.
+- **Published (user, by 2026-10-23): 1.1.7 (25) live in production at
+  100%**, new listing live (checked on the public Play page). Read-only
+  checks 2026-10-23: no function errors except one empty-message 500 in
+  `sendScheduledReminders` (10-22 22:05 UTC). **Open, needs a device:**
+  from 10-21 UTC, client traffic fell ~97% (App Check verdicts ~1,200-1,700
+  a day to 239 then 81; rules UPDATEs ~220-430 to 8-13; Trail callables
+  60-90 to 0; `notifyGroupGoalReached` 18-63 to 0-2) while
+  `registerPushInstallation` kept running (7-10 a day). Worker classes and
+  unique work names are unchanged from 1.0.12, and App Check enforcement is
+  off. Either the few installs simply went quiet, or background sync is not
+  running on updated phones that have not been opened since the update.
+  Check `adb shell dumpsys jobscheduler` for the StepSyncWorker periodic job
+  on a phone that auto-updated.
+  **Resolved 2026-10-23:** not a bug. Pamoja had been uninstalled from the
+  user's vivo phone after the 10-20 test session (last used 10-20 13:00
+  IST), and that phone was the busiest device (three groups, widgets, Trail
+  sync). Reinstalled from Play (1.1.7 (25), 09:22 IST), signed in,
+  permissions granted; the periodic StepSyncWorker job ran in the
+  background at ~04:23 UTC (about 12 minutes after its earliest slot:
+  Android 15 flexible scheduling), finished normally, queued the widget
+  refresh, and the server shows its writes (6 UPDATEs at 04:24, 1 at
+  04:25). Note: a reinstall resets vivo's background battery permission.
 - Next: the phone test, step 7 in parallel, then steps 8 to 11.
 
 **Phone test for step 6** (release build from Play, both themes): sign in

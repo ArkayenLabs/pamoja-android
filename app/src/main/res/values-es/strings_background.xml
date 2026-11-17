@@ -10,4 +10,8 @@
     <string name="bg_help_steps_huawei">En Información de la app, abre Batería y luego Inicio de apps. Desactiva Gestionar automáticamente y deja los tres interruptores activados.</string>
     <string name="bg_help_open">Abrir información de la app</string>
     <string name="bg_help_hide">Ocultar</string>
+
+    <string name="keep_awake_title">Que tus pasos sigan contando</string>
+    <string name="keep_awake_body">Android duerme las apps que no abres en un tiempo. Si Pamoja se duerme, tus pasos dejan de llegar a tu grupo. En la siguiente pantalla, desactiva el interruptor que pausa Pamoja.</string>
+    <string name="keep_awake_open">Abrir ajustes</string>
 </resources>

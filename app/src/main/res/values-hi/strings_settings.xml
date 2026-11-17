@@ -22,6 +22,8 @@
     <string name="settings_health_not_connected_sub">Pamoja को कदम पढ़ने की अनुमति नहीं है, इसलिए समूह को शून्य दिखता है।</string>
     <string name="settings_health_unavailable">इस फ़ोन पर Health Connect नहीं है</string>
     <string name="settings_health_unavailable_sub">कदम ट्रैक करने के लिए यह चाहिए। Play Store से इंस्टॉल करके यहाँ लौटें।</string>
+    <string name="settings_health_needs_update">Health Connect को अपडेट करना होगा</string>
+    <string name="settings_health_needs_update_sub">जब तक आप इसे अपडेट नहीं करते, आपके कदम सिंक नहीं होंगे।</string>
     <string name="settings_health_fix">Health Connect खोलें</string>
     <string name="settings_health_install">Health Connect पाएँ</string>
     <string name="settings_health_sync_now">अभी सिंक करें</string>

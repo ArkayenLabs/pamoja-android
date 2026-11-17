@@ -12,6 +12,8 @@
     <string name="hc_body_default">Health Connect को आपके रोज़ के कदम समूह की प्रगति में जोड़ने दें।</string>
     <string name="hc_steps_only">सिर्फ़ कदम। स्थान, रास्ता, हृदय गति या नींद नहीं।</string>
     <string name="hc_continue_without">कदमों के बिना आगे बढ़ें</string>
+    <string name="hc_body_needs_update">आपका Health Connect ऐप पुराना है। इसे Play Store से अपडेट करें, फिर अपने कदम जोड़ने के लिए यहाँ लौटें।</string>
+    <string name="hc_update">Health Connect अपडेट करें</string>
     <string name="hc_open_settings">सेटिंग खोलें</string>
     <string name="hc_skip">अभी छोड़ें</string>
     <string name="hc_connected">कदम कनेक्ट हो गए</string>

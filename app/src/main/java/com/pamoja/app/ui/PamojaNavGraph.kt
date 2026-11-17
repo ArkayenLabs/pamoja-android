@@ -233,10 +233,25 @@ fun PamojaNavGraph(
 
         composable(
             route = Screen.HealthConnect.route,
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("groupId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
         ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId").orEmpty()
-            val leaveHealthConnect: () -> Unit = { navController.openGroupHome(groupId) }
+            val groupId = backStackEntry.arguments?.getString("groupId")
+            val leaveHealthConnect: () -> Unit = {
+                if (groupId != null) {
+                    navController.openGroupHome(groupId)
+                } else {
+                    navController.navigate(Screen.Home.createRoute()) {
+                        popUpTo(Screen.HealthConnect.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
 
             HealthConnectScreen(
                 onConnected = leaveHealthConnect,

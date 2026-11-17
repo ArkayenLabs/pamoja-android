@@ -25,11 +25,16 @@ sealed class Screen(val route: String) {
     }
 
     object ProfileSetup : Screen("profile_setup")
-    object HealthConnect : Screen("connect_steps/{groupId}") {
+    /**
+     * Step access. After creating or joining, [groupId] is the group to open
+     * next; without it (opened from Health Connect's own app) Home follows.
+     */
+    object HealthConnect : Screen("connect_steps?groupId={groupId}") {
         fun createRoute(groupId: String): String {
             require(PamojaGroupId.isValid(groupId)) { "A valid group is required" }
-            return "connect_steps/$groupId"
+            return "connect_steps?groupId=$groupId"
         }
+        const val WITHOUT_GROUP = "connect_steps"
     }
     /**
      * The group home. Optional [groupId] opens that group, e.g. after joining

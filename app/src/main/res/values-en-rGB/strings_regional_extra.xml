@@ -1,2 +1,15 @@
 <resources>
+    <!-- Same as the base English on purpose (nothing regional in them): kept
+         here so en-GB carries every Health Connect and hibernation string.
+         Change both when you change one. -->
+    <string name="keep_awake_title">Keep your steps counting</string>
+    <string name="keep_awake_body">Android puts apps to sleep when you don\'t open them for a while. If Pamoja falls asleep, your steps stop reaching your group. On the next screen, turn off the switch that pauses Pamoja.</string>
+    <string name="keep_awake_open">Open settings</string>
+    <string name="hc_body_needs_update">Your Health Connect app is out of date. Update it from the Play Store, then come back here to connect your steps.</string>
+    <string name="hc_update">Update Health Connect</string>
+    <string name="settings_health_needs_update">Health Connect needs an update</string>
+    <string name="settings_health_needs_update_sub">Your steps won\'t sync until you update it.</string>
+    <string name="home_bg_hint_title">Right now your steps only sync when you open Pamoja</string>
+    <string name="home_bg_hint_body">Allow background access and they\'ll sync on their own.</string>
+    <string name="home_bg_hint_allow">Allow</string>
 </resources>

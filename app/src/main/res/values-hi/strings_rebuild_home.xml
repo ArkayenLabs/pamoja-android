@@ -75,4 +75,7 @@
     <string name="home_tour_today_body">टिक का मतलब है कि वे चल चुके हैं। जो अभी नहीं चला, उसे याद दिलाएँ।</string>
     <string name="home_tour_group_title">आपके समूह</string>
     <string name="home_tour_group_body">समूह बदलने या नया शुरू करने के लिए नाम पर टैप करें।</string>
+    <string name="home_bg_hint_title">अभी आपके कदम सिर्फ़ Pamoja खोलने पर सिंक होते हैं</string>
+    <string name="home_bg_hint_body">बैकग्राउंड एक्सेस की अनुमति दें, फिर वे अपने-आप सिंक होंगे।</string>
+    <string name="home_bg_hint_allow">अनुमति दें</string>
 </resources>

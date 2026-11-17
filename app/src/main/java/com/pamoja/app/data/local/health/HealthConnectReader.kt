@@ -44,8 +44,11 @@ open class HealthConnectReader @Inject constructor(
      * On Android 14+ it is built-in. On Android 9-13 the user must have the
      * Health Connect app installed from the Play Store.
      */
-    fun isAvailable(): Boolean =
-        HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
+    fun isAvailable(): Boolean = availability() == HealthConnectAvailability.Available
+
+    /** [isAvailable] with the reason when it is not: missing, or out of date. */
+    fun availability(): HealthConnectAvailability =
+        healthConnectAvailabilityOf(HealthConnectClient.getSdkStatus(context))
 
     /**
      * Returns true if the user has already granted the Steps read permission.

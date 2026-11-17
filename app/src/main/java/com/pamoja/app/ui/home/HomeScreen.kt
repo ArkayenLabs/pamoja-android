@@ -235,6 +235,7 @@ fun HomeScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshHealthConnectStatus()
+                viewModel.refreshKeepAwakeStatus()
                 groupViewModel.refreshHealthConnectStatus()
                 // Only reloads if the day has turned since: cheers are per day.
                 currentSelectedId?.let(signalsViewModel::load)
@@ -256,6 +257,9 @@ fun HomeScreen(
         viewModel.onHealthConnectPermissionRequested()
         healthLauncher.launch(HealthConnectReader.REQUIRED_PERMISSIONS)
     }
+    val backgroundLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract(),
+    ) { viewModel.onBackgroundReadResult() }
 
     NotificationPrimer(show = signals.showNotificationPrimer, onAnswered = signalsViewModel::onNotificationPrimerAnswered)
 
@@ -278,6 +282,7 @@ fun HomeScreen(
         )
     }
 
+
     val celebration = if (groupState.showGoalCelebration) celebrationModel(groupState) else null
     celebration?.let { model ->
         val others = model.people.filterNot { it.isYou }.map { it.userId }
@@ -299,6 +304,18 @@ fun HomeScreen(
             },
         )
     }
+
+    // Never on top of another ask. Not for the rest of a visit that showed the
+    // goal celebration either: closing it may bring up Play's rating card. It
+    // waits for the next open.
+    var celebratedThisVisit by remember { mutableStateOf(false) }
+    LaunchedEffect(celebration != null) { if (celebration != null) celebratedThisVisit = true }
+    KeepAwakeAsk(
+        show = home.askToKeepAwake && !signals.showNotificationPrimer && endedPreviewGroup == null &&
+            celebration == null && !celebratedThisVisit,
+        settingsIntent = { com.pamoja.app.util.AppHibernation.settingsIntent(context) },
+        onAnswered = viewModel::onKeepAwakeAnswered,
+    )
 
     HomeContent(
         home = home,
@@ -323,6 +340,8 @@ fun HomeScreen(
         },
         onDismissPendingInvite = joinViewModel::dismissPendingInvite,
         onConnectSteps = connectSteps,
+        onAllowBackgroundRead = { backgroundLauncher.launch(HealthConnectReader.BACKGROUND_PERMISSIONS) },
+        onHideBackgroundHint = viewModel::dismissBackgroundHint,
         signals = signals,
         onCheer = signalsViewModel::cheer,
         onNudge = signalsViewModel::nudge,
@@ -353,6 +372,8 @@ internal fun HomeContent(
     onOpenPendingInvite: (String) -> Unit,
     onDismissPendingInvite: () -> Unit,
     onConnectSteps: () -> Unit,
+    onAllowBackgroundRead: () -> Unit = {},
+    onHideBackgroundHint: () -> Unit = {},
     signals: SignalsUiState = SignalsUiState(),
     onCheer: (List<String>) -> Unit = {},
     onNudge: (List<String>) -> Unit = {},
@@ -419,6 +440,8 @@ internal fun HomeContent(
                         onOpenPendingInvite = onOpenPendingInvite,
                         onDismissPendingInvite = onDismissPendingInvite,
                         onConnectSteps = onConnectSteps,
+                        onAllowBackgroundRead = onAllowBackgroundRead,
+                        onHideBackgroundHint = onHideBackgroundHint,
                         // Never the last group's cheers under this one's name.
                         signals = signals.takeIf { it.groupId == shownGroup.groupId } ?: SignalsUiState(),
                         onCheer = onCheer,
@@ -546,6 +569,8 @@ private fun GroupHome(
     onOpenPendingInvite: (String) -> Unit,
     onDismissPendingInvite: () -> Unit,
     onConnectSteps: () -> Unit,
+    onAllowBackgroundRead: () -> Unit,
+    onHideBackgroundHint: () -> Unit,
     signals: SignalsUiState,
     onCheer: (List<String>) -> Unit,
     onNudge: (List<String>) -> Unit,
@@ -604,6 +629,16 @@ private fun GroupHome(
         onConnect = onConnectSteps,
         onCheerBack = onCheer,
     )
+    if (home.showBackgroundHint) {
+        KitNotice(
+            title = stringResource(R.string.home_bg_hint_title),
+            body = stringResource(R.string.home_bg_hint_body),
+            actions = {
+                PrimaryButton(stringResource(R.string.home_bg_hint_allow), onClick = onAllowBackgroundRead, size = ButtonSize.Small)
+                SecondaryButton(stringResource(R.string.common_not_now), onClick = onHideBackgroundHint, size = ButtonSize.Small)
+            },
+        )
+    }
     StandingsCard(
         group = group,
         members = state.memberStepData,
@@ -1194,6 +1229,30 @@ private fun NotificationPrimer(show: Boolean, onAnswered: () -> Unit) {
         onConfirm = {
             onAnswered()
             launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        },
+        dismissText = stringResource(R.string.common_not_now),
+        onDismiss = onAnswered,
+    )
+}
+
+/**
+ * Once, for someone in a group: Android hibernates apps nobody opens, and a
+ * hibernated Pamoja stops sending steps and receiving pushes
+ * ([com.pamoja.app.util.AppHibernation]). Android requires the settings page
+ * to be started for a result; the result itself says nothing useful, the next
+ * resume re-reads the status.
+ */
+@Composable
+private fun KeepAwakeAsk(show: Boolean, settingsIntent: () -> android.content.Intent, onAnswered: () -> Unit) {
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
+    if (!show) return
+    KitDialog(
+        title = stringResource(R.string.keep_awake_title),
+        body = stringResource(R.string.keep_awake_body),
+        confirmText = stringResource(R.string.keep_awake_open),
+        onConfirm = {
+            onAnswered()
+            runCatching { launcher.launch(settingsIntent()) }
         },
         dismissText = stringResource(R.string.common_not_now),
         onDismiss = onAnswered,

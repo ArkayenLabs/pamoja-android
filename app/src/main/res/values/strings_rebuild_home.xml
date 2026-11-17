@@ -80,4 +80,8 @@
     <string name="home_tour_today_body">A tick means they\'ve walked. Remind anyone who hasn\'t yet.</string>
     <string name="home_tour_group_title">Your groups</string>
     <string name="home_tour_group_body">Tap the name to switch groups or start a new one.</string>
+    <!-- Home, under "You today": steps granted, background read not (ui/home/BackgroundReadHint.kt). -->
+    <string name="home_bg_hint_title">Right now your steps only sync when you open Pamoja</string>
+    <string name="home_bg_hint_body">Allow background access and they\'ll sync on their own.</string>
+    <string name="home_bg_hint_allow">Allow</string>
 </resources>

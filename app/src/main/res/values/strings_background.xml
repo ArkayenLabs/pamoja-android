@@ -15,4 +15,10 @@
     <string name="bg_help_steps_huawei">In App info, open Battery, then App launch. Turn off Manage automatically and leave all three switches on.</string>
     <string name="bg_help_open">Open App info</string>
     <string name="bg_help_hide">Hide</string>
+
+    <!-- Home, once: app hibernation (util/AppHibernation.kt). Android 12 and 13+
+         name the switch differently, so the copy describes it instead. -->
+    <string name="keep_awake_title">Keep your steps counting</string>
+    <string name="keep_awake_body">Android puts apps to sleep when you don\'t open them for a while. If Pamoja falls asleep, your steps stop reaching your group. On the next screen, turn off the switch that pauses Pamoja.</string>
+    <string name="keep_awake_open">Open settings</string>
 </resources>

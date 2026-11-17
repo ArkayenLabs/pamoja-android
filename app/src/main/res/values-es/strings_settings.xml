@@ -22,6 +22,8 @@
     <string name="settings_health_not_connected_sub">Pamoja no tiene permiso para leer tus pasos, por eso el grupo te ve en cero.</string>
     <string name="settings_health_unavailable">Health Connect no está en este teléfono</string>
     <string name="settings_health_unavailable_sub">Lo necesitas para registrar pasos. Instálalo desde Play Store y vuelve aquí.</string>
+    <string name="settings_health_needs_update">Health Connect necesita una actualización</string>
+    <string name="settings_health_needs_update_sub">Tus pasos no se sincronizarán hasta que lo actualices.</string>
     <string name="settings_health_fix">Abrir Health Connect</string>
     <string name="settings_health_install">Instalar Health Connect</string>
     <string name="settings_health_sync_now">Sincronizar ahora</string>

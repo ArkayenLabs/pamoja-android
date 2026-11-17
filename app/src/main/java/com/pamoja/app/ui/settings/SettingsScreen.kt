@@ -230,7 +230,11 @@ fun SettingsScreen(
             if (!requestWidgetPin(context, provider)) scope.launch { snackbar.showSnackbar(widgetUnavailable) }
         },
         onSyncNow = viewModel::syncNow,
-        onFixHealth = {
+        onFixHealth = fix@{
+            if (uiState.healthStatus == HealthStatus.NeedsUpdate) {
+                com.pamoja.app.data.local.health.openHealthConnectListing(context)
+                return@fix
+            }
             // Health Connect owns the permission, so the fix is over there.
             // Falls back to the Play listing when the app is absent, which is
             // the Android 13-and-below case.
@@ -712,6 +716,7 @@ private fun HealthCard(
         HealthStatus.Connected -> R.string.settings_health_connected to R.string.settings_health_connected_sub
         HealthStatus.NotConnected -> R.string.settings_health_not_connected to R.string.settings_health_not_connected_sub
         HealthStatus.Unavailable -> R.string.settings_health_unavailable to R.string.settings_health_unavailable_sub
+        HealthStatus.NeedsUpdate -> R.string.settings_health_needs_update to R.string.settings_health_needs_update_sub
     }
     KitCard {
         CardHeader(stringResource(R.string.settings_section_health), detail = lastSyncedLabel(lastSyncTime))
@@ -725,7 +730,7 @@ private fun HealthCard(
                     .background(
                         when (status) {
                             HealthStatus.Connected -> colors.pop
-                            HealthStatus.NotConnected -> colors.danger
+                            HealthStatus.NotConnected, HealthStatus.NeedsUpdate -> colors.danger
                             HealthStatus.Unavailable -> colors.muted
                         },
                     ),
@@ -745,7 +750,11 @@ private fun HealthCard(
         } else {
             PrimaryButton(
                 stringResource(
-                    if (status == HealthStatus.Unavailable) R.string.settings_health_install else R.string.settings_health_fix,
+                    when (status) {
+                        HealthStatus.Unavailable -> R.string.settings_health_install
+                        HealthStatus.NeedsUpdate -> R.string.hc_update
+                        else -> R.string.settings_health_fix
+                    },
                 ),
                 onClick = onFix,
                 size = ButtonSize.Small,

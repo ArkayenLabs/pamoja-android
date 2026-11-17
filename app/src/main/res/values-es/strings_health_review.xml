@@ -12,6 +12,8 @@
     <string name="hc_body_default">Permite que Health Connect añada tus pasos diarios al progreso del grupo.</string>
     <string name="hc_steps_only">Solo pasos. Sin ubicación, rutas, pulso ni sueño.</string>
     <string name="hc_continue_without">Continuar sin pasos</string>
+    <string name="hc_body_needs_update">Tu app de Health Connect está desactualizada. Actualízala desde Play Store y vuelve aquí para conectar tus pasos.</string>
+    <string name="hc_update">Actualizar Health Connect</string>
     <string name="hc_open_settings">Abrir ajustes</string>
     <string name="hc_skip">Omitir por ahora</string>
     <string name="hc_connected">Pasos conectados</string>

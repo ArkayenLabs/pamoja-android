@@ -190,6 +190,30 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Health Connect's onboarding entry: someone connecting Pamoja from
+             inside Health Connect's own app lands on the step-access screen
+             (MainActivity routes the action). One alias per Android line,
+             each guarded by the permission only Health Connect holds. -->
+        <activity-alias
+            android:name="HealthConnectOnboardingActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="com.google.android.apps.healthdata.permission.START_ONBOARDING">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_ONBOARDING" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name="UAndAboveHealthConnectOnboardingActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.health.START_ONBOARDING">
+            <intent-filter>
+                <action android:name="android.health.connect.action.SHOW_ONBOARDING" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Remove the default WorkManager initializer. Hilt handles it via on-demand init -->
         <provider
             android:name="androidx.startup.InitializationProvider"

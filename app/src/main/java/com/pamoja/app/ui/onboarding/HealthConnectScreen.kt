@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,7 +25,12 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pamoja.app.R
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.pamoja.app.data.local.health.HealthConnectAvailability
 import com.pamoja.app.data.local.health.HealthConnectReader
+import com.pamoja.app.data.local.health.openHealthConnectListing
 import com.pamoja.app.ui.kit.CardTone
 import com.pamoja.app.ui.kit.Kit
 import com.pamoja.app.ui.kit.KitCard
@@ -35,7 +41,7 @@ import com.pamoja.app.ui.theme.PamojaIcons
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-internal enum class PermState { UNKNOWN, GRANTED, DENIED, HC_UNAVAILABLE }
+internal enum class PermState { UNKNOWN, GRANTED, DENIED, HC_UNAVAILABLE, HC_NEEDS_UPDATE }
 
 /**
  * A contextual permission primer shown only after a person creates or joins a
@@ -54,12 +60,12 @@ fun HealthConnectScreen(
     val context = LocalContext.current
     var permState by remember { mutableStateOf(PermState.UNKNOWN) }
 
-    LaunchedEffect(Unit) {
-        viewModel.onScreenViewed()
-        permState = when {
-            !healthConnectReader.isAvailable() -> PermState.HC_UNAVAILABLE
-            healthConnectReader.hasPermission() -> PermState.GRANTED
-            else -> PermState.UNKNOWN
+    suspend fun checkState() {
+        permState = when (healthConnectReader.availability()) {
+            HealthConnectAvailability.NotInstalled -> PermState.HC_UNAVAILABLE
+            HealthConnectAvailability.NeedsUpdate -> PermState.HC_NEEDS_UPDATE
+            HealthConnectAvailability.Available ->
+                if (healthConnectReader.hasPermission()) PermState.GRANTED else PermState.UNKNOWN
         }
 
         // Someone who connected previously should not see education they have
@@ -68,6 +74,25 @@ fun HealthConnectScreen(
             userPreferences.setHealthConnectGranted(true)
             onConnected()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.onScreenViewed()
+        checkState()
+    }
+
+    // Back from the Play Store: an updated Health Connect moves straight on to
+    // the connect step. Only from the update state, so a resume after the
+    // permission sheet cannot overwrite its answer.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && permState == PermState.HC_NEEDS_UPDATE) {
+                scope.launch { checkState() }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -107,6 +132,7 @@ fun HealthConnectScreen(
                     viewModel.onSkipped()
                     onSkip()
                 }
+                PermState.HC_NEEDS_UPDATE -> openHealthConnectListing(context)
                 PermState.DENIED -> openHealthSettings()
                 PermState.GRANTED -> onConnected()
                 PermState.UNKNOWN -> {
@@ -136,11 +162,13 @@ internal fun HealthConnectContent(
 ) {
     val body = when (permState) {
         PermState.HC_UNAVAILABLE -> stringResource(R.string.hc_body_unavailable)
+        PermState.HC_NEEDS_UPDATE -> stringResource(R.string.hc_body_needs_update)
         PermState.DENIED -> stringResource(R.string.hc_body_denied)
         PermState.GRANTED -> stringResource(R.string.hc_body_granted)
         PermState.UNKNOWN -> stringResource(R.string.hc_body_default)
     }
-    val problem = permState == PermState.DENIED || permState == PermState.HC_UNAVAILABLE
+    val problem = permState == PermState.DENIED || permState == PermState.HC_UNAVAILABLE ||
+        permState == PermState.HC_NEEDS_UPDATE
 
     KitScreen(
         bottom = {
@@ -148,6 +176,7 @@ internal fun HealthConnectContent(
                 text = stringResource(
                     when (permState) {
                         PermState.HC_UNAVAILABLE -> R.string.hc_continue_without
+                        PermState.HC_NEEDS_UPDATE -> R.string.hc_update
                         PermState.DENIED -> R.string.hc_open_settings
                         PermState.GRANTED -> R.string.hc_connected
                         PermState.UNKNOWN -> R.string.hc_connect

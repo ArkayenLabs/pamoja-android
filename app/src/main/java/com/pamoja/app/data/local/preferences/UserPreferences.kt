@@ -56,6 +56,12 @@ class UserPreferences @Inject constructor(
         // The background-restriction card in Settings, once per installation.
         val KEY_BACKGROUND_HELP_DONE = booleanPreferencesKey("background_help_done")
 
+        // Home's ask to turn off app hibernation (AppHibernation), once per installation.
+        val KEY_KEEP_AWAKE_ASKED = booleanPreferencesKey("keep_awake_asked")
+
+        // Home's background-read hint was dismissed, once per installation.
+        val KEY_BACKGROUND_HINT_DISMISSED = booleanPreferencesKey("background_hint_dismissed")
+
         // Groups whose ended Premium preview this account was already told about.
         val KEY_PREVIEW_END_SEEN = stringSetPreferencesKey("preview_end_seen_groups")
 
@@ -174,6 +180,21 @@ class UserPreferences @Inject constructor(
 
     suspend fun setBackgroundHelpDone() {
         context.dataStore.edit { it[KEY_BACKGROUND_HELP_DONE] = true }
+    }
+
+    /** About this phone's settings, so it survives sign-out like the tour. */
+    val keepAwakeAsked: Flow<Boolean> = context.dataStore.data.map { it[KEY_KEEP_AWAKE_ASKED] ?: false }
+
+    suspend fun setKeepAwakeAsked() {
+        context.dataStore.edit { it[KEY_KEEP_AWAKE_ASKED] = true }
+    }
+
+    /** About this phone's Health Connect, so it survives sign-out like the tour. */
+    val backgroundHintDismissed: Flow<Boolean> =
+        context.dataStore.data.map { it[KEY_BACKGROUND_HINT_DISMISSED] ?: false }
+
+    suspend fun setBackgroundHintDismissed() {
+        context.dataStore.edit { it[KEY_BACKGROUND_HINT_DISMISSED] = true }
     }
 
     /** Groups whose ended preview has been offered once; never offered twice. */
@@ -333,6 +354,8 @@ class UserPreferences @Inject constructor(
         val referrerChecked = context.dataStore.data.map { it[KEY_INSTALL_REFERRER_CHECKED] }.first()
         val tourSeen = context.dataStore.data.map { it[KEY_HOME_TOUR_SEEN] }.first()
         val backgroundHelpDone = context.dataStore.data.map { it[KEY_BACKGROUND_HELP_DONE] }.first()
+        val keepAwakeAsked = context.dataStore.data.map { it[KEY_KEEP_AWAKE_ASKED] }.first()
+        val backgroundHintDismissed = context.dataStore.data.map { it[KEY_BACKGROUND_HINT_DISMISSED] }.first()
         context.dataStore.edit { prefs ->
             prefs.clear()
             theme?.let { prefs[KEY_THEME] = it }
@@ -340,6 +363,8 @@ class UserPreferences @Inject constructor(
             referrerChecked?.let { prefs[KEY_INSTALL_REFERRER_CHECKED] = it }
             tourSeen?.let { prefs[KEY_HOME_TOUR_SEEN] = it }
             backgroundHelpDone?.let { prefs[KEY_BACKGROUND_HELP_DONE] = it }
+            keepAwakeAsked?.let { prefs[KEY_KEEP_AWAKE_ASKED] = it }
+            backgroundHintDismissed?.let { prefs[KEY_BACKGROUND_HINT_DISMISSED] = it }
         }
     }
 

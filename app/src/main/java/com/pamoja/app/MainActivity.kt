@@ -46,6 +46,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** Health Connect's onboarding action, before Android 14 and from 14 on. */
+private val HEALTH_CONNECT_ONBOARDING_ACTIONS = setOf(
+    "androidx.health.ACTION_SHOW_ONBOARDING",
+    "android.health.connect.action.SHOW_ONBOARDING",
+)
+
 /** Where the app was asked to open. Null means an ordinary launch. */
 private sealed interface LaunchTarget {
     /** Notification tap. Open this group directly. */
@@ -53,6 +59,9 @@ private sealed interface LaunchTarget {
 
     /** Invite link or QR scan. Join using this code. */
     data class Invite(val code: String) : LaunchTarget
+
+    /** Pamoja was connected from inside Health Connect's own app. */
+    data object ConnectSteps : LaunchTarget
 }
 
 /**
@@ -243,6 +252,19 @@ class MainActivity : AppCompatActivity() {
                             }
                             launchTarget.value = null
                         }
+
+                        LaunchTarget.ConnectSteps -> {
+                            // Only an account that finished setup has groups for
+                            // steps to count towards. Otherwise the ordinary
+                            // start (intro, sign-in) is the sensible landing,
+                            // and the group flow asks for steps later anyway.
+                            if (firebaseAuth.currentUser != null && userPreferences.isOnboarded.first()) {
+                                navController.navigate(Screen.HealthConnect.WITHOUT_GROUP) {
+                                    launchSingleTop = true
+                                }
+                            }
+                            launchTarget.value = null
+                        }
                     }
                 }
 
@@ -311,6 +333,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
+
+        // Health Connect's onboarding entry (the two aliases in the manifest).
+        if (intent.action in HEALTH_CONNECT_ONBOARDING_ACTIONS) {
+            launchTarget.value = LaunchTarget.ConnectSteps
+            // Cleared so a configuration change does not replay it.
+            intent.action = null
+            return
+        }
 
         // A tray notification FCM drew while the app was in the background.
         // Its data arrives as extras, and goes through the same strict parser

@@ -270,6 +270,8 @@
     <string name="hc_body_default">Let Health Connect add your daily steps to your group\'s progress.</string>
     <string name="hc_steps_only">Step count only. No location, route, heart rate or sleep.</string>
     <string name="hc_continue_without">Continue without steps</string>
+    <string name="hc_body_needs_update">Your Health Connect app is out of date. Update it from the Play Store, then come back here to connect your steps.</string>
+    <string name="hc_update">Update Health Connect</string>
     <string name="hc_open_settings">Open Settings</string>
     <string name="hc_skip">Skip for now</string>
     <string name="hc_connected">Steps connected</string>
@@ -402,6 +404,8 @@
     <string name="settings_health_unavailable_sub">Step tracking needs it. Install it from the Play Store, then come back here.</string>
     <string name="settings_health_fix">Open Health Connect</string>
     <string name="settings_health_install">Get Health Connect</string>
+    <string name="settings_health_needs_update">Health Connect needs an update</string>
+    <string name="settings_health_needs_update_sub">Your steps won\'t sync until you update it.</string>
     <string name="settings_health_sync_now">Sync now</string>
     <string name="settings_health_syncing">Syncing…</string>
     <string name="settings_health_never_synced">Not synced yet</string>

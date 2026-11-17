@@ -10,4 +10,8 @@
     <string name="bg_help_steps_huawei">ऐप जानकारी में Battery, फिर App launch खोलें। Manage automatically बंद करें और तीनों स्विच चालू रखें।</string>
     <string name="bg_help_open">ऐप जानकारी खोलें</string>
     <string name="bg_help_hide">छिपाएँ</string>
+
+    <string name="keep_awake_title">आपके कदम गिने जाते रहें</string>
+    <string name="keep_awake_body">जो ऐप कुछ समय तक नहीं खोले जाते, Android उन्हें सुला देता है। अगर Pamoja सो गया, तो आपके कदम आपके समूह तक नहीं पहुँचेंगे। अगली स्क्रीन पर वह स्विच बंद करें जो Pamoja को रोकता है।</string>
+    <string name="keep_awake_open">सेटिंग खोलें</string>
 </resources>

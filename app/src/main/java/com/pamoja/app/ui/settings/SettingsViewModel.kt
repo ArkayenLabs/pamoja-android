@@ -3,6 +3,7 @@ package com.pamoja.app.ui.settings
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pamoja.app.data.local.health.HealthConnectAvailability
 import com.pamoja.app.data.local.health.HealthConnectReader
 import com.pamoja.app.data.local.preferences.UserPreferences
 import com.pamoja.app.data.remote.auth.GoogleCredentialClient
@@ -55,6 +56,9 @@ enum class HealthStatus {
 
     /** Health Connect is present but the read permission is not granted. */
     NotConnected,
+
+    /** Health Connect is installed but too old to use; updating it from Play fixes it. */
+    NeedsUpdate,
 
     /** No Health Connect on this device at all, so nothing to grant. */
     Unavailable,
@@ -171,10 +175,11 @@ class SettingsViewModel @Inject constructor(
      */
     fun refreshHealthStatus() {
         viewModelScope.launch {
-            val status = when {
-                !healthConnectReader.isAvailable() -> HealthStatus.Unavailable
-                healthConnectReader.hasPermission() -> HealthStatus.Connected
-                else -> HealthStatus.NotConnected
+            val status = when (healthConnectReader.availability()) {
+                HealthConnectAvailability.NotInstalled -> HealthStatus.Unavailable
+                HealthConnectAvailability.NeedsUpdate -> HealthStatus.NeedsUpdate
+                HealthConnectAvailability.Available ->
+                    if (healthConnectReader.hasPermission()) HealthStatus.Connected else HealthStatus.NotConnected
             }
             _uiState.value = _uiState.value.copy(
                 healthStatus = status,

@@ -75,4 +75,7 @@
     <string name="home_tour_today_body">La marca indica que ya caminó. Avisa a quien todavía no.</string>
     <string name="home_tour_group_title">Tus grupos</string>
     <string name="home_tour_group_body">Toca el nombre para cambiar de grupo o crear uno nuevo.</string>
+    <string name="home_bg_hint_title">Ahora mismo tus pasos solo se sincronizan cuando abres Pamoja</string>
+    <string name="home_bg_hint_body">Permite el acceso en segundo plano y se sincronizarán solos.</string>
+    <string name="home_bg_hint_allow">Permitir</string>
 </resources>

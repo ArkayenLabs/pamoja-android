@@ -18,6 +18,7 @@ import com.pamoja.app.domain.usecase.GetCurrentUserUseCase
 import com.pamoja.app.domain.usecase.GetMyStepsForWeekUseCase
 import com.pamoja.app.domain.usecase.GetUserGroupsUseCase
 import com.pamoja.app.domain.usecase.GetUserUseCase
+import com.pamoja.app.util.AppHibernation
 import com.pamoja.app.util.WorkManagerScheduler
 import com.pamoja.app.widgets.PamojaWidgetUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -94,7 +95,29 @@ data class HomeUiState(
     val previewEndSeen: Set<String>? = null,
     /** Home's first-run coach marks have run; null until read, so they never flash. */
     val homeTourSeen: Boolean? = null,
+    /** [AppHibernation.status], re-read on every resume; null until read. */
+    val keepAwakeStatus: Int? = null,
+    /** The hibernation ask was answered on this installation; null until read. */
+    val keepAwakeAsked: Boolean? = null,
+    /** Health Connect facts for [showBackgroundHint], re-read on every resume. */
+    val stepsGranted: Boolean = false,
+    val backgroundReadSupported: Boolean = false,
+    val backgroundReadGranted: Boolean = false,
+    /** The background-read hint was dismissed on this installation; null until read. */
+    val backgroundHintDismissed: Boolean? = null,
 ) {
+    val askToKeepAwake: Boolean
+        get() = AppHibernation.shouldAsk(keepAwakeStatus, keepAwakeAsked, groups.isNotEmpty(), homeTourSeen)
+
+    val showBackgroundHint: Boolean
+        get() = backgroundHintNeeded(
+            inAGroup = groups.isNotEmpty(),
+            stepsGranted = stepsGranted,
+            backgroundSupported = backgroundReadSupported,
+            backgroundGranted = backgroundReadGranted,
+            dismissed = backgroundHintDismissed,
+        )
+
     /** Content is worth showing even mid-error if we already have some. */
     val hasContent: Boolean get() = groups.isNotEmpty() || hasLoadedPersonalSteps
 
@@ -124,6 +147,7 @@ class HomeViewModel @Inject constructor(
     private val healthConnectReader: HealthConnectReader,
     private val workManagerScheduler: WorkManagerScheduler,
     private val widgetUpdater: PamojaWidgetUpdater,
+    private val appHibernation: AppHibernation,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -179,8 +203,45 @@ class HomeViewModel @Inject constructor(
                 healthConnectReader.isAvailable() &&
                 !healthConnectReader.hasPermission()
             _uiState.value = _uiState.value.copy(needsHealthConnect = needed)
+            refreshBackgroundRead()
             refreshDeviceTodaySteps()
         }
+    }
+
+    private suspend fun refreshBackgroundRead() {
+        val stepsGranted = healthConnectReader.hasPermission()
+        _uiState.value = _uiState.value.copy(
+            stepsGranted = stepsGranted,
+            backgroundReadSupported = stepsGranted && healthConnectReader.supportsBackgroundRead(),
+            backgroundReadGranted = stepsGranted && healthConnectReader.hasBackgroundPermission(),
+        )
+    }
+
+    /** Back from the background permission sheet, granted or not. */
+    fun onBackgroundReadResult() {
+        viewModelScope.launch { refreshBackgroundRead() }
+    }
+
+    /** "Not now" is final here: Settings keeps the switch for later. */
+    fun dismissBackgroundHint() {
+        _uiState.value = _uiState.value.copy(backgroundHintDismissed = true)
+        viewModelScope.launch { userPreferences.setBackgroundHintDismissed() }
+    }
+
+    /**
+     * Re-read on every resume: the person may have just come back from the
+     * hibernation switch, and it can be turned back on at any time.
+     */
+    fun refreshKeepAwakeStatus() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(keepAwakeStatus = appHibernation.status())
+        }
+    }
+
+    /** Either answer: asked once per installation, never again. */
+    fun onKeepAwakeAnswered() {
+        _uiState.value = _uiState.value.copy(keepAwakeAsked = true)
+        viewModelScope.launch { userPreferences.setKeepAwakeAsked() }
     }
 
     fun dismissHealthConnectPrompt() {
@@ -206,6 +267,7 @@ class HomeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(needsHealthConnect = !granted)
             if (granted) {
                 analyticsManager.logHealthConnectPermissionGranted()
+                refreshBackgroundRead()
                 workManagerScheduler.syncSoon()
                 refreshDeviceTodaySteps()
             } else {
@@ -251,6 +313,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferences.homeTourSeen.collect { seen ->
                 _uiState.value = _uiState.value.copy(homeTourSeen = seen)
+            }
+        }
+        viewModelScope.launch {
+            userPreferences.keepAwakeAsked.collect { asked ->
+                _uiState.value = _uiState.value.copy(keepAwakeAsked = asked)
+            }
+        }
+        viewModelScope.launch {
+            userPreferences.backgroundHintDismissed.collect { dismissed ->
+                _uiState.value = _uiState.value.copy(backgroundHintDismissed = dismissed)
             }
         }
         // Same source the group screen uses, so the two cannot claim different

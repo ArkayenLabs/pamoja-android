@@ -225,6 +225,7 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.installreferrer)
     implementation(libs.play.services.code.scanner)
+    implementation(libs.play.review.ktx)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.text.google.fonts)
 

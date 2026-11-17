@@ -1,6 +1,7 @@
 package com.pamoja.app.ui.home
 
 import android.content.pm.PackageManager
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -118,6 +119,7 @@ import com.pamoja.app.ui.kit.PrimaryButton
 import com.pamoja.app.ui.kit.SecondaryButton
 import com.pamoja.app.ui.kit.mutedContentColor
 import com.pamoja.app.ui.theme.PamojaIcons
+import com.pamoja.app.ui.review.requestInAppReview
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.TextStyle
@@ -164,6 +166,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    // LocalActivity, never a cast of LocalContext (it throws on a wrapped context).
+    val activity = LocalActivity.current
 
     val selectedId = home.selectedGroupId
     LaunchedEffect(selectedId) {
@@ -287,7 +291,12 @@ fun HomeScreen(
                 groupViewModel.dismissGoalCelebration()
                 onOpenWeeklyCard(groupState.groupId)
             },
-            onClose = groupViewModel::dismissGoalCelebration,
+            onClose = {
+                groupViewModel.dismissGoalCelebration()
+                // Right after a win is the moment Play recommends for the rating card.
+                // Not on Share: that hands off to the weekly card instead.
+                activity?.let { scope.launch { requestInAppReview(it) } }
+            },
         )
     }
 

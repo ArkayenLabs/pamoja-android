@@ -45,6 +45,7 @@ class UserPreferences @Inject constructor(
         // permission was granted, which the OS already knows: this only stops
         // us asking a second time after someone said "not now".
         val KEY_NOTIFICATION_PRIMER_SHOWN = booleanPreferencesKey("notification_primer_shown")
+        val KEY_NOTIFICATION_SECOND_ASK_SHOWN = booleanPreferencesKey("notification_second_ask_shown")
 
         // Once per installation, like the intro: survives clearAll().
         val KEY_INSTALL_REFERRER_CHECKED = booleanPreferencesKey("install_referrer_checked")
@@ -153,6 +154,15 @@ class UserPreferences @Inject constructor(
 
     suspend fun setNotificationPrimerShown() {
         context.dataStore.edit { it[KEY_NOTIFICATION_PRIMER_SHOWN] = true }
+    }
+
+    /** The one repeat of the primer after a system denial (NotificationAsk.Second). */
+    val notificationSecondAskShown: Flow<Boolean> = context.dataStore.data.map {
+        it[KEY_NOTIFICATION_SECOND_ASK_SHOWN] ?: false
+    }
+
+    suspend fun setNotificationSecondAskShown() {
+        context.dataStore.edit { it[KEY_NOTIFICATION_SECOND_ASK_SHOWN] = true }
     }
 
     /**

@@ -8,7 +8,7 @@
     <string name="profile_failed_title">No se pudo guardar tu perfil</string>
     <string name="home_join_qr_not_pamoja">Ese código QR no es una invitación de Pamoja</string>
     <string name="home_join_qr_failed">No se pudo leer el código. Inténtalo de nuevo o pega el enlace.</string>
-    <string name="home_health_permission_denied">No se concedió permiso a Health Connect. Tus pasos seguirán en 0 hasta que lo conectes.</string>
+    <string name="home_health_permission_denied">Tus pasos aparecerán en 0 hasta que conectes Health Connect.</string>
     <string name="home_pending_invite_title">¿Terminar de unirte a este grupo?</string>
     <string name="home_pending_invite_body">Abriste esta invitación antes. Échale un vistazo antes de unirte.</string>
     <string name="home_pending_invite_action">Revisar invitación</string>

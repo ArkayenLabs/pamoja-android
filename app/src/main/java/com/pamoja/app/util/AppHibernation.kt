@@ -2,6 +2,9 @@ package com.pamoja.app.util
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.core.content.IntentCompat
 import androidx.core.content.PackageManagerCompat
 import androidx.core.content.UnusedAppRestrictionsConstants
@@ -24,8 +27,18 @@ import kotlin.coroutines.resume
 class AppHibernation @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    /** One of [UnusedAppRestrictionsConstants]; ERROR if Android would not say. */
-    suspend fun status(): Int {
+    /** One of [UnusedAppRestrictionsConstants], corrected by [effectiveStatus]. */
+    suspend fun status(): Int = effectiveStatus(
+        compat = compatStatus(),
+        sdk = Build.VERSION.SDK_INT,
+        exempt = {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                runCatching { context.packageManager.isAutoRevokeWhitelisted }.getOrDefault(false)
+        },
+    )
+
+    /** AndroidX's answer; ERROR if Android would not say. */
+    private suspend fun compatStatus(): Int {
         val future = runCatching {
             PackageManagerCompat.getUnusedAppRestrictionsStatus(context)
         }.getOrElse { return UnusedAppRestrictionsConstants.ERROR }
@@ -42,9 +55,34 @@ class AppHibernation @Inject constructor(
     }
 
     companion object {
-        /** Android requires this to be started for a result. */
+        /**
+         * AndroidX only trusts the status when the App info screen belongs to
+         * an app holding PACKAGE_VERIFICATION_AGENT. On a vivo (Android 15,
+         * checked 18 Nov 2026) Settings does not, so AndroidX answers
+         * FEATURE_NOT_AVAILABLE while App info plainly shows "Pause app
+         * activity if unused" and hibernation is on. From Android 12 the
+         * platform's own exemption flag is the honest answer in that case.
+         */
+        fun effectiveStatus(compat: Int, sdk: Int, exempt: () -> Boolean): Int {
+            val unsure = compat == UnusedAppRestrictionsConstants.FEATURE_NOT_AVAILABLE ||
+                compat == UnusedAppRestrictionsConstants.ERROR
+            if (sdk < Build.VERSION_CODES.S || !unsure) return compat
+            return if (exempt()) UnusedAppRestrictionsConstants.DISABLED else UnusedAppRestrictionsConstants.API_31
+        }
+
+        /**
+         * Android requires this to be started for a result. From Android 12
+         * AndroidX itself just opens App info, but throws first when it
+         * judges the feature missing (see [effectiveStatus]), so the page is
+         * opened directly there.
+         */
         fun settingsIntent(context: Context): Intent =
-            IntentCompat.createManageUnusedAppRestrictionsIntent(context, context.packageName)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", context.packageName, null))
+            } else {
+                IntentCompat.createManageUnusedAppRestrictionsIntent(context, context.packageName)
+            }
 
         /**
          * Ask once, only someone in a group (their steps are what is at stake),

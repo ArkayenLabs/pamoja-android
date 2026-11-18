@@ -1,5 +1,7 @@
 package com.pamoja.app.ui.home
 
+import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -261,7 +264,8 @@ fun HomeScreen(
         PermissionController.createRequestPermissionResultContract(),
     ) { viewModel.onBackgroundReadResult() }
 
-    NotificationPrimer(show = signals.showNotificationPrimer, onAnswered = signalsViewModel::onNotificationPrimerAnswered)
+    val notificationAsk = signals.notificationAsk?.takeIf { notificationAskNeeded(context, activity, it) }
+    NotificationPrimer(ask = notificationAsk, onAnswered = signalsViewModel::onNotificationPrimerAnswered)
 
     // The end of the group's preview, told once and only to its admin: never
     // to someone who joined through an invite (REBUILD_PLAN.md Phase 6).
@@ -311,7 +315,7 @@ fun HomeScreen(
     var celebratedThisVisit by remember { mutableStateOf(false) }
     LaunchedEffect(celebration != null) { if (celebration != null) celebratedThisVisit = true }
     KeepAwakeAsk(
-        show = home.askToKeepAwake && !signals.showNotificationPrimer && endedPreviewGroup == null &&
+        show = home.askToKeepAwake && notificationAsk == null && endedPreviewGroup == null &&
             celebration == null && !celebratedThisVisit,
         settingsIntent = { com.pamoja.app.util.AppHibernation.settingsIntent(context) },
         onAnswered = viewModel::onKeepAwakeAnswered,
@@ -1209,22 +1213,33 @@ private fun HomeSkeleton() {
 }
 
 /**
- * Asked once, at the first cheer or nudge sent or received (REBUILD_PLAN.md
- * §6), when what notifications are for is on the screen. Only "Allow" spends
- * the system prompt, since on Android 13+ one denial cannot be undone in the app.
+ * Whether the primer can lead anywhere: Android 13+, not yet granted, and for
+ * the second ask, Android still willing to show its prompt (true only after
+ * exactly one system denial; false after "Not now" on ours or a second denial).
+ */
+private fun notificationAskNeeded(context: Context, activity: Activity?, ask: NotificationAsk): Boolean {
+    val permission = android.Manifest.permission.POST_NOTIFICATIONS
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) return false
+    if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) return false
+    return ask == NotificationAsk.First ||
+        (activity != null && ActivityCompat.shouldShowRequestPermissionRationale(activity, permission))
+}
+
+/**
+ * At the first cheer or nudge sent or received (REBUILD_PLAN.md §6), when
+ * what notifications are for is on the screen, and once more at a received
+ * high five if the system prompt was denied ([nextNotificationAsk]). Android
+ * 11+ makes only the second system denial permanent. Only "Allow" spends the
+ * system prompt.
  */
 @Composable
-private fun NotificationPrimer(show: Boolean, onAnswered: () -> Unit) {
-    val context = LocalContext.current
+private fun NotificationPrimer(ask: NotificationAsk?, onAnswered: () -> Unit) {
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    val needed = show &&
-        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
-        ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) !=
-        PackageManager.PERMISSION_GRANTED
-    if (!needed) return
+    if (ask == null) return
+    val second = ask == NotificationAsk.Second
     KitDialog(
-        title = stringResource(R.string.social_primer_title),
-        body = stringResource(R.string.social_primer_body),
+        title = stringResource(if (second) R.string.social_primer_again_title else R.string.social_primer_title),
+        body = stringResource(if (second) R.string.social_primer_again_body else R.string.social_primer_body),
         confirmText = stringResource(R.string.notif_primer_allow),
         onConfirm = {
             onAnswered()

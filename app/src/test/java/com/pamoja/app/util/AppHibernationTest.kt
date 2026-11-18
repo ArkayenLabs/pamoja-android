@@ -6,6 +6,7 @@ import androidx.core.content.UnusedAppRestrictionsConstants.API_31
 import androidx.core.content.UnusedAppRestrictionsConstants.DISABLED
 import androidx.core.content.UnusedAppRestrictionsConstants.ERROR
 import androidx.core.content.UnusedAppRestrictionsConstants.FEATURE_NOT_AVAILABLE
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -49,4 +50,23 @@ class AppHibernationTest {
         assertFalse(ask(status = API_30))
         assertFalse(ask(status = API_30_BACKPORT))
     }
+
+    // The vivo case: AndroidX says "not available" while Android 12+ has the switch.
+    @Test
+    fun onAndroid12AndUpAnUnsureAnswerFallsBackToThePlatform() {
+        for (compat in listOf(FEATURE_NOT_AVAILABLE, ERROR)) {
+            assertEquals(API_31, AppHibernation.effectiveStatus(compat, sdk = 35, exempt = { false }))
+            assertEquals(DISABLED, AppHibernation.effectiveStatus(compat, sdk = 35, exempt = { true }))
+        }
+    }
+
+    @Test
+    fun aClearAnswerIsKept() {
+        assertEquals(DISABLED, AppHibernation.effectiveStatus(DISABLED, sdk = 35, exempt = { false }))
+        assertEquals(API_31, AppHibernation.effectiveStatus(API_31, sdk = 35, exempt = { true }))
+    }
+
+    @Test
+    fun belowAndroid12AndroidXIsTrusted() =
+        assertEquals(FEATURE_NOT_AVAILABLE, AppHibernation.effectiveStatus(FEATURE_NOT_AVAILABLE, sdk = 30, exempt = { false }))
 }

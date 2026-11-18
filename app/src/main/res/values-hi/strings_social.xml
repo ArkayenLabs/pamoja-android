@@ -32,6 +32,8 @@
     </plurals>
     <string name="social_primer_title">हाई फाइव मिलते ही जानें</string>
     <string name="social_primer_body">सूचनाएँ चालू करें, ताकि पता चले जब आपका समूह आपको हाई फाइव भेजे।</string>
+    <string name="social_primer_again_title">आपको हाई फाइव मिला</string>
+    <string name="social_primer_again_body">सूचनाएँ चालू करें, ताकि अगला हाई फाइव आते ही दिख जाए।</string>
 
     <!-- Group details -->
     <string name="details_past_weeks">पिछले हफ़्ते</string>

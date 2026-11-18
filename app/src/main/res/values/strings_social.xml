@@ -34,6 +34,8 @@
     </plurals>
     <string name="social_primer_title">Know when you get a high five</string>
     <string name="social_primer_body">Turn on notifications so you know when your group sends you a high five.</string>
+    <string name="social_primer_again_title">You got a high five</string>
+    <string name="social_primer_again_body">Turn on notifications and you\'ll see the next one as it happens.</string>
 
     <!-- Group details -->
     <string name="details_past_weeks">Past weeks</string>

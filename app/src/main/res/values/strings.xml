@@ -94,14 +94,14 @@
     <string name="error_offline_body">Check your connection. Your steps keep counting and will sync when you\'re back.</string>
     <string name="error_network_title">That took too long</string>
     <string name="error_network_body">The connection dropped. Try again.</string>
-    <string name="error_permission_title">You can\'t do that</string>
+    <string name="error_permission_title">You don\'t have access to this</string>
     <string name="error_permission_body">You may have been removed from this group, or it no longer exists.</string>
-    <string name="error_not_found_title">Not found</string>
+    <string name="error_not_found_title">We couldn\'t find this</string>
     <string name="error_not_found_body">This may have been deleted, or the link may be wrong.</string>
     <string name="error_conflict_title">Something changed</string>
     <string name="error_conflict_body">Someone else changed this first. Refresh to see the latest.</string>
     <string name="error_session_title">Please sign in again</string>
-    <string name="error_session_body">Nothing has been lost.</string>
+    <string name="error_session_body">Don\'t worry, your steps and groups are safe.</string>
     <string name="error_rate_limited_title">Too many attempts</string>
     <string name="error_rate_limited_body">Wait a few minutes before trying again.</string>
     <string name="error_credentials_title">That didn\'t match</string>
@@ -145,13 +145,13 @@
     <string name="auth_error_google_unavailable_body">Try again. If it keeps happening, update Google Play services or use phone or email.</string>
     <string name="auth_error_generic_title">That didn\'t work</string>
     <string name="auth_error_generic_body">Try again, or use another sign-in method.</string>
-    <string name="error_unknown_title">Something went wrong</string>
+    <string name="error_unknown_title">That didn\'t work</string>
     <string name="error_unknown_body">Try again. If it keeps happening, contact support.</string>
     <string name="error_snackbar_format">%1$s. %2$s</string>
 
     <!-- ── Offline banner ─────────────────────────────────────────────── -->
     <string name="offline_banner_title">You\'re offline</string>
-    <string name="offline_group_stale">Showing the last totals that reached this phone</string>
+    <string name="offline_group_stale">These are the last totals we got. They\'ll update when you\'re back online.</string>
     <!-- Offline with a known sync time. Preferred over the vaguer lines above,
          because "showing old data" without saying how old is not much of a
          statement. %1$s is a wall-clock time in the device's own format. -->
@@ -243,7 +243,7 @@
 
     <!-- Shown when Health Connect is installed but not permitted, so no steps
          can arrive at all. Says what is wrong before it says what to do. -->
-    <string name="home_health_permission_denied">Health Connect access wasn\'t given, so your steps stay at 0 until you connect it.</string>
+    <string name="home_health_permission_denied">Your steps will show 0 until you connect Health Connect.</string>
     <string name="home_pending_invite_title">Finish joining this group?</string>
     <string name="home_pending_invite_body">You opened this invite earlier. Take a look before you join.</string>
     <string name="home_pending_invite_action">Review invitation</string>

@@ -32,14 +32,14 @@
     <string name="error_offline_body">अपना कनेक्शन जाँचें। कदम गिने जाते रहेंगे और कनेक्शन लौटने पर सिंक होंगे।</string>
     <string name="error_network_title">बहुत समय लग गया</string>
     <string name="error_network_body">कनेक्शन बीच में टूट गया। फिर कोशिश करें।</string>
-    <string name="error_permission_title">आप यह नहीं कर सकते</string>
+    <string name="error_permission_title">आपके पास इसकी पहुँच नहीं है</string>
     <string name="error_permission_body">शायद आपको समूह से हटा दिया गया है या समूह अब मौजूद नहीं है।</string>
-    <string name="error_not_found_title">नहीं मिला</string>
+    <string name="error_not_found_title">हमें यह नहीं मिला</string>
     <string name="error_not_found_body">शायद इसे मिटा दिया गया है या लिंक गलत है।</string>
     <string name="error_conflict_title">कुछ बदल गया है</string>
     <string name="error_conflict_body">किसी ने पहले बदलाव कर दिया। नई स्थिति देखने के लिए रीफ़्रेश करें।</string>
     <string name="error_session_title">फिर से साइन इन करें</string>
-    <string name="error_session_body">कुछ भी खोया नहीं है।</string>
+    <string name="error_session_body">चिंता न करें, आपके कदम और समूह सुरक्षित हैं।</string>
     <string name="error_rate_limited_title">बहुत ज़्यादा कोशिशें</string>
     <string name="error_rate_limited_body">फिर कोशिश करने से पहले कुछ मिनट रुकें।</string>
     <string name="error_credentials_title">जानकारी मेल नहीं खाती</string>
@@ -63,10 +63,10 @@
     <string name="validation_display_name_missing">नाम लिखें</string>
     <string name="validation_avatar_unreadable">यह तस्वीर नहीं पढ़ी जा सकी। दूसरी फ़ोटो चुनें।</string>
     <string name="validation_not_allowed_target">केवल एडमिन समूह का लक्ष्य बदल सकता है</string>
-    <string name="error_unknown_title">कुछ गड़बड़ हुई</string>
+    <string name="error_unknown_title">यह नहीं हो पाया</string>
     <string name="error_unknown_body">फिर कोशिश करें। बार-बार हो तो सहायता से संपर्क करें।</string>
     <string name="error_snackbar_format">%1$s। %2$s</string>
     <string name="offline_banner_title">आप ऑफ़लाइन हैं</string>
-    <string name="offline_group_stale">इस फ़ोन पर मिले पिछले कुल दिख रहे हैं</string>
+    <string name="offline_group_stale">ये हमें मिले पिछले कुल हैं। ऑनलाइन होते ही ये अपडेट हो जाएँगे।</string>
     <string name="offline_showing_from">%1$s का डेटा दिख रहा है</string>
 </resources>

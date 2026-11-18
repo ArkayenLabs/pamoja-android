@@ -37,6 +37,8 @@
     </plurals>
     <string name="social_primer_title">Entérate cuando te choquen los cinco</string>
     <string name="social_primer_body">Activa las notificaciones para saber cuándo tu grupo te choca los cinco.</string>
+    <string name="social_primer_again_title">Te chocaron los cinco</string>
+    <string name="social_primer_again_body">Activa las notificaciones y verás el próximo en cuanto llegue.</string>
 
     <!-- Group details -->
     <string name="details_past_weeks">Semanas anteriores</string>

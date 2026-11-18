@@ -32,14 +32,14 @@
     <string name="error_offline_body">Comprueba tu conexión. Los pasos siguen contando y se sincronizarán cuando vuelvas a conectarte.</string>
     <string name="error_network_title">Ha tardado demasiado</string>
     <string name="error_network_body">La conexión se interrumpió. Vuelve a intentarlo.</string>
-    <string name="error_permission_title">No tienes permiso</string>
+    <string name="error_permission_title">No tienes acceso a esto</string>
     <string name="error_permission_body">Puede que ya no pertenezcas a este grupo o que el grupo no exista.</string>
-    <string name="error_not_found_title">No se encontró</string>
+    <string name="error_not_found_title">No pudimos encontrarlo</string>
     <string name="error_not_found_body">Puede que se haya eliminado o que el enlace sea incorrecto.</string>
     <string name="error_conflict_title">Algo ha cambiado</string>
     <string name="error_conflict_body">Alguien hizo un cambio antes. Actualiza para ver el estado actual.</string>
     <string name="error_session_title">Vuelve a iniciar sesión</string>
-    <string name="error_session_body">No se ha perdido nada.</string>
+    <string name="error_session_body">No te preocupes, tus pasos y tus grupos están a salvo.</string>
     <string name="error_rate_limited_title">Demasiados intentos</string>
     <string name="error_rate_limited_body">Espera unos minutos antes de volver a intentarlo.</string>
     <string name="error_credentials_title">Los datos no coinciden</string>
@@ -63,10 +63,10 @@
     <string name="validation_display_name_missing">Introduce un nombre</string>
     <string name="validation_avatar_unreadable">No se pudo leer la imagen. Prueba con otra.</string>
     <string name="validation_not_allowed_target">Solo el administrador puede cambiar la meta del grupo</string>
-    <string name="error_unknown_title">Algo salió mal</string>
+    <string name="error_unknown_title">Eso no funcionó</string>
     <string name="error_unknown_body">Vuelve a intentarlo. Si sigue pasando, contacta con soporte.</string>
     <string name="error_snackbar_format">%1$s. %2$s</string>
     <string name="offline_banner_title">Sin conexión</string>
-    <string name="offline_group_stale">Se muestran los últimos totales recibidos en este teléfono</string>
+    <string name="offline_group_stale">Son los últimos totales que recibimos. Se actualizarán cuando vuelvas a tener conexión.</string>
     <string name="offline_showing_from">Datos de %1$s</string>
 </resources>

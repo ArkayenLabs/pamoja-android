@@ -12,4 +12,6 @@
     <string name="home_bg_hint_title">Right now your steps only sync when you open Pamoja</string>
     <string name="home_bg_hint_body">Allow background access and they\'ll sync on their own.</string>
     <string name="home_bg_hint_allow">Allow</string>
+    <string name="social_primer_again_title">You got a high five</string>
+    <string name="social_primer_again_body">Turn on notifications and you\'ll see the next one as it happens.</string>
 </resources>

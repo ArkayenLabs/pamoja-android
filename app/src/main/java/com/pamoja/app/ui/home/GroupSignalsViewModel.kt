@@ -35,10 +35,13 @@ data class SignalsUiState(
     val error: AppError? = null,
     /**
      * Explain notifications now: the moment they obviously matter, having just
-     * cheered or nudged someone or looking at a cheer. Asked once, ever.
+     * cheered or nudged someone or looking at a cheer. At most twice, ever
+     * ([nextNotificationAsk]).
      */
-    val showNotificationPrimer: Boolean = false,
+    val notificationAsk: NotificationAsk? = null,
 ) {
+    val showNotificationPrimer: Boolean get() = notificationAsk != null
+
     fun hasSent(kind: SignalKind, toUserId: String): Boolean =
         (kind to toUserId) in sending || sent.any { it.kind == kind && it.toUserId == toUserId }
 
@@ -81,7 +84,7 @@ class GroupSignalsViewModel @Inject constructor(
         if (loadedFor == groupId to date) return
         loadedFor = groupId to date
         loadJob?.cancel()
-        _uiState.value = SignalsUiState(groupId = groupId, showNotificationPrimer = _uiState.value.showNotificationPrimer)
+        _uiState.value = SignalsUiState(groupId = groupId, notificationAsk = _uiState.value.notificationAsk)
         loadJob = viewModelScope.launch {
             val uid = userId ?: getCurrentUserUseCase()?.userId?.also { userId = it } ?: return@launch
             launch {
@@ -101,7 +104,7 @@ class GroupSignalsViewModel @Inject constructor(
                     .catch { emit(emptyList()) }
                     .collect { received ->
                         _uiState.value = _uiState.value.copy(received = received)
-                        if (received.any { it.kind == SignalKind.CHEER }) offerNotifications()
+                        if (received.any { it.kind == SignalKind.CHEER }) offerNotifications(cheerReceived = true)
                     }
             }
         }
@@ -126,7 +129,7 @@ class GroupSignalsViewModel @Inject constructor(
                         if (kind == SignalKind.CHEER) AnalyticsEvent.CHEER_SENT else AnalyticsEvent.NUDGE_SENT,
                         mapOf(AnalyticsParam.GROUP_ID to groupId, AnalyticsParam.RECIPIENTS to fresh.size),
                     )
-                    offerNotifications()
+                    offerNotifications(cheerReceived = false)
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(
@@ -138,21 +141,37 @@ class GroupSignalsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun offerNotifications() {
-        if (_uiState.value.showNotificationPrimer) return
-        if (!userPreferences.notificationPrimerShown.first()) {
-            _uiState.value = _uiState.value.copy(showNotificationPrimer = true)
-        }
+    /** True once an ask was answered in this ViewModel's life, so the second waits for another visit. */
+    private var askedThisVisit = false
+
+    private suspend fun offerNotifications(cheerReceived: Boolean) {
+        if (_uiState.value.notificationAsk != null) return
+        val ask = nextNotificationAsk(
+            firstShown = userPreferences.notificationPrimerShown.first(),
+            secondShown = userPreferences.notificationSecondAskShown.first(),
+            cheerReceived = cheerReceived,
+            askedThisVisit = askedThisVisit,
+        ) ?: return
+        _uiState.value = _uiState.value.copy(notificationAsk = ask)
     }
 
     /**
-     * Recorded whichever way it was answered. The point is to ask once:
-     * re-asking someone who declined is how an app earns a permanent denial,
-     * and on Android 13+ that cannot be undone from inside the app.
+     * Recorded whichever way it was answered. Android 11+ makes a denial
+     * permanent only the second time, so the primer is offered at most twice
+     * ([nextNotificationAsk]); after that, Notification settings has the way
+     * to the system page.
      */
     fun onNotificationPrimerAnswered() {
-        _uiState.value = _uiState.value.copy(showNotificationPrimer = false)
-        viewModelScope.launch { userPreferences.setNotificationPrimerShown() }
+        val ask = _uiState.value.notificationAsk
+        _uiState.value = _uiState.value.copy(notificationAsk = null)
+        askedThisVisit = true
+        viewModelScope.launch {
+            if (ask == NotificationAsk.Second) {
+                userPreferences.setNotificationSecondAskShown()
+            } else {
+                userPreferences.setNotificationPrimerShown()
+            }
+        }
     }
 
     fun clearError() {
